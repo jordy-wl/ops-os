@@ -16,17 +16,25 @@ export default function InviteUserModal({ isOpen, onClose, currentUserRole }) {
 
   const inviteMutation = useMutation({
     mutationFn: async ({ email, role }) => {
-      await base44.users.inviteUser(email, role);
-      return { email, role };
+      console.log('Inviting user:', email, 'with role:', role);
+      try {
+        const result = await base44.users.inviteUser(email, role);
+        console.log('Invite successful:', result);
+        return { email, role };
+      } catch (error) {
+        console.error('Invite error:', error);
+        throw error;
+      }
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
-      toast.success(`Invitation sent to ${data.email}`);
+      toast.success(`Invitation email sent to ${data.email}. They will receive an email to join the app.`);
       onClose();
-      setFormData({ email: '', role: 'user' });
+      setFormData({ email: '', role: 'operator' });
     },
     onError: (error) => {
-      toast.error(error.message || 'Failed to send invitation');
+      console.error('Mutation error:', error);
+      toast.error(error.message || 'Failed to send invitation. Please try again.');
     },
   });
 
