@@ -251,28 +251,29 @@ export default function People() {
               ))}
             </div>
           ) : departments.length === 0 ? (
-          <div className="neumorphic-pressed rounded-xl p-12 text-center">
-            <Building className="w-12 h-12 text-[#4A5568] mx-auto mb-4" />
-            <h3 className="font-medium mb-2">No Departments</h3>
-            <p className="text-[#A0AEC0] mb-4">Create departments to organize your teams.</p>
-            <Button 
-              onClick={() => setShowCreateDepartment(true)}
-              className="bg-gradient-to-r from-[#00E5FF] to-[#0099ff] text-[#121212]"
-            >
-              Create Department
-            </Button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-3 gap-4">
-            {departments.map(dept => (
-              <DepartmentCard 
-                key={dept.id} 
-                department={dept} 
-                teamsCount={teams.filter(t => t.department_id === dept.id).length}
-              />
-            ))}
-          </div>
-        )
+            <div className="neumorphic-pressed rounded-xl p-12 text-center">
+              <Building className="w-12 h-12 text-[#4A5568] mx-auto mb-4" />
+              <h3 className="font-medium mb-2">No Departments</h3>
+              <p className="text-[#A0AEC0] mb-4">Create departments to organize your teams.</p>
+              <Button 
+                onClick={() => setShowCreateDepartment(true)}
+                className="bg-gradient-to-r from-[#00E5FF] to-[#0099ff] text-[#121212]"
+              >
+                Create Department
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 gap-4">
+              {departments.map(dept => (
+                <DepartmentCard 
+                  key={dept.id} 
+                  department={dept} 
+                  teamsCount={teams.filter(t => t.department_id === dept.id).length}
+                />
+              ))}
+            </div>
+          )}
+        </>
       )}
 
       {activeView === 'teams' && (
@@ -293,24 +294,25 @@ export default function People() {
               ))}
             </div>
           ) : teams.length === 0 ? (
-          <div className="neumorphic-pressed rounded-xl p-12 text-center">
-            <Users className="w-12 h-12 text-[#4A5568] mx-auto mb-4" />
-            <h3 className="font-medium mb-2">No Teams</h3>
-            <p className="text-[#A0AEC0] mb-4">Create teams to route tasks and workflows.</p>
-            <Button 
-              onClick={() => setShowCreateTeam(true)}
-              className="bg-gradient-to-r from-[#00E5FF] to-[#0099ff] text-[#121212]"
-            >
-              Create Team
-            </Button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-4 gap-4">
-            {teams.map(team => (
-              <TeamCard key={team.id} team={team} />
-            ))}
-          </div>
-        )
+            <div className="neumorphic-pressed rounded-xl p-12 text-center">
+              <Users className="w-12 h-12 text-[#4A5568] mx-auto mb-4" />
+              <h3 className="font-medium mb-2">No Teams</h3>
+              <p className="text-[#A0AEC0] mb-4">Create teams to route tasks and workflows.</p>
+              <Button 
+                onClick={() => setShowCreateTeam(true)}
+                className="bg-gradient-to-r from-[#00E5FF] to-[#0099ff] text-[#121212]"
+              >
+                Create Team
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-4 gap-4">
+              {teams.map(team => (
+                <TeamCard key={team.id} team={team} />
+              ))}
+            </div>
+          )}
+        </>
       )}
 
       {/* User Profile Drawer */}
