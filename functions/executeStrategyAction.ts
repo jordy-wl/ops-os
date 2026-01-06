@@ -1,113 +1,100 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
-  const base44 = createClientFromRequest(req);
-  const user = await base44.auth.me();
+  try {
+    const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me();
 
-  if (!user) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+    if (!user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-  const { strategy_action_id } = await req.json();
+    const { actionId } = await req.json();
 
-  if (!strategy_action_id) {
-    return Response.json({ error: 'Missing strategy_action_id' }, { status: 400 });
-  }
+    if (!actionId) {
+      return Response.json({ error: 'Missing actionId' }, { status: 400 });
+    }
 
-  // Get the action
-  const actions = await base44.entities.StrategyAction.filter({ id: strategy_action_id });
-  if (actions.length === 0) {
-    return Response.json({ error: 'Action not found' }, { status: 404 });
-  }
+    // Fetch the action
+    const actions = await base44.asServiceRole.entities.StrategyAction.filter({ id: actionId });
+    const action = actions[0];
 
-  const action = actions[0];
+    if (!action) {
+      return Response.json({ error: 'Action not found' }, { status: 404 });
+    }
 
-  // Verify user has permission to execute
-  if (action.status !== 'pending' && action.status !== 'approved') {
-    return Response.json({ error: 'Action already executed or rejected' }, { status: 400 });
-  }
+    if (action.status !== 'pending') {
+      return Response.json({ error: 'Action already processed' }, { status: 400 });
+    }
 
-  let result = {};
+    // RBAC Check - Only admins and managers can execute certain actions
+    const restrictedActions = ['CREATE_WORKFLOW', 'PROPOSE_TEMPLATE_CHANGE', 'UPDATE_CLIENT_FIELD'];
+    if (restrictedActions.includes(action.action_type)) {
+      if (user.app_role !== 'admin' && user.app_role !== 'manager' && user.role !== 'admin') {
+        return Response.json({ error: 'Insufficient permissions' }, { status: 403 });
+      }
+    }
 
-  // Execute based on action type
-  switch (action.action_type) {
-    case 'create_workflow':
-      if (action.payload?.client_id && action.payload?.workflow_template_id) {
-        const workflowRes = await base44.functions.invoke('startWorkflow', {
-          client_id: action.payload.client_id,
-          workflow_template_id: action.payload.workflow_template_id
+    let result;
+
+    // Execute the action based on type
+    switch (action.action_type) {
+      case 'CREATE_TASK':
+        result = await base44.asServiceRole.entities.TaskInstance.create({
+          ...action.payload,
+          created_by: user.id,
         });
-        result = workflowRes.data;
-      }
-      break;
+        break;
 
-    case 'update_client_field':
-      if (action.payload?.client_id && action.payload?.field_code && action.payload?.value !== undefined) {
-        const fieldRes = await base44.functions.invoke('updateFieldValue', {
-          object_type: 'client',
-          object_id: action.payload.client_id,
-          field_code: action.payload.field_code,
-          value: action.payload.value,
-          source_type: 'ai_enriched'
-        });
-        result = fieldRes.data;
-      }
-      break;
+      case 'UPDATE_CLIENT_FIELD':
+        result = await base44.asServiceRole.entities.Client.update(
+          action.payload.client_id,
+          action.payload.updates
+        );
+        break;
 
-    case 'create_task':
-      if (action.payload?.workflow_instance_id && action.payload?.title) {
-        const task = await base44.asServiceRole.entities.TaskInstance.create({
-          workflow_instance_id: action.payload.workflow_instance_id,
-          client_id: action.payload.client_id,
-          name: action.payload.title,
-          description: action.payload.description,
-          status: 'not_started',
-          priority: action.payload.priority || 'normal',
-          is_ad_hoc: true,
-          assigned_user_id: action.payload.assigned_user_id || user.id
-        });
-        result = { task };
-      }
-      break;
+      case 'GENERATE_REPORT':
+        // Call report generation function
+        result = await base44.asServiceRole.functions.invoke('generateReport', action.payload);
+        break;
 
-    case 'generate_document':
-      if (action.payload?.document_template_id && action.payload?.client_id) {
-        const docRes = await base44.functions.invoke('aiDrafterDocument', action.payload);
-        result = docRes.data;
-      }
-      break;
+      case 'CREATE_WORKFLOW':
+        // Call workflow creation function
+        result = await base44.asServiceRole.functions.invoke('startWorkflow', action.payload);
+        break;
 
-    default:
-      return Response.json({ 
-        error: `Action type ${action.action_type} not yet implemented` 
-      }, { status: 400 });
-  }
+      default:
+        return Response.json({ error: 'Unknown action type' }, { status: 400 });
+    }
 
-  // Update action status
-  await base44.asServiceRole.entities.StrategyAction.update(strategy_action_id, {
-    status: 'executed',
-    executed_by: 'user',
-    executed_at: new Date().toISOString(),
-    result
-  });
+    // Update action status
+    await base44.asServiceRole.entities.StrategyAction.update(action.id, {
+      status: 'executed',
+      executed_at: new Date().toISOString(),
+      executed_by: user.id,
+      result_data: result,
+    });
 
-  // Publish event
-  await base44.asServiceRole.entities.Event.create({
-    event_type: 'strategy_action_executed',
-    source_entity_type: 'strategy_action',
-    source_entity_id: strategy_action_id,
-    actor_type: 'user',
-    actor_id: user.id,
-    payload: {
+    // Create audit log
+    await base44.asServiceRole.entities.AIAuditLog.create({
+      ai_agent_config_id: null, // Can be linked to agent config later
+      strategy_action_id: action.id,
       action_type: action.action_type,
-      result
-    },
-    occurred_at: new Date().toISOString()
-  });
+      actor_type: 'user',
+      actor_id: user.id,
+      input_summary: `Executed ${action.action_type}`,
+      output_summary: 'Success',
+      status: 'success',
+    });
 
-  return Response.json({ 
-    success: true, 
-    action,
-    result 
-  });
+    return Response.json({
+      success: true,
+      action,
+      result,
+    });
+
+  } catch (error) {
+    console.error('Execute Strategy Action Error:', error);
+    return Response.json({ error: error.message }, { status: 500 });
+  }
 });

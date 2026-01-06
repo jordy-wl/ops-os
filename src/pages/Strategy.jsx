@@ -63,7 +63,7 @@ function MessageBubble({ message }) {
   );
 }
 
-function ActionCard({ action }) {
+function ActionCard({ action, onExecute, onReject }) {
   const statusColors = {
     pending: 'border-orange-500/30 bg-orange-500/10',
     approved: 'border-green-500/30 bg-green-500/10',
@@ -73,39 +73,53 @@ function ActionCard({ action }) {
   };
 
   const actionIcons = {
-    create_workflow: GitMerge,
-    generate_document: FileText,
-    update_client_field: Briefcase,
+    CREATE_WORKFLOW: GitMerge,
+    GENERATE_REPORT: FileText,
+    UPDATE_CLIENT_FIELD: Briefcase,
+    CREATE_TASK: CheckCircle,
+    PROPOSE_TEMPLATE_CHANGE: GitMerge,
   };
 
   const Icon = actionIcons[action.action_type] || CheckCircle;
 
   return (
-    <div className={`rounded-xl p-4 border ${statusColors[action.status] || statusColors.pending} mb-4`}>
+    <div className={`rounded-xl p-4 border ${statusColors[action.status] || statusColors.pending} mb-3`}>
       <div className="flex items-start gap-3">
         <div className="w-10 h-10 rounded-lg bg-[#2C2E33] flex items-center justify-center">
-          <Icon className="w-5 h-5 text-[#00E5FF]" />
+          <Icon className="w-5 h-5 text-[#BD00FF]" />
         </div>
         <div className="flex-1">
-          <h4 className="font-medium text-sm mb-1">
-            Proposed Action: {action.action_type?.replace(/_/g, ' ')}
+          <h4 className="font-medium text-sm mb-1 capitalize">
+            {action.action_type?.replace(/_/g, ' ')}
           </h4>
           <p className="text-xs text-[#A0AEC0] mb-3">
-            {action.payload?.description || 'No description'}
+            {action.description || 'No description'}
           </p>
           
           {action.status === 'pending' && (
             <div className="flex gap-2">
-              <button className="px-3 py-1.5 rounded-lg bg-green-500/20 text-green-400 text-xs font-medium hover:bg-green-500/30">
-                Approve
+              <button 
+                onClick={() => onExecute(action.id)}
+                className="px-3 py-1.5 rounded-lg bg-green-500/20 text-green-400 text-xs font-medium hover:bg-green-500/30 transition-colors"
+              >
+                Execute
               </button>
-              <button className="px-3 py-1.5 rounded-lg border border-red-500/30 text-red-400 text-xs font-medium hover:bg-red-500/10">
+              <button 
+                onClick={() => onReject(action.id)}
+                className="px-3 py-1.5 rounded-lg border border-red-500/30 text-red-400 text-xs font-medium hover:bg-red-500/10 transition-colors"
+              >
                 Reject
               </button>
-              <button className="px-3 py-1.5 rounded-lg border border-[#2C2E33] text-[#A0AEC0] text-xs font-medium hover:bg-[#2C2E33]">
-                Edit
-              </button>
             </div>
+          )}
+          {action.status === 'executed' && (
+            <div className="flex items-center gap-2 text-xs text-green-400">
+              <CheckCircle className="w-3 h-3" />
+              <span>Executed</span>
+            </div>
+          )}
+          {action.status === 'rejected' && (
+            <div className="text-xs text-red-400">Rejected</div>
           )}
         </div>
       </div>
@@ -152,6 +166,28 @@ export default function Strategy() {
     enabled: !!selectedSpaceId,
   });
 
+  const { data: actions = [] } = useQuery({
+    queryKey: ['strategy-actions', selectedSpaceId],
+    queryFn: () => selectedSpaceId 
+      ? base44.entities.StrategyAction.filter({ strategy_space_id: selectedSpaceId }, '-created_date', 50)
+      : [],
+    enabled: !!selectedSpaceId,
+  });
+
+  const executeActionMutation = useMutation({
+    mutationFn: (actionId) => base44.functions.invoke('executeStrategyAction', { actionId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['strategy-actions', selectedSpaceId] });
+    },
+  });
+
+  const rejectActionMutation = useMutation({
+    mutationFn: (actionId) => base44.entities.StrategyAction.update(actionId, { status: 'rejected' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['strategy-actions', selectedSpaceId] });
+    },
+  });
+
   const createSpaceMutation = useMutation({
     mutationFn: (data) => base44.entities.StrategySpace.create(data),
     onSuccess: (newSpace) => {
@@ -173,19 +209,18 @@ export default function Strategy() {
       
       setIsThinking(true);
       
-      // Simulate AI response (in real implementation, this would call the AI)
-      setTimeout(async () => {
-        await base44.entities.StrategyMessage.create({
-          strategy_space_id: selectedSpaceId,
-          author_type: 'ai',
-          content: `I've analyzed your request: "${content}"\n\nBased on the current operational state, I can help you with this. Would you like me to:\n\n1. Generate a detailed report\n2. Suggest workflow improvements\n3. Create an action plan\n\nPlease let me know how you'd like to proceed.`,
-        });
-        setIsThinking(false);
-        queryClient.invalidateQueries({ queryKey: ['strategy-messages', selectedSpaceId] });
-      }, 2000);
+      // Call AI reasoning backend
+      const response = await base44.functions.invoke('aiStrategistReasoning', {
+        prompt: content,
+        strategySpaceId: selectedSpaceId,
+      });
+
+      setIsThinking(false);
+      return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['strategy-messages', selectedSpaceId] });
+      queryClient.invalidateQueries({ queryKey: ['strategy-actions', selectedSpaceId] });
       setInputValue('');
     },
   });
@@ -265,9 +300,26 @@ export default function Strategy() {
                 </div>
               ) : (
                 <>
-                  {messages.map(message => (
-                    <MessageBubble key={message.id} message={message} />
-                  ))}
+                  {messages.map(message => {
+                    const messageActions = actions.filter(a => a.trigger_message_id === message.id);
+                    return (
+                      <div key={message.id}>
+                        <MessageBubble message={message} />
+                        {messageActions.length > 0 && (
+                          <div className="ml-12 mb-4">
+                            {messageActions.map(action => (
+                              <ActionCard 
+                                key={action.id} 
+                                action={action}
+                                onExecute={(id) => executeActionMutation.mutate(id)}
+                                onReject={(id) => rejectActionMutation.mutate(id)}
+                              />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                   {isThinking && <ThinkingIndicator />}
                 </>
               )}

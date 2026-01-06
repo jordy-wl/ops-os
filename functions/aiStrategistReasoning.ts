@@ -1,169 +1,138 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
-  const base44 = createClientFromRequest(req);
-  const user = await base44.auth.me();
+  try {
+    const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me();
 
-  if (!user) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+    if (!user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-  const { strategy_space_id, user_message } = await req.json();
+    const { prompt, strategySpaceId } = await req.json();
 
-  if (!strategy_space_id || !user_message) {
-    return Response.json({ error: 'Missing required fields' }, { status: 400 });
-  }
+    if (!prompt || !strategySpaceId) {
+      return Response.json({ error: 'Missing required fields' }, { status: 400 });
+    }
 
-  // Save user message
-  await base44.asServiceRole.entities.StrategyMessage.create({
-    strategy_space_id,
-    author_type: 'user',
-    author_user_id: user.id,
-    content: user_message
-  });
+    // CONTEXT RETRIEVAL ("Look" Phase) - Fetch Current State & Desired State
+    const [workflowInstances, clients, templates, space] = await Promise.all([
+      base44.asServiceRole.entities.WorkflowInstance.list('-updated_date', 50),
+      base44.asServiceRole.entities.Client.list('-updated_date', 50),
+      base44.asServiceRole.entities.WorkflowTemplate.list('-updated_date', 50),
+      base44.asServiceRole.entities.StrategySpace.filter({ id: strategySpaceId }),
+    ]);
 
-  // Publish event
-  await base44.asServiceRole.entities.Event.create({
-    event_type: 'strategy_message_created',
-    source_entity_type: 'strategy_space',
-    source_entity_id: strategy_space_id,
-    actor_type: 'user',
-    actor_id: user.id,
-    payload: { message: user_message },
-    occurred_at: new Date().toISOString()
-  });
+    const strategySpace = space[0];
 
-  // LOOK PHASE: Context Retrieval
-  const strategySpace = await base44.entities.StrategySpace.filter({ id: strategy_space_id });
-  const space = strategySpace[0];
+    // Fetch recent messages for conversational context
+    const recentMessages = await base44.asServiceRole.entities.StrategyMessage.filter(
+      { strategy_space_id: strategySpaceId },
+      '-created_date',
+      10
+    );
 
-  // Get related client context if anchored
-  let clientContext = '';
-  if (space.primary_client_id) {
-    const clientDataRes = await base44.functions.invoke('getClientData', { 
-      client_id: space.primary_client_id 
-    });
-    clientContext = JSON.stringify(clientDataRes.data, null, 2);
-  }
+    // Build context summary for the LLM
+    const contextSummary = {
+      total_workflows: workflowInstances.length,
+      active_workflows: workflowInstances.filter(w => w.status === 'in_progress').length,
+      blocked_workflows: workflowInstances.filter(w => w.status === 'blocked').length,
+      total_clients: clients.length,
+      clients_by_stage: clients.reduce((acc, c) => {
+        acc[c.lifecycle_stage] = (acc[c.lifecycle_stage] || 0) + 1;
+        return acc;
+      }, {}),
+      available_templates: templates.length,
+    };
 
-  // Get workflow instances (current state)
-  const activeWorkflows = await base44.entities.WorkflowInstance.filter({
-    status: 'in_progress'
-  }, '-created_date', 10);
+    // REASONING ("Think" Phase) - Call LLM with SAGO-RAG approach
+    const systemPrompt = `You are The Strategist, an AI assistant for Business OS.
 
-  // Get blocked tasks
-  const blockedTasks = await base44.entities.TaskInstance.filter({
-    status: 'blocked'
-  }, '-created_date', 5);
+**Your Role:** Strategic Command Center AI that answers operational questions, identifies bottlenecks, and proposes system-wide actions.
 
-  // Get recent events for context
-  const recentEvents = await base44.entities.Event.list('-occurred_at', 20);
+**Your Goal:** Maximize System Coherence.
 
-  // Get conversation history
-  const previousMessages = await base44.entities.StrategyMessage.filter({
-    strategy_space_id
-  }, 'created_date', 10);
+**SAGO-RAG Framework:**
+For every request, solve: Gap = Desired State (Template) - Current State (Instance)
+- If Gap > 0: Propose actions to close the gap
+- If Gap = 0: Look for optimization opportunities
 
-  const conversationHistory = previousMessages
-    .map(m => `${m.author_type === 'user' ? 'User' : 'AI'}: ${m.content}`)
-    .join('\n\n');
+**Available Action Types You Can Propose:**
+1. CREATE_WORKFLOW - Start a new workflow for a client
+2. UPDATE_CLIENT_FIELD - Update client record data
+3. GENERATE_REPORT - Build analytical reports
+4. CREATE_TASK - Add ad-hoc tasks to workflows
+5. PROPOSE_TEMPLATE_CHANGE - Suggest workflow template improvements
 
-  // THINK PHASE: AI Reasoning with SAGO-RAG
-  const systemPrompt = `You are the Strategist - the command center AI for Business OS.
+**Current System State:**
+${JSON.stringify(contextSummary, null, 2)}
 
-Your role: Answer operational questions, surface bottlenecks, and propose system-wide actions.
-Your goal: Maximize System Coherence.
+**Conversation Context:**
+${recentMessages.slice(-5).map(m => `${m.author_type}: ${m.content}`).join('\n')}
 
-You operate using SAGO-RAG (State-Aware, Goal-Oriented Retrieval):
-1. Analyze CURRENT STATE (reality from data)
-2. Identify DESIRED STATE (goals from templates)
-3. Calculate GAP and propose actions to close it
+**Instructions:**
+- Be concise and actionable
+- Ground all responses in actual data
+- When proposing actions, structure them clearly
+- Identify bottlenecks and suggest concrete improvements
+- Never hallucinate data - only use what you can see in the context`;
 
-CURRENT SYSTEM STATE:
-- Active Workflows: ${activeWorkflows.length}
-- Blocked Tasks: ${blockedTasks.length}
-- Recent Activity: ${recentEvents.length} events
-
-${clientContext ? `CLIENT CONTEXT:\n${clientContext}\n` : ''}
-
-ACTIVE WORKFLOWS:
-${JSON.stringify(activeWorkflows.slice(0, 5), null, 2)}
-
-BLOCKED TASKS:
-${JSON.stringify(blockedTasks, null, 2)}
-
-CONVERSATION HISTORY:
-${conversationHistory}
-
-When proposing actions, be specific and actionable. Focus on:
-- Identifying bottlenecks
-- Suggesting workflow improvements
-- Analyzing client progression
-- Recommending next steps
-
-If you identify an action to take, describe it clearly and suggest it as a proposal.`;
-
-  // Invoke LLM with context
-  const aiResponse = await base44.asServiceRole.integrations.Core.InvokeLLM({
-    prompt: `${systemPrompt}\n\nUSER QUERY: ${user_message}\n\nProvide a comprehensive response based on the current system state.`,
-    add_context_from_internet: false
-  });
-
-  // Save AI message
-  const aiMessage = await base44.asServiceRole.entities.StrategyMessage.create({
-    strategy_space_id,
-    author_type: 'ai',
-    content: aiResponse
-  });
-
-  // Publish AI reasoning event
-  await base44.asServiceRole.entities.Event.create({
-    event_type: 'ai_reasoning_triggered',
-    source_entity_type: 'strategy_space',
-    source_entity_id: strategy_space_id,
-    actor_type: 'ai',
-    payload: { 
-      user_query: user_message,
-      response_length: aiResponse.length
-    },
-    occurred_at: new Date().toISOString()
-  });
-
-  // Check if response suggests an action (simple keyword detection)
-  const actionKeywords = ['recommend', 'suggest', 'propose', 'should create', 'should add'];
-  const suggestsAction = actionKeywords.some(keyword => 
-    aiResponse.toLowerCase().includes(keyword)
-  );
-
-  if (suggestsAction) {
-    // Create a pending strategy action for user approval
-    await base44.asServiceRole.entities.StrategyAction.create({
-      strategy_space_id,
-      trigger_message_id: aiMessage.id,
-      action_type: 'other',
-      status: 'pending',
-      requested_by_user_id: user.id,
-      executed_by: 'ai',
-      payload: {
-        description: aiResponse.substring(0, 500),
-        full_response: aiResponse
+    const llmResponse = await base44.asServiceRole.integrations.Core.InvokeLLM({
+      prompt: `${systemPrompt}\n\nUser Request: ${prompt}`,
+      response_json_schema: {
+        type: "object",
+        properties: {
+          message: {
+            type: "string",
+            description: "Natural language response to the user"
+          },
+          proposed_actions: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                action_type: { type: "string" },
+                description: { type: "string" },
+                payload: { type: "object" }
+              }
+            }
+          }
+        },
+        required: ["message"]
       }
     });
 
-    await base44.asServiceRole.entities.Event.create({
-      event_type: 'strategy_action_requested',
-      source_entity_type: 'strategy_space',
-      source_entity_id: strategy_space_id,
-      actor_type: 'ai',
-      payload: { message_id: aiMessage.id },
-      occurred_at: new Date().toISOString()
+    // Create AI message in the database
+    const aiMessage = await base44.asServiceRole.entities.StrategyMessage.create({
+      strategy_space_id: strategySpaceId,
+      author_type: 'ai',
+      content: llmResponse.message,
     });
-  }
 
-  return Response.json({ 
-    success: true, 
-    ai_response: aiResponse,
-    message_id: aiMessage.id,
-    action_proposed: suggestsAction
-  });
+    // Create StrategyAction records for any proposed actions
+    const createdActions = [];
+    if (llmResponse.proposed_actions && llmResponse.proposed_actions.length > 0) {
+      for (const action of llmResponse.proposed_actions) {
+        const strategyAction = await base44.asServiceRole.entities.StrategyAction.create({
+          strategy_space_id: strategySpaceId,
+          trigger_message_id: aiMessage.id,
+          action_type: action.action_type,
+          status: 'pending',
+          requested_by_user_id: user.id,
+          payload: action.payload || {},
+          description: action.description,
+        });
+        createdActions.push(strategyAction);
+      }
+    }
+
+    return Response.json({
+      message: aiMessage,
+      actions: createdActions,
+    });
+
+  } catch (error) {
+    console.error('AI Strategist Error:', error);
+    return Response.json({ error: error.message }, { status: 500 });
+  }
 });
