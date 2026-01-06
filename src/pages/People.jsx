@@ -324,10 +324,10 @@ export default function People() {
                 <p className="text-xs text-[#4A5568] mb-1">User ID</p>
                 <p className="font-mono text-xs text-[#A0AEC0] break-all">{selectedUser.id}</p>
               </div>
-              </div>
+            </div>
 
-              {/* Actions */}
-              {currentUser?.role === 'admin' && currentUser?.id !== selectedUser.id && (
+            {/* Actions */}
+            {currentUser?.role === 'admin' && currentUser?.id !== selectedUser.id && (
               <div className="space-y-3 pt-4">
                 <Button
                   onClick={() => {
@@ -341,23 +341,23 @@ export default function People() {
                   Edit Role
                 </Button>
               </div>
-              )}
-              </div>
-              </div>
-              )}
+            )}
+          </div>
+        </div>
+      )}
 
-              {/* Modals */}
-              <InviteUserModal 
-              isOpen={showInviteModal}
-              onClose={() => setShowInviteModal(false)}
-              currentUserRole={currentUser?.role}
-              />
-              <EditUserRoleModal
-              isOpen={!!editingUser}
-              onClose={() => setEditingUser(null)}
-              user={editingUser}
-              currentUserRole={currentUser?.role}
-              />
-              </div>
-              );
-              }
+      {/* Modals */}
+      <InviteUserModal 
+        isOpen={showInviteModal}
+        onClose={() => setShowInviteModal(false)}
+        currentUserRole={currentUser?.role}
+      />
+      <EditUserRoleModal
+        isOpen={!!editingUser}
+        onClose={() => setEditingUser(null)}
+        user={editingUser}
+        currentUserRole={currentUser?.role}
+      />
+    </div>
+  );
+}
