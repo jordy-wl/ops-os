@@ -13,7 +13,6 @@ export default function InviteUserModal({ isOpen, onClose, currentUserRole }) {
     email: '',
     role: 'operator',
   });
-  const [showPrivilegedRoleWarning, setShowPrivilegedRoleWarning] = useState(false);
 
   const inviteMutation = useMutation({
     mutationFn: async ({ email, role }) => {
@@ -43,11 +42,6 @@ export default function InviteUserModal({ isOpen, onClose, currentUserRole }) {
     e.preventDefault();
     if (!formData.email) {
       toast.error('Email is required');
-      return;
-    }
-    const privilegedRoles = ['admin', 'workflow_designer', 'manager'];
-    if (privilegedRoles.includes(formData.role) && !showPrivilegedRoleWarning) {
-      setShowPrivilegedRoleWarning(true);
       return;
     }
     inviteMutation.mutate(formData);
@@ -137,18 +131,6 @@ export default function InviteUserModal({ isOpen, onClose, currentUserRole }) {
             )}
           </div>
 
-          {showPrivilegedRoleWarning && (
-            <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-4 mb-4">
-              <p className="text-sm text-orange-300 mb-2">
-                ⚠️ <strong>Role Assignment Notice</strong>
-              </p>
-              <p className="text-xs text-[#A0AEC0]">
-                This user will be invited as <strong className="text-[#F5F5F5]">{formData.role.replace('_', ' ')}</strong>. 
-                Since they're not yet registered, the role will be applied after they complete registration.
-              </p>
-            </div>
-          )}
-
           <div className="flex gap-3 pt-4">
             <Button 
               type="button"
@@ -163,7 +145,7 @@ export default function InviteUserModal({ isOpen, onClose, currentUserRole }) {
               disabled={inviteMutation.isPending}
               className="flex-1 bg-gradient-to-r from-[#00E5FF] to-[#0099ff] text-[#121212] hover:shadow-lg hover:shadow-[#00E5FF]/30"
             >
-              {inviteMutation.isPending ? 'Sending...' : showPrivilegedRoleWarning ? 'Confirm & Send' : 'Send Invite'}
+              {inviteMutation.isPending ? 'Sending...' : 'Send Invite'}
             </Button>
           </div>
         </form>
