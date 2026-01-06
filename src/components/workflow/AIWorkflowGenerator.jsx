@@ -236,9 +236,7 @@ export default function AIWorkflowGenerator({ onBack }) {
             </Button>
           </div>
         </div>
-      ) : creationMode === 'manual' ? (
-        <ManualWorkflowBuilder onBack={() => setCreationMode(null)} />
-      ) : null}
+      )}
     </div>
   );
 }
