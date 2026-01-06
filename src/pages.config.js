@@ -1,31 +1,31 @@
+import BusinessConceptDetail from './pages/BusinessConceptDetail';
 import Clients from './pages/Clients';
 import Library from './pages/Library';
 import MyWork from './pages/MyWork';
-import People from './pages/People';
-import Settings from './pages/Settings';
-import Strategy from './pages/Strategy';
-import Workflows from './pages/Workflows';
-import WorkflowBuilder from './pages/WorkflowBuilder';
 import Offerings from './pages/Offerings';
+import People from './pages/People';
 import ProductDetail from './pages/ProductDetail';
 import ServiceDetail from './pages/ServiceDetail';
-import BusinessConceptDetail from './pages/BusinessConceptDetail';
+import Settings from './pages/Settings';
+import Strategy from './pages/Strategy';
+import WorkflowBuilder from './pages/WorkflowBuilder';
+import Workflows from './pages/Workflows';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
+    "BusinessConceptDetail": BusinessConceptDetail,
     "Clients": Clients,
     "Library": Library,
     "MyWork": MyWork,
-    "People": People,
-    "Settings": Settings,
-    "Strategy": Strategy,
-    "Workflows": Workflows,
-    "WorkflowBuilder": WorkflowBuilder,
     "Offerings": Offerings,
+    "People": People,
     "ProductDetail": ProductDetail,
     "ServiceDetail": ServiceDetail,
-    "BusinessConceptDetail": BusinessConceptDetail,
+    "Settings": Settings,
+    "Strategy": Strategy,
+    "WorkflowBuilder": WorkflowBuilder,
+    "Workflows": Workflows,
 }
 
 export const pagesConfig = {

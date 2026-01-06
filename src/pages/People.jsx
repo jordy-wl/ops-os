@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import InviteUserModal from '@/components/people/InviteUserModal';
+import EditUserRoleModal from '@/components/people/EditUserRoleModal';
 import {
   Users,
   Building,
@@ -11,8 +13,11 @@ import {
   Mail,
   Shield,
   ChevronRight,
-  X
+  X,
+  Edit,
+  UserMinus
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 function UserCard({ user, onClick }) {
   const roleColors = {
@@ -88,6 +93,13 @@ export default function People() {
   const [activeView, setActiveView] = useState('directory'); // directory, departments, teams
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedUser, setSelectedUser] = useState(null);
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
+
+  const { data: currentUser } = useQuery({
+    queryKey: ['current-user'],
+    queryFn: () => base44.auth.me(),
+  });
 
   const { data: users = [], isLoading: usersLoading } = useQuery({
     queryKey: ['users'],
@@ -120,10 +132,13 @@ export default function People() {
           </p>
         </div>
         
-        <button className="px-4 py-2 rounded-lg bg-gradient-to-r from-[#00E5FF] to-[#0099ff] text-[#121212] font-medium text-sm hover:shadow-lg hover:shadow-[#00E5FF]/30 transition-all flex items-center gap-2">
+        <Button 
+          onClick={() => setShowInviteModal(true)}
+          className="bg-gradient-to-r from-[#00E5FF] to-[#0099ff] text-[#121212] hover:shadow-lg hover:shadow-[#00E5FF]/30 flex items-center gap-2"
+        >
           <Plus className="w-4 h-4" />
           Invite User
-        </button>
+        </Button>
       </div>
 
       {/* View Toggle */}
@@ -309,10 +324,40 @@ export default function People() {
                 <p className="text-xs text-[#4A5568] mb-1">User ID</p>
                 <p className="font-mono text-xs text-[#A0AEC0] break-all">{selectedUser.id}</p>
               </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
+              </div>
+
+              {/* Actions */}
+              {currentUser?.role === 'admin' && currentUser?.id !== selectedUser.id && (
+              <div className="space-y-3 pt-4">
+                <Button
+                  onClick={() => {
+                    setEditingUser(selectedUser);
+                    setSelectedUser(null);
+                  }}
+                  variant="outline"
+                  className="w-full bg-transparent border-[#2C2E33] hover:bg-[#2C2E33] flex items-center gap-2"
+                >
+                  <Edit className="w-4 h-4" />
+                  Edit Role
+                </Button>
+              </div>
+              )}
+              </div>
+              </div>
+              )}
+
+              {/* Modals */}
+              <InviteUserModal 
+              isOpen={showInviteModal}
+              onClose={() => setShowInviteModal(false)}
+              currentUserRole={currentUser?.role}
+              />
+              <EditUserRoleModal
+              isOpen={!!editingUser}
+              onClose={() => setEditingUser(null)}
+              user={editingUser}
+              currentUserRole={currentUser?.role}
+              />
+              </div>
+              );
+              }
