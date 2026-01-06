@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import TaskCompletionModal from '@/components/TaskCompletionModal';
 import { 
   LayoutGrid, 
   List, 
@@ -91,6 +92,8 @@ function TaskCard({ task, onClick }) {
 export default function MyWork() {
   const [viewMode, setViewMode] = useState('kanban');
   const [selectedTask, setSelectedTask] = useState(null);
+  const [completingTask, setCompletingTask] = useState(null);
+  const queryClient = useQueryClient();
 
   const { data: tasks = [], isLoading } = useQuery({
     queryKey: ['my-tasks'],
@@ -281,12 +284,30 @@ export default function MyWork() {
             )}
 
             {/* Action Button */}
-            <button className="w-full py-3 rounded-xl bg-gradient-to-r from-[#00E5FF] to-[#0099ff] text-[#121212] font-medium hover:shadow-lg hover:shadow-[#00E5FF]/30 transition-all">
+            <button 
+              onClick={() => {
+                setCompletingTask(selectedTask);
+                setSelectedTask(null);
+              }}
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-[#00E5FF] to-[#0099ff] text-[#121212] font-medium hover:shadow-lg hover:shadow-[#00E5FF]/30 transition-all"
+            >
               Complete Task
             </button>
           </div>
         </div>
       )}
-    </div>
-  );
-}
+
+      {/* Task Completion Modal */}
+      {completingTask && (
+        <TaskCompletionModal
+          task={completingTask}
+          onClose={() => setCompletingTask(null)}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ['my-tasks'] });
+            setCompletingTask(null);
+          }}
+        />
+      )}
+      </div>
+      );
+      }

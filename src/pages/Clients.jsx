@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
+import AIInsightCard from '@/components/AIInsightCard';
 import {
   Briefcase,
   Search,
@@ -336,12 +337,26 @@ export default function Clients() {
 
               {/* AI Insights */}
               {selectedClient.next_best_action && (
-                <div className="neumorphic-raised rounded-xl p-4 border border-[#BD00FF]/30">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Sparkles className="w-4 h-4 text-[#BD00FF]" />
-                    <span className="text-sm font-medium text-[#BD00FF]">AI Insight</span>
-                  </div>
-                  <p className="text-sm">{selectedClient.next_best_action}</p>
+                <AIInsightCard
+                  type="recommendation"
+                  title="Next Best Action"
+                  content={selectedClient.next_best_action}
+                  severity="opportunity"
+                />
+              )}
+
+              {selectedClient.insights?.stage_summaries?.length > 0 && (
+                <div className="space-y-3">
+                  <h3 className="text-sm font-medium text-[#A0AEC0]">Workflow Summaries</h3>
+                  {selectedClient.insights.stage_summaries.slice(-2).map((summary, idx) => (
+                    <AIInsightCard
+                      key={idx}
+                      type="summary"
+                      title={`${summary.workflow_name} - ${summary.stage_name}`}
+                      content={summary.summary}
+                      severity="info"
+                    />
+                  ))}
                 </div>
               )}
 
