@@ -164,10 +164,12 @@ export default function Workflows() {
           </div>
 
           {activeTab === 'studio' && (
-            <button className="px-4 py-2 rounded-lg bg-gradient-to-r from-[#00E5FF] to-[#0099ff] text-[#121212] font-medium text-sm hover:shadow-lg hover:shadow-[#00E5FF]/30 transition-all flex items-center gap-2">
-              <Plus className="w-4 h-4" />
-              New Template
-            </button>
+            <Link to={createPageUrl('WorkflowBuilder')}>
+              <button className="px-4 py-2 rounded-lg bg-gradient-to-r from-[#00E5FF] to-[#0099ff] text-[#121212] font-medium text-sm hover:shadow-lg hover:shadow-[#00E5FF]/30 transition-all flex items-center gap-2">
+                <Plus className="w-4 h-4" />
+                New Template
+              </button>
+            </Link>
           )}
         </div>
       </div>
