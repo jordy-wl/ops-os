@@ -44,11 +44,6 @@ export default function InviteUserModal({ isOpen, onClose, currentUserRole }) {
       toast.error('Email is required');
       return;
     }
-    const privilegedRoles = ['admin', 'workflow_designer', 'manager'];
-    if (privilegedRoles.includes(formData.role) && currentUserRole !== 'admin') {
-      toast.error('Only admins can assign privileged roles');
-      return;
-    }
     inviteMutation.mutate(formData);
   };
 
@@ -102,24 +97,6 @@ export default function InviteUserModal({ isOpen, onClose, currentUserRole }) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-[#2C2E33] border-[#3a3d44]">
-                  <SelectItem 
-                    value="admin"
-                    disabled={currentUserRole !== 'admin'}
-                  >
-                    Admin - Full System Access {currentUserRole !== 'admin' && '(Admins Only)'}
-                  </SelectItem>
-                  <SelectItem 
-                    value="workflow_designer"
-                    disabled={currentUserRole !== 'admin'}
-                  >
-                    Workflow Designer - Create & Edit Templates {currentUserRole !== 'admin' && '(Admins Only)'}
-                  </SelectItem>
-                  <SelectItem 
-                    value="manager"
-                    disabled={currentUserRole !== 'admin'}
-                  >
-                    Manager - Assign Workflows & Edit Instances {currentUserRole !== 'admin' && '(Admins Only)'}
-                  </SelectItem>
                   <SelectItem value="operator">
                     Operator - Complete Tasks & Edit Fields
                   </SelectItem>
@@ -129,11 +106,9 @@ export default function InviteUserModal({ isOpen, onClose, currentUserRole }) {
                 </SelectContent>
               </Select>
             </div>
-            {currentUserRole !== 'admin' && (
-              <p className="text-xs text-[#4A5568] mt-2">
-                Only administrators can assign Admin, Workflow Designer, or Manager roles
-              </p>
-            )}
+            <p className="text-xs text-[#4A5568] mt-2">
+              💡 New users can only be invited as Operator or Viewer. To assign privileged roles (Admin, Manager, etc.), first invite them, then upgrade their role after they register.
+            </p>
           </div>
 
           <div className="flex gap-3 pt-4">
