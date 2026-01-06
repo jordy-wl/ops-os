@@ -11,7 +11,7 @@ export default function InviteUserModal({ isOpen, onClose, currentUserRole }) {
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
     email: '',
-    role: 'user',
+    role: 'operator',
   });
 
   const inviteMutation = useMutation({
@@ -36,8 +36,9 @@ export default function InviteUserModal({ isOpen, onClose, currentUserRole }) {
       toast.error('Email is required');
       return;
     }
-    if (formData.role === 'admin' && currentUserRole !== 'admin') {
-      toast.error('Only admins can invite other admins');
+    const privilegedRoles = ['admin', 'workflow_designer', 'manager'];
+    if (privilegedRoles.includes(formData.role) && currentUserRole !== 'admin') {
+      toast.error('Only admins can assign privileged roles');
       return;
     }
     inviteMutation.mutate(formData);
@@ -93,19 +94,36 @@ export default function InviteUserModal({ isOpen, onClose, currentUserRole }) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-[#2C2E33] border-[#3a3d44]">
-                  <SelectItem value="user">User - Standard Access</SelectItem>
                   <SelectItem 
                     value="admin"
                     disabled={currentUserRole !== 'admin'}
                   >
-                    Admin - Full Access {currentUserRole !== 'admin' && '(Admins Only)'}
+                    Admin - Full System Access {currentUserRole !== 'admin' && '(Admins Only)'}
+                  </SelectItem>
+                  <SelectItem 
+                    value="workflow_designer"
+                    disabled={currentUserRole !== 'admin'}
+                  >
+                    Workflow Designer - Create & Edit Templates {currentUserRole !== 'admin' && '(Admins Only)'}
+                  </SelectItem>
+                  <SelectItem 
+                    value="manager"
+                    disabled={currentUserRole !== 'admin'}
+                  >
+                    Manager - Assign Workflows & Edit Instances {currentUserRole !== 'admin' && '(Admins Only)'}
+                  </SelectItem>
+                  <SelectItem value="operator">
+                    Operator - Complete Tasks & Edit Fields
+                  </SelectItem>
+                  <SelectItem value="viewer">
+                    Viewer - Read-Only Access
                   </SelectItem>
                 </SelectContent>
               </Select>
             </div>
             {currentUserRole !== 'admin' && (
               <p className="text-xs text-[#4A5568] mt-2">
-                Only administrators can invite other admins
+                Only administrators can assign Admin, Workflow Designer, or Manager roles
               </p>
             )}
           </div>

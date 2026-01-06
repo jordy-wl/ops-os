@@ -3,6 +3,8 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import InviteUserModal from '@/components/people/InviteUserModal';
 import EditUserRoleModal from '@/components/people/EditUserRoleModal';
+import CreateTeamModal from '@/components/people/CreateTeamModal';
+import CreateDepartmentModal from '@/components/people/CreateDepartmentModal';
 import {
   Users,
   Building,
@@ -22,7 +24,18 @@ import { Button } from '@/components/ui/button';
 function UserCard({ user, onClick }) {
   const roleColors = {
     admin: 'bg-red-500/20 text-red-400 border-red-500/30',
-    user: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+    workflow_designer: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
+    manager: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+    operator: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+    viewer: 'bg-gray-500/20 text-gray-400 border-gray-500/30',
+  };
+
+  const roleLabels = {
+    admin: 'Admin',
+    workflow_designer: 'Designer',
+    manager: 'Manager',
+    operator: 'Operator',
+    viewer: 'Viewer',
   };
 
   return (
@@ -38,8 +51,8 @@ function UserCard({ user, onClick }) {
           <h3 className="font-medium truncate">{user.full_name || 'Unnamed User'}</h3>
           <p className="text-sm text-[#A0AEC0] truncate">{user.email}</p>
         </div>
-        <span className={`px-2 py-1 rounded-full text-xs border capitalize ${roleColors[user.role] || roleColors.user}`}>
-          {user.role || 'user'}
+        <span className={`px-2 py-1 rounded-full text-xs border ${roleColors[user.role] || roleColors.operator}`}>
+          {roleLabels[user.role] || 'Operator'}
         </span>
       </div>
     </div>
@@ -95,6 +108,8 @@ export default function People() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
+  const [showCreateTeam, setShowCreateTeam] = useState(false);
+  const [showCreateDepartment, setShowCreateDepartment] = useState(false);
 
   const { data: currentUser } = useQuery({
     queryKey: ['current-user'],
@@ -219,20 +234,33 @@ export default function People() {
       )}
 
       {activeView === 'departments' && (
-        deptsLoading ? (
-          <div className="grid grid-cols-3 gap-4">
-            {[1,2,3].map(i => (
-              <div key={i} className="h-48 bg-[#2C2E33] rounded-xl animate-pulse" />
-            ))}
+        <>
+          <div className="flex justify-end mb-4">
+            <Button 
+              onClick={() => setShowCreateDepartment(true)}
+              className="bg-gradient-to-r from-[#BD00FF] to-[#8B00CC] text-white hover:shadow-lg hover:shadow-[#BD00FF]/30"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              New Department
+            </Button>
           </div>
-        ) : departments.length === 0 ? (
+          {deptsLoading ? (
+            <div className="grid grid-cols-3 gap-4">
+              {[1,2,3].map(i => (
+                <div key={i} className="h-48 bg-[#2C2E33] rounded-xl animate-pulse" />
+              ))}
+            </div>
+          ) : departments.length === 0 ? (
           <div className="neumorphic-pressed rounded-xl p-12 text-center">
             <Building className="w-12 h-12 text-[#4A5568] mx-auto mb-4" />
             <h3 className="font-medium mb-2">No Departments</h3>
             <p className="text-[#A0AEC0] mb-4">Create departments to organize your teams.</p>
-            <button className="px-4 py-2 rounded-lg bg-gradient-to-r from-[#00E5FF] to-[#0099ff] text-[#121212] font-medium text-sm">
+            <Button 
+              onClick={() => setShowCreateDepartment(true)}
+              className="bg-gradient-to-r from-[#00E5FF] to-[#0099ff] text-[#121212]"
+            >
               Create Department
-            </button>
+            </Button>
           </div>
         ) : (
           <div className="grid grid-cols-3 gap-4">
@@ -248,20 +276,33 @@ export default function People() {
       )}
 
       {activeView === 'teams' && (
-        teamsLoading ? (
-          <div className="grid grid-cols-4 gap-4">
-            {[1,2,3,4].map(i => (
-              <div key={i} className="h-32 bg-[#2C2E33] rounded-xl animate-pulse" />
-            ))}
+        <>
+          <div className="flex justify-end mb-4">
+            <Button 
+              onClick={() => setShowCreateTeam(true)}
+              className="bg-gradient-to-r from-[#00E5FF] to-[#0099ff] text-[#121212] hover:shadow-lg hover:shadow-[#00E5FF]/30"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              New Team
+            </Button>
           </div>
-        ) : teams.length === 0 ? (
+          {teamsLoading ? (
+            <div className="grid grid-cols-4 gap-4">
+              {[1,2,3,4].map(i => (
+                <div key={i} className="h-32 bg-[#2C2E33] rounded-xl animate-pulse" />
+              ))}
+            </div>
+          ) : teams.length === 0 ? (
           <div className="neumorphic-pressed rounded-xl p-12 text-center">
             <Users className="w-12 h-12 text-[#4A5568] mx-auto mb-4" />
             <h3 className="font-medium mb-2">No Teams</h3>
             <p className="text-[#A0AEC0] mb-4">Create teams to route tasks and workflows.</p>
-            <button className="px-4 py-2 rounded-lg bg-gradient-to-r from-[#00E5FF] to-[#0099ff] text-[#121212] font-medium text-sm">
+            <Button 
+              onClick={() => setShowCreateTeam(true)}
+              className="bg-gradient-to-r from-[#00E5FF] to-[#0099ff] text-[#121212]"
+            >
               Create Team
-            </button>
+            </Button>
           </div>
         ) : (
           <div className="grid grid-cols-4 gap-4">
@@ -357,6 +398,14 @@ export default function People() {
         onClose={() => setEditingUser(null)}
         user={editingUser}
         currentUserRole={currentUser?.role}
+      />
+      <CreateTeamModal 
+        isOpen={showCreateTeam}
+        onClose={() => setShowCreateTeam(false)}
+      />
+      <CreateDepartmentModal 
+        isOpen={showCreateDepartment}
+        onClose={() => setShowCreateDepartment(false)}
       />
     </div>
   );

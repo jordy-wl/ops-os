@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 
 export default function EditUserRoleModal({ isOpen, onClose, user, currentUserRole }) {
   const queryClient = useQueryClient();
-  const [selectedRole, setSelectedRole] = useState(user?.role || 'user');
+  const [selectedRole, setSelectedRole] = useState(user?.role || 'operator');
 
   const updateRoleMutation = useMutation({
     mutationFn: async (role) => {
@@ -70,8 +70,11 @@ export default function EditUserRoleModal({ isOpen, onClose, user, currentUserRo
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-[#2C2E33] border-[#3a3d44]">
-                  <SelectItem value="user">User - Standard Access</SelectItem>
-                  <SelectItem value="admin">Admin - Full Access</SelectItem>
+                  <SelectItem value="admin">Admin - Full System Access</SelectItem>
+                  <SelectItem value="workflow_designer">Workflow Designer - Create & Edit Templates</SelectItem>
+                  <SelectItem value="manager">Manager - Assign Workflows & Edit Instances</SelectItem>
+                  <SelectItem value="operator">Operator - Complete Tasks & Edit Fields</SelectItem>
+                  <SelectItem value="viewer">Viewer - Read-Only Access</SelectItem>
                 </SelectContent>
               </Select>
             </div>
