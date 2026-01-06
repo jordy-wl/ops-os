@@ -30,6 +30,11 @@ export default function Layout({ children, currentPageName }) {
   return (
     <div className="min-h-screen bg-[#121212] text-[#F5F5F5] flex">
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap');
+
+        * {
+          font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
         :root {
           --bg-base: #121212;
           --bg-surface: #2C2E33;
@@ -92,7 +97,7 @@ export default function Layout({ children, currentPageName }) {
       <nav className="fixed left-0 top-0 h-full w-20 glass z-50 flex flex-col items-center py-6">
         {/* Logo */}
         <div className="mb-8">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#00E5FF] to-[#BD00FF] flex items-center justify-center font-bold text-sm">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#00E5FF] to-[#BD00FF] flex items-center justify-center font-semibold text-sm">
             OS
           </div>
         </div>

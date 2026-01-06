@@ -114,7 +114,7 @@ export default function People() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold mb-1">People</h1>
+          <h1 className="text-2xl font-semibold mb-1">People</h1>
           <p className="text-[#A0AEC0]">
             {users.length} users • {departments.length} departments • {teams.length} teams
           </p>
@@ -279,7 +279,7 @@ export default function People() {
               <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#00E5FF] to-[#BD00FF] flex items-center justify-center text-3xl font-bold text-[#121212] mx-auto mb-4 ring-4 ring-[#00E5FF]/20">
                 {selectedUser.full_name?.charAt(0) || selectedUser.email?.charAt(0) || 'U'}
               </div>
-              <h2 className="text-xl font-bold mb-1">{selectedUser.full_name || 'Unnamed User'}</h2>
+              <h2 className="text-xl font-semibold mb-1">{selectedUser.full_name || 'Unnamed User'}</h2>
               <p className="text-[#A0AEC0]">{selectedUser.role || 'user'}</p>
             </div>
 

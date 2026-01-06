@@ -127,7 +127,7 @@ export default function Workflows() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold mb-1">Workflows</h1>
+          <h1 className="text-2xl font-semibold mb-1">Workflows</h1>
           <p className="text-[#A0AEC0]">
             {activeTab === 'control' 
               ? `${instances.length} active instances`

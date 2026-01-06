@@ -196,7 +196,7 @@ export default function Clients() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold mb-1">Clients</h1>
+          <h1 className="text-2xl font-semibold mb-1">Clients</h1>
           <p className="text-[#A0AEC0]">{clients.length} clients in registry</p>
         </div>
         
@@ -299,7 +299,7 @@ export default function Clients() {
                   )}
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-xl font-bold mb-1">{selectedClient.name}</h2>
+                  <h2 className="text-xl font-semibold mb-1">{selectedClient.name}</h2>
                   <p className="text-sm text-[#A0AEC0] capitalize">{selectedClient.industry?.replace('_', ' ')}</p>
                 </div>
                 <button 

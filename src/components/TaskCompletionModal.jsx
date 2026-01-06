@@ -134,7 +134,7 @@ export default function TaskCompletionModal({ task, onClose, onSuccess }) {
       <div className="absolute inset-0 bg-black/70" onClick={onClose} />
       <div className="glass rounded-2xl p-6 w-full max-w-2xl relative z-10 shadow-2xl border border-white/10 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold">Complete Task</h2>
+          <h2 className="text-xl font-semibold">Complete Task</h2>
           <button onClick={onClose} className="p-2 rounded-lg hover:bg-[#2C2E33]">
             <X className="w-5 h-5 text-[#A0AEC0]" />
           </button>

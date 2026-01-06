@@ -110,7 +110,7 @@ export default function MyWork() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold mb-1">My Work</h1>
+          <h1 className="text-2xl font-semibold mb-1">My Work</h1>
           <p className="text-[#A0AEC0]">{tasks.length} tasks assigned to you</p>
         </div>
         
@@ -265,7 +265,7 @@ export default function MyWork() {
               <span>{selectedTask.workflow_name || 'Ad-hoc'}</span>
             </div>
 
-            <h2 className="text-xl font-bold mb-4">{selectedTask.name}</h2>
+            <h2 className="text-xl font-semibold mb-4">{selectedTask.name}</h2>
             
             {selectedTask.instructions && (
               <div className="mb-6">
