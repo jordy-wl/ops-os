@@ -1,0 +1,165 @@
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+
+Deno.serve(async (req) => {
+  const base44 = createClientFromRequest(req);
+  const user = await base44.auth.me();
+
+  if (!user) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const { client_id, workflow_template_id } = await req.json();
+
+  if (!client_id || !workflow_template_id) {
+    return Response.json({ 
+      error: 'Missing required fields: client_id, workflow_template_id' 
+    }, { status: 400 });
+  }
+
+  // Get the template and its current version
+  const template = await base44.entities.WorkflowTemplate.filter({ id: workflow_template_id });
+  if (template.length === 0) {
+    return Response.json({ error: 'Workflow template not found' }, { status: 404 });
+  }
+
+  // Get the current version
+  const versions = await base44.entities.WorkflowTemplateVersion.filter({ 
+    workflow_template_id,
+    status: 'published'
+  }, '-version_number', 1);
+
+  const currentVersion = versions[0];
+  if (!currentVersion) {
+    return Response.json({ error: 'No published version found' }, { status: 404 });
+  }
+
+  // Create WorkflowInstance
+  const workflowInstance = await base44.asServiceRole.entities.WorkflowInstance.create({
+    workflow_template_id,
+    workflow_template_version_id: currentVersion.id,
+    client_id,
+    name: `${template[0].name} - ${new Date().toLocaleDateString()}`,
+    status: 'not_started',
+    started_at: new Date().toISOString(),
+    progress_percentage: 0,
+    owner_type: template[0].owner_type || 'user',
+    owner_id: template[0].owner_id || user.id
+  });
+
+  // Get all stages for this version
+  const stageTemplates = await base44.entities.StageTemplate.filter({
+    workflow_template_version_id: currentVersion.id
+  }, 'sequence_order');
+
+  // Create StageInstances
+  const stageInstances = [];
+  for (const stageTemplate of stageTemplates) {
+    const stageInstance = await base44.asServiceRole.entities.StageInstance.create({
+      workflow_instance_id: workflowInstance.id,
+      stage_template_id: stageTemplate.id,
+      name: stageTemplate.name,
+      sequence_order: stageTemplate.sequence_order,
+      status: stageTemplate.sequence_order === 1 ? 'in_progress' : 'not_started',
+      owner_type: stageTemplate.owner_type,
+      owner_id: stageTemplate.owner_id,
+      started_at: stageTemplate.sequence_order === 1 ? new Date().toISOString() : null
+    });
+    stageInstances.push(stageInstance);
+
+    // Get deliverables for this stage
+    const deliverableTemplates = await base44.entities.DeliverableTemplate.filter({
+      stage_template_id: stageTemplate.id
+    }, 'sequence_order');
+
+    // Create DeliverableInstances for first stage only
+    if (stageTemplate.sequence_order === 1) {
+      for (const deliverableTemplate of deliverableTemplates) {
+        const deliverableInstance = await base44.asServiceRole.entities.DeliverableInstance.create({
+          stage_instance_id: stageInstance.id,
+          deliverable_template_id: deliverableTemplate.id,
+          workflow_instance_id: workflowInstance.id,
+          name: deliverableTemplate.name,
+          sequence_order: deliverableTemplate.sequence_order,
+          status: deliverableTemplate.sequence_order === 1 ? 'in_progress' : 'not_started',
+          owner_type: deliverableTemplate.owner_type,
+          owner_id: deliverableTemplate.owner_id,
+          fields: {}
+        });
+
+        // Get tasks for this deliverable
+        const taskTemplates = await base44.entities.TaskTemplate.filter({
+          deliverable_template_id: deliverableTemplate.id
+        }, 'sequence_order');
+
+        // Create TaskInstances for first deliverable only
+        if (deliverableTemplate.sequence_order === 1) {
+          for (const taskTemplate of taskTemplates) {
+            await base44.asServiceRole.entities.TaskInstance.create({
+              deliverable_instance_id: deliverableInstance.id,
+              task_template_id: taskTemplate.id,
+              workflow_instance_id: workflowInstance.id,
+              client_id,
+              name: taskTemplate.name,
+              description: taskTemplate.description,
+              instructions: taskTemplate.instructions,
+              sequence_order: taskTemplate.sequence_order,
+              status: 'not_started',
+              priority: taskTemplate.priority || 'normal',
+              owner_type: taskTemplate.owner_type,
+              owner_id: taskTemplate.owner_id,
+              is_ad_hoc: false,
+              field_values: {}
+            });
+          }
+        }
+      }
+    }
+  }
+
+  // Update workflow instance status
+  await base44.asServiceRole.entities.WorkflowInstance.update(workflowInstance.id, {
+    status: 'in_progress',
+    current_stage_id: stageInstances[0]?.id
+  });
+
+  // Publish WORKFLOW_INSTANCE_STARTED event
+  await base44.asServiceRole.entities.Event.create({
+    event_type: 'workflow_instance_started',
+    source_entity_type: 'workflow_instance',
+    source_entity_id: workflowInstance.id,
+    actor_type: 'user',
+    actor_id: user.id,
+    payload: { 
+      client_id, 
+      workflow_template_id,
+      template_name: template[0].name 
+    },
+    occurred_at: new Date().toISOString()
+  });
+
+  // Publish TASK_RELEASED events
+  const releasedTasks = await base44.entities.TaskInstance.filter({
+    workflow_instance_id: workflowInstance.id,
+    status: 'not_started'
+  });
+
+  for (const task of releasedTasks.slice(0, 5)) {
+    await base44.asServiceRole.entities.Event.create({
+      event_type: 'task_released',
+      source_entity_type: 'task_instance',
+      source_entity_id: task.id,
+      actor_type: 'system',
+      payload: { 
+        task_name: task.name,
+        assigned_user_id: task.owner_id 
+      },
+      occurred_at: new Date().toISOString()
+    });
+  }
+
+  return Response.json({ 
+    success: true, 
+    workflow_instance: workflowInstance,
+    stages_created: stageInstances.length
+  });
+});
