@@ -1,0 +1,115 @@
+import React, { useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
+import { X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+export default function CreateConceptModal({ isOpen, onClose }) {
+  const queryClient = useQueryClient();
+  const [formData, setFormData] = useState({
+    name: '',
+    type: 'methodology',
+    description: '',
+    version: '1.0',
+  });
+
+  const createMutation = useMutation({
+    mutationFn: (data) => base44.entities.BusinessConcept.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['business-concepts'] });
+      onClose();
+      setFormData({
+        name: '',
+        type: 'methodology',
+        description: '',
+        version: '1.0',
+      });
+    },
+  });
+
+  const handleSubmit = () => {
+    createMutation.mutate(formData);
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/70" onClick={onClose} />
+      <div className="glass rounded-2xl p-6 w-full max-w-xl relative z-10 shadow-2xl border border-white/10">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-semibold">New Business Concept</h2>
+          <button onClick={onClose} className="p-2 rounded-lg hover:bg-[#2C2E33]">
+            <X className="w-5 h-5 text-[#A0AEC0]" />
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Name *</label>
+            <Input
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="Concept name"
+              className="bg-[#1A1B1E] border-[#2C2E33] focus:border-[#00E5FF]"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Type</label>
+              <Select value={formData.type} onValueChange={(v) => setFormData({ ...formData, type: v })}>
+                <SelectTrigger className="bg-[#1A1B1E] border-[#2C2E33]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-[#2C2E33] border-[#3a3d44]">
+                  <SelectItem value="methodology">Methodology</SelectItem>
+                  <SelectItem value="framework">Framework</SelectItem>
+                  <SelectItem value="internal_process">Internal Process</SelectItem>
+                  <SelectItem value="value_proposition">Value Proposition</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Version</label>
+              <Input
+                value={formData.version}
+                onChange={(e) => setFormData({ ...formData, version: e.target.value })}
+                placeholder="1.0"
+                className="bg-[#1A1B1E] border-[#2C2E33] focus:border-[#00E5FF]"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Description</label>
+            <Textarea
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder="Describe this concept, methodology, or framework..."
+              className="bg-[#1A1B1E] border-[#2C2E33] focus:border-[#00E5FF] h-32"
+            />
+          </div>
+        </div>
+
+        <div className="flex gap-3 mt-6">
+          <Button variant="outline" onClick={onClose} className="flex-1 bg-transparent border-[#2C2E33] hover:bg-[#2C2E33]">
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            disabled={!formData.name || createMutation.isPending}
+            className="flex-1 bg-gradient-to-r from-[#BD00FF] to-[#8B00CC] text-white hover:shadow-lg hover:shadow-[#BD00FF]/30"
+          >
+            {createMutation.isPending ? 'Creating...' : 'Create Concept'}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}

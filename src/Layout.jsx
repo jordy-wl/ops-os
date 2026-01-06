@@ -19,6 +19,7 @@ const navItems = [
   { name: 'MyWork', icon: CheckCircle, label: 'My Work' },
   { name: 'Workflows', icon: GitMerge, label: 'Workflows' },
   { name: 'Clients', icon: Briefcase, label: 'Clients' },
+  { name: 'Offerings', icon: BookOpen, label: 'Offerings' },
   { name: 'People', icon: Users, label: 'People' },
   { name: 'Strategy', icon: Sparkles, label: 'Strategy', isAI: true },
   { name: 'Library', icon: BookOpen, label: 'Library' },
