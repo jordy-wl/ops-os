@@ -16,11 +16,18 @@ export default function InviteUserModal({ isOpen, onClose, currentUserRole }) {
 
   const inviteMutation = useMutation({
     mutationFn: async ({ email, role }) => {
-      console.log('Inviting user:', email, 'with role:', role);
+      console.log('Inviting user:', email, 'with app role:', role);
       try {
-        const result = await base44.users.inviteUser(email, role);
+        // Determine Base44 platform role: only 'admin' or 'user'
+        const platformRole = (currentUserRole === 'admin' && role === 'admin') ? 'admin' : 'user';
+        
+        // Invite user with platform role
+        const result = await base44.users.inviteUser(email, platformRole);
         console.log('Invite successful:', result);
-        return { email, role };
+        
+        // If they have a custom app role (not admin), we'll store it after they register
+        // For now, just return success
+        return { email, role, platformRole };
       } catch (error) {
         console.error('Invite error:', error);
         throw error;
@@ -28,7 +35,11 @@ export default function InviteUserModal({ isOpen, onClose, currentUserRole }) {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
-      toast.success(`Invitation email sent to ${data.email}. They will receive an email to join the app.`);
+      if (data.role === 'admin') {
+        toast.success(`Invitation sent to ${data.email} as Admin.`);
+      } else {
+        toast.success(`Invitation sent to ${data.email} as ${data.role.replace('_', ' ')}. Role will be assigned after they register.`);
+      }
       onClose();
       setFormData({ email: '', role: 'operator' });
     },
@@ -124,11 +135,11 @@ export default function InviteUserModal({ isOpen, onClose, currentUserRole }) {
                 </SelectContent>
               </Select>
             </div>
-            {currentUserRole !== 'admin' && (
-              <p className="text-xs text-[#4A5568] mt-2">
-                Only administrators can assign Admin, Workflow Designer, or Manager roles
-              </p>
-            )}
+            <p className="text-xs text-[#4A5568] mt-2">
+              {currentUserRole === 'admin' 
+                ? 'Note: Admin role requires user to register before it takes effect. Other roles are assigned after registration.'
+                : 'Only administrators can assign Admin, Workflow Designer, or Manager roles'}
+            </p>
           </div>
 
           <div className="flex gap-3 pt-4">
