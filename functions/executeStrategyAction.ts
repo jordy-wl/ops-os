@@ -55,12 +55,14 @@ Deno.serve(async (req) => {
 
       case 'GENERATE_REPORT':
         // Call report generation function
-        result = await base44.asServiceRole.functions.invoke('generateReport', action.payload);
+        const reportResponse = await base44.asServiceRole.functions.invoke('generateReport', action.payload);
+        result = reportResponse.data;
         break;
 
       case 'CREATE_WORKFLOW':
         // Call workflow creation function
-        result = await base44.asServiceRole.functions.invoke('startWorkflow', action.payload);
+        const workflowResponse = await base44.asServiceRole.functions.invoke('startWorkflow', action.payload);
+        result = workflowResponse.data;
         break;
 
       default:
