@@ -35,6 +35,23 @@ Deno.serve(async (req) => {
       }
     }
 
+    // AI Permission Check - Verify AI agent is allowed to propose this action type
+    if (action.requested_by_user_id === 'ai_strategist' || action.requested_by_user_id?.startsWith('ai_')) {
+      const permCheck = await base44.asServiceRole.functions.invoke('checkAIPermission', {
+        agent_id: 'strategist',
+        object_type: action.target_object_type || 'strategy_action',
+        operation: 'execute_action'
+      });
+
+      if (!permCheck.data.allowed) {
+        await base44.asServiceRole.entities.StrategyAction.update(action.id, {
+          status: 'rejected',
+          result_data: { error: 'AI permission denied: ' + permCheck.data.reason }
+        });
+        return Response.json({ error: 'AI permission denied' }, { status: 403 });
+      }
+    }
+
     let result;
 
     // Execute the action based on type

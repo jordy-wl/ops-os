@@ -15,6 +15,17 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
+    // Load AI Agent Configuration
+    const agentConfigs = await base44.asServiceRole.entities.AIAgentConfig.filter({ 
+      agent_id: 'strategist',
+      is_enabled: true 
+    });
+    const agentConfig = agentConfigs[0];
+
+    if (!agentConfig) {
+      return Response.json({ error: 'AI Strategist agent not configured or disabled' }, { status: 403 });
+    }
+
     // CONTEXT RETRIEVAL ("Look" Phase) - Fetch Current State & Desired State
     const [workflowInstances, clients, templates, space] = await Promise.all([
       base44.asServiceRole.entities.WorkflowInstance.list('-updated_date', 50),
@@ -61,8 +72,21 @@ Deno.serve(async (req) => {
         ).join('\n\n')}`
       : '';
 
+    // Apply agent configuration to system prompt
+    const contextSources = agentConfig.config_jsonb?.context_sources || ['workflows', 'clients', 'templates'];
+    const safetyGuardrails = agentConfig.config_jsonb?.safety_guardrails || {
+      require_approval_for: ['DELETE', 'PROPOSE_TEMPLATE_CHANGE'],
+      max_actions_per_response: 5
+    };
+
     // REASONING ("Think" Phase) - Call LLM with SAGO-RAG approach
     const systemPrompt = `You are The Strategist, an AI assistant for Business OS.
+
+    **Agent Configuration:**
+    - Role: ${agentConfig.role}
+    - Allowed Context Sources: ${contextSources.join(', ')}
+    - Safety: Actions requiring approval - ${safetyGuardrails.require_approval_for.join(', ')}
+    - Max actions per response: ${safetyGuardrails.max_actions_per_response}
     
     **Your Role:** Strategic Command Center AI that answers operational questions, identifies bottlenecks, and proposes system-wide actions.
     
@@ -127,15 +151,21 @@ Deno.serve(async (req) => {
       content: llmResponse.message,
     });
 
-    // Create StrategyAction records for any proposed actions
+    // Create StrategyAction records for any proposed actions (with permission checks)
     const createdActions = [];
     if (llmResponse.proposed_actions && llmResponse.proposed_actions.length > 0) {
-      for (const action of llmResponse.proposed_actions) {
+      // Enforce max actions limit from config
+      const actionsToCreate = llmResponse.proposed_actions.slice(0, safetyGuardrails.max_actions_per_response);
+
+      for (const action of actionsToCreate) {
+        // Check if this action requires approval
+        const requiresApproval = safetyGuardrails.require_approval_for.includes(action.action_type);
+
         const strategyAction = await base44.asServiceRole.entities.StrategyAction.create({
           strategy_space_id: strategySpaceId,
           trigger_message_id: aiMessage.id,
           action_type: action.action_type,
-          status: 'pending',
+          status: requiresApproval ? 'pending' : 'approved',
           requested_by_user_id: user.id,
           payload: action.payload || {},
           description: action.description,
