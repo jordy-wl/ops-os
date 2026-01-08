@@ -44,9 +44,26 @@ export default function AIWorkflowGenerator({ onBack }) {
     });
   };
 
+  const publishMutation = useMutation({
+    mutationFn: async (versionId) => {
+      await base44.entities.WorkflowTemplateVersion.update(versionId, {
+        status: 'published',
+        published_at: new Date().toISOString()
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workflow-templates'] });
+      navigate(createPageUrl('Workflows'));
+    }
+  });
+
   const handlePublish = async () => {
-    queryClient.invalidateQueries({ queryKey: ['workflow-templates'] });
-    navigate(createPageUrl('Workflows'));
+    if (generateMutation.data?.version?.id) {
+      publishMutation.mutate(generateMutation.data.version.id);
+    } else {
+      queryClient.invalidateQueries({ queryKey: ['workflow-templates'] });
+      navigate(createPageUrl('Workflows'));
+    }
   };
 
   const toggleStage = (index) => {
@@ -161,9 +178,17 @@ export default function AIWorkflowGenerator({ onBack }) {
             </div>
             <Button
               onClick={handlePublish}
+              disabled={publishMutation.isPending}
               className="bg-gradient-to-r from-[#00E5FF] to-[#0099ff] text-[#121212]"
             >
-              Publish Template
+              {publishMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Publishing...
+                </>
+              ) : (
+                'Publish Template'
+              )}
             </Button>
           </div>
 
