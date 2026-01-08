@@ -16,6 +16,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import DeliverableConfigPanel from './DeliverableConfigPanel';
+import TaskConfigPanel from './TaskConfigPanel';
 
 const STEPS = ['Basic Info', 'Stages', 'Deliverables', 'Tasks', 'Review'];
 
@@ -31,6 +33,8 @@ export default function ManualWorkflowBuilder({ onBack }) {
     tasks: {}
   });
   const [isCreating, setIsCreating] = useState(false);
+  const [editingDeliverable, setEditingDeliverable] = useState(null);
+  const [editingTask, setEditingTask] = useState(null);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
@@ -53,15 +57,25 @@ export default function ManualWorkflowBuilder({ onBack }) {
   };
 
   const addDeliverable = (stageIndex) => {
+    setEditingDeliverable({ stageIndex, delIndex: null, data: null });
+  };
+
+  const saveDeliverable = (data) => {
+    const { stageIndex, delIndex } = editingDeliverable;
     const key = `stage_${stageIndex}`;
-    const existing = formData.deliverables[key] || [];
+    const existing = [...(formData.deliverables[key] || [])];
+    
+    if (delIndex !== null) {
+      existing[delIndex] = data;
+    } else {
+      existing.push(data);
+    }
+    
     setFormData({
       ...formData,
-      deliverables: {
-        ...formData.deliverables,
-        [key]: [...existing, { name: '', description: '' }]
-      }
+      deliverables: { ...formData.deliverables, [key]: existing }
     });
+    setEditingDeliverable(null);
   };
 
   const removeDeliverable = (stageIndex, delIndex) => {
@@ -90,15 +104,25 @@ export default function ManualWorkflowBuilder({ onBack }) {
   };
 
   const addTask = (stageIndex, delIndex) => {
+    setEditingTask({ stageIndex, delIndex, taskIndex: null, data: null });
+  };
+
+  const saveTask = (data) => {
+    const { stageIndex, delIndex, taskIndex } = editingTask;
     const key = `stage_${stageIndex}_del_${delIndex}`;
-    const existing = formData.tasks[key] || [];
+    const existing = [...(formData.tasks[key] || [])];
+    
+    if (taskIndex !== null) {
+      existing[taskIndex] = data;
+    } else {
+      existing.push(data);
+    }
+    
     setFormData({
       ...formData,
-      tasks: {
-        ...formData.tasks,
-        [key]: [...existing, { name: '', description: '', instructions: '', priority: 'normal' }]
-      }
+      tasks: { ...formData.tasks, [key]: existing }
     });
+    setEditingTask(null);
   };
 
   const removeTask = (stageIndex, delIndex, taskIndex) => {
@@ -188,8 +212,15 @@ export default function ManualWorkflowBuilder({ onBack }) {
               name: taskData.name,
               description: taskData.description,
               instructions: taskData.instructions,
+              priority: taskData.priority || 'normal',
+              estimated_duration_minutes: taskData.estimated_duration_minutes || 0,
+              is_required: taskData.is_required !== false,
+              requires_review: taskData.requires_review || false,
+              can_be_overridden: taskData.can_be_overridden !== false,
+              data_field_definitions: taskData.data_field_definitions || [],
+              conditions: taskData.conditions || {},
+              assignment_config: taskData.assignment_config || {},
               sequence_order: taskIdx + 1,
-              priority: taskData.priority,
               owner_type: 'user',
               owner_id: user.id
             });
@@ -406,28 +437,31 @@ export default function ManualWorkflowBuilder({ onBack }) {
 
                   <div className="space-y-3">
                     {(formData.deliverables[`stage_${stageIdx}`] || []).map((del, delIdx) => (
-                      <div key={delIdx} className="neumorphic-raised rounded-lg p-4">
+                      <div 
+                        key={delIdx} 
+                        className="neumorphic-raised rounded-lg p-4 cursor-pointer hover:bg-[#2C2E33] transition-colors"
+                        onClick={() => setEditingDeliverable({ stageIndex: stageIdx, delIndex: delIdx, data: del })}
+                      >
                         <div className="flex items-start gap-3">
                           <div className="w-6 h-6 rounded bg-[#2C2E33] flex items-center justify-center text-xs text-[#A0AEC0]">
                             D{delIdx + 1}
                           </div>
-                          <div className="flex-1 space-y-2">
-                            <Input
-                              value={del.name}
-                              onChange={(e) => updateDeliverable(stageIdx, delIdx, 'name', e.target.value)}
-                              placeholder="Deliverable name (e.g., Signed Proposal)"
-                              className="bg-[#1A1B1E] border-[#2C2E33]"
-                            />
-                            <Textarea
-                              value={del.description}
-                              onChange={(e) => updateDeliverable(stageIdx, delIdx, 'description', e.target.value)}
-                              placeholder="Description..."
-                              className="bg-[#1A1B1E] border-[#2C2E33] h-16"
-                            />
+                          <div className="flex-1">
+                            <p className="font-medium">{del.name || 'Untitled Deliverable'}</p>
+                            <p className="text-xs text-[#A0AEC0] mt-1">{del.description || 'No description'}</p>
+                            <div className="flex items-center gap-2 mt-2">
+                              <span className="text-xs text-[#4A5568] capitalize">{del.output_type || 'document'}</span>
+                              {del.document_template_ids?.length > 0 && (
+                                <span className="text-xs text-[#00E5FF]">• Auto-generate</span>
+                              )}
+                            </div>
                           </div>
                           <button
-                            onClick={() => removeDeliverable(stageIdx, delIdx)}
-                            className="p-2 rounded-lg hover:bg-[#2C2E33] text-red-400"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeDeliverable(stageIdx, delIdx);
+                            }}
+                            className="p-2 rounded-lg hover:bg-[#3a3d44] text-red-400"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -469,48 +503,34 @@ export default function ManualWorkflowBuilder({ onBack }) {
 
                   <div className="space-y-3">
                     {(formData.tasks[`stage_${stageIdx}_del_${delIdx}`] || []).map((task, taskIdx) => (
-                      <div key={taskIdx} className="neumorphic-raised rounded-lg p-4">
+                      <div 
+                        key={taskIdx} 
+                        className="neumorphic-raised rounded-lg p-4 cursor-pointer hover:bg-[#2C2E33] transition-colors"
+                        onClick={() => setEditingTask({ stageIndex: stageIdx, delIndex: delIdx, taskIndex: taskIdx, data: task })}
+                      >
                         <div className="flex items-start gap-3">
                           <div className="w-6 h-6 rounded bg-[#2C2E33] flex items-center justify-center text-xs">
                             {taskIdx + 1}
                           </div>
-                          <div className="flex-1 space-y-2">
-                            <Input
-                              value={task.name}
-                              onChange={(e) => updateTask(stageIdx, delIdx, taskIdx, 'name', e.target.value)}
-                              placeholder="Task name"
-                              className="bg-[#1A1B1E] border-[#2C2E33]"
-                            />
-                            <Textarea
-                              value={task.description}
-                              onChange={(e) => updateTask(stageIdx, delIdx, taskIdx, 'description', e.target.value)}
-                              placeholder="What this task accomplishes..."
-                              className="bg-[#1A1B1E] border-[#2C2E33] h-16"
-                            />
-                            <Textarea
-                              value={task.instructions}
-                              onChange={(e) => updateTask(stageIdx, delIdx, taskIdx, 'instructions', e.target.value)}
-                              placeholder="Step-by-step instructions..."
-                              className="bg-[#1A1B1E] border-[#2C2E33] h-16"
-                            />
-                            <Select 
-                              value={task.priority} 
-                              onValueChange={(v) => updateTask(stageIdx, delIdx, taskIdx, 'priority', v)}
-                            >
-                              <SelectTrigger className="bg-[#1A1B1E] border-[#2C2E33] w-40">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent className="bg-[#2C2E33] border-[#3a3d44]">
-                                <SelectItem value="low">Low Priority</SelectItem>
-                                <SelectItem value="normal">Normal</SelectItem>
-                                <SelectItem value="high">High</SelectItem>
-                                <SelectItem value="urgent">Urgent</SelectItem>
-                              </SelectContent>
-                            </Select>
+                          <div className="flex-1">
+                            <p className="font-medium">{task.name || 'Untitled Task'}</p>
+                            <p className="text-xs text-[#A0AEC0] mt-1">{task.description || 'No description'}</p>
+                            <div className="flex items-center gap-2 mt-2">
+                              <span className="text-xs text-[#4A5568] capitalize">{task.priority || 'normal'} priority</span>
+                              {task.data_field_definitions?.length > 0 && (
+                                <span className="text-xs text-[#00E5FF]">• {task.data_field_definitions.length} fields</span>
+                              )}
+                              {task.requires_review && (
+                                <span className="text-xs text-yellow-400">• Needs review</span>
+                              )}
+                            </div>
                           </div>
                           <button
-                            onClick={() => removeTask(stageIdx, delIdx, taskIdx)}
-                            className="p-2 rounded-lg hover:bg-[#2C2E33] text-red-400"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeTask(stageIdx, delIdx, taskIdx);
+                            }}
+                            className="p-2 rounded-lg hover:bg-[#3a3d44] text-red-400"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -615,6 +635,33 @@ export default function ManualWorkflowBuilder({ onBack }) {
           )}
         </Button>
       </div>
+
+      {/* Config Modals */}
+      {editingDeliverable && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/70" onClick={() => setEditingDeliverable(null)} />
+          <div className="glass rounded-2xl w-full max-w-2xl relative z-10 shadow-2xl border border-white/10 p-6">
+            <DeliverableConfigPanel
+              deliverable={editingDeliverable.data}
+              onSave={saveDeliverable}
+              onClose={() => setEditingDeliverable(null)}
+            />
+          </div>
+        </div>
+      )}
+
+      {editingTask && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/70" onClick={() => setEditingTask(null)} />
+          <div className="glass rounded-2xl w-full max-w-3xl relative z-10 shadow-2xl border border-white/10 p-6 max-h-[90vh] overflow-y-auto">
+            <TaskConfigPanel
+              task={editingTask.data}
+              onSave={saveTask}
+              onClose={() => setEditingTask(null)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
