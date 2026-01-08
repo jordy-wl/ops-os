@@ -123,7 +123,7 @@ Deno.serve(async (req) => {
   });
 
   // Publish WORKFLOW_INSTANCE_STARTED event
-  await base44.asServiceRole.entities.Event.create({
+  const workflowStartedEvent = await base44.asServiceRole.entities.Event.create({
     event_type: 'workflow_instance_started',
     source_entity_type: 'workflow_instance',
     source_entity_id: workflowInstance.id,
@@ -137,24 +137,35 @@ Deno.serve(async (req) => {
     occurred_at: new Date().toISOString()
   });
 
-  // Publish TASK_RELEASED events
+  // Trigger AI Operator monitoring (async, non-blocking)
+  base44.asServiceRole.functions.invoke('aiOperatorMonitor', { 
+    event_id: workflowStartedEvent.id 
+  }).catch(err => console.error('AI Operator trigger failed:', err));
+
+  // Publish TASK_RELEASED event (single event for all released tasks)
   const releasedTasks = await base44.entities.TaskInstance.filter({
     workflow_instance_id: workflowInstance.id,
     status: 'not_started'
   });
 
-  for (const task of releasedTasks.slice(0, 5)) {
-    await base44.asServiceRole.entities.Event.create({
+  if (releasedTasks.length > 0) {
+    const taskReleasedEvent = await base44.asServiceRole.entities.Event.create({
       event_type: 'task_released',
       source_entity_type: 'task_instance',
-      source_entity_id: task.id,
+      source_entity_id: releasedTasks[0].id,
       actor_type: 'system',
       payload: { 
-        task_name: task.name,
-        assigned_user_id: task.owner_id 
+        workflow_instance_id: workflowInstance.id,
+        client_id,
+        task_count: releasedTasks.length
       },
       occurred_at: new Date().toISOString()
     });
+
+    // Trigger AI Operator monitoring
+    base44.asServiceRole.functions.invoke('aiOperatorMonitor', { 
+      event_id: taskReleasedEvent.id 
+    }).catch(err => console.error('AI Operator trigger failed:', err));
   }
 
   return Response.json({ 
