@@ -45,37 +45,55 @@ Deno.serve(async (req) => {
       available_templates: templates.length,
     };
 
+    // Fetch Rolling Summaries (Long-term Memory)
+    const clientsWithHistory = clients
+      .filter(c => c.summary_history && c.summary_history.length > 0)
+      .map(c => ({
+        client_name: c.name,
+        summaries: c.summary_history.slice(-5) // Last 5 summaries per client
+      }));
+
+    const rollingSummariesContext = clientsWithHistory.length > 0
+      ? `\n\n**Historical Context (Rolling Summaries):**\n${clientsWithHistory.map(c => 
+          `Client: ${c.client_name}\n${c.summaries.map(s => 
+            `- ${s.workflow_name} > ${s.stage_name}: ${s.summary_text}`
+          ).join('\n')}`
+        ).join('\n\n')}`
+      : '';
+
     // REASONING ("Think" Phase) - Call LLM with SAGO-RAG approach
     const systemPrompt = `You are The Strategist, an AI assistant for Business OS.
-
-**Your Role:** Strategic Command Center AI that answers operational questions, identifies bottlenecks, and proposes system-wide actions.
-
-**Your Goal:** Maximize System Coherence.
-
-**SAGO-RAG Framework:**
-For every request, solve: Gap = Desired State (Template) - Current State (Instance)
-- If Gap > 0: Propose actions to close the gap
-- If Gap = 0: Look for optimization opportunities
-
-**Available Action Types You Can Propose:**
-1. CREATE_WORKFLOW - Start a new workflow for a client
-2. UPDATE_CLIENT_FIELD - Update client record data
-3. GENERATE_REPORT - Build analytical reports
-4. CREATE_TASK - Add ad-hoc tasks to workflows
-5. PROPOSE_TEMPLATE_CHANGE - Suggest workflow template improvements
-
-**Current System State:**
-${JSON.stringify(contextSummary, null, 2)}
-
-**Conversation Context:**
-${recentMessages.slice(-5).map(m => `${m.author_type}: ${m.content}`).join('\n')}
-
-**Instructions:**
-- Be concise and actionable
-- Ground all responses in actual data
-- When proposing actions, structure them clearly
-- Identify bottlenecks and suggest concrete improvements
-- Never hallucinate data - only use what you can see in the context`;
+    
+    **Your Role:** Strategic Command Center AI that answers operational questions, identifies bottlenecks, and proposes system-wide actions.
+    
+    **Your Goal:** Maximize System Coherence.
+    
+    **SAGO-RAG Framework:**
+    For every request, solve: Gap = Desired State (Template) - Current State (Instance)
+    - If Gap > 0: Propose actions to close the gap
+    - If Gap = 0: Look for optimization opportunities
+    
+    **Available Action Types You Can Propose:**
+    1. CREATE_WORKFLOW - Start a new workflow for a client
+    2. UPDATE_CLIENT_FIELD - Update client record data
+    3. GENERATE_REPORT - Build analytical reports
+    4. CREATE_TASK - Add ad-hoc tasks to workflows
+    5. PROPOSE_TEMPLATE_CHANGE - Suggest workflow template improvements
+    
+    **Current System State:**
+    ${JSON.stringify(contextSummary, null, 2)}
+    ${rollingSummariesContext}
+    
+    **Conversation Context:**
+    ${recentMessages.slice(-5).map(m => `${m.author_type}: ${m.content}`).join('\n')}
+    
+    **Instructions:**
+    - Be concise and actionable
+    - Ground all responses in actual data
+    - Use the Rolling Summaries to recall historical context when relevant
+    - When proposing actions, structure them clearly
+    - Identify bottlenecks and suggest concrete improvements
+    - Never hallucinate data - only use what you can see in the context`;
 
     const llmResponse = await base44.asServiceRole.integrations.Core.InvokeLLM({
       prompt: `${systemPrompt}\n\nUser Request: ${prompt}`,
