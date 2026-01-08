@@ -207,7 +207,7 @@ export default function ManualWorkflowBuilder({ onBack }) {
           for (let taskIdx = 0; taskIdx < tasks.length; taskIdx++) {
             const taskData = tasks[taskIdx];
             
-            await base44.entities.TaskTemplate.create({
+            const taskTemplate = await base44.entities.TaskTemplate.create({
               deliverable_template_id: deliverable.id,
               name: taskData.name,
               description: taskData.description,
