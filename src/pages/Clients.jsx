@@ -6,6 +6,7 @@ import { createPageUrl } from '@/utils';
 import AIInsightCard from '@/components/AIInsightCard';
 import GenerateDocumentModal from '@/components/documents/GenerateDocumentModal';
 import DocumentViewer from '@/components/documents/DocumentViewer';
+import OfferingRecommendations from '@/components/clients/OfferingRecommendations';
 import {
   Briefcase,
   Search,
@@ -370,6 +371,13 @@ export default function Clients() {
                   ))}
                 </div>
               )}
+
+              {/* Offering Recommendations */}
+              <OfferingRecommendations 
+                clientId={selectedClient.id}
+                clientName={selectedClient.name}
+                insights={selectedClient.insights}
+              />
 
               {/* Documents Section */}
               <div className="space-y-3">
