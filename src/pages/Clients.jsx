@@ -4,6 +4,8 @@ import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import AIInsightCard from '@/components/AIInsightCard';
+import GenerateDocumentModal from '@/components/documents/GenerateDocumentModal';
+import DocumentViewer from '@/components/documents/DocumentViewer';
 import {
   Briefcase,
   Search,
@@ -16,7 +18,8 @@ import {
   AlertTriangle,
   ChevronRight,
   X,
-  Sparkles
+  Sparkles,
+  FileText
 } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -171,6 +174,8 @@ export default function Clients() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedClient, setSelectedClient] = useState(null);
+  const [showGenerateDocModal, setShowGenerateDocModal] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState(null);
 
   const urlParams = new URLSearchParams(window.location.search);
   const shouldShowCreate = urlParams.get('action') === 'create';
@@ -184,6 +189,12 @@ export default function Clients() {
   const { data: clients = [], isLoading } = useQuery({
     queryKey: ['clients'],
     queryFn: () => base44.entities.Client.list('-created_date', 100),
+  });
+
+  const { data: documents = [] } = useQuery({
+    queryKey: ['documents', selectedClient?.id],
+    queryFn: () => base44.entities.DocumentInstance.filter({ client_id: selectedClient.id }),
+    enabled: !!selectedClient,
   });
 
   const filteredClients = clients.filter(c => 
@@ -360,6 +371,50 @@ export default function Clients() {
                 </div>
               )}
 
+              {/* Documents Section */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-medium text-[#A0AEC0]">Documents</h3>
+                  <Button
+                    size="sm"
+                    onClick={() => setShowGenerateDocModal(true)}
+                    className="bg-gradient-to-r from-[#BD00FF] to-[#9000cc] text-white text-xs"
+                  >
+                    <Sparkles className="w-3 h-3 mr-1" />
+                    Generate
+                  </Button>
+                </div>
+                {documents.length === 0 ? (
+                  <div className="neumorphic-pressed rounded-lg p-6 text-center">
+                    <FileText className="w-8 h-8 text-[#4A5568] mx-auto mb-2" />
+                    <p className="text-sm text-[#A0AEC0]">No documents yet</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {documents.slice(0, 5).map((doc) => (
+                      <button
+                        key={doc.id}
+                        onClick={() => setSelectedDocument(doc)}
+                        className="w-full neumorphic-pressed rounded-lg p-3 hover:bg-[#2C2E33] transition-colors text-left"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <FileText className="w-4 h-4 text-[#BD00FF]" />
+                            <div>
+                              <p className="text-sm font-medium">{doc.name}</p>
+                              <p className="text-xs text-[#4A5568]">
+                                {new Date(doc.generated_at).toLocaleDateString()}
+                              </p>
+                            </div>
+                          </div>
+                          <span className="text-xs text-[#A0AEC0] capitalize">{doc.status}</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               {/* Actions */}
               <div className="flex gap-3">
                 <Button className="flex-1 bg-gradient-to-r from-[#00E5FF] to-[#0099ff] text-[#121212]">
@@ -373,6 +428,22 @@ export default function Clients() {
           </div>
         </div>
       )}
+
+      {/* Document Generation Modal */}
+      {selectedClient && (
+        <GenerateDocumentModal
+          isOpen={showGenerateDocModal}
+          onClose={() => setShowGenerateDocModal(false)}
+          clientId={selectedClient.id}
+        />
+      )}
+
+      {/* Document Viewer */}
+      <DocumentViewer
+        document={selectedDocument}
+        isOpen={!!selectedDocument}
+        onClose={() => setSelectedDocument(null)}
+      />
     </div>
   );
 }
