@@ -45,11 +45,11 @@ export default function ClientActivityFeed({ client, workflowInstances, communic
       )}
 
       {/* Risk & Sentiment */}
-      {(client.risk_score !== null && client.risk_score !== undefined) || client.sentiment_score ? (
+      {((client.risk_score !== null && client.risk_score !== undefined) || client.sentiment_score) && (
         <div className="neumorphic-raised rounded-xl p-4">
           <h3 className="text-sm font-medium text-[#A0AEC0] mb-3">Health Indicators</h3>
           <div className="flex gap-3">
-            {client.risk_score !== null && client.risk_score !== undefined && (
+            {(client.risk_score !== null && client.risk_score !== undefined) && (
               <div className="flex-1 neumorphic-pressed rounded-lg p-3 text-center">
                 <p className="text-xs text-[#4A5568] mb-1">Risk Score</p>
                 <p className={`text-lg font-bold ${client.risk_score > 70 ? 'text-red-400' : client.risk_score > 40 ? 'text-yellow-400' : 'text-green-400'}`}>
