@@ -40,6 +40,25 @@ export default function ClientDetail() {
     enabled: !!clientId,
   });
 
+  const { data: clientContacts = [] } = useQuery({
+    queryKey: ['client-contacts', clientId],
+    queryFn: async () => {
+      const links = await base44.entities.ClientContact.filter({ client_id: clientId });
+      const contactIds = links.map(link => link.contact_id);
+      if (contactIds.length === 0) return [];
+      const contacts = await Promise.all(
+        contactIds.map(async (id) => {
+          const result = await base44.entities.Contact.filter({ id });
+          const contact = result[0];
+          const link = links.find(l => l.contact_id === id);
+          return { ...contact, role: link?.role, is_primary: link?.is_primary };
+        })
+      );
+      return contacts;
+    },
+    enabled: !!clientId,
+  });
+
   if (!clientId) {
     return (
       <div className="p-6">
@@ -87,7 +106,7 @@ export default function ClientDetail() {
       <div className="grid grid-cols-12 gap-6">
         {/* Left Column - Firmographics */}
         <div className="col-span-3">
-          <ClientFirmographics client={client} />
+          <ClientFirmographics client={client} contacts={clientContacts} />
         </div>
 
         {/* Middle Column - Activity & Insights */}

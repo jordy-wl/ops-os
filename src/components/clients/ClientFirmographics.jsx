@@ -1,7 +1,7 @@
 import React from 'react';
-import { Building2, Globe, MapPin, DollarSign, TrendingUp } from 'lucide-react';
+import { Building2, Globe, MapPin, DollarSign, TrendingUp, User, Mail, Phone, Linkedin, Star } from 'lucide-react';
 
-export default function ClientFirmographics({ client }) {
+export default function ClientFirmographics({ client, contacts = [] }) {
   return (
     <div className="space-y-4">
       <div className="neumorphic-raised rounded-xl p-6">
@@ -79,6 +79,66 @@ export default function ClientFirmographics({ client }) {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Contacts */}
+      <div className="neumorphic-raised rounded-xl p-6">
+        <h3 className="text-sm font-medium text-[#A0AEC0] mb-4">Contacts</h3>
+        {contacts.length === 0 ? (
+          <div className="text-center py-4">
+            <User className="w-8 h-8 text-[#4A5568] mx-auto mb-2" />
+            <p className="text-xs text-[#A0AEC0]">No contacts yet</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {contacts.map((contact) => (
+              <div key={contact.id} className="neumorphic-pressed rounded-lg p-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#2C2E33] to-[#1A1B1E] flex items-center justify-center flex-shrink-0">
+                    {contact.avatar_url ? (
+                      <img src={contact.avatar_url} alt="" className="w-10 h-10 rounded-full object-cover" />
+                    ) : (
+                      <User className="w-5 h-5 text-[#A0AEC0]" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium truncate">
+                        {contact.first_name} {contact.last_name}
+                      </p>
+                      {contact.is_primary && (
+                        <Star className="w-3 h-3 text-yellow-400 fill-yellow-400 flex-shrink-0" />
+                      )}
+                    </div>
+                    {contact.job_title && (
+                      <p className="text-xs text-[#A0AEC0] truncate">{contact.job_title}</p>
+                    )}
+                    {contact.role && (
+                      <p className="text-xs text-[#4A5568] capitalize mt-1">{contact.role.replace('_', ' ')}</p>
+                    )}
+                    <div className="flex items-center gap-2 mt-2">
+                      {contact.email && (
+                        <a href={`mailto:${contact.email}`} className="text-[#00E5FF] hover:text-[#00b8cc]">
+                          <Mail className="w-3 h-3" />
+                        </a>
+                      )}
+                      {contact.phone && (
+                        <a href={`tel:${contact.phone}`} className="text-[#00E5FF] hover:text-[#00b8cc]">
+                          <Phone className="w-3 h-3" />
+                        </a>
+                      )}
+                      {contact.linkedin_url && (
+                        <a href={contact.linkedin_url} target="_blank" rel="noopener noreferrer" className="text-[#00E5FF] hover:text-[#00b8cc]">
+                          <Linkedin className="w-3 h-3" />
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Additional Metadata */}
