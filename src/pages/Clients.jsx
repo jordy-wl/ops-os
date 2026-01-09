@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import AIInsightCard from '@/components/AIInsightCard';
 import GenerateDocumentModal from '@/components/documents/GenerateDocumentModal';
@@ -41,10 +41,10 @@ const sentimentColors = {
   negative: 'bg-red-500',
 };
 
-function ClientRow({ client, onClick }) {
+function ClientRow({ client, onNavigate }) {
   return (
     <tr 
-      onClick={onClick}
+      onClick={onNavigate}
       className="hover:bg-[#2C2E33] cursor-pointer transition-colors border-b border-[#2C2E33]"
     >
       <td className="px-4 py-4">
@@ -172,11 +172,9 @@ function CreateClientModal({ isOpen, onClose }) {
 }
 
 export default function Clients() {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [selectedClient, setSelectedClient] = useState(null);
-  const [showGenerateDocModal, setShowGenerateDocModal] = useState(false);
-  const [selectedDocument, setSelectedDocument] = useState(null);
 
   const urlParams = new URLSearchParams(window.location.search);
   const shouldShowCreate = urlParams.get('action') === 'create';
@@ -190,12 +188,6 @@ export default function Clients() {
   const { data: clients = [], isLoading } = useQuery({
     queryKey: ['clients'],
     queryFn: () => base44.entities.Client.list('-created_date', 100),
-  });
-
-  const { data: documents = [] } = useQuery({
-    queryKey: ['documents', selectedClient?.id],
-    queryFn: () => base44.entities.DocumentInstance.filter({ client_id: selectedClient.id }),
-    enabled: !!selectedClient,
   });
 
   const filteredClients = clients.filter(c => 
@@ -282,7 +274,7 @@ export default function Clients() {
                 <ClientRow 
                   key={client.id} 
                   client={client} 
-                  onClick={() => setSelectedClient(client)}
+                  onNavigate={() => navigate(createPageUrl('ClientDetail') + '?id=' + client.id)}
                 />
               ))}
             </tbody>
@@ -291,167 +283,6 @@ export default function Clients() {
       )}
 
       <CreateClientModal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} />
-
-      {/* Client Dossier Drawer */}
-      {selectedClient && (
-        <div className="fixed inset-0 z-50 flex">
-          <div 
-            className="flex-1 bg-black/50 backdrop-blur-sm"
-            onClick={() => setSelectedClient(null)}
-          />
-          <div className="w-[600px] glass h-full overflow-y-auto shadow-2xl">
-            {/* Header */}
-            <div className="glass sticky top-0 z-10 p-6 border-b border-[#2C2E33]">
-              <div className="flex items-start gap-4">
-                <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-[#2C2E33] to-[#1A1B1E] flex items-center justify-center">
-                  {selectedClient.logo_url ? (
-                    <img src={selectedClient.logo_url} alt="" className="w-14 h-14 rounded-lg" />
-                  ) : (
-                    <Building2 className="w-8 h-8 text-[#A0AEC0]" />
-                  )}
-                </div>
-                <div className="flex-1">
-                  <h2 className="text-xl font-semibold mb-1">{selectedClient.name}</h2>
-                  <p className="text-sm text-[#A0AEC0] capitalize">{selectedClient.industry?.replace('_', ' ')}</p>
-                </div>
-                <button 
-                  onClick={() => setSelectedClient(null)}
-                  className="p-2 rounded-lg hover:bg-[#2C2E33]"
-                >
-                  <X className="w-5 h-5 text-[#A0AEC0]" />
-                </button>
-              </div>
-            </div>
-
-            {/* Content */}
-            <div className="p-6 space-y-6">
-              {/* Quick Stats */}
-              <div className="grid grid-cols-3 gap-4">
-                <div className="neumorphic-pressed rounded-xl p-4 text-center">
-                  <p className="text-[#A0AEC0] text-xs mb-1">Value</p>
-                  <p className="font-mono font-bold text-lg">
-                    {selectedClient.value ? `$${selectedClient.value.toLocaleString()}` : '—'}
-                  </p>
-                </div>
-                <div className="neumorphic-pressed rounded-xl p-4 text-center">
-                  <p className="text-[#A0AEC0] text-xs mb-1">Stage</p>
-                  <p className="font-medium capitalize">
-                    {selectedClient.lifecycle_stage?.replace('_', ' ') || 'Prospect'}
-                  </p>
-                </div>
-                <div className="neumorphic-pressed rounded-xl p-4 text-center">
-                  <p className="text-[#A0AEC0] text-xs mb-1">Risk Score</p>
-                  <p className="font-mono font-bold text-lg">
-                    {selectedClient.risk_score ?? '—'}
-                  </p>
-                </div>
-              </div>
-
-              {/* AI Insights */}
-              {selectedClient.next_best_action && (
-                <AIInsightCard
-                  type="recommendation"
-                  title="Next Best Action"
-                  content={selectedClient.next_best_action}
-                  severity="opportunity"
-                />
-              )}
-
-              {selectedClient.insights?.stage_summaries?.length > 0 && (
-                <div className="space-y-3">
-                  <h3 className="text-sm font-medium text-[#A0AEC0]">Workflow Summaries</h3>
-                  {selectedClient.insights.stage_summaries.slice(-2).map((summary, idx) => (
-                    <AIInsightCard
-                      key={idx}
-                      type="summary"
-                      title={`${summary.workflow_name} - ${summary.stage_name}`}
-                      content={summary.summary}
-                      severity="info"
-                    />
-                  ))}
-                </div>
-              )}
-
-              {/* Offering Recommendations */}
-              <OfferingRecommendations 
-                clientId={selectedClient.id}
-                clientName={selectedClient.name}
-                insights={selectedClient.insights}
-              />
-
-              {/* Documents Section */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-medium text-[#A0AEC0]">Documents</h3>
-                  <Button
-                    size="sm"
-                    onClick={() => setShowGenerateDocModal(true)}
-                    className="bg-gradient-to-r from-[#BD00FF] to-[#9000cc] text-white text-xs"
-                  >
-                    <Sparkles className="w-3 h-3 mr-1" />
-                    Generate
-                  </Button>
-                </div>
-                {documents.length === 0 ? (
-                  <div className="neumorphic-pressed rounded-lg p-6 text-center">
-                    <FileText className="w-8 h-8 text-[#4A5568] mx-auto mb-2" />
-                    <p className="text-sm text-[#A0AEC0]">No documents yet</p>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {documents.slice(0, 5).map((doc) => (
-                      <button
-                        key={doc.id}
-                        onClick={() => setSelectedDocument(doc)}
-                        className="w-full neumorphic-pressed rounded-lg p-3 hover:bg-[#2C2E33] transition-colors text-left"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <FileText className="w-4 h-4 text-[#BD00FF]" />
-                            <div>
-                              <p className="text-sm font-medium">{doc.name}</p>
-                              <p className="text-xs text-[#4A5568]">
-                                {new Date(doc.generated_at).toLocaleDateString()}
-                              </p>
-                            </div>
-                          </div>
-                          <span className="text-xs text-[#A0AEC0] capitalize">{doc.status}</span>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Actions */}
-              <div className="flex gap-3">
-                <Button className="flex-1 bg-gradient-to-r from-[#00E5FF] to-[#0099ff] text-[#121212]">
-                  Start Workflow
-                </Button>
-                <Button variant="outline" className="bg-transparent border-[#2C2E33] hover:bg-[#2C2E33]">
-                  Edit
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Document Generation Modal */}
-      {selectedClient && (
-        <GenerateDocumentModal
-          isOpen={showGenerateDocModal}
-          onClose={() => setShowGenerateDocModal(false)}
-          clientId={selectedClient.id}
-        />
-      )}
-
-      {/* Document Viewer */}
-      <DocumentViewer
-        document={selectedDocument}
-        isOpen={!!selectedDocument}
-        onClose={() => setSelectedDocument(null)}
-      />
     </div>
   );
 }
