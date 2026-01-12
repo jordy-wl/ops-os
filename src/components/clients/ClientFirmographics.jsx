@@ -1,5 +1,6 @@
 import React from 'react';
 import { Building2, Globe, MapPin, DollarSign, TrendingUp, User, Mail, Phone, Linkedin, Star } from 'lucide-react';
+import SendFormPanel from './SendFormPanel';
 
 export default function ClientFirmographics({ client, contacts = [] }) {
   return (
@@ -157,6 +158,11 @@ export default function ClientFirmographics({ client, contacts = [] }) {
               ))}
           </div>
         </div>
+      )}
+
+      {/* Send Client Form */}
+      {contacts.length > 0 && (
+        <SendFormPanel clientId={client.id} contacts={contacts} />
       )}
     </div>
   );
