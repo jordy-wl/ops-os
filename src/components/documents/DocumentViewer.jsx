@@ -105,7 +105,7 @@ export default function DocumentViewer({ document, isOpen, onClose }) {
                 ),
             }}
           >
-            {document.content}
+            {document.generated_content || document.content}
           </ReactMarkdown>
         </div>
 
