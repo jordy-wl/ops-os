@@ -672,7 +672,7 @@ export default function ManualWorkflowBuilder({ onBack }) {
       {editingDeliverable && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/70" onClick={() => setEditingDeliverable(null)} />
-          <div className="glass rounded-2xl w-full max-w-2xl relative z-10 shadow-2xl border border-white/10 p-6">
+          <div className="glass rounded-2xl w-full max-w-2xl relative z-10 shadow-2xl border border-white/10 p-6 max-h-[90vh] overflow-y-auto">
             <DeliverableConfigPanel
               deliverable={editingDeliverable.data}
               onSave={saveDeliverable}
