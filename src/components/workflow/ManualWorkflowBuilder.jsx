@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
@@ -28,6 +28,7 @@ export default function ManualWorkflowBuilder({ onBack }) {
     description: '',
     type: 'linear',
     category: 'custom',
+    next_workflow_template_id: '',
     stages: [],
     deliverables: {},
     tasks: {}
@@ -37,6 +38,11 @@ export default function ManualWorkflowBuilder({ onBack }) {
   const [editingTask, setEditingTask] = useState(null);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+
+  const { data: availableTemplates = [] } = useQuery({
+    queryKey: ['workflow-templates-list'],
+    queryFn: () => base44.entities.WorkflowTemplate.filter({ is_active: true }),
+  });
 
   const addStage = () => {
     setFormData({
@@ -164,7 +170,8 @@ export default function ManualWorkflowBuilder({ onBack }) {
         current_version: 1,
         owner_type: 'user',
         owner_id: user.id,
-        is_active: true
+        is_active: true,
+        next_workflow_template_id: formData.next_workflow_template_id || null
       });
 
       const version = await base44.entities.WorkflowTemplateVersion.create({
@@ -356,6 +363,31 @@ export default function ManualWorkflowBuilder({ onBack }) {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-[#A0AEC0] mb-2">
+                Next Workflow (Optional)
+              </label>
+              <Select 
+                value={formData.next_workflow_template_id} 
+                onValueChange={(v) => setFormData({ ...formData, next_workflow_template_id: v })}
+              >
+                <SelectTrigger className="bg-[#1A1B1E] border-[#2C2E33]">
+                  <SelectValue placeholder="Auto-start another workflow on completion" />
+                </SelectTrigger>
+                <SelectContent className="bg-[#2C2E33] border-[#3a3d44]">
+                  <SelectItem value={null}>None</SelectItem>
+                  {availableTemplates.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-[#4A5568] mt-2">
+                When this workflow completes, automatically start the selected workflow for the same client
+              </p>
             </div>
           </div>
         )}

@@ -60,10 +60,24 @@ Deno.serve(async (req) => {
       event_id: stageCompletedEvent.id 
     }).catch(err => console.error('AI Operator trigger failed:', err));
 
+    // Check if this was the last stage in the workflow
+    const allStages = await base44.asServiceRole.entities.StageInstance.filter({
+      workflow_instance_id: stage.workflow_instance_id
+    });
+    const allCompleted = allStages.every(s => s.status === 'completed');
+
+    if (allCompleted) {
+      // Complete the entire workflow
+      await base44.asServiceRole.functions.invoke('completeWorkflow', {
+        workflow_instance_id: stage.workflow_instance_id
+      });
+    }
+
     return Response.json({
       success: true,
       stage,
-      summary: summaryResponse.data
+      summary: summaryResponse.data,
+      workflow_completed: allCompleted
     });
 
   } catch (error) {
