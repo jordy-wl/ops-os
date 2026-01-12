@@ -1,4 +1,5 @@
 import BusinessConceptDetail from './pages/BusinessConceptDetail';
+import ClientDetail from './pages/ClientDetail';
 import Clients from './pages/Clients';
 import Library from './pages/Library';
 import MyWork from './pages/MyWork';
@@ -10,12 +11,12 @@ import Settings from './pages/Settings';
 import Strategy from './pages/Strategy';
 import WorkflowBuilder from './pages/WorkflowBuilder';
 import Workflows from './pages/Workflows';
-import ClientDetail from './pages/ClientDetail';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
     "BusinessConceptDetail": BusinessConceptDetail,
+    "ClientDetail": ClientDetail,
     "Clients": Clients,
     "Library": Library,
     "MyWork": MyWork,
@@ -27,7 +28,6 @@ export const PAGES = {
     "Strategy": Strategy,
     "WorkflowBuilder": WorkflowBuilder,
     "Workflows": Workflows,
-    "ClientDetail": ClientDetail,
 }
 
 export const pagesConfig = {

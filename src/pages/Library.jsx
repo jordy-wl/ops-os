@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import CreateTemplateModal from '@/components/library/CreateTemplateModal';
 import {
   BookOpen,
   FileText,
@@ -35,12 +36,15 @@ const categoryColors = {
   other: 'from-gray-500 to-gray-600',
 };
 
-function TemplateCard({ template }) {
+function TemplateCard({ template, onEdit }) {
   const Icon = categoryIcons[template.category] || File;
   const colorClass = categoryColors[template.category] || categoryColors.other;
   
   return (
-    <div className="neumorphic-raised rounded-xl p-5 group cursor-pointer transition-all duration-200 hover:translate-y-[-2px]">
+    <div 
+      onClick={onEdit}
+      className="neumorphic-raised rounded-xl p-5 group cursor-pointer transition-all duration-200 hover:translate-y-[-2px]"
+    >
       <div className="flex items-start gap-4 mb-4">
         <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${colorClass} flex items-center justify-center`}>
           <Icon className="w-6 h-6 text-white" />
@@ -49,8 +53,11 @@ function TemplateCard({ template }) {
           <h3 className="font-medium truncate mb-1">{template.name}</h3>
           <p className="text-xs text-[#A0AEC0] capitalize">{template.category?.replace('_', ' ') || 'Other'}</p>
         </div>
-        <button className="p-2 rounded-lg hover:bg-[#3a3d44] opacity-0 group-hover:opacity-100 transition-opacity">
-          <MoreHorizontal className="w-4 h-4 text-[#A0AEC0]" />
+        <button 
+          onClick={(e) => { e.stopPropagation(); onEdit(); }}
+          className="p-2 rounded-lg hover:bg-[#3a3d44] opacity-0 group-hover:opacity-100 transition-opacity"
+        >
+          <Edit className="w-4 h-4 text-[#A0AEC0]" />
         </button>
       </div>
 
@@ -62,12 +69,12 @@ function TemplateCard({ template }) {
         <div className="flex items-center gap-3 text-xs text-[#4A5568]">
           <span>v{template.version || 1}</span>
           <span>•</span>
-          <span className="capitalize">{template.output_format || 'PDF'}</span>
+          <span className="capitalize">{template.output_format || 'Markdown'}</span>
         </div>
-        {template.placeholders?.length > 0 && (
+        {template.placeholder_schema?.length > 0 && (
           <span className="text-xs text-[#00E5FF] flex items-center gap-1">
             <LinkIcon className="w-3 h-3" />
-            {template.placeholders.length} fields
+            {template.placeholder_schema.length} fields
           </span>
         )}
       </div>
@@ -79,6 +86,8 @@ export default function Library() {
   const [activeTab, setActiveTab] = useState('documents'); // documents, sops, assets
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState(null);
 
   const { data: templates = [], isLoading: templatesLoading } = useQuery({
     queryKey: ['document-templates'],
@@ -103,7 +112,10 @@ export default function Library() {
           <p className="text-[#A0AEC0]">{templates.length} templates and assets</p>
         </div>
         
-        <button className="px-4 py-2 rounded-lg bg-gradient-to-r from-[#00E5FF] to-[#0099ff] text-[#121212] font-medium text-sm hover:shadow-lg hover:shadow-[#00E5FF]/30 transition-all flex items-center gap-2">
+        <button 
+          onClick={() => setShowCreateModal(true)}
+          className="px-4 py-2 rounded-lg bg-gradient-to-r from-[#00E5FF] to-[#0099ff] text-[#121212] font-medium text-sm hover:shadow-lg hover:shadow-[#00E5FF]/30 transition-all flex items-center gap-2"
+        >
           <Plus className="w-4 h-4" />
           New Template
         </button>
@@ -203,11 +215,24 @@ export default function Library() {
         ) : (
           <div className="grid grid-cols-3 gap-4">
             {filteredTemplates.map(template => (
-              <TemplateCard key={template.id} template={template} />
+              <TemplateCard 
+                key={template.id} 
+                template={template} 
+                onEdit={() => setEditingTemplate(template)}
+              />
             ))}
           </div>
         )
       )}
+
+      <CreateTemplateModal 
+        isOpen={showCreateModal || !!editingTemplate} 
+        onClose={() => {
+          setShowCreateModal(false);
+          setEditingTemplate(null);
+        }}
+        template={editingTemplate}
+      />
 
       {activeTab === 'sops' && (
         <div className="neumorphic-pressed rounded-xl p-12 text-center">
