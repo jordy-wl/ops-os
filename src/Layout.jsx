@@ -24,6 +24,7 @@ const navItems = [
   { name: 'People', icon: Users, label: 'People' },
   { name: 'Strategy', icon: Sparkles, label: 'Strategy', isAI: true },
   { name: 'Library', icon: BookOpen, label: 'Library' },
+  { name: 'KnowledgeLibrary', icon: BookOpen, label: 'Knowledge' },
 ];
 
 export default function Layout({ children, currentPageName }) {

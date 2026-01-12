@@ -7,6 +7,7 @@ import { ArrowLeft } from 'lucide-react';
 import ClientFirmographics from '@/components/clients/ClientFirmographics';
 import ClientActivityFeed from '@/components/clients/ClientActivityFeed';
 import ClientDataAndAssets from '@/components/clients/ClientDataAndAssets';
+import ClientCommunicationPanel from '@/components/clients/ClientCommunicationPanel';
 
 export default function ClientDetail() {
   const navigate = useNavigate();
@@ -119,11 +120,17 @@ export default function ClientDetail() {
         </div>
 
         {/* Right Column - Data & Assets */}
-        <div className="col-span-4">
+        <div className="col-span-4 space-y-6">
           <ClientDataAndAssets 
             client={client}
             documents={documents}
           />
+          {clientContacts.length > 0 && (
+            <ClientCommunicationPanel 
+              client={client}
+              contacts={clientContacts}
+            />
+          )}
         </div>
       </div>
     </div>
