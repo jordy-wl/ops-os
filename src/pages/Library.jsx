@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { useNavigate } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
 import CreateTemplateModal from '@/components/library/CreateTemplateModal';
 import {
   BookOpen,
@@ -13,7 +15,8 @@ import {
   Eye,
   Edit,
   Trash2,
-  Link as LinkIcon
+  Link as LinkIcon,
+  ClipboardList
 } from 'lucide-react';
 
 const categoryIcons = {
@@ -83,7 +86,8 @@ function TemplateCard({ template, onEdit }) {
 }
 
 export default function Library() {
-  const [activeTab, setActiveTab] = useState('documents'); // documents, sops, assets
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('documents'); // documents, forms, sops, assets
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -134,6 +138,17 @@ export default function Library() {
           >
             <FileText className="w-4 h-4 inline mr-2" />
             Documents
+          </button>
+          <button
+            onClick={() => setActiveTab('forms')}
+            className={`px-4 py-2 rounded-md text-sm transition-all ${
+              activeTab === 'forms' 
+                ? 'bg-[#2C2E33] text-[#00E5FF] shadow' 
+                : 'text-[#A0AEC0] hover:text-[#F5F5F5]'
+            }`}
+          >
+            <ClipboardList className="w-4 h-4 inline mr-2" />
+            Forms
           </button>
           <button
             onClick={() => setActiveTab('sops')}
@@ -233,6 +248,20 @@ export default function Library() {
         }}
         template={editingTemplate}
       />
+
+      {activeTab === 'forms' && (
+        <div className="neumorphic-pressed rounded-xl p-12 text-center">
+          <ClipboardList className="w-12 h-12 text-[#4A5568] mx-auto mb-4" />
+          <h3 className="font-medium mb-2">Client-Facing Forms</h3>
+          <p className="text-[#A0AEC0] mb-4">Create forms to collect data from clients automatically.</p>
+          <button 
+            onClick={() => navigate(createPageUrl('FormTemplates'))}
+            className="px-4 py-2 rounded-lg bg-gradient-to-r from-[#BD00FF] to-[#9000cc] text-white font-medium text-sm"
+          >
+            Manage Forms
+          </button>
+        </div>
+      )}
 
       {activeTab === 'sops' && (
         <div className="neumorphic-pressed rounded-xl p-12 text-center">

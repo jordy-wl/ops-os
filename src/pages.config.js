@@ -11,6 +11,8 @@ import Settings from './pages/Settings';
 import Strategy from './pages/Strategy';
 import WorkflowBuilder from './pages/WorkflowBuilder';
 import Workflows from './pages/Workflows';
+import FormTemplates from './pages/FormTemplates';
+import ClientForm from './pages/ClientForm';
 import __Layout from './Layout.jsx';
 
 
@@ -28,6 +30,8 @@ export const PAGES = {
     "Strategy": Strategy,
     "WorkflowBuilder": WorkflowBuilder,
     "Workflows": Workflows,
+    "FormTemplates": FormTemplates,
+    "ClientForm": ClientForm,
 }
 
 export const pagesConfig = {
