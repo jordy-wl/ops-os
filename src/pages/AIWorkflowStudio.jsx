@@ -23,12 +23,12 @@ import { toast } from 'sonner';
 
 const MessageBubble = ({ message, isUser }) => (
   <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4`}>
-    <div className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+    <div className={`max-w-[95%] md:max-w-[80%] rounded-2xl px-3 md:px-4 py-2 md:py-3 ${
       isUser 
         ? 'bg-gradient-to-r from-[#00E5FF] to-[#0099ff] text-[#121212]' 
         : 'glass border border-white/10'
     }`}>
-      <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+      <p className="text-xs md:text-sm leading-relaxed whitespace-pre-wrap break-words">{message.content}</p>
     </div>
   </div>
 );
@@ -43,19 +43,19 @@ const WorkflowSuggestionCard = ({ suggestion, onApprove, onEdit, onReject }) => 
   };
 
   return (
-    <div className="neumorphic-raised rounded-xl p-4 mb-3">
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex items-center gap-2">
-          {suggestion.type === 'workflow' && <Layers className="w-5 h-5 text-[#00E5FF]" />}
-          {suggestion.type === 'stage' && <Target className="w-5 h-5 text-[#BD00FF]" />}
-          {suggestion.type === 'deliverable' && <FileText className="w-5 h-5 text-[#00E5FF]" />}
-          {suggestion.type === 'task' && <CheckSquare className="w-5 h-5 text-[#BD00FF]" />}
-          <span className="text-xs uppercase font-medium text-[#A0AEC0]">{suggestion.type}</span>
+    <div className="neumorphic-raised rounded-xl p-3 md:p-4 mb-3">
+      <div className="flex items-start justify-between mb-3 gap-2">
+        <div className="flex items-center gap-2 min-w-0 flex-shrink">
+          {suggestion.type === 'workflow' && <Layers className="w-4 h-4 md:w-5 md:h-5 text-[#00E5FF] flex-shrink-0" />}
+          {suggestion.type === 'stage' && <Target className="w-4 h-4 md:w-5 md:h-5 text-[#BD00FF] flex-shrink-0" />}
+          {suggestion.type === 'deliverable' && <FileText className="w-4 h-4 md:w-5 md:h-5 text-[#00E5FF] flex-shrink-0" />}
+          {suggestion.type === 'task' && <CheckSquare className="w-4 h-4 md:w-5 md:h-5 text-[#BD00FF] flex-shrink-0" />}
+          <span className="text-xs uppercase font-medium text-[#A0AEC0] truncate">{suggestion.type}</span>
         </div>
         {!isEditing && (
           <button 
             onClick={() => setIsEditing(true)}
-            className="p-1 rounded hover:bg-[#2C2E33] text-[#A0AEC0] hover:text-[#F5F5F5]"
+            className="p-1 rounded hover:bg-[#2C2E33] text-[#A0AEC0] hover:text-[#F5F5F5] flex-shrink-0"
           >
             <Edit2 className="w-4 h-4" />
           </button>
@@ -63,7 +63,7 @@ const WorkflowSuggestionCard = ({ suggestion, onApprove, onEdit, onReject }) => 
       </div>
 
       {isEditing ? (
-        <div className="space-y-3">
+        <div className="space-y-3 w-full">
           <Input
             value={editedData.name}
             onChange={(e) => setEditedData({ ...editedData, name: e.target.value })}
@@ -76,26 +76,26 @@ const WorkflowSuggestionCard = ({ suggestion, onApprove, onEdit, onReject }) => 
             placeholder="Description"
             className="bg-[#1A1B1E] border-[#2C2E33] min-h-[80px]"
           />
-          <div className="flex gap-2">
-            <Button onClick={handleSave} size="sm" className="bg-[#00E5FF] text-[#121212]">
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={handleSave} size="sm" className="bg-[#00E5FF] text-[#121212] flex-1 md:flex-none">
               Save
             </Button>
-            <Button onClick={() => setIsEditing(false)} size="sm" variant="outline">
+            <Button onClick={() => setIsEditing(false)} size="sm" variant="outline" className="flex-1 md:flex-none text-[#F5F5F5]">
               Cancel
             </Button>
           </div>
         </div>
       ) : (
         <>
-          <h4 className="font-semibold mb-2">{suggestion.name}</h4>
+          <h4 className="font-semibold mb-2 text-sm md:text-base break-words">{suggestion.name}</h4>
           {suggestion.description && (
-            <p className="text-sm text-[#A0AEC0] mb-3">{suggestion.description}</p>
+            <p className="text-xs md:text-sm text-[#A0AEC0] mb-3 break-words">{suggestion.description}</p>
           )}
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button 
               onClick={() => onApprove(suggestion)} 
               size="sm" 
-              className="bg-green-500/20 text-green-400 hover:bg-green-500/30 border border-green-500/30"
+              className="bg-green-500/20 text-green-400 hover:bg-green-500/30 border border-green-500/30 flex-1 md:flex-none"
             >
               <Check className="w-4 h-4 mr-1" />
               Approve
@@ -104,7 +104,7 @@ const WorkflowSuggestionCard = ({ suggestion, onApprove, onEdit, onReject }) => 
               onClick={() => onReject(suggestion)} 
               size="sm" 
               variant="outline"
-              className="border-red-500/30 text-red-400 hover:bg-red-500/20"
+              className="border-red-500/30 text-red-400 hover:bg-red-500/20 flex-1 md:flex-none"
             >
               <X className="w-4 h-4 mr-1" />
               Reject
@@ -234,23 +234,23 @@ export default function AIWorkflowStudio() {
   return (
     <div className="h-screen flex flex-col bg-[#121212]">
       {/* Header */}
-      <div className="glass border-b border-white/5 px-6 py-4">
+      <div className="glass border-b border-white/5 px-4 md:px-6 py-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#BD00FF] to-[#00E5FF] flex items-center justify-center">
             <Sparkles className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-xl font-bold">AI Workflow Studio</h1>
-            <p className="text-sm text-[#A0AEC0]">Build workflows with AI assistance</p>
+            <h1 className="text-lg md:text-xl font-bold">AI Workflow Studio</h1>
+            <p className="text-xs md:text-sm text-[#A0AEC0]">Build workflows with AI assistance</p>
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-hidden flex">
+      <div className="flex-1 overflow-hidden flex flex-col md:flex-row">
         {/* Chat Area */}
-        <div className="flex-1 flex flex-col">
-          <div className="flex-1 overflow-y-auto p-6 scrollbar-dark">
+        <div className="flex-1 flex flex-col min-h-0">
+          <div className="flex-1 overflow-y-auto p-4 md:p-6 scrollbar-dark">
             {messages.map((msg, idx) => (
               <MessageBubble key={idx} message={msg} isUser={msg.role === 'user'} />
             ))}
@@ -286,13 +286,13 @@ export default function AIWorkflowStudio() {
           </div>
 
           {/* Input Area */}
-          <div className="glass border-t border-white/5 p-4">
+          <div className="glass border-t border-white/5 p-3 md:p-4">
             {uploadedFiles.length > 0 && (
               <div className="mb-3 flex flex-wrap gap-2">
                 {uploadedFiles.map((file, idx) => (
-                  <div key={idx} className="neumorphic-pressed px-3 py-1 rounded-lg flex items-center gap-2 text-sm">
-                    <FileText className="w-4 h-4 text-[#00E5FF]" />
-                    <span className="text-[#A0AEC0]">{file.name}</span>
+                  <div key={idx} className="neumorphic-pressed px-2 md:px-3 py-1 rounded-lg flex items-center gap-2 text-xs md:text-sm max-w-full">
+                    <FileText className="w-4 h-4 text-[#00E5FF] flex-shrink-0" />
+                    <span className="text-[#A0AEC0] truncate">{file.name}</span>
                     <button 
                       onClick={() => setUploadedFiles(prev => prev.filter((_, i) => i !== idx))}
                       className="text-[#4A5568] hover:text-[#F5F5F5]"
@@ -304,12 +304,12 @@ export default function AIWorkflowStudio() {
               </div>
             )}
             
-            <div className="flex gap-2">
+            <div className="flex gap-2 items-end">
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="neumorphic-raised p-3 rounded-lg hover:bg-[#2C2E33] transition-colors"
+                className="neumorphic-raised p-2 md:p-3 rounded-lg hover:bg-[#2C2E33] transition-colors flex-shrink-0"
               >
-                <Upload className="w-5 h-5 text-[#A0AEC0]" />
+                <Upload className="w-4 h-4 md:w-5 md:h-5 text-[#A0AEC0]" />
               </button>
               <input
                 ref={fileInputRef}
@@ -329,17 +329,17 @@ export default function AIWorkflowStudio() {
                     handleSend();
                   }
                 }}
-                placeholder="Describe your workflow or ask questions..."
-                className="flex-1 bg-[#1A1B1E] border-[#2C2E33] focus:border-[#00E5FF] resize-none"
+                placeholder="Describe your workflow..."
+                className="flex-1 bg-[#1A1B1E] border-[#2C2E33] focus:border-[#00E5FF] resize-none text-sm min-w-0"
                 rows={2}
               />
               
               <Button
                 onClick={handleSend}
                 disabled={buildWorkflowMutation.isPending || (!input.trim() && uploadedFiles.length === 0)}
-                className="bg-gradient-to-r from-[#00E5FF] to-[#0099ff] text-[#121212] hover:shadow-lg hover:shadow-[#00E5FF]/30"
+                className="bg-gradient-to-r from-[#00E5FF] to-[#0099ff] text-[#121212] hover:shadow-lg hover:shadow-[#00E5FF]/30 flex-shrink-0 p-2 md:px-4"
               >
-                <Send className="w-5 h-5" />
+                <Send className="w-4 h-4 md:w-5 md:h-5" />
               </Button>
             </div>
           </div>
@@ -347,19 +347,19 @@ export default function AIWorkflowStudio() {
 
         {/* Context Panel */}
         {workflowContext && (
-          <div className="w-80 glass border-l border-white/5 p-4 overflow-y-auto scrollbar-dark">
-            <h3 className="font-semibold mb-4 flex items-center gap-2">
-              <Layers className="w-5 h-5 text-[#00E5FF]" />
+          <div className="w-full md:w-80 glass border-t md:border-t-0 md:border-l border-white/5 p-4 overflow-y-auto scrollbar-dark max-h-64 md:max-h-none">
+            <h3 className="font-semibold mb-4 flex items-center gap-2 text-sm md:text-base">
+              <Layers className="w-4 h-4 md:w-5 md:h-5 text-[#00E5FF]" />
               Workflow Progress
             </h3>
             
             {workflowContext.workflow && (
               <div className="mb-4">
                 <div className="text-xs text-[#A0AEC0] mb-1">Workflow</div>
-                <div className="neumorphic-pressed rounded-lg p-3">
-                  <p className="font-medium text-sm">{workflowContext.workflow.name}</p>
+                <div className="neumorphic-pressed rounded-lg p-2 md:p-3">
+                  <p className="font-medium text-xs md:text-sm break-words">{workflowContext.workflow.name}</p>
                   {workflowContext.workflow.description && (
-                    <p className="text-xs text-[#A0AEC0] mt-1">{workflowContext.workflow.description}</p>
+                    <p className="text-xs text-[#A0AEC0] mt-1 break-words">{workflowContext.workflow.description}</p>
                   )}
                 </div>
               </div>
@@ -370,7 +370,7 @@ export default function AIWorkflowStudio() {
                 <div className="text-xs text-[#A0AEC0] mb-2">Stages ({workflowContext.stages.length})</div>
                 <div className="space-y-2">
                   {workflowContext.stages.map((stage, idx) => (
-                    <div key={idx} className="neumorphic-pressed rounded-lg p-2 text-sm">
+                    <div key={idx} className="neumorphic-pressed rounded-lg p-2 text-xs md:text-sm break-words">
                       {stage.name}
                     </div>
                   ))}
@@ -383,7 +383,7 @@ export default function AIWorkflowStudio() {
                 <div className="text-xs text-[#A0AEC0] mb-2">Deliverables ({workflowContext.deliverables.length})</div>
                 <div className="space-y-2">
                   {workflowContext.deliverables.map((deliverable, idx) => (
-                    <div key={idx} className="neumorphic-pressed rounded-lg p-2 text-sm">
+                    <div key={idx} className="neumorphic-pressed rounded-lg p-2 text-xs md:text-sm break-words">
                       {deliverable.name}
                     </div>
                   ))}
@@ -396,7 +396,7 @@ export default function AIWorkflowStudio() {
                 <div className="text-xs text-[#A0AEC0] mb-2">Tasks ({workflowContext.tasks.length})</div>
                 <div className="space-y-2">
                   {workflowContext.tasks.map((task, idx) => (
-                    <div key={idx} className="neumorphic-pressed rounded-lg p-2 text-sm">
+                    <div key={idx} className="neumorphic-pressed rounded-lg p-2 text-xs md:text-sm break-words">
                       {task.name}
                     </div>
                   ))}
