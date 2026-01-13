@@ -17,6 +17,9 @@ export default function CreateTemplateModal({ isOpen, onClose, template }) {
     category: 'other',
     content_template: '',
     placeholder_schema: [],
+    ai_prompt_instructions: '',
+    required_entity_data: [],
+    rag_keywords: [],
     output_format: 'markdown'
   });
 
@@ -54,6 +57,28 @@ export default function CreateTemplateModal({ isOpen, onClose, template }) {
     const updated = [...(formData.placeholder_schema || [])];
     updated.splice(index, 1);
     setFormData({ ...formData, placeholder_schema: updated });
+  };
+
+  const addRequiredData = () => {
+    setFormData({
+      ...formData,
+      required_entity_data: [
+        ...(formData.required_entity_data || []),
+        { entity_type: 'Client', field_path: '', description: '', is_required: false }
+      ]
+    });
+  };
+
+  const updateRequiredData = (index, field, value) => {
+    const updated = [...(formData.required_entity_data || [])];
+    updated[index] = { ...updated[index], [field]: value };
+    setFormData({ ...formData, required_entity_data: updated });
+  };
+
+  const removeRequiredData = (index) => {
+    const updated = [...(formData.required_entity_data || [])];
+    updated.splice(index, 1);
+    setFormData({ ...formData, required_entity_data: updated });
   };
 
   const insertPlaceholder = (key) => {
@@ -185,6 +210,84 @@ export default function CreateTemplateModal({ isOpen, onClose, template }) {
                 theme="snow"
                 className="h-64"
               />
+            </div>
+          </div>
+
+          {/* AI Configuration */}
+          <div className="border-t border-[#2C2E33] pt-6">
+            <h3 className="text-sm font-semibold text-[#BD00FF] mb-4">AI Configuration</h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-[#A0AEC0] mb-2">AI Instructions</label>
+                <Textarea
+                  value={formData.ai_prompt_instructions}
+                  onChange={(e) => setFormData({ ...formData, ai_prompt_instructions: e.target.value })}
+                  placeholder="Tell the AI how to elaborate, what tone to use, what to emphasize..."
+                  className="bg-[#1A1B1E] border-[#2C2E33] h-24"
+                />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <label className="text-sm font-medium text-[#A0AEC0]">Required Entity Data</label>
+                  <Button size="sm" variant="outline" onClick={addRequiredData} className="border-[#2C2E33]">
+                    <Plus className="w-4 h-4 mr-1" />
+                    Add Data Point
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  {(formData.required_entity_data || []).map((data, idx) => (
+                    <div key={idx} className="flex gap-2 items-start neumorphic-pressed p-3 rounded-lg">
+                      <Select 
+                        value={data.entity_type} 
+                        onValueChange={(v) => updateRequiredData(idx, 'entity_type', v)}
+                      >
+                        <SelectTrigger className="w-40 bg-[#1A1B1E] border-[#2C2E33] text-sm">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-[#2C2E33] border-[#3a3d44]">
+                          <SelectItem value="Client">Client</SelectItem>
+                          <SelectItem value="WorkflowInstance">Workflow</SelectItem>
+                          <SelectItem value="Contact">Contact</SelectItem>
+                          <SelectItem value="TaskInstance">Task</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Input
+                        value={data.field_path}
+                        onChange={(e) => updateRequiredData(idx, 'field_path', e.target.value)}
+                        placeholder="Field path (e.g., name, metadata.company_size)"
+                        className="flex-1 bg-[#1A1B1E] border-[#2C2E33] text-sm"
+                      />
+                      <Input
+                        value={data.description}
+                        onChange={(e) => updateRequiredData(idx, 'description', e.target.value)}
+                        placeholder="Description"
+                        className="flex-1 bg-[#1A1B1E] border-[#2C2E33] text-sm"
+                      />
+                      <button onClick={() => removeRequiredData(idx)} className="p-2 hover:bg-[#3a3d44] rounded">
+                        <Trash2 className="w-4 h-4 text-red-400" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[#A0AEC0] mb-2">RAG Keywords</label>
+                <p className="text-xs text-[#4A5568] mb-2">
+                  Keywords to search your knowledge library for relevant context
+                </p>
+                <Input
+                  value={(formData.rag_keywords || []).join(', ')}
+                  onChange={(e) => setFormData({ 
+                    ...formData, 
+                    rag_keywords: e.target.value.split(',').map(k => k.trim()).filter(k => k) 
+                  })}
+                  placeholder="e.g., onboarding, compliance, best practices"
+                  className="bg-[#1A1B1E] border-[#2C2E33]"
+                />
+              </div>
             </div>
           </div>
 
