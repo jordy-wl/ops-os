@@ -3,6 +3,7 @@ import ClientDetail from './pages/ClientDetail';
 import ClientForm from './pages/ClientForm';
 import Clients from './pages/Clients';
 import FormTemplates from './pages/FormTemplates';
+import KnowledgeLibrary from './pages/KnowledgeLibrary';
 import Library from './pages/Library';
 import MyWork from './pages/MyWork';
 import Offerings from './pages/Offerings';
@@ -13,7 +14,6 @@ import Settings from './pages/Settings';
 import Strategy from './pages/Strategy';
 import WorkflowBuilder from './pages/WorkflowBuilder';
 import Workflows from './pages/Workflows';
-import KnowledgeLibrary from './pages/KnowledgeLibrary';
 import __Layout from './Layout.jsx';
 
 
@@ -23,6 +23,7 @@ export const PAGES = {
     "ClientForm": ClientForm,
     "Clients": Clients,
     "FormTemplates": FormTemplates,
+    "KnowledgeLibrary": KnowledgeLibrary,
     "Library": Library,
     "MyWork": MyWork,
     "Offerings": Offerings,
@@ -33,7 +34,6 @@ export const PAGES = {
     "Strategy": Strategy,
     "WorkflowBuilder": WorkflowBuilder,
     "Workflows": Workflows,
-    "KnowledgeLibrary": KnowledgeLibrary,
 }
 
 export const pagesConfig = {
