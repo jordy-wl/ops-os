@@ -95,8 +95,8 @@ export default function Layout({ children, currentPageName }) {
         }
       `}</style>
 
-      {/* Navigation Dock */}
-      <nav className="fixed left-0 top-0 h-full w-20 glass z-50 flex flex-col items-center py-6">
+      {/* Navigation Dock - Desktop Sidebar / Mobile Bottom Nav */}
+      <nav className="fixed left-0 top-0 h-full w-20 glass z-50 md:flex flex-col items-center py-6 hidden">
         {/* Logo */}
         <div className="mb-8">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#00E5FF] to-[#BD00FF] flex items-center justify-center font-semibold text-sm">
@@ -152,12 +152,34 @@ export default function Layout({ children, currentPageName }) {
         </Link>
       </nav>
 
+      {/* Mobile Bottom Nav */}
+      <nav className="fixed bottom-0 left-0 right-0 glass z-50 md:hidden border-t border-white/5">
+        <div className="flex items-center justify-around py-3 px-2">
+          {navItems.slice(0, 5).map((item) => {
+            const isActive = currentPageName === item.name;
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.name}
+                to={createPageUrl(item.name)}
+                className="flex flex-col items-center gap-1 flex-1"
+              >
+                <Icon className={`w-5 h-5 ${isActive ? 'text-[#00E5FF]' : 'text-[#A0AEC0]'}`} />
+                <span className={`text-[10px] ${isActive ? 'text-[#00E5FF]' : 'text-[#A0AEC0]'}`}>
+                  {item.label}
+                </span>
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
+
       {/* Main Content */}
-      <div className="flex-1 ml-20">
+      <div className="flex-1 md:ml-20">
         {/* Top Command Bar */}
-        <header className="fixed top-0 left-20 right-0 h-16 glass z-40 flex items-center justify-between px-6">
+        <header className="fixed top-0 md:left-20 left-0 right-0 h-16 glass z-40 flex items-center justify-between px-4 md:px-6">
           {/* Omnibox */}
-          <div className="flex-1 max-w-2xl mx-auto">
+          <div className="flex-1 max-w-2xl mx-auto hidden md:block">
             <div className="neumorphic-pressed rounded-full px-4 py-2 flex items-center gap-3">
               <Search className="w-4 h-4 text-[#A0AEC0]" />
               <input
@@ -170,6 +192,11 @@ export default function Layout({ children, currentPageName }) {
                 <span>K</span>
               </div>
             </div>
+          </div>
+
+          {/* Mobile: Show app name */}
+          <div className="md:hidden flex-1">
+            <div className="text-sm font-semibold">Operations OS</div>
           </div>
 
           {/* Right Icons */}
@@ -185,13 +212,13 @@ export default function Layout({ children, currentPageName }) {
         </header>
 
         {/* Page Content */}
-        <main className="pt-16 min-h-screen scrollbar-dark">
+        <main className="pt-16 pb-20 md:pb-0 min-h-screen scrollbar-dark">
           {children}
         </main>
       </div>
 
-      {/* Create FAB */}
-      <div className="fixed bottom-6 left-6 z-50">
+      {/* Create FAB - Hide on mobile */}
+      <div className="fixed bottom-6 left-6 z-50 hidden md:block">
         <div className="relative">
           <button
             onClick={() => setIsCreateOpen(!isCreateOpen)}
