@@ -17,8 +17,10 @@ import {
   Trash2,
   Link as LinkIcon,
   ClipboardList,
-  Lightbulb
+  Lightbulb,
+  Filter
 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const categoryIcons = {
   proposal: FileText,
@@ -91,6 +93,7 @@ export default function Library() {
   const [activeTab, setActiveTab] = useState('documents'); // documents, forms, sops, assets, knowledge
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
+  const [clientFilter, setClientFilter] = useState('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState(null);
 
@@ -104,11 +107,29 @@ export default function Library() {
     queryFn: () => base44.entities.KnowledgeAsset.filter({ is_active: true }, '-created_date', 50)
   });
 
+  const { data: documentInstances = [], isLoading: instancesLoading } = useQuery({
+    queryKey: ['document-instances'],
+    queryFn: () => base44.entities.DocumentInstance.list('-created_date', 100),
+    enabled: activeTab === 'documents',
+  });
+
+  const { data: clients = [] } = useQuery({
+    queryKey: ['clients'],
+    queryFn: () => base44.entities.Client.list('name', 100),
+    enabled: activeTab === 'documents',
+  });
+
   const filteredTemplates = templates.filter(t => {
     const matchesSearch = t.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          t.description?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = categoryFilter === 'all' || t.category === categoryFilter;
     return matchesSearch && matchesCategory;
+  });
+
+  const filteredDocumentInstances = documentInstances.filter(d => {
+    const matchesSearch = d.name?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesClient = clientFilter === 'all' || d.client_id === clientFilter;
+    return matchesSearch && matchesClient;
   });
 
   const categories = ['all', 'proposal', 'contract', 'welcome_pack', 'compliance', 'onboarding', 'report', 'other'];
@@ -204,57 +225,112 @@ export default function Library() {
         </div>
       </div>
 
-      {/* Category Filter */}
+      {/* Filters */}
       {activeTab === 'documents' && (
-        <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2">
-          {categories.map(cat => (
-            <button
-              key={cat}
-              onClick={() => setCategoryFilter(cat)}
-              className={`px-4 py-2 rounded-lg text-sm whitespace-nowrap transition-all ${
-                categoryFilter === cat
-                  ? 'bg-[#00E5FF]/20 text-[#00E5FF] border border-[#00E5FF]/30'
-                  : 'bg-[#2C2E33] text-[#A0AEC0] hover:text-[#F5F5F5]'
-              }`}
-            >
-              {cat === 'all' ? 'All' : cat.replace('_', ' ')}
-            </button>
-          ))}
+        <div className="flex items-center gap-4 mb-6">
+          <div className="flex items-center gap-2 overflow-x-auto pb-2">
+            {categories.map(cat => (
+              <button
+                key={cat}
+                onClick={() => setCategoryFilter(cat)}
+                className={`px-4 py-2 rounded-lg text-sm whitespace-nowrap transition-all ${
+                  categoryFilter === cat
+                    ? 'bg-[#00E5FF]/20 text-[#00E5FF] border border-[#00E5FF]/30'
+                    : 'bg-[#2C2E33] text-[#A0AEC0] hover:text-[#F5F5F5]'
+                }`}
+              >
+                {cat === 'all' ? 'All' : cat.replace('_', ' ')}
+              </button>
+            ))}
+          </div>
+          <Select value={clientFilter} onValueChange={setClientFilter}>
+            <SelectTrigger className="w-56 bg-[#1A1B1E] border-[#2C2E33]">
+              <SelectValue placeholder="Filter by client" />
+            </SelectTrigger>
+            <SelectContent className="bg-[#2C2E33] border-[#3a3d44]">
+              <SelectItem value="all">All Clients</SelectItem>
+              {clients.map(client => (
+                <SelectItem key={client.id} value={client.id}>
+                  {client.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       )}
 
       {/* Content */}
       {activeTab === 'documents' && (
-        templatesLoading ? (
-          <div className="grid grid-cols-3 gap-4">
-            {[1,2,3,4,5,6].map(i => (
-              <div key={i} className="h-48 bg-[#2C2E33] rounded-xl animate-pulse" />
-            ))}
-          </div>
-        ) : filteredTemplates.length === 0 ? (
-          <div className="neumorphic-pressed rounded-xl p-12 text-center">
-            <FileText className="w-12 h-12 text-[#4A5568] mx-auto mb-4" />
-            <h3 className="font-medium mb-2">No Templates Found</h3>
-            <p className="text-[#A0AEC0] mb-4">
-              {searchQuery ? 'Try a different search term.' : 'Create your first document template.'}
-            </p>
-            {!searchQuery && (
-              <button className="px-4 py-2 rounded-lg bg-gradient-to-r from-[#00E5FF] to-[#0099ff] text-[#121212] font-medium text-sm">
-                Create Template
-              </button>
+        <div className="space-y-8">
+          {/* Templates Section */}
+          <div>
+            <h3 className="text-sm font-semibold text-[#A0AEC0] mb-4">Document Templates</h3>
+            {templatesLoading ? (
+              <div className="grid grid-cols-3 gap-4">
+                {[1,2,3,4,5,6].map(i => (
+                  <div key={i} className="h-48 bg-[#2C2E33] rounded-xl animate-pulse" />
+                ))}
+              </div>
+            ) : filteredTemplates.length === 0 ? (
+              <div className="neumorphic-pressed rounded-xl p-12 text-center">
+                <FileText className="w-12 h-12 text-[#4A5568] mx-auto mb-4" />
+                <h3 className="font-medium mb-2">No Templates Found</h3>
+                <p className="text-[#A0AEC0] mb-4">
+                  {searchQuery ? 'Try a different search term.' : 'Create your first document template.'}
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 gap-4">
+                {filteredTemplates.map(template => (
+                  <TemplateCard 
+                    key={template.id} 
+                    template={template} 
+                    onEdit={() => setEditingTemplate(template)}
+                  />
+                ))}
+              </div>
             )}
           </div>
-        ) : (
-          <div className="grid grid-cols-3 gap-4">
-            {filteredTemplates.map(template => (
-              <TemplateCard 
-                key={template.id} 
-                template={template} 
-                onEdit={() => setEditingTemplate(template)}
-              />
-            ))}
+
+          {/* Generated Documents Section */}
+          <div>
+            <h3 className="text-sm font-semibold text-[#A0AEC0] mb-4">Generated Documents</h3>
+            {instancesLoading ? (
+              <div className="grid grid-cols-3 gap-4">
+                {[1,2,3].map(i => (
+                  <div key={i} className="h-32 bg-[#2C2E33] rounded-xl animate-pulse" />
+                ))}
+              </div>
+            ) : filteredDocumentInstances.length === 0 ? (
+              <div className="neumorphic-pressed rounded-xl p-8 text-center">
+                <p className="text-[#A0AEC0] text-sm">No documents generated yet</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 gap-4">
+                {filteredDocumentInstances.map(doc => {
+                  const client = clients.find(c => c.id === doc.client_id);
+                  return (
+                    <div key={doc.id} className="neumorphic-raised rounded-xl p-4 hover:translate-y-[-2px] transition-all cursor-pointer">
+                      <div className="flex items-start justify-between mb-2">
+                        <FileText className="w-5 h-5 text-[#00E5FF]" />
+                        <span className="text-xs px-2 py-1 rounded bg-[#00E5FF]/20 text-[#00E5FF] capitalize">
+                          {doc.status}
+                        </span>
+                      </div>
+                      <h4 className="font-medium text-sm mb-1 line-clamp-2">{doc.name}</h4>
+                      {client && (
+                        <p className="text-xs text-[#A0AEC0] mb-2">Client: {client.name}</p>
+                      )}
+                      <p className="text-xs text-[#4A5568]">
+                        {new Date(doc.created_date).toLocaleDateString()}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
-        )
+        </div>
       )}
 
       <CreateTemplateModal 
