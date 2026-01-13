@@ -135,9 +135,9 @@ export default function Library() {
   const categories = ['all', 'proposal', 'contract', 'welcome_pack', 'compliance', 'onboarding', 'report', 'other'];
 
   return (
-    <div className="p-6">
+    <div className="p-4 md:p-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="text-2xl font-semibold mb-1">Library</h1>
           <p className="text-[#A0AEC0]">{templates.length} templates and assets</p>
@@ -153,8 +153,8 @@ export default function Library() {
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-4 mb-6">
-        <div className="neumorphic-pressed rounded-lg p-1 flex">
+      <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4 mb-6">
+        <div className="neumorphic-pressed rounded-lg p-1 flex overflow-x-auto">
           <button
             onClick={() => setActiveTab('documents')}
             className={`px-4 py-2 rounded-md text-sm transition-all ${
@@ -213,7 +213,7 @@ export default function Library() {
         </div>
 
         {/* Search */}
-        <div className="flex-1 max-w-md neumorphic-pressed rounded-lg px-4 py-2 flex items-center gap-3">
+        <div className="flex-1 md:max-w-md neumorphic-pressed rounded-lg px-4 py-2 flex items-center gap-3">
           <Search className="w-4 h-4 text-[#A0AEC0]" />
           <input
             type="text"
