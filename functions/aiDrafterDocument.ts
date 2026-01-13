@@ -98,7 +98,10 @@ DOCUMENT TEMPLATE: ${template.name}
 CATEGORY: ${template.category}
 DESCRIPTION: ${template.description || 'No description'}
 
-${template.ai_prompt_instructions ? `AI INSTRUCTIONS:
+${template.document_outline ? `DOCUMENT OUTLINE (Follow this structure):
+${template.document_outline}
+
+` : ''}${template.ai_prompt_instructions ? `AI INSTRUCTIONS:
 ${template.ai_prompt_instructions}
 
 ` : ''}CLIENT DATA:
