@@ -105,15 +105,15 @@ export default function ClientDetail() {
         <p className="text-[#A0AEC0] capitalize">{client.industry?.replace('_', ' ') || 'No industry'}</p>
       </div>
 
-      {/* Three Column Layout - Responsive */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      {/* Three Column Layout */}
+      <div className="grid grid-cols-12 gap-6">
         {/* Left Column - Firmographics */}
-        <div className="lg:col-span-3">
+        <div className="col-span-3">
           <ClientFirmographics client={client} contacts={clientContacts} />
         </div>
 
         {/* Middle Column - Activity & Insights */}
-        <div className="lg:col-span-5 space-y-6">
+        <div className="col-span-5 space-y-6">
           <ProactiveInsightsWidget clientId={clientId} />
           <ClientActivityFeed 
             client={client}
@@ -127,7 +127,7 @@ export default function ClientDetail() {
         </div>
 
         {/* Right Column - Data & Assets */}
-        <div className="lg:col-span-4 space-y-6">
+        <div className="col-span-4 space-y-6">
           <ClientDataAndAssets 
             client={client}
             documents={documents}

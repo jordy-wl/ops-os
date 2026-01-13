@@ -253,9 +253,9 @@ export default function Strategy() {
   };
 
   return (
-    <div className="h-[calc(100vh-64px)] flex flex-col md:flex-row">
+    <div className="h-[calc(100vh-64px)] flex">
       {/* Spaces Sidebar */}
-      <div className="w-full md:w-72 border-b md:border-b-0 md:border-r border-[#2C2E33] p-4 flex flex-col md:max-h-none max-h-48 overflow-y-auto">
+      <div className="w-72 border-r border-[#2C2E33] p-4 flex flex-col">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-bold text-lg">Strategy</h2>
           <button 

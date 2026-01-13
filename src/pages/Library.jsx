@@ -135,9 +135,9 @@ export default function Library() {
   const categories = ['all', 'proposal', 'contract', 'welcome_pack', 'compliance', 'onboarding', 'report', 'other'];
 
   return (
-    <div className="p-4 md:p-6">
+    <div className="p-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+      <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-semibold mb-1">Library</h1>
           <p className="text-[#A0AEC0]">{templates.length} templates and assets</p>
@@ -153,8 +153,8 @@ export default function Library() {
       </div>
 
       {/* Tabs */}
-      <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4 mb-6">
-        <div className="neumorphic-pressed rounded-lg p-1 flex overflow-x-auto">
+      <div className="flex items-center gap-4 mb-6">
+        <div className="neumorphic-pressed rounded-lg p-1 flex">
           <button
             onClick={() => setActiveTab('documents')}
             className={`px-4 py-2 rounded-md text-sm transition-all ${
@@ -213,7 +213,7 @@ export default function Library() {
         </div>
 
         {/* Search */}
-        <div className="flex-1 md:max-w-md neumorphic-pressed rounded-lg px-4 py-2 flex items-center gap-3">
+        <div className="flex-1 max-w-md neumorphic-pressed rounded-lg px-4 py-2 flex items-center gap-3">
           <Search className="w-4 h-4 text-[#A0AEC0]" />
           <input
             type="text"
@@ -266,7 +266,7 @@ export default function Library() {
           <div>
             <h3 className="text-sm font-semibold text-[#A0AEC0] mb-4">Document Templates</h3>
             {templatesLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 {[1,2,3,4,5,6].map(i => (
                   <div key={i} className="h-48 bg-[#2C2E33] rounded-xl animate-pulse" />
                 ))}
@@ -280,7 +280,7 @@ export default function Library() {
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 {filteredTemplates.map(template => (
                   <TemplateCard 
                     key={template.id} 
@@ -296,7 +296,7 @@ export default function Library() {
           <div>
             <h3 className="text-sm font-semibold text-[#A0AEC0] mb-4">Generated Documents</h3>
             {instancesLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 {[1,2,3].map(i => (
                   <div key={i} className="h-32 bg-[#2C2E33] rounded-xl animate-pulse" />
                 ))}
@@ -306,7 +306,7 @@ export default function Library() {
                 <p className="text-[#A0AEC0] text-sm">No documents generated yet</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 {filteredDocumentInstances.map(doc => {
                   const client = clients.find(c => c.id === doc.client_id);
                   return (
@@ -380,7 +380,7 @@ export default function Library() {
 
       {activeTab === 'knowledge' && (
         knowledgeLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             {[1,2,3,4,5,6].map(i => (
               <div key={i} className="h-48 bg-[#2C2E33] rounded-xl animate-pulse" />
             ))}
@@ -392,7 +392,7 @@ export default function Library() {
             <p className="text-[#A0AEC0] mb-4">Save conversations from Strategy to build your knowledge base.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             {knowledgeAssets.map(asset => {
               const typeConfig = {
                 sop: { label: 'SOP', color: 'from-blue-500 to-blue-600', icon: BookOpen },
