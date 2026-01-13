@@ -49,42 +49,93 @@ Deno.serve(async (req) => {
     }
   }
 
-  // THINK PHASE: Fill template placeholders and generate content
+  // Gather required entity data based on template configuration
+  const requiredData = {};
+  if (template.required_entity_data && template.required_entity_data.length > 0) {
+    for (const requirement of template.required_entity_data) {
+      const { entity_type, field_path } = requirement;
+      
+      if (entity_type === 'Client') {
+        requiredData[field_path] = getNestedValue(clientData.client, field_path);
+      } else if (entity_type === 'WorkflowInstance' && workflowContext) {
+        requiredData[field_path] = getNestedValue(workflowContext, field_path);
+      }
+    }
+  }
+
+  // Perform RAG search if keywords are defined
+  let knowledgeContext = '';
+  if (template.rag_keywords && template.rag_keywords.length > 0) {
+    try {
+      const searchQuery = `${template.rag_keywords.join(' ')} ${template.name} ${template.category}`;
+      const searchResult = await base44.functions.invoke('semanticSearchKnowledge', {
+        query: searchQuery,
+        top_k: 5,
+      });
+      
+      if (searchResult.data?.results?.length > 0) {
+        knowledgeContext = searchResult.data.results
+          .map(r => `[${r.knowledge_asset.title}]\n${r.knowledge_asset.content || r.knowledge_asset.description || ''}`)
+          .join('\n\n---\n\n');
+      }
+    } catch (error) {
+      console.error('Error performing RAG search:', error);
+    }
+  }
+
+// Helper function to get nested values
+function getNestedValue(obj, path) {
+  return path.split('.').reduce((acc, part) => acc?.[part], obj);
+}
+
+  // THINK PHASE: Fill template placeholders and generate content with AI reasoning
   const generationPrompt = `You are the Drafter - the Document Engine AI for Business OS.
 
-Your role: Fill document templates with data and generate prose for missing sections.
-Your goal: Zero Manual Assembly.
+Your role: Fill document templates with data, reason over context, and generate intelligent prose.
+Your goal: Zero Manual Assembly with Deep Contextual Understanding.
 
 DOCUMENT TEMPLATE: ${template.name}
 CATEGORY: ${template.category}
 DESCRIPTION: ${template.description || 'No description'}
 
-CLIENT DATA:
+${template.ai_prompt_instructions ? `AI INSTRUCTIONS:
+${template.ai_prompt_instructions}
+
+` : ''}CLIENT DATA:
 ${JSON.stringify(clientData, null, 2)}
 
-${workflowContext ? `WORKFLOW CONTEXT:
+${Object.keys(requiredData).length > 0 ? `REQUIRED DATA POINTS:
+${JSON.stringify(requiredData, null, 2)}
+
+` : ''}${workflowContext ? `WORKFLOW CONTEXT:
 Workflow: ${workflowContext.name}
 Status: ${workflowContext.status}
-Progress: ${workflowContext.progress_percentage}%` : ''}
+Progress: ${workflowContext.progress_percentage}%
+Current Stage: ${workflowContext.current_stage_name || 'N/A'}
 
-${deliverableContext ? `DELIVERABLE CONTEXT:
+` : ''}${deliverableContext ? `DELIVERABLE CONTEXT:
 Deliverable: ${deliverableContext.name}
 Collected Fields: ${JSON.stringify(deliverableContext.fields || {}, null, 2)}
-Completed Tasks: ${deliverableContext.completed_tasks?.length || 0}` : ''}
+Completed Tasks: ${deliverableContext.completed_tasks?.length || 0}
 
-TEMPLATE CONTENT:
-${template.content || 'No template content provided - generate appropriate document structure for this category'}
+` : ''}${knowledgeContext ? `ORGANIZATIONAL KNOWLEDGE (RAG Context):
+${knowledgeContext}
+
+` : ''}TEMPLATE CONTENT:
+${template.content_template || 'No template content provided - generate appropriate document structure for this category'}
 
 PLACEHOLDERS TO FILL:
-${JSON.stringify(template.placeholders || [], null, 2)}
+${JSON.stringify(template.placeholder_schema || [], null, 2)}
 
 INSTRUCTIONS:
 1. Replace all placeholders with actual client data from the context
-2. Use workflow and deliverable context to enrich the document
-3. Write professional, coherent prose for any missing sections
-4. Ensure the document is production-ready and follows best practices for ${template.category} documents
-5. Output ONLY the final document content in clean markdown format
-6. Do not include any explanations or metadata - just the document itself
+2. Reason over the client's situation, workflow progress, and deliverable outcomes
+3. Use the organizational knowledge (RAG) to inform your writing with relevant best practices and context
+4. Fill in blanks and elaborate on sections based on all available context
+5. Write professional, coherent prose that addresses the document's purpose
+6. Ensure the document is production-ready and follows best practices for ${template.category} documents
+7. Output ONLY the final document content in clean markdown format
+8. Do not include any explanations or metadata - just the document itself
 
 Generate the complete document now:`;
 
