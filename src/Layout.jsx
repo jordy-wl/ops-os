@@ -30,7 +30,7 @@ export default function Layout({ children, currentPageName }) {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-[#121212] text-[#F5F5F5] flex">
+    <div className="min-h-screen bg-[#121212] text-[#F5F5F5] flex flex-col md:flex-row">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap');
 
@@ -96,16 +96,16 @@ export default function Layout({ children, currentPageName }) {
       `}</style>
 
       {/* Navigation Dock */}
-      <nav className="fixed left-0 top-0 h-full w-20 glass z-50 flex flex-col items-center py-6">
-        {/* Logo */}
-        <div className="mb-8">
+      <nav className="fixed md:left-0 md:top-0 bottom-0 left-0 right-0 md:h-full md:w-20 h-16 w-full glass z-50 flex md:flex-col flex-row items-center md:py-6 px-2 md:px-0 justify-around md:justify-start">
+        {/* Logo - Hidden on mobile */}
+        <div className="hidden md:block mb-8">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#00E5FF] to-[#BD00FF] flex items-center justify-center font-semibold text-sm">
             OS
           </div>
         </div>
 
         {/* Nav Items */}
-        <div className="flex-1 flex flex-col gap-2">
+        <div className="flex-1 flex md:flex-col flex-row gap-2 md:gap-2 justify-around md:justify-start w-full md:w-auto overflow-x-auto md:overflow-x-visible">
           {navItems.map((item) => {
             const isActive = currentPageName === item.name;
             const Icon = item.icon;
@@ -114,7 +114,7 @@ export default function Layout({ children, currentPageName }) {
                 key={item.name}
                 to={createPageUrl(item.name)}
                 className={`
-                  w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-200
+                  w-12 h-12 md:w-12 md:h-12 rounded-xl flex items-center justify-center transition-all duration-200 flex-shrink-0
                   ${isActive ? 'nav-active' : 'hover:bg-[#2C2E33]'}
                   group relative
                 `}
@@ -130,8 +130,8 @@ export default function Layout({ children, currentPageName }) {
                   <div className={`absolute inset-0 rounded-xl ${item.isAI ? 'glow-purple' : 'glow-cyan'} opacity-30`} />
                 )}
                 
-                {/* Tooltip */}
-                <div className="absolute left-full ml-3 px-3 py-1.5 rounded-lg bg-[#2C2E33] text-sm font-medium opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50">
+                {/* Tooltip - Desktop only */}
+                <div className="hidden md:block absolute left-full ml-3 px-3 py-1.5 rounded-lg bg-[#2C2E33] text-sm font-medium opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50">
                   {item.label}
                 </div>
               </Link>
@@ -139,33 +139,44 @@ export default function Layout({ children, currentPageName }) {
           })}
         </div>
 
-        {/* Settings */}
+        {/* Settings - Hidden on mobile, shown in navigation */}
         <Link
           to={createPageUrl('Settings')}
           className={`
-            w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-200
+            hidden md:flex w-12 h-12 rounded-xl items-center justify-center transition-all duration-200
             ${currentPageName === 'Settings' ? 'nav-active' : 'hover:bg-[#2C2E33]'}
             group relative
           `}
         >
           <Settings className={`w-5 h-5 ${currentPageName === 'Settings' ? 'text-[#00E5FF]' : 'text-[#A0AEC0] group-hover:text-[#F5F5F5]'}`} />
         </Link>
+
+        {/* Settings - Mobile version */}
+        <Link
+          to={createPageUrl('Settings')}
+          className={`
+            flex md:hidden w-12 h-12 rounded-xl items-center justify-center transition-all duration-200 flex-shrink-0
+            ${currentPageName === 'Settings' ? 'nav-active' : 'hover:bg-[#2C2E33]'}
+          `}
+        >
+          <Settings className={`w-5 h-5 ${currentPageName === 'Settings' ? 'text-[#00E5FF]' : 'text-[#A0AEC0]'}`} />
+        </Link>
       </nav>
 
       {/* Main Content */}
-      <div className="flex-1 ml-20">
+      <div className="flex-1 md:ml-20 mb-16 md:mb-0">
         {/* Top Command Bar */}
-        <header className="fixed top-0 left-20 right-0 h-16 glass z-40 flex items-center justify-between px-6">
+        <header className="fixed top-0 left-0 md:left-20 right-0 h-16 glass z-40 flex items-center justify-between px-4 md:px-6">
           {/* Omnibox */}
           <div className="flex-1 max-w-2xl mx-auto">
-            <div className="neumorphic-pressed rounded-full px-4 py-2 flex items-center gap-3">
-              <Search className="w-4 h-4 text-[#A0AEC0]" />
+            <div className="neumorphic-pressed rounded-full px-3 md:px-4 py-2 flex items-center gap-2 md:gap-3">
+              <Search className="w-4 h-4 text-[#A0AEC0] flex-shrink-0" />
               <input
                 type="text"
-                placeholder="Search clients, workflows, or type '/' for commands..."
-                className="bg-transparent flex-1 text-sm focus:outline-none placeholder-[#4A5568]"
+                placeholder="Search..."
+                className="bg-transparent flex-1 text-sm focus:outline-none placeholder-[#4A5568] min-w-0"
               />
-              <div className="flex items-center gap-1 text-xs text-[#4A5568]">
+              <div className="hidden md:flex items-center gap-1 text-xs text-[#4A5568]">
                 <Command className="w-3 h-3" />
                 <span>K</span>
               </div>
@@ -173,12 +184,12 @@ export default function Layout({ children, currentPageName }) {
           </div>
 
           {/* Right Icons */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 md:gap-4">
             <button className="relative p-2 rounded-lg hover:bg-[#2C2E33] transition-colors">
-              <Bell className="w-5 h-5 text-[#A0AEC0]" />
+              <Bell className="w-4 h-4 md:w-5 md:h-5 text-[#A0AEC0]" />
               <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#00E5FF] animate-pulse" />
             </button>
-            <div className="w-8 h-8 rounded-full neumorphic-raised flex items-center justify-center text-sm font-medium">
+            <div className="w-7 h-7 md:w-8 md:h-8 rounded-full neumorphic-raised flex items-center justify-center text-xs md:text-sm font-medium">
               U
             </div>
           </div>
@@ -190,8 +201,8 @@ export default function Layout({ children, currentPageName }) {
         </main>
       </div>
 
-      {/* Create FAB */}
-      <div className="fixed bottom-6 left-6 z-50">
+      {/* Create FAB - Hidden on mobile */}
+      <div className="fixed bottom-20 md:bottom-6 left-6 z-50 hidden md:block">
         <div className="relative">
           <button
             onClick={() => setIsCreateOpen(!isCreateOpen)}

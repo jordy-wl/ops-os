@@ -23,14 +23,14 @@ function SpaceItem({ space, isActive, onClick, onDelete }) {
       <button
         onClick={onClick}
         className={`
-          w-full text-left px-4 py-3 rounded-xl transition-all
+          w-full text-left px-3 md:px-4 py-2 md:py-3 rounded-xl transition-all
           ${isActive 
             ? 'neumorphic-pressed border border-[#BD00FF]/30 text-[#BD00FF]' 
             : 'hover:bg-[#2C2E33]'
           }
         `}
       >
-        <h3 className="font-medium truncate mb-1 pr-8">{space.name}</h3>
+        <h3 className="font-medium truncate mb-1 pr-8 text-sm md:text-base">{space.name}</h3>
         <p className="text-xs text-[#4A5568] truncate">{space.description || 'No description'}</p>
       </button>
       <button
@@ -38,9 +38,9 @@ function SpaceItem({ space, isActive, onClick, onDelete }) {
           e.stopPropagation();
           onDelete(space.id);
         }}
-        className="absolute top-3 right-3 p-1.5 rounded-lg hover:bg-red-500/20 opacity-0 group-hover:opacity-100 transition-opacity"
+        className="absolute top-2 md:top-3 right-2 md:right-3 p-1.5 rounded-lg hover:bg-red-500/20 opacity-0 group-hover:opacity-100 transition-opacity"
       >
-        <Trash2 className="w-4 h-4 text-red-400" />
+        <Trash2 className="w-3 h-3 md:w-4 md:h-4 text-red-400" />
       </button>
     </div>
   );
@@ -53,7 +53,7 @@ function MessageBubble({ message }) {
     <div className={`flex ${isAI ? 'justify-start' : 'justify-end'} mb-4`}>
       <div 
         className={`
-          max-w-[80%] rounded-2xl px-4 py-3
+          max-w-[95%] md:max-w-[80%] rounded-2xl px-3 md:px-4 py-2 md:py-3
           ${isAI 
             ? 'glass border border-[#BD00FF]/20 rounded-tl-none' 
             : 'neumorphic-raised rounded-tr-none'
@@ -66,7 +66,7 @@ function MessageBubble({ message }) {
             <span className="text-xs text-[#BD00FF] font-medium">AI Assistant</span>
           </div>
         )}
-        <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+        <p className="text-xs md:text-sm whitespace-pre-wrap break-words">{message.content}</p>
         <p className="text-xs text-[#4A5568] mt-2">
           {new Date(message.created_date).toLocaleTimeString()}
         </p>
@@ -253,20 +253,20 @@ export default function Strategy() {
   };
 
   return (
-    <div className="h-[calc(100vh-64px)] flex">
+    <div className="h-[calc(100vh-64px)] flex flex-col md:flex-row">
       {/* Spaces Sidebar */}
-      <div className="w-72 border-r border-[#2C2E33] p-4 flex flex-col">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-bold text-lg">Strategy</h2>
+      <div className="w-full md:w-72 border-b md:border-b-0 md:border-r border-[#2C2E33] p-4 flex flex-col max-h-48 md:max-h-none">
+        <div className="flex items-center justify-between mb-3 md:mb-4">
+          <h2 className="font-bold text-base md:text-lg">Strategy</h2>
           <button 
             onClick={() => setShowNewSpaceModal(true)}
-            className="p-2 rounded-lg hover:bg-[#2C2E33] text-[#BD00FF]"
+            className="p-2 rounded-lg hover:bg-[#2C2E33] text-[#BD00FF] flex-shrink-0"
           >
-            <Plus className="w-5 h-5" />
+            <Plus className="w-4 h-4 md:w-5 md:h-5" />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto space-y-2">
+        <div className="flex-1 overflow-y-auto space-y-2 overflow-x-hidden">
           {spacesLoading ? (
             <div className="space-y-2">
               {[1,2,3].map(i => (
@@ -297,14 +297,14 @@ export default function Strategy() {
       </div>
 
       {/* Chat Area */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-h-0">
         {selectedSpace ? (
           <>
             {/* Chat Header */}
-            <div className="glass border-b border-[#2C2E33] px-6 py-4 flex items-center justify-between">
-              <div>
-                <h2 className="font-bold">{selectedSpace.name}</h2>
-                <p className="text-sm text-[#A0AEC0]">{selectedSpace.description || 'No description'}</p>
+            <div className="glass border-b border-[#2C2E33] px-4 md:px-6 py-3 md:py-4 flex items-center justify-between">
+              <div className="min-w-0 flex-1">
+                <h2 className="font-bold text-sm md:text-base truncate">{selectedSpace.name}</h2>
+                <p className="text-xs md:text-sm text-[#A0AEC0] truncate">{selectedSpace.description || 'No description'}</p>
               </div>
               <button className="p-2 rounded-lg hover:bg-[#2C2E33]">
                 <MoreHorizontal className="w-5 h-5 text-[#A0AEC0]" />
@@ -312,7 +312,7 @@ export default function Strategy() {
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="flex-1 overflow-y-auto p-4 md:p-6">
               {messages.length === 0 && !isThinking ? (
                 <div className="h-full flex items-center justify-center">
                   <div className="text-center">
@@ -353,20 +353,20 @@ export default function Strategy() {
             </div>
 
             {/* Input */}
-            <div className="p-4 border-t border-[#2C2E33]">
-              <div className="neumorphic-pressed rounded-xl px-4 py-3 flex items-center gap-3">
+            <div className="p-3 md:p-4 border-t border-[#2C2E33]">
+              <div className="neumorphic-pressed rounded-xl px-3 md:px-4 py-2 md:py-3 flex items-center gap-2 md:gap-3">
                 <input
                   type="text"
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                  placeholder="Type '/' for commands or ask a question..."
-                  className="flex-1 bg-transparent focus:outline-none placeholder-[#4A5568]"
+                  placeholder="Ask a question..."
+                  className="flex-1 bg-transparent focus:outline-none placeholder-[#4A5568] text-sm min-w-0"
                 />
                 <button 
                   onClick={handleSend}
                   disabled={!inputValue.trim() || sendMessageMutation.isPending}
-                  className="p-2 rounded-lg bg-gradient-to-r from-[#BD00FF] to-[#9000cc] text-white disabled:opacity-50 hover:shadow-lg hover:shadow-[#BD00FF]/30 transition-all"
+                  className="p-2 rounded-lg bg-gradient-to-r from-[#BD00FF] to-[#9000cc] text-white disabled:opacity-50 hover:shadow-lg hover:shadow-[#BD00FF]/30 transition-all flex-shrink-0"
                 >
                   <Send className="w-4 h-4" />
                 </button>
