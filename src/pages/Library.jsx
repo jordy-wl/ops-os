@@ -266,7 +266,7 @@ export default function Library() {
           <div>
             <h3 className="text-sm font-semibold text-[#A0AEC0] mb-4">Document Templates</h3>
             {templatesLoading ? (
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {[1,2,3,4,5,6].map(i => (
                   <div key={i} className="h-48 bg-[#2C2E33] rounded-xl animate-pulse" />
                 ))}
@@ -296,7 +296,7 @@ export default function Library() {
           <div>
             <h3 className="text-sm font-semibold text-[#A0AEC0] mb-4">Generated Documents</h3>
             {instancesLoading ? (
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {[1,2,3].map(i => (
                   <div key={i} className="h-32 bg-[#2C2E33] rounded-xl animate-pulse" />
                 ))}
@@ -306,7 +306,7 @@ export default function Library() {
                 <p className="text-[#A0AEC0] text-sm">No documents generated yet</p>
               </div>
             ) : (
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredDocumentInstances.map(doc => {
                   const client = clients.find(c => c.id === doc.client_id);
                   return (
@@ -380,7 +380,7 @@ export default function Library() {
 
       {activeTab === 'knowledge' && (
         knowledgeLoading ? (
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {[1,2,3,4,5,6].map(i => (
               <div key={i} className="h-48 bg-[#2C2E33] rounded-xl animate-pulse" />
             ))}
@@ -392,7 +392,7 @@ export default function Library() {
             <p className="text-[#A0AEC0] mb-4">Save conversations from Strategy to build your knowledge base.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {knowledgeAssets.map(asset => {
               const typeConfig = {
                 sop: { label: 'SOP', color: 'from-blue-500 to-blue-600', icon: BookOpen },
