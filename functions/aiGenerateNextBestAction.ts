@@ -1,93 +1,204 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
-  const base44 = createClientFromRequest(req);
+  try {
+    const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me();
 
-  const { client_id } = await req.json();
+    if (!user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-  if (!client_id) {
-    return Response.json({ error: 'Missing client_id' }, { status: 400 });
-  }
+    const { client_id } = await req.json();
 
-  // LOOK PHASE: Get comprehensive client context
-  const clientDataRes = await base44.asServiceRole.functions.invoke('getClientData', { client_id });
-  const clientData = clientDataRes.data;
+    if (!client_id) {
+      return Response.json({ error: 'client_id required' }, { status: 400 });
+    }
 
-  // Get active workflows
-  const activeWorkflows = await base44.asServiceRole.entities.WorkflowInstance.filter({
-    client_id,
-    status: 'in_progress'
-  });
+    console.log('Generating next best action for client:', client_id);
 
-  // Get available workflow templates (potential next workflows)
-  const availableTemplates = await base44.asServiceRole.entities.WorkflowTemplate.filter({
-    is_active: true
-  }, '-created_date', 10);
+    // Fetch comprehensive client context
+    const [client] = await base44.asServiceRole.entities.Client.filter({ id: client_id });
+    
+    if (!client) {
+      return Response.json({ error: 'Client not found' }, { status: 404 });
+    }
 
-  // Get recent events for this client
-  const recentEvents = await base44.asServiceRole.entities.Event.filter({
-    payload: { client_id }
-  }, '-occurred_at', 10);
+    // Fetch active workflows
+    const workflows = await base44.asServiceRole.entities.WorkflowInstance.filter(
+      { client_id, status: { $in: ['active', 'in_progress'] } },
+      '-created_date',
+      10
+    );
 
-  // THINK PHASE: Determine next best action using SAGO-RAG
-  const reasoningPrompt = `You are analyzing a client record to determine the Next Best Action.
+    // Fetch recent communications
+    const communications = await base44.asServiceRole.entities.CommunicationLog.filter(
+      { client_id },
+      '-occurred_at',
+      20
+    );
 
-CLIENT DATA:
-${JSON.stringify(clientData, null, 2)}
+    // Fetch recent events
+    const events = await base44.asServiceRole.entities.Event.filter(
+      { 
+        source_entity_type: 'workflow_instance',
+        source_entity_id: { $in: workflows.map(w => w.id) }
+      },
+      '-occurred_at',
+      50
+    );
 
-ACTIVE WORKFLOWS:
-${JSON.stringify(activeWorkflows, null, 2)}
+    // Calculate risk indicators
+    const daysSinceLastCommunication = communications.length > 0
+      ? Math.floor((Date.now() - new Date(communications[0].occurred_at)) / (1000 * 60 * 60 * 24))
+      : 999;
 
-AVAILABLE WORKFLOW TEMPLATES:
-${JSON.stringify(availableTemplates.map(t => ({ 
-  id: t.id, 
-  name: t.name, 
-  category: t.category, 
-  type: t.type 
-})), null, 2)}
+    const blockedTasks = events.filter(e => e.event_type === 'task_blocked').length;
+    const failedTasks = events.filter(e => e.event_type === 'task_failed').length;
 
-RECENT ACTIVITY:
-${JSON.stringify(recentEvents.slice(0, 5), null, 2)}
-
-Based on:
-1. CURRENT STATE: Client's lifecycle stage, active workflows, enriched data
-2. DESIRED STATE: Typical progression paths for similar clients
-3. GAP ANALYSIS: What's missing or what should happen next
-
-Determine the single best next action for this client. Consider:
-- Are there workflows that should be started?
-- Are there gaps in data that need filling?
-- Are there risks that need addressing?
-- What's the natural next step in their journey?
-
-Provide a clear, actionable recommendation (1-2 sentences).`;
-
-  const nextAction = await base44.asServiceRole.integrations.Core.InvokeLLM({
-    prompt: reasoningPrompt,
-    add_context_from_internet: false
-  });
-
-  // Update client record
-  await base44.asServiceRole.entities.Client.update(client_id, {
-    next_best_action: nextAction
-  });
-
-  // Log AI action
-  const agentConfigs = await base44.asServiceRole.entities.AIAgentConfig.filter({
-    role: 'sago_rag_engine'
-  });
-
-  if (agentConfigs.length > 0) {
-    await base44.asServiceRole.entities.AIAuditLog.create({
-      ai_agent_config_id: agentConfigs[0].id,
-      input_summary: `Generate next best action for client ${client_id}`,
-      output_summary: nextAction,
-      status: 'success'
+    // Check for delayed workflows
+    const delayedWorkflows = workflows.filter(w => {
+      if (!w.expected_completion_date) return false;
+      return new Date(w.expected_completion_date) < new Date();
     });
-  }
 
-  return Response.json({ 
-    success: true, 
-    next_best_action: nextAction 
-  });
+    // Search knowledge base for relevant context
+    let knowledgeContext = '';
+    try {
+      const searchResult = await base44.functions.invoke('semanticSearchKnowledge', {
+        query: `client management best practices ${client.industry} ${client.lifecycle_stage}`,
+        top_k: 3,
+      });
+      
+      if (searchResult.data?.results?.length > 0) {
+        knowledgeContext = searchResult.data.results
+          .map(r => `${r.knowledge_asset.title}: ${r.knowledge_asset.description || ''}`)
+          .join('\n');
+      }
+    } catch (error) {
+      console.error('Knowledge search error:', error);
+    }
+
+    console.log('Invoking LLM for predictive analysis...');
+
+    // Generate AI recommendations with predictive insights
+    const prompt = `You are a proactive AI business advisor analyzing client health and predicting future needs.
+
+Client Profile:
+- Name: ${client.name}
+- Industry: ${client.industry}
+- Stage: ${client.lifecycle_stage}
+- Value: $${client.value || 0}
+- Risk Score: ${client.risk_score || 0}/100
+- Sentiment: ${client.sentiment_score || 'neutral'}
+
+Current Situation:
+- Active Workflows: ${workflows.length}
+- Delayed Workflows: ${delayedWorkflows.length}
+- Days Since Last Contact: ${daysSinceLastCommunication}
+- Blocked Tasks: ${blockedTasks}
+- Failed Tasks: ${failedTasks}
+
+Recent Communication Pattern:
+${communications.slice(0, 5).map(c => `- ${c.communication_type}: ${c.subject || 'No subject'} (${new Date(c.occurred_at).toLocaleDateString()})`).join('\n')}
+
+Recent Events:
+${events.slice(0, 10).map(e => `- ${e.event_type} at ${new Date(e.occurred_at).toLocaleDateString()}`).join('\n')}
+
+Organizational Knowledge:
+${knowledgeContext || 'No specific context found'}
+
+Analyze this data and generate:
+1. Risk Assessment: Predict potential issues (churn risk, delays, quality concerns)
+2. Next Best Action: Specific, actionable recommendation
+3. Priority Level: How urgent is this action?
+4. Expected Impact: What outcome will this action drive?
+5. Predictive Insights: What might happen if no action is taken?
+
+Be proactive and specific. Focus on preventing issues before they occur.`;
+
+    const aiResponse = await base44.integrations.Core.InvokeLLM({
+      prompt,
+      response_json_schema: {
+        type: 'object',
+        properties: {
+          risk_assessment: {
+            type: 'object',
+            properties: {
+              churn_risk: { type: 'string', enum: ['low', 'medium', 'high', 'critical'] },
+              delay_risk: { type: 'string', enum: ['low', 'medium', 'high', 'critical'] },
+              quality_risk: { type: 'string', enum: ['low', 'medium', 'high', 'critical'] },
+              summary: { type: 'string' }
+            }
+          },
+          next_best_action: {
+            type: 'object',
+            properties: {
+              action_type: { 
+                type: 'string', 
+                enum: ['communicate', 'schedule_meeting', 'escalate', 'provide_resource', 'adjust_workflow', 'review_deliverable', 'other']
+              },
+              title: { type: 'string' },
+              description: { type: 'string' },
+              priority: { type: 'string', enum: ['low', 'medium', 'high', 'urgent'] },
+              expected_impact: { type: 'string' },
+              reasoning: { type: 'string' }
+            }
+          },
+          predictive_insights: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                scenario: { type: 'string' },
+                probability: { type: 'string', enum: ['low', 'medium', 'high'] },
+                impact: { type: 'string' },
+                prevention: { type: 'string' }
+              }
+            }
+          }
+        }
+      }
+    });
+
+    // Update client with AI insights
+    await base44.asServiceRole.entities.Client.update(client.id, {
+      next_best_action: aiResponse.next_best_action.title,
+      risk_score: aiResponse.risk_assessment.churn_risk === 'critical' ? 90 :
+                  aiResponse.risk_assessment.churn_risk === 'high' ? 70 :
+                  aiResponse.risk_assessment.churn_risk === 'medium' ? 40 : 20,
+      insights: {
+        ...client.insights,
+        last_ai_analysis: new Date().toISOString(),
+        risk_assessment: aiResponse.risk_assessment,
+        predictive_insights: aiResponse.predictive_insights
+      }
+    });
+
+    // Log AI action
+    await base44.asServiceRole.entities.AIAuditLog.create({
+      agent_id: 'next_best_action_predictor',
+      action_type: 'generate_recommendation',
+      object_type: 'client',
+      object_id: client_id,
+      input_data: { client_id },
+      output_data: aiResponse,
+      user_id: user.id,
+      timestamp: new Date().toISOString(),
+      was_approved: null, // Will be set when user provides feedback
+    });
+
+    console.log('Next best action generated successfully');
+
+    return Response.json({
+      success: true,
+      risk_assessment: aiResponse.risk_assessment,
+      next_best_action: aiResponse.next_best_action,
+      predictive_insights: aiResponse.predictive_insights,
+    });
+
+  } catch (error) {
+    console.error('Error generating next best action:', error);
+    return Response.json({ error: error.message }, { status: 500 });
+  }
 });

@@ -9,6 +9,7 @@ import ClientActivityFeed from '@/components/clients/ClientActivityFeed';
 import ClientDataAndAssets from '@/components/clients/ClientDataAndAssets';
 import ClientCommunicationPanel from '@/components/clients/ClientCommunicationPanel';
 import InsightsPanel from '@/components/analytics/InsightsPanel';
+import ProactiveInsightsWidget from '@/components/ai/ProactiveInsightsWidget';
 
 export default function ClientDetail() {
   const navigate = useNavigate();
@@ -113,6 +114,7 @@ export default function ClientDetail() {
 
         {/* Middle Column - Activity & Insights */}
         <div className="col-span-5 space-y-6">
+          <ProactiveInsightsWidget clientId={clientId} />
           <ClientActivityFeed 
             client={client}
             workflowInstances={workflowInstances}
