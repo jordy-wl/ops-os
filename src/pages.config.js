@@ -1,3 +1,4 @@
+import AIWorkflowStudio from './pages/AIWorkflowStudio';
 import BusinessConceptDetail from './pages/BusinessConceptDetail';
 import ClientDetail from './pages/ClientDetail';
 import ClientForm from './pages/ClientForm';
@@ -14,11 +15,11 @@ import Settings from './pages/Settings';
 import Strategy from './pages/Strategy';
 import WorkflowBuilder from './pages/WorkflowBuilder';
 import Workflows from './pages/Workflows';
-import AIWorkflowStudio from './pages/AIWorkflowStudio';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
+    "AIWorkflowStudio": AIWorkflowStudio,
     "BusinessConceptDetail": BusinessConceptDetail,
     "ClientDetail": ClientDetail,
     "ClientForm": ClientForm,
@@ -35,7 +36,6 @@ export const PAGES = {
     "Strategy": Strategy,
     "WorkflowBuilder": WorkflowBuilder,
     "Workflows": Workflows,
-    "AIWorkflowStudio": AIWorkflowStudio,
 }
 
 export const pagesConfig = {

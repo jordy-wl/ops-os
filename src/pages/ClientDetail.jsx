@@ -8,6 +8,7 @@ import ClientFirmographics from '@/components/clients/ClientFirmographics';
 import ClientActivityFeed from '@/components/clients/ClientActivityFeed';
 import ClientDataAndAssets from '@/components/clients/ClientDataAndAssets';
 import ClientCommunicationPanel from '@/components/clients/ClientCommunicationPanel';
+import InsightsPanel from '@/components/analytics/InsightsPanel';
 
 export default function ClientDetail() {
   const navigate = useNavigate();
@@ -111,12 +112,16 @@ export default function ClientDetail() {
         </div>
 
         {/* Middle Column - Activity & Insights */}
-        <div className="col-span-5">
+        <div className="col-span-5 space-y-6">
           <ClientActivityFeed 
             client={client}
             workflowInstances={workflowInstances}
             communications={communications}
           />
+          <div className="neumorphic-raised rounded-xl p-4">
+            <h3 className="font-semibold mb-4">AI-Powered Insights</h3>
+            <InsightsPanel clientId={clientId} />
+          </div>
         </div>
 
         {/* Right Column - Data & Assets */}
