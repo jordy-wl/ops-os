@@ -13,24 +13,36 @@ import {
   GitMerge,
   FileText,
   CheckCircle,
-  X
+  X,
+  Trash2
 } from 'lucide-react';
 
-function SpaceItem({ space, isActive, onClick }) {
+function SpaceItem({ space, isActive, onClick, onDelete }) {
   return (
-    <button
-      onClick={onClick}
-      className={`
-        w-full text-left px-4 py-3 rounded-xl transition-all
-        ${isActive 
-          ? 'neumorphic-pressed border border-[#BD00FF]/30 text-[#BD00FF]' 
-          : 'hover:bg-[#2C2E33]'
-        }
-      `}
-    >
-      <h3 className="font-medium truncate mb-1">{space.name}</h3>
-      <p className="text-xs text-[#4A5568] truncate">{space.description || 'No description'}</p>
-    </button>
+    <div className="relative group">
+      <button
+        onClick={onClick}
+        className={`
+          w-full text-left px-4 py-3 rounded-xl transition-all
+          ${isActive 
+            ? 'neumorphic-pressed border border-[#BD00FF]/30 text-[#BD00FF]' 
+            : 'hover:bg-[#2C2E33]'
+          }
+        `}
+      >
+        <h3 className="font-medium truncate mb-1 pr-8">{space.name}</h3>
+        <p className="text-xs text-[#4A5568] truncate">{space.description || 'No description'}</p>
+      </button>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onDelete(space.id);
+        }}
+        className="absolute top-3 right-3 p-1.5 rounded-lg hover:bg-red-500/20 opacity-0 group-hover:opacity-100 transition-opacity"
+      >
+        <Trash2 className="w-4 h-4 text-red-400" />
+      </button>
+    </div>
   );
 }
 
@@ -198,6 +210,16 @@ export default function Strategy() {
     },
   });
 
+  const deleteSpaceMutation = useMutation({
+    mutationFn: (spaceId) => base44.entities.StrategySpace.delete(spaceId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['strategy-spaces'] });
+      if (selectedSpaceId) {
+        setSelectedSpaceId(null);
+      }
+    },
+  });
+
   const sendMessageMutation = useMutation({
     mutationFn: async (content) => {
       // Create user message
@@ -263,6 +285,11 @@ export default function Strategy() {
                 space={space}
                 isActive={space.id === selectedSpaceId}
                 onClick={() => setSelectedSpaceId(space.id)}
+                onDelete={(id) => {
+                  if (confirm('Delete this strategy space and all its messages?')) {
+                    deleteSpaceMutation.mutate(id);
+                  }
+                }}
               />
             ))
           )}
