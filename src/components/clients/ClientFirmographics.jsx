@@ -1,8 +1,35 @@
-import React from 'react';
-import { Building2, Globe, MapPin, DollarSign, TrendingUp, User, Mail, Phone, Linkedin, Star } from 'lucide-react';
+import React, { useState } from 'react';
+import { Building2, Globe, MapPin, DollarSign, TrendingUp, User, Mail, Phone, Linkedin, Star, UserPlus, Edit, Trash2 } from 'lucide-react';
 import SendFormPanel from './SendFormPanel';
+import AddContactModal from './AddContactModal';
+import { Button } from "@/components/ui/button";
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
+import { toast } from 'sonner';
 
 export default function ClientFirmographics({ client, contacts = [] }) {
+  const [showAddContactModal, setShowAddContactModal] = useState(false);
+  const [editingContact, setEditingContact] = useState(null);
+  const queryClient = useQueryClient();
+
+  const deleteContactMutation = useMutation({
+    mutationFn: async (contact) => {
+      const clientContacts = await base44.entities.ClientContact.filter({ 
+        client_id: client.id, 
+        contact_id: contact.id 
+      });
+      if (clientContacts.length > 0) {
+        await base44.entities.ClientContact.delete(clientContacts[0].id);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['client', client.id] });
+      toast.success('Contact removed');
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    }
+  });
   return (
     <div className="space-y-4">
       <div className="neumorphic-raised rounded-xl p-6">
@@ -84,7 +111,17 @@ export default function ClientFirmographics({ client, contacts = [] }) {
 
       {/* Contacts */}
       <div className="neumorphic-raised rounded-xl p-6">
-        <h3 className="text-sm font-medium text-[#A0AEC0] mb-4">Contacts</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-medium text-[#A0AEC0]">Contacts</h3>
+          <Button
+            size="sm"
+            onClick={() => setShowAddContactModal(true)}
+            className="bg-gradient-to-r from-[#00E5FF] to-[#0099ff] text-[#121212] h-7 text-xs"
+          >
+            <UserPlus className="w-3 h-3 mr-1" />
+            Add
+          </Button>
+        </div>
         {contacts.length === 0 ? (
           <div className="text-center py-4">
             <User className="w-8 h-8 text-[#4A5568] mx-auto mb-2" />
@@ -93,7 +130,7 @@ export default function ClientFirmographics({ client, contacts = [] }) {
         ) : (
           <div className="space-y-3">
             {contacts.map((contact) => (
-              <div key={contact.id} className="neumorphic-pressed rounded-lg p-3">
+              <div key={contact.id} className="neumorphic-pressed rounded-lg p-3 group">
                 <div className="flex items-start gap-3">
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#2C2E33] to-[#1A1B1E] flex items-center justify-center flex-shrink-0">
                     {contact.avatar_url ? (
@@ -135,6 +172,27 @@ export default function ClientFirmographics({ client, contacts = [] }) {
                       )}
                     </div>
                   </div>
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => {
+                        setEditingContact(contact);
+                        setShowAddContactModal(true);
+                      }}
+                      className="p-1 rounded hover:bg-[#3a3d44]"
+                    >
+                      <Edit className="w-3 h-3 text-[#A0AEC0]" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (confirm('Remove this contact from the client?')) {
+                          deleteContactMutation.mutate(contact);
+                        }
+                      }}
+                      className="p-1 rounded hover:bg-[#3a3d44]"
+                    >
+                      <Trash2 className="w-3 h-3 text-red-400" />
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -164,6 +222,16 @@ export default function ClientFirmographics({ client, contacts = [] }) {
       {contacts.length > 0 && (
         <SendFormPanel clientId={client.id} contacts={contacts} />
       )}
+
+      <AddContactModal
+        isOpen={showAddContactModal}
+        onClose={() => {
+          setShowAddContactModal(false);
+          setEditingContact(null);
+        }}
+        clientId={client.id}
+        contact={editingContact}
+      />
     </div>
   );
 }
