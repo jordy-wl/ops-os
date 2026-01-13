@@ -96,7 +96,7 @@ export default function Layout({ children, currentPageName }) {
       `}</style>
 
       {/* Navigation Dock */}
-      <nav className="fixed md:left-0 md:top-0 bottom-0 left-0 right-0 md:h-full md:w-20 h-16 w-full glass z-50 flex md:flex-col flex-row items-center md:py-6 px-2 md:px-0 justify-around md:justify-start">
+      <nav className="fixed md:relative md:left-0 md:top-0 bottom-0 left-0 right-0 md:h-screen md:w-20 h-16 w-full glass z-50 flex md:flex-col flex-row items-center md:py-6 px-2 md:px-0 justify-around md:justify-start md:flex-shrink-0">
         {/* Logo - Hidden on mobile */}
         <div className="hidden md:block mb-8">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#00E5FF] to-[#BD00FF] flex items-center justify-center font-semibold text-sm">
@@ -164,9 +164,9 @@ export default function Layout({ children, currentPageName }) {
       </nav>
 
       {/* Main Content */}
-      <div className="flex-1 md:ml-20 mb-16 md:mb-0">
+      <div className="flex-1 mb-16 md:mb-0 w-full md:w-auto min-w-0">
         {/* Top Command Bar */}
-        <header className="fixed top-0 left-0 md:left-20 right-0 h-16 glass z-40 flex items-center justify-between px-4 md:px-6">
+        <header className="fixed top-0 left-0 md:left-0 right-0 h-16 glass z-40 flex items-center justify-between px-4 md:px-6">
           {/* Omnibox */}
           <div className="flex-1 max-w-2xl mx-auto">
             <div className="neumorphic-pressed rounded-full px-3 md:px-4 py-2 flex items-center gap-2 md:gap-3">
