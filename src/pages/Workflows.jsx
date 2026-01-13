@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
+import InsightsPanel from '@/components/analytics/InsightsPanel';
 import {
   GitMerge,
   Layers,
@@ -16,7 +17,8 @@ import {
   Grid,
   List,
   Filter,
-  MoreHorizontal
+  MoreHorizontal,
+  Sparkles
 } from 'lucide-react';
 
 function WorkflowCard({ workflow, onClick }) {
@@ -113,6 +115,7 @@ function TemplateCard({ template, onStart }) {
 export default function Workflows() {
   const [activeTab, setActiveTab] = useState('control'); // 'control' or 'studio'
   const [viewMode, setViewMode] = useState('grid');
+  const [showInsights, setShowInsights] = useState(false);
 
   const { data: instances = [], isLoading: instancesLoading } = useQuery({
     queryKey: ['workflow-instances'],
@@ -185,6 +188,15 @@ export default function Workflows() {
               <Filter className="w-4 h-4" />
               Filter
             </button>
+            <button 
+              onClick={() => setShowInsights(!showInsights)}
+              className={`neumorphic-pressed px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors ${
+                showInsights ? 'text-[#BD00FF]' : 'text-[#A0AEC0] hover:text-[#F5F5F5]'
+              }`}
+            >
+              <Sparkles className="w-4 h-4" />
+              AI Insights
+            </button>
             <div className="neumorphic-pressed rounded-lg p-1 flex">
               <button
                 onClick={() => setViewMode('grid')}
@@ -200,6 +212,13 @@ export default function Workflows() {
               </button>
             </div>
           </div>
+
+          {showInsights && (
+            <div className="mb-6 neumorphic-raised rounded-xl p-4">
+              <h3 className="font-semibold mb-4">Workflow Analytics</h3>
+              <InsightsPanel />
+            </div>
+          )}
 
           {instancesLoading ? (
             <div className="grid grid-cols-3 gap-4">
