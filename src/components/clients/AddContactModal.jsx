@@ -216,7 +216,7 @@ export default function AddContactModal({ isOpen, onClose, clientId, contact }) 
           </div>
 
           <div className="flex gap-3 mt-6">
-            <Button type="button" variant="outline" onClick={onClose} className="flex-1 border-[#2C2E33]">
+            <Button type="button" variant="outline" onClick={onClose} className="flex-1 border-[#2C2E33] text-[#F5F5F5]">
               Cancel
             </Button>
             <Button 
