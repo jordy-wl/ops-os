@@ -84,14 +84,28 @@ export default function Layout({ children, currentPageName }) {
         }
         
         .scrollbar-dark::-webkit-scrollbar {
-          width: 6px;
+          width: 0px;
+          height: 0px;
         }
         .scrollbar-dark::-webkit-scrollbar-track {
-          background: #1A1B1E;
+          background: transparent;
         }
         .scrollbar-dark::-webkit-scrollbar-thumb {
-          background: #4A5568;
-          border-radius: 3px;
+          background: transparent;
+        }
+        .scrollbar-dark {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        
+        /* Hide scrollbars globally but keep functionality */
+        *::-webkit-scrollbar {
+          width: 0px;
+          height: 0px;
+        }
+        * {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
         }
       `}</style>
 
