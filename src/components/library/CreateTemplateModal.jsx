@@ -284,24 +284,17 @@ export default function CreateTemplateModal({ isOpen, onClose, template }) {
                              <SelectItem value="Workflow">Workflow</SelectItem>
                            </SelectContent>
                          </Select>
-                        <Select 
-                           value={data.field_path} 
-                           onValueChange={(v) => updateRequiredData(idx, 'field_path', v)}
-                         >
-                           <SelectTrigger className="flex-1 bg-[#1A1B1E] border-[#2C2E33] text-xs h-8">
-                             <SelectValue placeholder="Select field..." />
-                           </SelectTrigger>
-                           <SelectContent className="bg-[#2C2E33] border-[#3a3d44]">
-                             {(data.entity_type === 'Client' ? clientFields : workflowFields)?.map(field => (
-                               <SelectItem key={field.path} value={field.path}>
-                                 {field.label}
-                               </SelectItem>
-                             ))}
-                           </SelectContent>
-                         </Select>
+                        <div className="flex-1">
+                          <MultiSelectField
+                            options={data.entity_type === 'Client' ? clientFields : workflowFields}
+                            value={data.field_paths || []}
+                            onChange={(v) => updateRequiredData(idx, 'field_paths', v)}
+                            placeholder="Select fields..."
+                          />
+                        </div>
                         <button 
                           onClick={() => removeRequiredData(idx)} 
-                          className="p-1.5 hover:bg-[#3a3d44] rounded transition-colors"
+                          className="p-1.5 hover:bg-[#3a3d44] rounded transition-colors flex-shrink-0"
                         >
                           <Trash2 className="w-3.5 h-3.5 text-red-400" />
                         </button>
@@ -309,7 +302,7 @@ export default function CreateTemplateModal({ isOpen, onClose, template }) {
                       <Input
                         value={data.description}
                         onChange={(e) => updateRequiredData(idx, 'description', e.target.value)}
-                        placeholder="How should the AI use this field? e.g., 'Use to personalize industry examples'"
+                        placeholder="How should the AI use these fields? e.g., 'Use to personalize industry examples'"
                         className="bg-[#1A1B1E] border-[#2C2E33] text-xs h-8"
                       />
                     </div>
