@@ -21,7 +21,7 @@ import TaskConfigPanel from './TaskConfigPanel';
 
 const STEPS = ['Basic Info', 'Stages', 'Deliverables', 'Tasks', 'Logic', 'Review'];
 
-export default function ManualWorkflowBuilder({ onBack }) {
+export default function ManualWorkflowBuilder({ onBack, template }) {
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState({
     name: '',
@@ -36,8 +36,21 @@ export default function ManualWorkflowBuilder({ onBack }) {
   const [isCreating, setIsCreating] = useState(false);
   const [editingDeliverable, setEditingDeliverable] = useState(null);
   const [editingTask, setEditingTask] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (template) {
+      setIsEditing(true);
+      setFormData({
+        ...template,
+        stages: [],
+        deliverables: {},
+        tasks: {}
+      });
+    }
+  }, [template]);
 
   const { data: availableTemplates = [] } = useQuery({
     queryKey: ['workflow-templates-list'],
