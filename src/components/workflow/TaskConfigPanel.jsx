@@ -40,7 +40,7 @@ export default function TaskConfigPanel({ task, onSave, onClose, allStages, allD
     }
   });
 
-  const [activeTab, setActiveTab] = useState(isLogicStage ? 'conditions' : 'basic');
+  const [activeTab, setActiveTab] = useState('basic');
 
   const { data: teams = [] } = useQuery({
     queryKey: ['teams'],
@@ -127,26 +127,36 @@ export default function TaskConfigPanel({ task, onSave, onClose, allStages, allD
         </button>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-2 border-b border-[#2C2E33]">
-        {['basic', 'data', 'conditions', 'assignment'].map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2 text-sm font-medium transition-colors ${
-              activeTab === tab
-                ? 'text-[#00E5FF] border-b-2 border-[#00E5FF]'
-                : 'text-[#A0AEC0] hover:text-[#F5F5F5]'
-            }`}
-          >
-            {tab.charAt(0).toUpperCase() + tab.slice(1)}
-          </button>
-        ))}
-      </div>
+      {/* Tabs - Only show in non-logic stage */}
+      {!isLogicStage && (
+        <div className="flex gap-2 border-b border-[#2C2E33]">
+          {['basic', 'data', 'assignment'].map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-4 py-2 text-sm font-medium transition-colors ${
+                activeTab === tab
+                  ? 'text-[#00E5FF] border-b-2 border-[#00E5FF]'
+                  : 'text-[#A0AEC0] hover:text-[#F5F5F5]'
+              }`}
+            >
+              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Logic Stage Header */}
+      {isLogicStage && (
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold mb-2">Task: {formData.name}</h3>
+          <p className="text-sm text-[#A0AEC0]">Define conditional outcomes for this task</p>
+        </div>
+      )}
 
       <div className="space-y-4 max-h-[500px] overflow-y-auto">
         {/* Basic Tab */}
-        {activeTab === 'basic' && (
+        {!isLogicStage && activeTab === 'basic' && (
           <>
             <div>
               <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Name *</label>
@@ -243,7 +253,7 @@ export default function TaskConfigPanel({ task, onSave, onClose, allStages, allD
         )}
 
         {/* Data Fields Tab */}
-        {activeTab === 'data' && (
+        {!isLogicStage && activeTab === 'data' && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <p className="text-sm text-[#A0AEC0]">
@@ -331,8 +341,8 @@ export default function TaskConfigPanel({ task, onSave, onClose, allStages, allD
           </div>
         )}
 
-        {/* Conditions Tab */}
-        {(activeTab === 'conditions' || isLogicStage) && (
+        {/* Conditions Tab - Only show when in Logic Stage */}
+        {isLogicStage && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-[#A0AEC0]">
