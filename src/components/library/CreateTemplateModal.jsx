@@ -272,19 +272,17 @@ export default function CreateTemplateModal({ isOpen, onClose, template }) {
                     <div key={idx} className="neumorphic-pressed p-3 rounded-lg space-y-2">
                       <div className="flex gap-2">
                         <Select 
-                          value={data.entity_type} 
-                          onValueChange={(v) => updateRequiredData(idx, 'entity_type', v)}
-                        >
-                          <SelectTrigger className="w-28 bg-[#1A1B1E] border-[#2C2E33] text-xs h-8">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent className="bg-[#2C2E33] border-[#3a3d44]">
-                            <SelectItem value="Client">Client</SelectItem>
-                            <SelectItem value="WorkflowInstance">Workflow</SelectItem>
-                            <SelectItem value="Contact">Contact</SelectItem>
-                            <SelectItem value="TaskInstance">Task</SelectItem>
-                          </SelectContent>
-                        </Select>
+                           value={data.entity_type} 
+                           onValueChange={(v) => updateRequiredData(idx, 'entity_type', v)}
+                         >
+                           <SelectTrigger className="w-32 bg-[#1A1B1E] border-[#2C2E33] text-xs h-8">
+                             <SelectValue />
+                           </SelectTrigger>
+                           <SelectContent className="bg-[#2C2E33] border-[#3a3d44]">
+                             <SelectItem value="Client">Client</SelectItem>
+                             <SelectItem value="Workflow">Workflow</SelectItem>
+                           </SelectContent>
+                         </Select>
                         <Select 
                           value={data.field_path} 
                           onValueChange={(v) => updateRequiredData(idx, 'field_path', v)}
