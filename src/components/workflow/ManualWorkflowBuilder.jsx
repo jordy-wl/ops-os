@@ -50,18 +50,17 @@ export default function ManualWorkflowBuilder({ onBack, editingTemplateId }) {
   const loadTemplateData = async () => {
     try {
       const template = await base44.entities.WorkflowTemplate.get(editingTemplateId);
-      const version = await base44.entities.WorkflowTemplateVersion.filter({ 
-        workflow_template_id: editingTemplateId, 
-        status: 'published' 
+      const versions = await base44.entities.WorkflowTemplateVersion.filter({ 
+        workflow_template_id: editingTemplateId
       });
       
-      if (version.length === 0) {
-        alert('No published version found for this template');
+      if (versions.length === 0) {
+        alert('No versions found for this template');
         setIsLoading(false);
         return;
       }
 
-      const latestVersion = version[0];
+      const latestVersion = versions[0];
       const stages = await base44.entities.StageTemplate.filter({ 
         workflow_template_version_id: latestVersion.id 
       });
