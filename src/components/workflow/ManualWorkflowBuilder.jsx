@@ -325,8 +325,11 @@ export default function ManualWorkflowBuilder({ onBack, template }) {
                 {idx < currentStep ? <CheckCircle2 className="w-5 h-5" /> : idx + 1}
               </div>
               <span className={`text-sm ${idx === currentStep ? 'text-[#F5F5F5]' : 'text-[#A0AEC0]'}`}>
-                {step}
-              </span>
+                    {step}
+                  </span>
+                  {isEditing && idx === 0 && (
+                    <span className="text-xs bg-[#BD00FF]/20 text-[#BD00FF] px-2 py-0.5 rounded-full ml-2">Edit</span>
+                  )}
             </div>
             {idx < STEPS.length - 1 && (
               <div className={`flex-1 h-0.5 mx-4 ${idx < currentStep ? 'bg-green-500/50' : 'bg-[#2C2E33]'}`} />
