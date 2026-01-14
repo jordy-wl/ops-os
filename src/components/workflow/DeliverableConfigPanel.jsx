@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { FileText, Video, CheckSquare, FileSpreadsheet, X } from 'lucide-react';
+import { FileText, Video, CheckSquare, FileSpreadsheet, X, Sparkles } from 'lucide-react';
 
 const outputTypeIcons = {
   document: FileText,
@@ -113,31 +113,48 @@ export default function DeliverableConfigPanel({ deliverable, onSave, onClose })
 
         {/* Document Template Selection (if output type is document) */}
         {formData.output_type === 'document' && (
-          <div>
-            <label className="block text-sm font-medium text-[#A0AEC0] mb-2">
-              Document Template (Auto-Generate)
-            </label>
-            <Select 
-              value={formData.document_template_ids?.[0] || ''} 
-              onValueChange={(v) => setFormData({ 
-                ...formData, 
-                document_template_ids: v ? [v] : [] 
-              })}
-            >
-              <SelectTrigger className="bg-[#1A1B1E] border-[#2C2E33]">
-                <SelectValue placeholder="Select template..." />
-              </SelectTrigger>
-              <SelectContent className="bg-[#2C2E33] border-[#3a3d44]">
-                {documentTemplates.map((template) => (
-                  <SelectItem key={template.id} value={template.id}>
-                    {template.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-[#4A5568] mt-1">
-              Document will auto-populate with data collected from tasks
-            </p>
+          <div className="space-y-3">
+            <div>
+              <label className="block text-sm font-medium text-[#A0AEC0] mb-2">
+                Document Template
+              </label>
+              <Select 
+                value={formData.document_template_ids?.[0] || ''} 
+                onValueChange={(v) => setFormData({ 
+                  ...formData, 
+                  document_template_ids: v ? [v] : [],
+                  auto_generate_ai_document: v ? true : false
+                })}
+              >
+                <SelectTrigger className="bg-[#1A1B1E] border-[#2C2E33]">
+                  <SelectValue placeholder="Select template..." />
+                </SelectTrigger>
+                <SelectContent className="bg-[#2C2E33] border-[#3a3d44]">
+                  {documentTemplates.map((template) => (
+                    <SelectItem key={template.id} value={template.id}>
+                      {template.name}
+                      {template.ai_prompt_instructions && (
+                        <span className="ml-2 text-xs text-[#BD00FF]">✨ AI</span>
+                      )}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {formData.document_template_ids?.[0] && (
+              <div className="neumorphic-pressed rounded-lg p-3 border-l-2 border-[#00E5FF]">
+                <div className="flex items-start gap-2">
+                  <FileText className="w-4 h-4 text-[#00E5FF] mt-0.5" />
+                  <div>
+                    <p className="text-sm text-[#F5F5F5] font-medium">AI Document Generation Enabled</p>
+                    <p className="text-xs text-[#A0AEC0] mt-1">
+                      When all tasks are completed, the AI will automatically generate this document using the collected workflow data and the template's generation settings.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

@@ -271,30 +271,33 @@ export default function CreateTemplateModal({ isOpen, onClose, template }) {
             <div className="neumorphic-raised rounded-xl p-4 border border-[#BD00FF]/20">
               <h3 className="text-sm font-semibold text-[#BD00FF] mb-4 flex items-center gap-2">
                 <Sparkles className="w-4 h-4" />
-                AI Generation Settings
+                AI Document Builder
               </h3>
+              <p className="text-xs text-[#4A5568] mb-4">
+                Configure how AI should generate documents using workflow data
+              </p>
               
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-[#A0AEC0] mb-2">AI Prompt</label>
-                  <p className="text-xs text-[#4A5568] mb-2">Tell the AI how to elaborate, what tone to use, what to emphasize</p>
+                  <label className="block text-sm font-medium text-[#A0AEC0] mb-2">AI Generation Prompt</label>
+                  <p className="text-xs text-[#4A5568] mb-2">Describe how the document should be written - tone, style, what to emphasize</p>
                   <Textarea
                     value={formData.ai_prompt_instructions}
                     onChange={(e) => setFormData({ ...formData, ai_prompt_instructions: e.target.value })}
-                    placeholder="Write in a professional tone. Emphasize the client's industry needs. Elaborate on how our solution addresses their specific challenges..."
-                    className="bg-[#1A1B1E] border-[#2C2E33] h-24"
+                    placeholder="Example: Generate a client proposal in a professional, consultative tone. Emphasize how our solution addresses their specific industry challenges. Include concrete examples and ROI projections based on the client data."
+                    className="bg-[#1A1B1E] border-[#2C2E33] h-32"
                   />
                 </div>
 
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <div>
-                      <label className="text-sm font-medium text-[#A0AEC0]">Context Data Points</label>
-                      <p className="text-xs text-[#4A5568]">Specify which data the AI should reason over</p>
+                      <label className="text-sm font-medium text-[#A0AEC0]">Required Data Fields</label>
+                      <p className="text-xs text-[#4A5568]">Select which client and task data the AI needs to generate the document</p>
                     </div>
                     <Button size="sm" variant="outline" onClick={addRequiredData} className="border-[#2C2E33] h-8">
                       <Plus className="w-3 h-3 mr-1" />
-                      Add
+                      Add Field
                     </Button>
                   </div>
                   <div className="space-y-2 max-h-64 overflow-y-auto">
