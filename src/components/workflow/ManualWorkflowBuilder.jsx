@@ -175,26 +175,47 @@ export default function ManualWorkflowBuilder({ onBack, template }) {
     try {
       const user = await base44.auth.me();
 
-      const template = await base44.entities.WorkflowTemplate.create({
-        name: formData.name,
-        description: formData.description,
-        type: formData.type,
-        category: formData.category,
-        current_version: 1,
-        owner_type: 'user',
-        owner_id: user.id,
-        is_active: true,
-        next_workflow_template_id: formData.next_workflow_template_id || null
-      });
+      let template, version;
 
-      const version = await base44.entities.WorkflowTemplateVersion.create({
-        workflow_template_id: template.id,
-        version_number: 1,
-        name: formData.name,
-        description: formData.description,
-        status: 'draft',
-        published_by: user.id
-      });
+      if (isEditing) {
+        // Update existing template
+        await base44.entities.WorkflowTemplate.update(formData.id, {
+          name: formData.name,
+          description: formData.description,
+          type: formData.type,
+          category: formData.category,
+          next_workflow_template_id: formData.next_workflow_template_id || null
+        });
+        template = formData;
+        
+        // Get current version
+        const versions = await base44.entities.WorkflowTemplateVersion.filter({
+          workflow_template_id: formData.id
+        });
+        version = versions[0];
+      } else {
+        // Create new template
+        template = await base44.entities.WorkflowTemplate.create({
+          name: formData.name,
+          description: formData.description,
+          type: formData.type,
+          category: formData.category,
+          current_version: 1,
+          owner_type: 'user',
+          owner_id: user.id,
+          is_active: true,
+          next_workflow_template_id: formData.next_workflow_template_id || null
+        });
+
+        version = await base44.entities.WorkflowTemplateVersion.create({
+          workflow_template_id: template.id,
+          version_number: 1,
+          name: formData.name,
+          description: formData.description,
+          status: 'draft',
+          published_by: user.id
+        });
+      }
 
       for (let stageIdx = 0; stageIdx < formData.stages.length; stageIdx++) {
         const stageData = formData.stages[stageIdx];
