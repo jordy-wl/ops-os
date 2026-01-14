@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useNavigate } from 'react-router-dom';
@@ -21,7 +21,7 @@ import TaskConfigPanel from './TaskConfigPanel';
 
 const STEPS = ['Basic Info', 'Stages', 'Deliverables', 'Tasks', 'Logic', 'Review'];
 
-export default function ManualWorkflowBuilder({ onBack, template }) {
+export default function ManualWorkflowBuilder({ onBack }) {
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState({
     name: '',
@@ -36,21 +36,8 @@ export default function ManualWorkflowBuilder({ onBack, template }) {
   const [isCreating, setIsCreating] = useState(false);
   const [editingDeliverable, setEditingDeliverable] = useState(null);
   const [editingTask, setEditingTask] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    if (template) {
-      setIsEditing(true);
-      setFormData({
-        ...template,
-        stages: [],
-        deliverables: {},
-        tasks: {}
-      });
-    }
-  }, [template]);
 
   const { data: availableTemplates = [] } = useQuery({
     queryKey: ['workflow-templates-list'],
@@ -175,47 +162,26 @@ export default function ManualWorkflowBuilder({ onBack, template }) {
     try {
       const user = await base44.auth.me();
 
-      let template, version;
+      const template = await base44.entities.WorkflowTemplate.create({
+        name: formData.name,
+        description: formData.description,
+        type: formData.type,
+        category: formData.category,
+        current_version: 1,
+        owner_type: 'user',
+        owner_id: user.id,
+        is_active: true,
+        next_workflow_template_id: formData.next_workflow_template_id || null
+      });
 
-      if (isEditing) {
-        // Update existing template
-        await base44.entities.WorkflowTemplate.update(formData.id, {
-          name: formData.name,
-          description: formData.description,
-          type: formData.type,
-          category: formData.category,
-          next_workflow_template_id: formData.next_workflow_template_id || null
-        });
-        template = formData;
-        
-        // Get current version
-        const versions = await base44.entities.WorkflowTemplateVersion.filter({
-          workflow_template_id: formData.id
-        });
-        version = versions[0];
-      } else {
-        // Create new template
-        template = await base44.entities.WorkflowTemplate.create({
-          name: formData.name,
-          description: formData.description,
-          type: formData.type,
-          category: formData.category,
-          current_version: 1,
-          owner_type: 'user',
-          owner_id: user.id,
-          is_active: true,
-          next_workflow_template_id: formData.next_workflow_template_id || null
-        });
-
-        version = await base44.entities.WorkflowTemplateVersion.create({
-          workflow_template_id: template.id,
-          version_number: 1,
-          name: formData.name,
-          description: formData.description,
-          status: 'draft',
-          published_by: user.id
-        });
-      }
+      const version = await base44.entities.WorkflowTemplateVersion.create({
+        workflow_template_id: template.id,
+        version_number: 1,
+        name: formData.name,
+        description: formData.description,
+        status: 'draft',
+        published_by: user.id
+      });
 
       for (let stageIdx = 0; stageIdx < formData.stages.length; stageIdx++) {
         const stageData = formData.stages[stageIdx];
@@ -325,11 +291,8 @@ export default function ManualWorkflowBuilder({ onBack, template }) {
                 {idx < currentStep ? <CheckCircle2 className="w-5 h-5" /> : idx + 1}
               </div>
               <span className={`text-sm ${idx === currentStep ? 'text-[#F5F5F5]' : 'text-[#A0AEC0]'}`}>
-                    {step}
-                  </span>
-                  {isEditing && idx === 0 && (
-                    <span className="text-xs bg-[#BD00FF]/20 text-[#BD00FF] px-2 py-0.5 rounded-full ml-2">Edit</span>
-                  )}
+                {step}
+              </span>
             </div>
             {idx < STEPS.length - 1 && (
               <div className={`flex-1 h-0.5 mx-4 ${idx < currentStep ? 'bg-green-500/50' : 'bg-[#2C2E33]'}`} />
@@ -786,15 +749,15 @@ export default function ManualWorkflowBuilder({ onBack, template }) {
             </>
           ) : currentStep === STEPS.length - 1 ? (
             <>
-             <CheckCircle2 className="w-4 h-4 mr-2" />
-             {isEditing ? 'Update Template' : 'Create Template'}
+              <CheckCircle2 className="w-4 h-4 mr-2" />
+              Create Template
             </>
-            ) : (
+          ) : (
             <>
-             Next
-             <ArrowRight className="w-4 h-4 ml-2" />
+              Next
+              <ArrowRight className="w-4 h-4 ml-2" />
             </>
-            )}
+          )}
         </Button>
       </div>
 
