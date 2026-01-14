@@ -786,15 +786,15 @@ export default function ManualWorkflowBuilder({ onBack, template }) {
             </>
           ) : currentStep === STEPS.length - 1 ? (
             <>
-              <CheckCircle2 className="w-4 h-4 mr-2" />
-              Create Template
+             <CheckCircle2 className="w-4 h-4 mr-2" />
+             {isEditing ? 'Update Template' : 'Create Template'}
             </>
-          ) : (
+            ) : (
             <>
-              Next
-              <ArrowRight className="w-4 h-4 ml-2" />
+             Next
+             <ArrowRight className="w-4 h-4 ml-2" />
             </>
-          )}
+            )}
         </Button>
       </div>
 
