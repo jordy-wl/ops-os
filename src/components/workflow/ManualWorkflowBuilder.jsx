@@ -254,12 +254,14 @@ export default function ManualWorkflowBuilder({ onBack }) {
           return dels.length > 0 && dels.every(d => d.name);
         });
       case 3:
-        return Object.keys(formData.deliverables).every(key => {
-          const [, stageIdx, , delIdx] = key.split('_');
-          const tasks = formData.tasks[`stage_${stageIdx}_del_${delIdx}`] || [];
-          return tasks.length > 0 && tasks.every(t => t.name);
+        return formData.stages.every((_, stageIdx) => {
+          const deliverablesInStage = formData.deliverables[`stage_${stageIdx}`] || [];
+          return deliverablesInStage.every((del, delIdx) => {
+            const tasks = formData.tasks[`stage_${stageIdx}_del_${delIdx}`] || [];
+            return tasks.length > 0 && tasks.every(t => t.name);
+          });
         });
-      case 4: return true; // Logic stage is optional
+      case 4: return true;
       default: return true;
     }
   };
