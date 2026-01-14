@@ -16,10 +16,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import DeliverableConfigPanel from './DeliverableConfigPanel';
-import TaskConfigPanel from './TaskConfigPanel';
+import WorkflowStructurePanel from './WorkflowStructurePanel';
+import DeliverableTaskPanel from './DeliverableTaskPanel';
+import WorkflowLogicPanel from './WorkflowLogicPanel';
+import WorkflowReviewPanel from './WorkflowReviewPanel';
 
-const STEPS = ['Basic Info', 'Stages', 'Deliverables', 'Tasks', 'Review'];
+const STEPS = ['Basic Info', 'Stages', 'Deliverables & Tasks', 'Logic', 'Review'];
 
 export default function ManualWorkflowBuilder({ onBack }) {
   const [currentStep, setCurrentStep] = useState(0);
@@ -34,8 +36,6 @@ export default function ManualWorkflowBuilder({ onBack }) {
     tasks: {}
   });
   const [isCreating, setIsCreating] = useState(false);
-  const [editingDeliverable, setEditingDeliverable] = useState(null);
-  const [editingTask, setEditingTask] = useState(null);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
@@ -225,11 +225,11 @@ export default function ManualWorkflowBuilder({ onBack }) {
               requires_review: taskData.requires_review || false,
               can_be_overridden: taskData.can_be_overridden !== false,
               data_field_definitions: taskData.data_field_definitions || [],
-              conditions: taskData.conditions || {},
+              conditions: { outcomes: taskData.outcomes || [] },
               assignment_config: taskData.assignment_config || {},
               sequence_order: taskIdx + 1,
-              owner_type: 'user',
-              owner_id: user.id
+              owner_type: taskData.owner_type || 'user',
+              owner_id: taskData.owner_id || user.id
             });
           }
         }
@@ -248,17 +248,19 @@ export default function ManualWorkflowBuilder({ onBack }) {
     switch (currentStep) {
       case 0: return formData.name && formData.description;
       case 1: return formData.stages.length > 0 && formData.stages.every(s => s.name);
-      case 2: 
+      case 2: {
+        // Check that each stage has at least one deliverable with tasks
         return formData.stages.every((_, stageIdx) => {
           const dels = formData.deliverables[`stage_${stageIdx}`] || [];
-          return dels.length > 0 && dels.every(d => d.name);
+          if (dels.length === 0) return false;
+          
+          return dels.every((d, delIdx) => {
+            const taskList = formData.tasks[`stage_${stageIdx}_del_${delIdx}`] || [];
+            return d.name && taskList.length > 0 && taskList.every(t => t.name);
+          });
         });
-      case 3:
-        return Object.keys(formData.deliverables).every(key => {
-          const [, stageIdx, , delIdx] = key.split('_');
-          const tasks = formData.tasks[`stage_${stageIdx}_del_${delIdx}`] || [];
-          return tasks.length > 0 && tasks.every(t => t.name);
-        });
+      }
+      case 3: return true; // Logic is optional
       default: return true;
     }
   };
@@ -393,237 +395,38 @@ export default function ManualWorkflowBuilder({ onBack }) {
         )}
 
         {currentStep === 1 && (
-          <div className="max-w-3xl mx-auto">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold">Define Stages</h2>
-              <Button onClick={addStage} className="bg-[#00E5FF]/20 text-[#00E5FF] hover:bg-[#00E5FF]/30">
-                <Plus className="w-4 h-4 mr-2" />
-                Add Stage
-              </Button>
-            </div>
-
-            {formData.stages.length === 0 ? (
-              <div className="neumorphic-pressed rounded-xl p-12 text-center">
-                <p className="text-[#A0AEC0] mb-4">No stages defined yet</p>
-                <Button onClick={addStage} className="bg-gradient-to-r from-[#00E5FF] to-[#0099ff] text-[#121212]">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add First Stage
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {formData.stages.map((stage, idx) => (
-                  <div key={idx} className="neumorphic-pressed rounded-xl p-5">
-                    <div className="flex items-start gap-4">
-                      <div className="flex items-center gap-2">
-                        <GripVertical className="w-4 h-4 text-[#4A5568] cursor-move" />
-                        <div className="w-8 h-8 rounded-lg bg-[#00E5FF]/20 flex items-center justify-center text-sm font-medium text-[#00E5FF]">
-                          {idx + 1}
-                        </div>
-                      </div>
-                      <div className="flex-1 space-y-3">
-                        <Input
-                          value={stage.name}
-                          onChange={(e) => updateStage(idx, 'name', e.target.value)}
-                          placeholder="Stage name (e.g., Discovery)"
-                          className="bg-[#1A1B1E] border-[#2C2E33] focus:border-[#00E5FF]"
-                        />
-                        <Textarea
-                          value={stage.description}
-                          onChange={(e) => updateStage(idx, 'description', e.target.value)}
-                          placeholder="Describe this stage..."
-                          className="bg-[#1A1B1E] border-[#2C2E33] focus:border-[#00E5FF] h-20"
-                        />
-                      </div>
-                      <button
-                        onClick={() => removeStage(idx)}
-                        className="p-2 rounded-lg hover:bg-[#2C2E33] text-red-400"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          <WorkflowStructurePanel 
+            stages={formData.stages}
+            onUpdateStages={(stages) => setFormData({ ...formData, stages })}
+          />
         )}
 
         {currentStep === 2 && (
-          <div className="max-w-4xl mx-auto">
-            <h2 className="text-xl font-semibold mb-6">Define Deliverables</h2>
-            <div className="space-y-6">
-              {formData.stages.map((stage, stageIdx) => (
-                <div key={stageIdx} className="neumorphic-pressed rounded-xl p-5">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-medium">Stage {stageIdx + 1}: {stage.name}</h3>
-                    <Button 
-                      onClick={() => addDeliverable(stageIdx)}
-                      size="sm"
-                      className="bg-[#00E5FF]/20 text-[#00E5FF] hover:bg-[#00E5FF]/30"
-                    >
-                      <Plus className="w-4 h-4 mr-1" />
-                      Add Deliverable
-                    </Button>
-                  </div>
-
-                  <div className="space-y-3">
-                    {(formData.deliverables[`stage_${stageIdx}`] || []).map((del, delIdx) => (
-                      <div 
-                        key={delIdx} 
-                        className="neumorphic-raised rounded-lg p-4 cursor-pointer hover:bg-[#2C2E33] transition-colors"
-                        onClick={() => setEditingDeliverable({ stageIndex: stageIdx, delIndex: delIdx, data: del })}
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className="w-6 h-6 rounded bg-[#2C2E33] flex items-center justify-center text-xs text-[#A0AEC0]">
-                            D{delIdx + 1}
-                          </div>
-                          <div className="flex-1">
-                            <p className="font-medium">{del.name || 'Untitled Deliverable'}</p>
-                            <p className="text-xs text-[#A0AEC0] mt-1">{del.description || 'No description'}</p>
-                            <div className="flex items-center gap-2 mt-2">
-                              <span className="text-xs text-[#4A5568] capitalize">{del.output_type || 'document'}</span>
-                              {del.document_template_ids?.length > 0 && (
-                                <span className="text-xs text-[#00E5FF]">• Auto-generate</span>
-                              )}
-                            </div>
-                          </div>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              removeDeliverable(stageIdx, delIdx);
-                            }}
-                            className="p-2 rounded-lg hover:bg-[#3a3d44] text-red-400"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-
-                    {(formData.deliverables[`stage_${stageIdx}`] || []).length === 0 && (
-                      <p className="text-sm text-[#4A5568] text-center py-4">No deliverables yet</p>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <DeliverableTaskPanel
+            stages={formData.stages}
+            deliverables={formData.deliverables}
+            tasks={formData.tasks}
+            onUpdateDeliverables={(deliverables) => setFormData({ ...formData, deliverables })}
+            onUpdateTasks={(tasks) => setFormData({ ...formData, tasks })}
+          />
         )}
 
         {currentStep === 3 && (
-          <div className="max-w-5xl mx-auto space-y-6">
-            <h2 className="text-xl font-semibold mb-6">Define Tasks</h2>
-            {formData.stages.map((stage, stageIdx) => {
-              const deliverables = formData.deliverables[`stage_${stageIdx}`] || [];
-              return deliverables.map((del, delIdx) => (
-                <div key={`${stageIdx}-${delIdx}`} className="neumorphic-pressed rounded-xl p-5">
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <p className="text-xs text-[#4A5568]">Stage {stageIdx + 1}: {stage.name}</p>
-                      <h3 className="font-medium">Deliverable: {del.name}</h3>
-                    </div>
-                    <Button 
-                      onClick={() => addTask(stageIdx, delIdx)}
-                      size="sm"
-                      className="bg-[#00E5FF]/20 text-[#00E5FF] hover:bg-[#00E5FF]/30"
-                    >
-                      <Plus className="w-4 h-4 mr-1" />
-                      Add Task
-                    </Button>
-                  </div>
-
-                  <div className="space-y-3">
-                    {(formData.tasks[`stage_${stageIdx}_del_${delIdx}`] || []).map((task, taskIdx) => (
-                      <div 
-                        key={taskIdx} 
-                        className="neumorphic-raised rounded-lg p-4 cursor-pointer hover:bg-[#2C2E33] transition-colors"
-                        onClick={() => setEditingTask({ stageIndex: stageIdx, delIndex: delIdx, taskIndex: taskIdx, data: task })}
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className="w-6 h-6 rounded bg-[#2C2E33] flex items-center justify-center text-xs">
-                            {taskIdx + 1}
-                          </div>
-                          <div className="flex-1">
-                            <p className="font-medium">{task.name || 'Untitled Task'}</p>
-                            <p className="text-xs text-[#A0AEC0] mt-1">{task.description || 'No description'}</p>
-                            <div className="flex items-center gap-2 mt-2">
-                              <span className="text-xs text-[#4A5568] capitalize">{task.priority || 'normal'} priority</span>
-                              {task.data_field_definitions?.length > 0 && (
-                                <span className="text-xs text-[#00E5FF]">• {task.data_field_definitions.length} fields</span>
-                              )}
-                              {task.requires_review && (
-                                <span className="text-xs text-yellow-400">• Needs review</span>
-                              )}
-                            </div>
-                          </div>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              removeTask(stageIdx, delIdx, taskIdx);
-                            }}
-                            className="p-2 rounded-lg hover:bg-[#3a3d44] text-red-400"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-
-                    {(formData.tasks[`stage_${stageIdx}_del_${delIdx}`] || []).length === 0 && (
-                      <p className="text-sm text-[#4A5568] text-center py-4">No tasks yet</p>
-                    )}
-                  </div>
-                </div>
-              ));
-            })}
-          </div>
+          <WorkflowLogicPanel
+            stages={formData.stages}
+            deliverables={formData.deliverables}
+            tasks={formData.tasks}
+            onUpdateTasks={(tasks) => setFormData({ ...formData, tasks })}
+          />
         )}
 
         {currentStep === 4 && (
-          <div className="max-w-4xl mx-auto">
-            <h2 className="text-xl font-semibold mb-6">Review & Create</h2>
-            
-            <div className="space-y-6">
-              <div className="neumorphic-pressed rounded-xl p-5">
-                <h3 className="font-medium mb-2">{formData.name}</h3>
-                <p className="text-sm text-[#A0AEC0] mb-3">{formData.description}</p>
-                <div className="flex gap-4 text-xs text-[#4A5568]">
-                  <span className="capitalize">Type: {formData.type}</span>
-                  <span>•</span>
-                  <span className="capitalize">Category: {formData.category}</span>
-                  <span>•</span>
-                  <span>{formData.stages.length} stages</span>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                {formData.stages.map((stage, stageIdx) => {
-                  const deliverables = formData.deliverables[`stage_${stageIdx}`] || [];
-                  return (
-                    <div key={stageIdx} className="neumorphic-raised rounded-xl p-5">
-                      <h4 className="font-medium mb-3">Stage {stageIdx + 1}: {stage.name}</h4>
-                      <div className="ml-4 space-y-2">
-                        {deliverables.map((del, delIdx) => {
-                          const tasks = formData.tasks[`stage_${stageIdx}_del_${delIdx}`] || [];
-                          return (
-                            <div key={delIdx}>
-                              <p className="text-sm text-[#A0AEC0] mb-1">→ {del.name}</p>
-                              <div className="ml-4 text-xs text-[#4A5568]">
-                                {tasks.map((task, taskIdx) => (
-                                  <p key={taskIdx}>• {task.name}</p>
-                                ))}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
+          <WorkflowReviewPanel
+            formData={formData}
+            stages={formData.stages}
+            deliverables={formData.deliverables}
+            tasks={formData.tasks}
+          />
         )}
       </div>
 
@@ -668,32 +471,7 @@ export default function ManualWorkflowBuilder({ onBack }) {
         </Button>
       </div>
 
-      {/* Config Modals */}
-      {editingDeliverable && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/70" onClick={() => setEditingDeliverable(null)} />
-          <div className="glass rounded-2xl w-full max-w-2xl relative z-10 shadow-2xl border border-white/10 p-6 max-h-[90vh] overflow-y-auto">
-            <DeliverableConfigPanel
-              deliverable={editingDeliverable.data}
-              onSave={saveDeliverable}
-              onClose={() => setEditingDeliverable(null)}
-            />
-          </div>
-        </div>
-      )}
 
-      {editingTask && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/70" onClick={() => setEditingTask(null)} />
-          <div className="glass rounded-2xl w-full max-w-3xl relative z-10 shadow-2xl border border-white/10 p-6 max-h-[90vh] overflow-y-auto">
-            <TaskConfigPanel
-              task={editingTask.data}
-              onSave={saveTask}
-              onClose={() => setEditingTask(null)}
-            />
-          </div>
-        </div>
-      )}
     </div>
   );
 }
