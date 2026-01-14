@@ -113,7 +113,7 @@ export default function CreateTemplateModal({ isOpen, onClose, template }) {
       ...formData,
       required_entity_data: [
         ...(formData.required_entity_data || []),
-        { entity_type: 'Client', field_path: '', description: '', is_required: false }
+        { entity_type: 'Client', field_paths: [], description: '', is_required: false }
       ]
     });
   };
