@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Plus, X, Trash2, GitBranch } from 'lucide-react';
+import { AssignmentUserSelector, AssignmentTeamSelector, AssignmentDepartmentSelector } from './AssignmentSelectors';
 
 const fieldTypeOptions = [
   { value: 'text', label: 'Text' },
@@ -524,10 +525,55 @@ export default function TaskConfigPanel({ task, onSave, onClose, allStages, allD
         {!isLogicStage && activeTab === 'assignment' && (
           <div className="space-y-4">
             <p className="text-sm text-[#A0AEC0]">
-              Configure assignment hierarchy and reassignment permissions
+              Configure task assignment and permissions
             </p>
 
+            {/* Assign To */}
             <div className="space-y-3">
+              <label className="block text-sm font-medium text-[#A0AEC0]">Assign To</label>
+              
+              <div>
+                <label className="block text-xs text-[#A0AEC0] mb-1">Assignment Type</label>
+                <Select 
+                  value={formData.owner_type || ''} 
+                  onValueChange={(v) => setFormData({ ...formData, owner_type: v, owner_id: '' })}
+                >
+                  <SelectTrigger className="bg-[#1A1B1E] border-[#2C2E33]">
+                    <SelectValue placeholder="Select assignment type..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#2C2E33]">
+                    <SelectItem value="user">Specific User</SelectItem>
+                    <SelectItem value="team">Team (routed to team lead)</SelectItem>
+                    <SelectItem value="department">Department (routed to dept head)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {formData.owner_type === 'user' && (
+                <AssignmentUserSelector
+                  value={formData.owner_id || ''}
+                  onChange={(v) => setFormData({ ...formData, owner_id: v })}
+                />
+              )}
+
+              {formData.owner_type === 'team' && (
+                <AssignmentTeamSelector
+                  value={formData.owner_id || ''}
+                  onChange={(v) => setFormData({ ...formData, owner_id: v })}
+                />
+              )}
+
+              {formData.owner_type === 'department' && (
+                <AssignmentDepartmentSelector
+                  value={formData.owner_id || ''}
+                  onChange={(v) => setFormData({ ...formData, owner_id: v })}
+                />
+              )}
+            </div>
+
+            <div className="border-t border-[#2C2E33] pt-4 space-y-3">
+              <label className="block text-sm font-medium text-[#A0AEC0]">Assignment Settings</label>
+
               <div className="flex items-center gap-3">
                 <input
                   type="checkbox"
