@@ -25,6 +25,7 @@ export default function DeliverableConfigPanel({ deliverable, onSave, onClose })
     is_required: true,
     estimated_duration_hours: 0,
     document_template_ids: [],
+    auto_generate_ai_document: true,
     meeting_config: {},
     data_mapping: {}
   });
@@ -33,6 +34,10 @@ export default function DeliverableConfigPanel({ deliverable, onSave, onClose })
     queryKey: ['document-templates'],
     queryFn: () => base44.entities.DocumentTemplate.filter({ is_active: true }),
   });
+
+  // Get the selected template to check if it has AI instructions
+  const selectedTemplate = documentTemplates.find(t => t.id === formData.document_template_ids?.[0]);
+  const isAITemplate = selectedTemplate?.ai_prompt_instructions;
 
   const OutputIcon = outputTypeIcons[formData.output_type] || FileText;
 
@@ -142,14 +147,28 @@ export default function DeliverableConfigPanel({ deliverable, onSave, onClose })
               </Select>
             </div>
 
-            {formData.document_template_ids?.[0] && (
-              <div className="neumorphic-pressed rounded-lg p-3 border-l-2 border-[#00E5FF]">
+            {formData.document_template_ids?.[0] && isAITemplate && (
+              <div className="neumorphic-pressed rounded-lg p-3 border-l-2 border-[#BD00FF]">
                 <div className="flex items-start gap-2">
-                  <FileText className="w-4 h-4 text-[#00E5FF] mt-0.5" />
+                  <Sparkles className="w-4 h-4 text-[#BD00FF] mt-0.5" />
                   <div>
-                    <p className="text-sm text-[#F5F5F5] font-medium">AI Document Generation Enabled</p>
+                    <p className="text-sm text-[#BD00FF] font-medium">AI Document Generation Active</p>
                     <p className="text-xs text-[#A0AEC0] mt-1">
-                      When all tasks are completed, the AI will automatically generate this document using the collected workflow data and the template's generation settings.
+                      When tasks are completed, AI will automatically generate this document using workflow data and your template's prompt.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {formData.document_template_ids?.[0] && !isAITemplate && (
+              <div className="neumorphic-pressed rounded-lg p-3 border-l-2 border-[#4A5568]">
+                <div className="flex items-start gap-2">
+                  <FileText className="w-4 h-4 text-[#A0AEC0] mt-0.5" />
+                  <div>
+                    <p className="text-sm text-[#A0AEC0] font-medium">Standard Template</p>
+                    <p className="text-xs text-[#4A5568] mt-1">
+                      This template doesn't have AI generation configured. Add an AI prompt to the template for automatic generation.
                     </p>
                   </div>
                 </div>

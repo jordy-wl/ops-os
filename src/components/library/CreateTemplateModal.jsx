@@ -48,12 +48,9 @@ export default function CreateTemplateModal({ isOpen, onClose, template }) {
     name: '',
     description: '',
     category: 'other',
-    content_template: '',
     document_outline: '',
-    placeholder_schema: [],
     ai_prompt_instructions: '',
     required_entity_data: [],
-    rag_keywords: [],
     output_format: 'markdown'
   });
 
@@ -71,34 +68,7 @@ export default function CreateTemplateModal({ isOpen, onClose, template }) {
     }
   });
 
-  const addPlaceholder = () => {
-    setFormData({
-      ...formData,
-      placeholder_schema: [
-        ...(formData.placeholder_schema || []),
-        { key: '', label: '', type: 'text', example: '' }
-      ]
-    });
-  };
 
-  const updatePlaceholder = (index, field, value) => {
-    const updated = [...(formData.placeholder_schema || [])];
-    updated[index] = { ...updated[index], [field]: value };
-    setFormData({ ...formData, placeholder_schema: updated });
-  };
-
-  const removePlaceholder = (index) => {
-    const updated = [...(formData.placeholder_schema || [])];
-    updated.splice(index, 1);
-    setFormData({ ...formData, placeholder_schema: updated });
-  };
-
-  const insertPlaceholder = (key) => {
-    setFormData({
-      ...formData,
-      content_template: (formData.content_template || '') + `<span style="background-color: #00E5FF20; padding: 2px 6px; border-radius: 4px; font-family: monospace;">{{${key}}}</span>`
-    });
-  };
 
   const addRequiredData = () => {
     setFormData({
@@ -122,18 +92,7 @@ export default function CreateTemplateModal({ isOpen, onClose, template }) {
     setFormData({ ...formData, required_entity_data: updated });
   };
 
-  // Generate preview with lorem ipsum for AI sections
-  const documentPreview = useMemo(() => {
-    let preview = formData.content_template || '';
-    
-    // Add lorem ipsum hints where AI will elaborate
-    if (formData.ai_prompt_instructions && preview) {
-      const loremHint = '<div style="background: linear-gradient(to right, #BD00FF20, transparent); border-left: 3px solid #BD00FF; padding: 12px; margin: 16px 0; font-style: italic; color: #A0AEC0;">✨ AI will elaborate here based on your prompt and context...</div>';
-      preview = preview + loremHint;
-    }
-    
-    return preview;
-  }, [formData.content_template, formData.ai_prompt_instructions]);
+
 
   if (!isOpen) return null;
 
@@ -151,251 +110,177 @@ export default function CreateTemplateModal({ isOpen, onClose, template }) {
           </button>
         </div>
 
-        <div className="grid grid-cols-2 gap-6">
-          {/* Left Column - Configuration */}
-          <div className="space-y-6">
-            {/* Basic Info */}
-            <div className="neumorphic-raised rounded-xl p-4">
-              <h3 className="text-sm font-semibold text-[#00E5FF] mb-4">Basic Information</h3>
-              
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Template Name *</label>
-                  <Input
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="e.g., Client Onboarding Agreement"
-                    className="bg-[#1A1B1E] border-[#2C2E33]"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Category</label>
-                    <Select value={formData.category} onValueChange={(v) => setFormData({ ...formData, category: v })}>
-                      <SelectTrigger className="bg-[#1A1B1E] border-[#2C2E33]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-[#2C2E33] border-[#3a3d44]">
-                        <SelectItem value="proposal">Proposal</SelectItem>
-                        <SelectItem value="contract">Contract</SelectItem>
-                        <SelectItem value="welcome_pack">Welcome Pack</SelectItem>
-                        <SelectItem value="compliance">Compliance</SelectItem>
-                        <SelectItem value="onboarding">Onboarding</SelectItem>
-                        <SelectItem value="report">Report</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Output Format</label>
-                    <Select value={formData.output_format} onValueChange={(v) => setFormData({ ...formData, output_format: v })}>
-                      <SelectTrigger className="bg-[#1A1B1E] border-[#2C2E33]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-[#2C2E33] border-[#3a3d44]">
-                        <SelectItem value="markdown">Markdown</SelectItem>
-                        <SelectItem value="html">HTML</SelectItem>
-                        <SelectItem value="pdf">PDF</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Description</label>
-                  <p className="text-xs text-[#4A5568] mb-2">Brief summary for internal reference</p>
-                  <Textarea
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    placeholder="Describe this template..."
-                    className="bg-[#1A1B1E] border-[#2C2E33] h-20"
-                  />
-                </div>
-              </div>
+        <div className="space-y-6">
+          {/* Basic Info */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Template Name *</label>
+              <Input
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="e.g., Client Onboarding Proposal"
+                className="bg-[#1A1B1E] border-[#2C2E33]"
+              />
             </div>
 
-            {/* Document Structure */}
-            <div className="neumorphic-raised rounded-xl p-4">
-              <h3 className="text-sm font-semibold text-[#00E5FF] mb-4">Document Structure</h3>
-              
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Document Outline</label>
-                  <p className="text-xs text-[#4A5568] mb-2">Define the high-level structure (e.g., # Introduction, ## Background)</p>
-                  <Textarea
-                    value={formData.document_outline}
-                    onChange={(e) => setFormData({ ...formData, document_outline: e.target.value })}
-                    placeholder="# Executive Summary&#10;## Background&#10;## Proposal&#10;## Next Steps"
-                    className="bg-[#1A1B1E] border-[#2C2E33] h-32 font-mono text-sm"
-                  />
-                </div>
-
-                {/* Placeholders */}
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <label className="text-sm font-medium text-[#A0AEC0]">Data Placeholders</label>
-                    <Button size="sm" variant="outline" onClick={addPlaceholder} className="border-[#2C2E33] h-8">
-                      <Plus className="w-3 h-3 mr-1" />
-                      Add
-                    </Button>
-                  </div>
-                  <div className="space-y-2 max-h-64 overflow-y-auto">
-                    {(formData.placeholder_schema || []).map((placeholder, idx) => (
-                      <div key={idx} className="flex gap-2 items-center neumorphic-pressed p-2 rounded-lg">
-                        <Input
-                          value={placeholder.key}
-                          onChange={(e) => updatePlaceholder(idx, 'key', e.target.value)}
-                          placeholder="client.name"
-                          className="flex-1 bg-[#1A1B1E] border-[#2C2E33] text-xs h-8"
-                        />
-                        <Button 
-                          size="sm" 
-                          variant="ghost" 
-                          onClick={() => insertPlaceholder(placeholder.key)}
-                          className="text-[#00E5FF] hover:bg-[#00E5FF]/10 h-8 px-2 text-xs"
-                        >
-                          Insert
-                        </Button>
-                        <button onClick={() => removePlaceholder(idx)} className="p-1 hover:bg-[#3a3d44] rounded">
-                          <Trash2 className="w-3 h-3 text-red-400" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* AI Configuration */}
-            <div className="neumorphic-raised rounded-xl p-4 border border-[#BD00FF]/20">
-              <h3 className="text-sm font-semibold text-[#BD00FF] mb-4 flex items-center gap-2">
-                <Sparkles className="w-4 h-4" />
-                AI Document Builder
-              </h3>
-              <p className="text-xs text-[#4A5568] mb-4">
-                Configure how AI should generate documents using workflow data
-              </p>
-              
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-[#A0AEC0] mb-2">AI Generation Prompt</label>
-                  <p className="text-xs text-[#4A5568] mb-2">Describe how the document should be written - tone, style, what to emphasize</p>
-                  <Textarea
-                    value={formData.ai_prompt_instructions}
-                    onChange={(e) => setFormData({ ...formData, ai_prompt_instructions: e.target.value })}
-                    placeholder="Example: Generate a client proposal in a professional, consultative tone. Emphasize how our solution addresses their specific industry challenges. Include concrete examples and ROI projections based on the client data."
-                    className="bg-[#1A1B1E] border-[#2C2E33] h-32"
-                  />
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <div>
-                      <label className="text-sm font-medium text-[#A0AEC0]">Required Data Fields</label>
-                      <p className="text-xs text-[#4A5568]">Select which client and task data the AI needs to generate the document</p>
-                    </div>
-                    <Button size="sm" variant="outline" onClick={addRequiredData} className="border-[#2C2E33] h-8">
-                      <Plus className="w-3 h-3 mr-1" />
-                      Add Field
-                    </Button>
-                  </div>
-                  <div className="space-y-2 max-h-64 overflow-y-auto">
-                    {(formData.required_entity_data || []).map((data, idx) => (
-                      <div key={idx} className="neumorphic-pressed p-3 rounded-lg space-y-2">
-                        <div className="flex gap-2">
-                          <Select 
-                            value={data.entity_type} 
-                            onValueChange={(v) => updateRequiredData(idx, 'entity_type', v)}
-                          >
-                            <SelectTrigger className="w-32 bg-[#1A1B1E] border-[#2C2E33] text-xs h-8">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent className="bg-[#2C2E33] border-[#3a3d44]">
-                              <SelectItem value="Client">Client</SelectItem>
-                              <SelectItem value="WorkflowInstance">Workflow</SelectItem>
-                              <SelectItem value="Contact">Contact</SelectItem>
-                              <SelectItem value="TaskInstance">Task</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <Select 
-                            value={data.field_path} 
-                            onValueChange={(v) => updateRequiredData(idx, 'field_path', v)}
-                          >
-                            <SelectTrigger className="flex-1 bg-[#1A1B1E] border-[#2C2E33] text-xs h-8">
-                              <SelectValue placeholder="Select field..." />
-                            </SelectTrigger>
-                            <SelectContent className="bg-[#2C2E33] border-[#3a3d44]">
-                              {ENTITY_FIELDS[data.entity_type]?.map(field => (
-                                <SelectItem key={field.path} value={field.path}>
-                                  {field.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <button onClick={() => removeRequiredData(idx)} className="p-1 hover:bg-[#3a3d44] rounded">
-                            <Trash2 className="w-3 h-3 text-red-400" />
-                          </button>
-                        </div>
-                        <Input
-                          value={data.description}
-                          onChange={(e) => updateRequiredData(idx, 'description', e.target.value)}
-                          placeholder="How should AI use this? e.g., 'Explain implications of their industry...'"
-                          className="bg-[#1A1B1E] border-[#2C2E33] text-xs h-8"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Knowledge Keywords</label>
-                  <p className="text-xs text-[#4A5568] mb-2">Keywords to search your knowledge library</p>
-                  <Input
-                    value={(formData.rag_keywords || []).join(', ')}
-                    onChange={(e) => setFormData({ 
-                      ...formData, 
-                      rag_keywords: e.target.value.split(',').map(k => k.trim()).filter(k => k) 
-                    })}
-                    placeholder="onboarding, compliance, best practices"
-                    className="bg-[#1A1B1E] border-[#2C2E33]"
-                  />
-                </div>
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Category</label>
+              <Select value={formData.category} onValueChange={(v) => setFormData({ ...formData, category: v })}>
+                <SelectTrigger className="bg-[#1A1B1E] border-[#2C2E33]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-[#2C2E33] border-[#3a3d44]">
+                  <SelectItem value="proposal">Proposal</SelectItem>
+                  <SelectItem value="contract">Contract</SelectItem>
+                  <SelectItem value="welcome_pack">Welcome Pack</SelectItem>
+                  <SelectItem value="compliance">Compliance</SelectItem>
+                  <SelectItem value="onboarding">Onboarding</SelectItem>
+                  <SelectItem value="report">Report</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
-          {/* Right Column - Live Preview */}
-          <div className="space-y-4">
-            <div className="neumorphic-raised rounded-xl p-4">
-              <h3 className="text-sm font-semibold text-[#00E5FF] mb-4">Live Document Preview</h3>
-              <div className="bg-[#1A1B1E] border border-[#2C2E33] rounded-lg overflow-hidden">
-                <ReactQuill
-                  value={formData.content_template}
-                  onChange={(value) => setFormData({ ...formData, content_template: value })}
-                  theme="snow"
-                  className="min-h-[500px]"
-                  placeholder="Start writing your document template... Use the placeholders from the left panel."
+          <div>
+            <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Description</label>
+            <Textarea
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder="Brief description of this document template..."
+              className="bg-[#1A1B1E] border-[#2C2E33] h-20"
+            />
+          </div>
+
+          {/* Document Structure */}
+          <div className="neumorphic-raised rounded-xl p-4">
+            <h3 className="text-sm font-semibold text-[#00E5FF] mb-4">Document Structure</h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Document Outline</label>
+                <p className="text-xs text-[#4A5568] mb-2">Define section headings and structure (optional)</p>
+                <Textarea
+                  value={formData.document_outline}
+                  onChange={(e) => setFormData({ ...formData, document_outline: e.target.value })}
+                  placeholder="# Executive Summary&#10;## Background&#10;## Our Proposal&#10;## Investment & ROI&#10;## Next Steps"
+                  className="bg-[#1A1B1E] border-[#2C2E33] h-32 font-mono text-sm"
                 />
               </div>
-            </div>
 
-            {formData.ai_prompt_instructions && (
-              <div className="neumorphic-pressed rounded-xl p-4 border-l-4 border-[#BD00FF]">
-                <div className="flex items-start gap-3">
-                  <Sparkles className="w-5 h-5 text-[#BD00FF] mt-0.5" />
+              <div>
+                <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Output Format</label>
+                <Select value={formData.output_format} onValueChange={(v) => setFormData({ ...formData, output_format: v })}>
+                  <SelectTrigger className="bg-[#1A1B1E] border-[#2C2E33]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#2C2E33] border-[#3a3d44]">
+                    <SelectItem value="markdown">Markdown</SelectItem>
+                    <SelectItem value="html">HTML</SelectItem>
+                    <SelectItem value="pdf">PDF</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+
+          {/* AI Configuration - Primary Focus */}
+          <div className="neumorphic-raised rounded-xl p-6 border-2 border-[#BD00FF]/30">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 rounded-lg bg-gradient-to-br from-[#BD00FF]/20 to-[#BD00FF]/10">
+                <Sparkles className="w-5 h-5 text-[#BD00FF]" />
+              </div>
+              <div>
+                <h3 className="text-base font-semibold text-[#BD00FF]">AI Document Generation</h3>
+                <p className="text-xs text-[#A0AEC0]">Tell AI how to write and what data to use</p>
+              </div>
+            </div>
+            
+            <div className="space-y-5">
+              <div>
+                <label className="block text-sm font-medium text-[#F5F5F5] mb-2">
+                  Generation Prompt *
+                </label>
+                <p className="text-xs text-[#4A5568] mb-2">
+                  Describe the tone, style, what to emphasize, and how the document should be structured
+                </p>
+                <Textarea
+                  value={formData.ai_prompt_instructions}
+                  onChange={(e) => setFormData({ ...formData, ai_prompt_instructions: e.target.value })}
+                  placeholder="Example: Generate a professional client proposal with a consultative tone. Start with an executive summary, then detail our solution approach. Emphasize how we address their specific industry challenges. Include ROI projections and concrete implementation timelines. Close with clear next steps."
+                  className="bg-[#1A1B1E] border-[#2C2E33] min-h-[120px]"
+                />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-3">
                   <div>
-                    <p className="text-sm font-medium text-[#BD00FF] mb-1">AI will generate content here</p>
-                    <p className="text-xs text-[#A0AEC0] italic">
-                      Based on your prompt, context data, and knowledge base...
-                    </p>
+                    <label className="text-sm font-medium text-[#F5F5F5]">Data Fields</label>
+                    <p className="text-xs text-[#4A5568]">Select client and workflow data the AI should use</p>
                   </div>
+                  <Button size="sm" variant="outline" onClick={addRequiredData} className="border-[#BD00FF]/30 text-[#BD00FF] hover:bg-[#BD00FF]/10 h-8">
+                    <Plus className="w-3 h-3 mr-1" />
+                    Add Field
+                  </Button>
+                </div>
+                <div className="space-y-2 max-h-80 overflow-y-auto">
+                  {(formData.required_entity_data || []).length === 0 && (
+                    <div className="neumorphic-pressed p-4 rounded-lg text-center">
+                      <Database className="w-8 h-8 text-[#4A5568] mx-auto mb-2" />
+                      <p className="text-sm text-[#A0AEC0]">No data fields selected yet</p>
+                      <p className="text-xs text-[#4A5568] mt-1">Add fields to provide context to the AI</p>
+                    </div>
+                  )}
+                  {(formData.required_entity_data || []).map((data, idx) => (
+                    <div key={idx} className="neumorphic-pressed p-3 rounded-lg space-y-2">
+                      <div className="flex gap-2">
+                        <Select 
+                          value={data.entity_type} 
+                          onValueChange={(v) => updateRequiredData(idx, 'entity_type', v)}
+                        >
+                          <SelectTrigger className="w-28 bg-[#1A1B1E] border-[#2C2E33] text-xs h-8">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-[#2C2E33] border-[#3a3d44]">
+                            <SelectItem value="Client">Client</SelectItem>
+                            <SelectItem value="WorkflowInstance">Workflow</SelectItem>
+                            <SelectItem value="Contact">Contact</SelectItem>
+                            <SelectItem value="TaskInstance">Task</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Select 
+                          value={data.field_path} 
+                          onValueChange={(v) => updateRequiredData(idx, 'field_path', v)}
+                        >
+                          <SelectTrigger className="flex-1 bg-[#1A1B1E] border-[#2C2E33] text-xs h-8">
+                            <SelectValue placeholder="Select field..." />
+                          </SelectTrigger>
+                          <SelectContent className="bg-[#2C2E33] border-[#3a3d44]">
+                            {ENTITY_FIELDS[data.entity_type]?.map(field => (
+                              <SelectItem key={field.path} value={field.path}>
+                                {field.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <button 
+                          onClick={() => removeRequiredData(idx)} 
+                          className="p-1.5 hover:bg-[#3a3d44] rounded transition-colors"
+                        >
+                          <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                        </button>
+                      </div>
+                      <Input
+                        value={data.description}
+                        onChange={(e) => updateRequiredData(idx, 'description', e.target.value)}
+                        placeholder="How should the AI use this field? e.g., 'Use to personalize industry examples'"
+                        className="bg-[#1A1B1E] border-[#2C2E33] text-xs h-8"
+                      />
+                    </div>
+                  ))}
                 </div>
               </div>
-            )}
-          </div>
-        </div>
-
+            </div>
         <div className="flex gap-3 mt-6">
           <Button variant="outline" onClick={onClose} className="flex-1 border-[#2C2E33] text-[#F5F5F5]">
             Cancel
