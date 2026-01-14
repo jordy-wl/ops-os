@@ -284,20 +284,20 @@ export default function CreateTemplateModal({ isOpen, onClose, template }) {
                            </SelectContent>
                          </Select>
                         <Select 
-                          value={data.field_path} 
-                          onValueChange={(v) => updateRequiredData(idx, 'field_path', v)}
-                        >
-                          <SelectTrigger className="flex-1 bg-[#1A1B1E] border-[#2C2E33] text-xs h-8">
-                            <SelectValue placeholder="Select field..." />
-                          </SelectTrigger>
-                          <SelectContent className="bg-[#2C2E33] border-[#3a3d44]">
-                            {ENTITY_FIELDS[data.entity_type]?.map(field => (
-                              <SelectItem key={field.path} value={field.path}>
-                                {field.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                           value={data.field_path} 
+                           onValueChange={(v) => updateRequiredData(idx, 'field_path', v)}
+                         >
+                           <SelectTrigger className="flex-1 bg-[#1A1B1E] border-[#2C2E33] text-xs h-8">
+                             <SelectValue placeholder="Select field..." />
+                           </SelectTrigger>
+                           <SelectContent className="bg-[#2C2E33] border-[#3a3d44]">
+                             {(data.entity_type === 'Client' ? clientFields : workflowFields)?.map(field => (
+                               <SelectItem key={field.path} value={field.path}>
+                                 {field.label}
+                               </SelectItem>
+                             ))}
+                           </SelectContent>
+                         </Select>
                         <button 
                           onClick={() => removeRequiredData(idx)} 
                           className="p-1.5 hover:bg-[#3a3d44] rounded transition-colors"
