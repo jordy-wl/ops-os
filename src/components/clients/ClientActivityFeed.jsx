@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { createPageUrl } from '@/utils';
+import { toast } from 'sonner';
 import AIInsightCard from '@/components/AIInsightCard';
 import { 
   GitMerge, 
