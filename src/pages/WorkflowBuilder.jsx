@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import React, { useState, useEffect } from 'react';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
@@ -23,7 +23,27 @@ import ManualWorkflowBuilder from '@/components/workflow/ManualWorkflowBuilder';
 
 export default function WorkflowBuilder() {
   const [creationMode, setCreationMode] = useState(null); // 'ai' or 'manual'
+  const [editingTemplate, setEditingTemplate] = useState(null);
   const navigate = useNavigate();
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const editId = urlParams.get('edit');
+
+  const { data: templateData, isLoading: templateLoading } = useQuery({
+    queryKey: ['workflow-template', editId],
+    queryFn: async () => {
+      if (!editId) return null;
+      return await base44.entities.WorkflowTemplate.read(editId);
+    },
+    enabled: !!editId
+  });
+
+  useEffect(() => {
+    if (editId && templateData && !editingTemplate) {
+      setEditingTemplate(templateData);
+      setCreationMode('manual');
+    }
+  }, [editId, templateData, editingTemplate]);
 
   return (
     <div className="p-6 min-h-screen">
