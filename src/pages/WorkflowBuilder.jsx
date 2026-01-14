@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import React, { useState, useEffect } from 'react';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { 
   Wand2, 
@@ -23,7 +23,19 @@ import ManualWorkflowBuilder from '@/components/workflow/ManualWorkflowBuilder';
 
 export default function WorkflowBuilder() {
   const [creationMode, setCreationMode] = useState(null); // 'ai' or 'manual'
+  const [editingTemplateId, setEditingTemplateId] = useState(null);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const queryClient = useQueryClient();
+
+  // Check for edit parameter and fetch template
+  useEffect(() => {
+    const editId = searchParams.get('edit');
+    if (editId) {
+      setEditingTemplateId(editId);
+      setCreationMode('manual');
+    }
+  }, [searchParams]);
 
   return (
     <div className="p-6 min-h-screen">
@@ -84,7 +96,7 @@ export default function WorkflowBuilder() {
       ) : creationMode === 'ai' ? (
         <AIWorkflowGenerator onBack={() => setCreationMode(null)} />
       ) : (
-        <ManualWorkflowBuilder onBack={() => setCreationMode(null)} />
+        <ManualWorkflowBuilder onBack={() => setCreationMode(null)} editingTemplateId={editingTemplateId} />
       )}
     </div>
   );
