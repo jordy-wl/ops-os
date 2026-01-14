@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,38 +9,11 @@ import { X, Plus, Trash2, Sparkles, FileText, Database } from 'lucide-react';
 import { toast } from 'sonner';
 import ReactQuill from 'react-quill';
 
-// Entity field suggestions
-const ENTITY_FIELDS = {
-  Client: [
-    { path: 'name', label: 'Client Name', type: 'text' },
-    { path: 'email', label: 'Email', type: 'email' },
-    { path: 'industry', label: 'Industry', type: 'text' },
-    { path: 'region', label: 'Region', type: 'text' },
-    { path: 'lifecycle_stage', label: 'Lifecycle Stage', type: 'text' },
-    { path: 'value', label: 'Value', type: 'currency' },
-    { path: 'website', label: 'Website', type: 'text' },
-    { path: 'metadata.*', label: 'Custom Field (specify path)', type: 'text' }
-  ],
-  WorkflowInstance: [
-    { path: 'name', label: 'Workflow Name', type: 'text' },
-    { path: 'status', label: 'Status', type: 'text' },
-    { path: 'progress_percentage', label: 'Progress %', type: 'number' },
-    { path: 'current_stage_name', label: 'Current Stage', type: 'text' },
-    { path: 'started_at', label: 'Started Date', type: 'date' }
-  ],
-  Contact: [
-    { path: 'first_name', label: 'First Name', type: 'text' },
-    { path: 'last_name', label: 'Last Name', type: 'text' },
-    { path: 'email', label: 'Email', type: 'email' },
-    { path: 'phone', label: 'Phone', type: 'text' },
-    { path: 'job_title', label: 'Job Title', type: 'text' }
-  ],
-  TaskInstance: [
-    { path: 'name', label: 'Task Name', type: 'text' },
-    { path: 'status', label: 'Status', type: 'text' },
-    { path: 'completed_at', label: 'Completed Date', type: 'date' }
-  ]
-};
+// List of available entities in the system
+const AVAILABLE_ENTITIES = [
+  'Client', 'Contact', 'WorkflowInstance', 'StageInstance', 'DeliverableInstance', 
+  'TaskInstance', 'Team', 'Department', 'Product', 'Service', 'BusinessConcept'
+];
 
 export default function CreateTemplateModal({ isOpen, onClose, template }) {
   const queryClient = useQueryClient();
