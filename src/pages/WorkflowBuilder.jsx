@@ -104,7 +104,7 @@ export default function WorkflowBuilder() {
       ) : creationMode === 'ai' ? (
         <AIWorkflowGenerator onBack={() => setCreationMode(null)} />
       ) : (
-        <ManualWorkflowBuilder onBack={() => setCreationMode(null)} />
+        <ManualWorkflowBuilder onBack={() => setCreationMode(null)} template={editingTemplate} />
       )}
     </div>
   );
