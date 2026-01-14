@@ -80,6 +80,13 @@ export default function CreateTemplateModal({ isOpen, onClose, template }) {
   const updateRequiredData = (index, field, value) => {
     const updated = [...(formData.required_entity_data || [])];
     updated[index] = { ...updated[index], [field]: value };
+    
+    // If entity_type changed, fetch its schema and reset field_path
+    if (field === 'entity_type') {
+      updated[index].field_path = '';
+      fetchEntitySchema(value);
+    }
+    
     setFormData({ ...formData, required_entity_data: updated });
   };
 
