@@ -90,11 +90,10 @@ export default function TaskConfigPanel({ task, onSave, onClose }) {
           ...outcomes,
           {
             outcome_name: '',
-            field_code: '',
-            field_value: '',
             action: 'continue',
             target_stage_id: '',
             target_task_id: '',
+            target_deliverable_id: '',
             target_workflow_template_id: ''
           }
         ]
@@ -359,53 +358,25 @@ export default function TaskConfigPanel({ task, onSave, onClose }) {
             {formData.conditions?.outcomes?.map((outcome, idx) => (
               <div key={idx} className="neumorphic-pressed rounded-lg p-4 space-y-3">
                 <div className="flex items-center justify-between">
-                  <Input
-                    value={outcome.outcome_name}
-                    onChange={(e) => updateOutcome(idx, { outcome_name: e.target.value })}
-                    placeholder="e.g., Meeting Booked"
-                    className="bg-[#1A1B1E] border-[#2C2E33] text-sm font-medium flex-1"
-                  />
+                  <div className="flex-1 mr-2">
+                    <label className="block text-xs text-[#A0AEC0] mb-1">Outcome Name</label>
+                    <Input
+                      value={outcome.outcome_name}
+                      onChange={(e) => updateOutcome(idx, { outcome_name: e.target.value })}
+                      placeholder="e.g., Meeting Booked, Approved, Not Interested"
+                      className="bg-[#1A1B1E] border-[#2C2E33] text-sm font-medium"
+                    />
+                  </div>
                   <button
                     onClick={() => removeOutcome(idx)}
-                    className="p-1 rounded hover:bg-[#3a3d44] ml-2"
+                    className="p-2 rounded hover:bg-[#3a3d44] mt-5"
                   >
                     <Trash2 className="w-4 h-4 text-red-400" />
                   </button>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs text-[#A0AEC0] mb-1">Triggered When Field</label>
-                    <Select 
-                      value={outcome.field_code} 
-                      onValueChange={(v) => updateOutcome(idx, { field_code: v })}
-                    >
-                      <SelectTrigger className="bg-[#1A1B1E] border-[#2C2E33] text-sm">
-                        <SelectValue placeholder="Select field..." />
-                      </SelectTrigger>
-                      <SelectContent className="bg-[#2C2E33]">
-                        {formData.data_field_definitions?.map((field) => (
-                          <SelectItem key={field.field_code} value={field.field_code}>
-                            {field.field_name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs text-[#A0AEC0] mb-1">Equals</label>
-                    <Input
-                      value={outcome.field_value}
-                      onChange={(e) => updateOutcome(idx, { field_value: e.target.value })}
-                      placeholder="Value"
-                      className="bg-[#1A1B1E] border-[#2C2E33] text-sm"
-                    />
-                  </div>
-                </div>
-
                 <div>
-                  <label className="block text-xs text-[#A0AEC0] mb-1">Then Action</label>
+                  <label className="block text-xs text-[#A0AEC0] mb-1">When User Selects This Outcome</label>
                   <Select 
                     value={outcome.action} 
                     onValueChange={(v) => updateOutcome(idx, { action: v })}
@@ -416,6 +387,7 @@ export default function TaskConfigPanel({ task, onSave, onClose }) {
                     <SelectContent className="bg-[#2C2E33]">
                       <SelectItem value="continue">Continue to Next Task</SelectItem>
                       <SelectItem value="skip_to_stage">Skip to Stage</SelectItem>
+                      <SelectItem value="skip_to_deliverable">Skip to Deliverable</SelectItem>
                       <SelectItem value="skip_to_task">Skip to Task</SelectItem>
                       <SelectItem value="start_workflow">Start New Workflow</SelectItem>
                       <SelectItem value="end_workflow">End Workflow</SelectItem>
@@ -426,25 +398,40 @@ export default function TaskConfigPanel({ task, onSave, onClose }) {
 
                 {outcome.action === 'skip_to_stage' && (
                   <div>
-                    <label className="block text-xs text-[#A0AEC0] mb-1">Target Stage ID</label>
+                    <label className="block text-xs text-[#A0AEC0] mb-1">Target Stage Template ID</label>
                     <Input
                       value={outcome.target_stage_id}
                       onChange={(e) => updateOutcome(idx, { target_stage_id: e.target.value })}
                       placeholder="Enter stage template ID"
                       className="bg-[#1A1B1E] border-[#2C2E33] text-sm"
                     />
+                    <p className="text-xs text-[#4A5568] mt-1">Workflow will jump to this stage</p>
+                  </div>
+                )}
+
+                {outcome.action === 'skip_to_deliverable' && (
+                  <div>
+                    <label className="block text-xs text-[#A0AEC0] mb-1">Target Deliverable Template ID</label>
+                    <Input
+                      value={outcome.target_deliverable_id}
+                      onChange={(e) => updateOutcome(idx, { target_deliverable_id: e.target.value })}
+                      placeholder="Enter deliverable template ID"
+                      className="bg-[#1A1B1E] border-[#2C2E33] text-sm"
+                    />
+                    <p className="text-xs text-[#4A5568] mt-1">Workflow will jump to this deliverable and start its tasks</p>
                   </div>
                 )}
 
                 {outcome.action === 'skip_to_task' && (
                   <div>
-                    <label className="block text-xs text-[#A0AEC0] mb-1">Target Task ID</label>
+                    <label className="block text-xs text-[#A0AEC0] mb-1">Target Task Template ID</label>
                     <Input
                       value={outcome.target_task_id}
                       onChange={(e) => updateOutcome(idx, { target_task_id: e.target.value })}
                       placeholder="Enter task template ID"
                       className="bg-[#1A1B1E] border-[#2C2E33] text-sm"
                     />
+                    <p className="text-xs text-[#4A5568] mt-1">Workflow will jump to this specific task</p>
                   </div>
                 )}
 
@@ -457,6 +444,7 @@ export default function TaskConfigPanel({ task, onSave, onClose }) {
                       placeholder="Enter workflow template ID"
                       className="bg-[#1A1B1E] border-[#2C2E33] text-sm"
                     />
+                    <p className="text-xs text-[#4A5568] mt-1">A new workflow instance will be started for this client</p>
                   </div>
                 )}
               </div>
