@@ -36,6 +36,28 @@ const statusColors = {
 };
 
 export default function ClientActivityFeed({ client, workflowInstances, communications }) {
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const queryClient = useQueryClient();
+
+  const { data: availableTemplates = [] } = useQuery({
+    queryKey: ['workflow-templates'],
+    queryFn: () => base44.entities.WorkflowTemplate.filter({ is_active: true }, '-created_date', 50),
+  });
+
+  const startWorkflowMutation = useMutation({
+    mutationFn: async (templateId) => {
+      const template = await base44.entities.WorkflowTemplate.get(templateId);
+      return await base44.functions.invoke('startWorkflow', {
+        workflow_template_id: templateId,
+        client_id: client.id,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workflow-instances'] });
+      setIsDropdownOpen(false);
+    },
+  });
+
   return (
     <div className="space-y-4">
       {/* AI Insights & Recommendations */}
@@ -80,7 +102,36 @@ export default function ClientActivityFeed({ client, workflowInstances, communic
       <div className="neumorphic-raised rounded-xl p-4">
         <h3 className="text-sm font-medium text-[#A0AEC0] mb-3">Workflows</h3>
         {workflowInstances.length === 0 ? (
-          <p className="text-sm text-[#4A5568] text-center py-4">No workflows yet</p>
+          <div className="space-y-3">
+            <p className="text-sm text-[#4A5568] text-center py-2">No workflows yet</p>
+            <div className="relative">
+              <button
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                className="w-full flex items-center justify-between px-3 py-2 bg-[#00E5FF]/10 hover:bg-[#00E5FF]/20 border border-[#00E5FF]/30 rounded-lg transition-colors text-sm text-[#00E5FF]"
+              >
+                <span>Start Workflow</span>
+                <ChevronDown className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {isDropdownOpen && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-[#2C2E33] border border-[#3a3d44] rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto">
+                  {availableTemplates.length === 0 ? (
+                    <p className="px-3 py-2 text-xs text-[#4A5568]">No workflows available</p>
+                  ) : (
+                    availableTemplates.map((template) => (
+                      <button
+                        key={template.id}
+                        onClick={() => startWorkflowMutation.mutate(template.id)}
+                        disabled={startWorkflowMutation.isPending}
+                        className="w-full text-left px-3 py-2 hover:bg-[#3a3d44] border-b border-[#1A1B1E] last:border-b-0 text-sm text-[#F5F5F5] transition-colors disabled:opacity-50"
+                      >
+                        {template.name}
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
         ) : (
           <div className="space-y-2">
             {workflowInstances.slice(0, 5).map((workflow) => (
