@@ -53,7 +53,8 @@ export default function ClientActivityFeed({ client, workflowInstances, communic
         client_id: client.id,
       });
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      toast.success(`Workflow initiated successfully! Check ${client.name}'s My Work for tasks.`);
       queryClient.invalidateQueries({ queryKey: ['workflow-instances'] });
       setIsDropdownOpen(false);
     },
