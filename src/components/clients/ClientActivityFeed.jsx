@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
 import { createPageUrl } from '@/utils';
 import AIInsightCard from '@/components/AIInsightCard';
 import { 
@@ -13,8 +15,10 @@ import {
   TrendingUp,
   Clock,
   CheckCircle2,
-  XCircle
+  XCircle,
+  ChevronDown
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 const communicationIcons = {
   email: Mail,
