@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useNavigate } from 'react-router-dom';
@@ -21,7 +21,7 @@ import TaskConfigPanel from './TaskConfigPanel';
 
 const STEPS = ['Basic Info', 'Stages', 'Deliverables', 'Tasks', 'Logic', 'Review'];
 
-export default function ManualWorkflowBuilder({ onBack }) {
+export default function ManualWorkflowBuilder({ onBack, editingTemplateId }) {
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState({
     name: '',
@@ -36,8 +36,98 @@ export default function ManualWorkflowBuilder({ onBack }) {
   const [isCreating, setIsCreating] = useState(false);
   const [editingDeliverable, setEditingDeliverable] = useState(null);
   const [editingTask, setEditingTask] = useState(null);
+  const [isLoading, setIsLoading] = useState(!!editingTemplateId);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+
+  // Load template data if editing
+  useEffect(() => {
+    if (editingTemplateId) {
+      loadTemplateData();
+    }
+  }, [editingTemplateId]);
+
+  const loadTemplateData = async () => {
+    try {
+      const template = await base44.entities.WorkflowTemplate.get(editingTemplateId);
+      const version = await base44.entities.WorkflowTemplateVersion.filter({ 
+        workflow_template_id: editingTemplateId, 
+        status: 'published' 
+      });
+      
+      if (version.length === 0) {
+        alert('No published version found for this template');
+        setIsLoading(false);
+        return;
+      }
+
+      const latestVersion = version[0];
+      const stages = await base44.entities.StageTemplate.filter({ 
+        workflow_template_version_id: latestVersion.id 
+      });
+
+      const deliverables = {};
+      const tasks = {};
+
+      for (let stageIdx = 0; stageIdx < stages.length; stageIdx++) {
+        const stage = stages[stageIdx];
+        const stageKey = `stage_${stageIdx}`;
+        
+        const dels = await base44.entities.DeliverableTemplate.filter({ 
+          stage_template_id: stage.id 
+        });
+
+        deliverables[stageKey] = dels.map(d => ({
+          name: d.name,
+          description: d.description,
+          output_type: d.output_type || 'document',
+          document_template_ids: d.document_template_ids || [],
+          auto_generate_ai_document: d.auto_generate_ai_document || false
+        }));
+
+        for (let delIdx = 0; delIdx < dels.length; delIdx++) {
+          const del = dels[delIdx];
+          const taskKey = `stage_${stageIdx}_del_${delIdx}`;
+          
+          const taskList = await base44.entities.TaskTemplate.filter({ 
+            deliverable_template_id: del.id 
+          });
+
+          tasks[taskKey] = taskList.map(t => ({
+            name: t.name,
+            description: t.description,
+            instructions: t.instructions,
+            priority: t.priority || 'normal',
+            estimated_duration_minutes: t.estimated_duration_minutes || 0,
+            is_required: t.is_required !== false,
+            requires_review: t.requires_review || false,
+            can_be_overridden: t.can_be_overridden !== false,
+            data_field_definitions: t.data_field_definitions || [],
+            conditions: t.conditions || {}
+          }));
+        }
+      }
+
+      setFormData({
+        name: template.name,
+        description: template.description,
+        type: template.type || 'linear',
+        category: template.category || 'custom',
+        next_workflow_template_id: template.next_workflow_template_id || '',
+        stages: stages.map(s => ({
+          name: s.name,
+          description: s.description
+        })),
+        deliverables,
+        tasks
+      });
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Failed to load template:', error);
+      alert('Failed to load template data');
+      setIsLoading(false);
+    }
+  };
 
   const { data: availableTemplates = [] } = useQuery({
     queryKey: ['workflow-templates-list'],
@@ -161,27 +251,55 @@ export default function ManualWorkflowBuilder({ onBack }) {
 
     try {
       const user = await base44.auth.me();
+      let template, version;
 
-      const template = await base44.entities.WorkflowTemplate.create({
-        name: formData.name,
-        description: formData.description,
-        type: formData.type,
-        category: formData.category,
-        current_version: 1,
-        owner_type: 'user',
-        owner_id: user.id,
-        is_active: true,
-        next_workflow_template_id: formData.next_workflow_template_id || null
-      });
+      if (editingTemplateId) {
+        // Update existing template
+        await base44.entities.WorkflowTemplate.update(editingTemplateId, {
+          name: formData.name,
+          description: formData.description,
+          type: formData.type,
+          category: formData.category,
+          next_workflow_template_id: formData.next_workflow_template_id || null
+        });
+        
+        template = { id: editingTemplateId };
+        const existingVersions = await base44.entities.WorkflowTemplateVersion.filter({ 
+          workflow_template_id: editingTemplateId 
+        });
+        const latestVersion = existingVersions[0];
+        version = latestVersion;
 
-      const version = await base44.entities.WorkflowTemplateVersion.create({
-        workflow_template_id: template.id,
-        version_number: 1,
-        name: formData.name,
-        description: formData.description,
-        status: 'draft',
-        published_by: user.id
-      });
+        // Delete old stages, deliverables, and tasks for this version
+        const oldStages = await base44.entities.StageTemplate.filter({ 
+          workflow_template_version_id: latestVersion.id 
+        });
+        for (const stage of oldStages) {
+          await base44.entities.StageTemplate.delete(stage.id);
+        }
+      } else {
+        // Create new template
+        template = await base44.entities.WorkflowTemplate.create({
+          name: formData.name,
+          description: formData.description,
+          type: formData.type,
+          category: formData.category,
+          current_version: 1,
+          owner_type: 'user',
+          owner_id: user.id,
+          is_active: true,
+          next_workflow_template_id: formData.next_workflow_template_id || null
+        });
+
+        version = await base44.entities.WorkflowTemplateVersion.create({
+          workflow_template_id: template.id,
+          version_number: 1,
+          name: formData.name,
+          description: formData.description,
+          status: 'draft',
+          published_by: user.id
+        });
+      }
 
       for (let stageIdx = 0; stageIdx < formData.stages.length; stageIdx++) {
         const stageData = formData.stages[stageIdx];
@@ -266,6 +384,17 @@ export default function ManualWorkflowBuilder({ onBack }) {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="max-w-6xl mx-auto flex items-center justify-center py-20">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-[#00E5FF] mx-auto mb-4" />
+          <p className="text-[#A0AEC0]">Loading workflow template...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-6xl mx-auto">
       <button
@@ -305,7 +434,7 @@ export default function ManualWorkflowBuilder({ onBack }) {
       <div className="neumorphic-raised rounded-2xl p-8 min-h-[500px]">
         {currentStep === 0 && (
           <div className="max-w-2xl mx-auto space-y-6">
-            <h2 className="text-xl font-semibold mb-6">Basic Information</h2>
+            <h2 className="text-xl font-semibold mb-6">{editingTemplateId ? 'Edit' : 'Create'} Workflow Template</h2>
             
             <div>
               <label className="block text-sm font-medium text-[#A0AEC0] mb-2">
@@ -741,16 +870,16 @@ export default function ManualWorkflowBuilder({ onBack }) {
           }}
           disabled={!canProceed() || isCreating}
           className="bg-gradient-to-r from-[#00E5FF] to-[#0099ff] text-[#121212]"
-        >
+          >
           {isCreating ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Creating...
+              {editingTemplateId ? 'Saving...' : 'Creating...'}
             </>
           ) : currentStep === STEPS.length - 1 ? (
             <>
               <CheckCircle2 className="w-4 h-4 mr-2" />
-              Create Template
+              {editingTemplateId ? 'Save Changes' : 'Create Template'}
             </>
           ) : (
             <>
