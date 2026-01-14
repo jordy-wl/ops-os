@@ -26,6 +26,30 @@ export default function CreateTemplateModal({ isOpen, onClose, template }) {
     required_entity_data: [],
     output_format: 'markdown'
   });
+  const [entitySchemas, setEntitySchemas] = useState({});
+
+  // Fetch schema for an entity when needed
+  const fetchEntitySchema = async (entityName) => {
+    if (entitySchemas[entityName]) return;
+    try {
+      const schema = await base44.entities[entityName].schema();
+      setEntitySchemas(prev => ({ ...prev, [entityName]: schema }));
+    } catch (error) {
+      console.error(`Failed to fetch schema for ${entityName}:`, error);
+    }
+  };
+
+  // Get fields from schema
+  const getFieldsForEntity = (entityName) => {
+    const schema = entitySchemas[entityName];
+    if (!schema?.properties) return [];
+    
+    return Object.entries(schema.properties).map(([key, value]) => ({
+      path: key,
+      label: key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+      type: value.type || 'text'
+    }));
+  };
 
   const createMutation = useMutation({
     mutationFn: (data) => template 
