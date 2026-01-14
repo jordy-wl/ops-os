@@ -281,6 +281,8 @@ export default function CreateTemplateModal({ isOpen, onClose, template }) {
                 </div>
               </div>
             </div>
+          </div>
+
         <div className="flex gap-3 mt-6">
           <Button variant="outline" onClick={onClose} className="flex-1 border-[#2C2E33] text-[#F5F5F5]">
             Cancel
