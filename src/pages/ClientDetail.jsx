@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { ArrowLeft, Play, Loader2 } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import ClientFirmographics from '@/components/clients/ClientFirmographics';
 import ClientActivityFeed from '@/components/clients/ClientActivityFeed';
 import ClientDataAndAssets from '@/components/clients/ClientDataAndAssets';
@@ -13,10 +13,8 @@ import ProactiveInsightsWidget from '@/components/ai/ProactiveInsightsWidget';
 
 export default function ClientDetail() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const urlParams = new URLSearchParams(window.location.search);
   const clientId = urlParams.get('id');
-  const [selectedWorkflow, setSelectedWorkflow] = useState(null);
 
   const { data: client, isLoading } = useQuery({
     queryKey: ['client', clientId],
@@ -62,27 +60,6 @@ export default function ClientDetail() {
       return contacts;
     },
     enabled: !!clientId,
-  });
-
-  const { data: workflowTemplates = [] } = useQuery({
-    queryKey: ['workflow-templates'],
-    queryFn: () => base44.entities.WorkflowTemplate.filter({ is_active: true }, '-created_date', 50),
-  });
-
-  const pushWorkflowMutation = useMutation({
-    mutationFn: async (templateId) => {
-      const workflowInstance = await base44.entities.WorkflowInstance.create({
-        workflow_template_id: templateId,
-        client_id: clientId,
-        status: 'not_started',
-        progress_percentage: 0
-      });
-      return workflowInstance;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['workflow-instances', clientId] });
-      setSelectedWorkflow(null);
-    }
   });
 
   if (!clientId) {
@@ -155,41 +132,6 @@ export default function ClientDetail() {
             client={client}
             documents={documents}
           />
-          
-          {/* Workflows Card */}
-          <div className="neumorphic-raised rounded-xl p-4">
-            <h3 className="font-semibold mb-4 flex items-center gap-2">
-              <Play className="w-4 h-4 text-[#00E5FF]" />
-              Push to Workflow
-            </h3>
-            <div className="space-y-2">
-              {workflowTemplates.length === 0 ? (
-                <p className="text-sm text-[#A0AEC0]">No workflows available</p>
-              ) : (
-                workflowTemplates.map((template) => (
-                  <button
-                    key={template.id}
-                    onClick={() => pushWorkflowMutation.mutate(template.id)}
-                    disabled={pushWorkflowMutation.isPending}
-                    className="w-full text-left p-3 rounded-lg bg-[#1A1B1E] hover:bg-[#2C2E33] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-[#F5F5F5]">{template.name}</p>
-                        <p className="text-xs text-[#A0AEC0]">{template.category || 'custom'}</p>
-                      </div>
-                      {pushWorkflowMutation.isPending ? (
-                        <Loader2 className="w-4 h-4 animate-spin text-[#00E5FF]" />
-                      ) : (
-                        <Play className="w-4 h-4 text-[#A0AEC0]" />
-                      )}
-                    </div>
-                  </button>
-                ))
-              )}
-            </div>
-          </div>
-          
           {clientContacts.length > 0 && (
             <ClientCommunicationPanel 
               client={client}
