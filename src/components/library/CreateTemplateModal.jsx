@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { X, Plus, Trash2, Sparkles, FileText, Database } from 'lucide-react';
 import { toast } from 'sonner';
 import ReactQuill from 'react-quill';
+import MultiSelectField from './MultiSelectField';
 
 // Helper to convert schema type to readable label
 const getFieldLabel = (fieldName, fieldSchema) => {
