@@ -80,6 +80,45 @@ export default function TaskConfigPanel({ task, onSave, onClose }) {
     setFormData({ ...formData, data_field_definitions: fields });
   };
 
+  const addCondition = () => {
+    const paths = formData.conditions?.paths || [];
+    setFormData({
+      ...formData,
+      conditions: {
+        ...formData.conditions,
+        paths: [
+          ...paths,
+          {
+            condition_type: 'field_value',
+            field_code: '',
+            operator: 'equals',
+            value: '',
+            action: 'continue',
+            target_stage_id: '',
+            target_task_id: ''
+          }
+        ]
+      }
+    });
+  };
+
+  const updateCondition = (index, updates) => {
+    const paths = [...(formData.conditions?.paths || [])];
+    paths[index] = { ...paths[index], ...updates };
+    setFormData({ 
+      ...formData, 
+      conditions: { ...formData.conditions, paths } 
+    });
+  };
+
+  const removeCondition = (index) => {
+    const paths = (formData.conditions?.paths || []).filter((_, i) => i !== index);
+    setFormData({ 
+      ...formData, 
+      conditions: { ...formData.conditions, paths } 
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -296,17 +335,143 @@ export default function TaskConfigPanel({ task, onSave, onClose }) {
         {/* Conditions Tab */}
         {activeTab === 'conditions' && (
           <div className="space-y-4">
-            <div className="flex items-center gap-2 text-[#A0AEC0]">
-              <GitBranch className="w-5 h-5" />
-              <p className="text-sm">
-                Define conditional paths based on task outcomes (coming soon)
-              </p>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-[#A0AEC0]">
+                <GitBranch className="w-5 h-5" />
+                <p className="text-sm">
+                  Define conditional paths based on task outcomes
+                </p>
+              </div>
+              <Button
+                size="sm"
+                onClick={addCondition}
+                className="bg-[#00E5FF] text-[#121212]"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Path
+              </Button>
             </div>
-            <div className="neumorphic-pressed rounded-lg p-6 text-center">
-              <p className="text-sm text-[#4A5568]">
-                Conditional branching will allow different workflow paths based on task results
-              </p>
-            </div>
+
+            <p className="text-xs text-[#4A5568]">
+              Create different workflow paths based on data collected in this task
+            </p>
+
+            {formData.conditions?.paths?.map((condition, idx) => (
+              <div key={idx} className="neumorphic-pressed rounded-lg p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Path {idx + 1}</span>
+                  <button
+                    onClick={() => removeCondition(idx)}
+                    className="p-1 rounded hover:bg-[#3a3d44]"
+                  >
+                    <Trash2 className="w-4 h-4 text-red-400" />
+                  </button>
+                </div>
+
+                <div>
+                  <label className="block text-xs text-[#A0AEC0] mb-1">If Field</label>
+                  <Select 
+                    value={condition.field_code} 
+                    onValueChange={(v) => updateCondition(idx, { field_code: v })}
+                  >
+                    <SelectTrigger className="bg-[#1A1B1E] border-[#2C2E33] text-sm">
+                      <SelectValue placeholder="Select field..." />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#2C2E33]">
+                      {formData.data_field_definitions?.map((field) => (
+                        <SelectItem key={field.field_code} value={field.field_code}>
+                          {field.field_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs text-[#A0AEC0] mb-1">Operator</label>
+                    <Select 
+                      value={condition.operator} 
+                      onValueChange={(v) => updateCondition(idx, { operator: v })}
+                    >
+                      <SelectTrigger className="bg-[#1A1B1E] border-[#2C2E33] text-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#2C2E33]">
+                        <SelectItem value="equals">Equals</SelectItem>
+                        <SelectItem value="not_equals">Not Equals</SelectItem>
+                        <SelectItem value="contains">Contains</SelectItem>
+                        <SelectItem value="greater_than">Greater Than</SelectItem>
+                        <SelectItem value="less_than">Less Than</SelectItem>
+                        <SelectItem value="is_empty">Is Empty</SelectItem>
+                        <SelectItem value="is_not_empty">Is Not Empty</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs text-[#A0AEC0] mb-1">Value</label>
+                    <Input
+                      value={condition.value}
+                      onChange={(e) => updateCondition(idx, { value: e.target.value })}
+                      placeholder="Expected value"
+                      className="bg-[#1A1B1E] border-[#2C2E33] text-sm"
+                      disabled={['is_empty', 'is_not_empty'].includes(condition.operator)}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs text-[#A0AEC0] mb-1">Then Action</label>
+                  <Select 
+                    value={condition.action} 
+                    onValueChange={(v) => updateCondition(idx, { action: v })}
+                  >
+                    <SelectTrigger className="bg-[#1A1B1E] border-[#2C2E33] text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#2C2E33]">
+                      <SelectItem value="continue">Continue to Next Task</SelectItem>
+                      <SelectItem value="skip_to_stage">Skip to Stage</SelectItem>
+                      <SelectItem value="skip_to_task">Skip to Task</SelectItem>
+                      <SelectItem value="end_workflow">End Workflow</SelectItem>
+                      <SelectItem value="block_workflow">Block Workflow</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {condition.action === 'skip_to_stage' && (
+                  <div>
+                    <label className="block text-xs text-[#A0AEC0] mb-1">Target Stage ID</label>
+                    <Input
+                      value={condition.target_stage_id}
+                      onChange={(e) => updateCondition(idx, { target_stage_id: e.target.value })}
+                      placeholder="Enter stage ID"
+                      className="bg-[#1A1B1E] border-[#2C2E33] text-sm"
+                    />
+                  </div>
+                )}
+
+                {condition.action === 'skip_to_task' && (
+                  <div>
+                    <label className="block text-xs text-[#A0AEC0] mb-1">Target Task ID</label>
+                    <Input
+                      value={condition.target_task_id}
+                      onChange={(e) => updateCondition(idx, { target_task_id: e.target.value })}
+                      placeholder="Enter task ID"
+                      className="bg-[#1A1B1E] border-[#2C2E33] text-sm"
+                    />
+                  </div>
+                )}
+              </div>
+            ))}
+
+            {(!formData.conditions?.paths || formData.conditions.paths.length === 0) && (
+              <div className="text-center py-8 text-[#4A5568]">
+                <p className="text-sm">No conditional paths defined</p>
+                <p className="text-xs mt-1">Add paths to create branching logic based on task data</p>
+              </div>
+            )}
           </div>
         )}
 
