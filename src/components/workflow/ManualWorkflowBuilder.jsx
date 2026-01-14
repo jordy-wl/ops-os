@@ -307,26 +307,32 @@ export default function ManualWorkflowBuilder({ onBack }) {
             
             <div>
               <label className="block text-sm font-medium text-[#A0AEC0] mb-2">
-                Workflow Name *
+                Workflow Name <span className="text-red-400">*</span>
               </label>
               <Input
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="e.g., Enterprise Sales Process"
-                className="bg-[#1A1B1E] border-[#2C2E33] focus:border-[#00E5FF]"
+                className={`bg-[#1A1B1E] border-[#2C2E33] focus:border-[#00E5FF] ${!formData.name ? 'border-red-400/50' : ''}`}
               />
+              {!formData.name && (
+                <p className="text-xs text-red-400 mt-1">Workflow name is required</p>
+              )}
             </div>
 
             <div>
               <label className="block text-sm font-medium text-[#A0AEC0] mb-2">
-                Description
+                Description <span className="text-red-400">*</span>
               </label>
               <Textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 placeholder="Describe the purpose and scope of this workflow..."
-                className="bg-[#1A1B1E] border-[#2C2E33] focus:border-[#00E5FF] h-24"
+                className={`bg-[#1A1B1E] border-[#2C2E33] focus:border-[#00E5FF] h-24 ${!formData.description ? 'border-red-400/50' : ''}`}
               />
+              {!formData.description && (
+                <p className="text-xs text-red-400 mt-1">Description is required</p>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -396,7 +402,10 @@ export default function ManualWorkflowBuilder({ onBack }) {
         {currentStep === 1 && (
           <div className="max-w-3xl mx-auto">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold">Define Stages</h2>
+              <div>
+                <h2 className="text-xl font-semibold">Define Stages</h2>
+                <p className="text-xs text-[#4A5568] mt-1">At least one stage with a name is required <span className="text-red-400">*</span></p>
+              </div>
               <Button onClick={addStage} className="bg-[#00E5FF]/20 text-[#00E5FF] hover:bg-[#00E5FF]/30">
                 <Plus className="w-4 h-4 mr-2" />
                 Add Stage
@@ -405,7 +414,8 @@ export default function ManualWorkflowBuilder({ onBack }) {
 
             {formData.stages.length === 0 ? (
               <div className="neumorphic-pressed rounded-xl p-12 text-center">
-                <p className="text-[#A0AEC0] mb-4">No stages defined yet</p>
+                <p className="text-[#A0AEC0] mb-2">No stages defined yet</p>
+                <p className="text-xs text-red-400 mb-4">You must add at least one stage to continue</p>
                 <Button onClick={addStage} className="bg-gradient-to-r from-[#00E5FF] to-[#0099ff] text-[#121212]">
                   <Plus className="w-4 h-4 mr-2" />
                   Add First Stage
@@ -423,12 +433,17 @@ export default function ManualWorkflowBuilder({ onBack }) {
                         </div>
                       </div>
                       <div className="flex-1 space-y-3">
-                        <Input
-                          value={stage.name}
-                          onChange={(e) => updateStage(idx, 'name', e.target.value)}
-                          placeholder="Stage name (e.g., Discovery)"
-                          className="bg-[#1A1B1E] border-[#2C2E33] focus:border-[#00E5FF]"
-                        />
+                        <div>
+                          <Input
+                            value={stage.name}
+                            onChange={(e) => updateStage(idx, 'name', e.target.value)}
+                            placeholder="Stage name (e.g., Discovery) *"
+                            className={`bg-[#1A1B1E] border-[#2C2E33] focus:border-[#00E5FF] ${!stage.name ? 'border-red-400/50' : ''}`}
+                          />
+                          {!stage.name && (
+                            <p className="text-xs text-red-400 mt-1">Stage name is required</p>
+                          )}
+                        </div>
                         <Textarea
                           value={stage.description}
                           onChange={(e) => updateStage(idx, 'description', e.target.value)}
@@ -452,7 +467,10 @@ export default function ManualWorkflowBuilder({ onBack }) {
 
         {currentStep === 2 && (
           <div className="max-w-4xl mx-auto">
-            <h2 className="text-xl font-semibold mb-6">Define Deliverables</h2>
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold">Define Deliverables</h2>
+              <p className="text-xs text-[#4A5568] mt-1">Each stage must have at least one deliverable with a name <span className="text-red-400">*</span></p>
+            </div>
             <div className="space-y-6">
               {formData.stages.map((stage, stageIdx) => (
                 <div key={stageIdx} className="neumorphic-pressed rounded-xl p-5">
@@ -503,7 +521,10 @@ export default function ManualWorkflowBuilder({ onBack }) {
                     ))}
 
                     {(formData.deliverables[`stage_${stageIdx}`] || []).length === 0 && (
-                      <p className="text-sm text-[#4A5568] text-center py-4">No deliverables yet</p>
+                      <div className="text-center py-4">
+                        <p className="text-sm text-[#4A5568]">No deliverables yet</p>
+                        <p className="text-xs text-red-400 mt-1">Add at least one deliverable to continue</p>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -514,7 +535,10 @@ export default function ManualWorkflowBuilder({ onBack }) {
 
         {currentStep === 3 && (
           <div className="max-w-5xl mx-auto space-y-6">
-            <h2 className="text-xl font-semibold mb-6">Define Tasks</h2>
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold">Define Tasks</h2>
+              <p className="text-xs text-[#4A5568] mt-1">Each deliverable must have at least one task with a name <span className="text-red-400">*</span></p>
+            </div>
             {formData.stages.map((stage, stageIdx) => {
               const deliverables = formData.deliverables[`stage_${stageIdx}`] || [];
               return deliverables.map((del, delIdx) => (
@@ -572,7 +596,10 @@ export default function ManualWorkflowBuilder({ onBack }) {
                     ))}
 
                     {(formData.tasks[`stage_${stageIdx}_del_${delIdx}`] || []).length === 0 && (
-                      <p className="text-sm text-[#4A5568] text-center py-4">No tasks yet</p>
+                      <div className="text-center py-4">
+                        <p className="text-sm text-[#4A5568]">No tasks yet</p>
+                        <p className="text-xs text-red-400 mt-1">Add at least one task to continue</p>
+                      </div>
                     )}
                   </div>
                 </div>

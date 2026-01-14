@@ -48,13 +48,18 @@ export default function DeliverableConfigPanel({ deliverable, onSave, onClose })
       <div className="space-y-4">
         {/* Basic Info */}
         <div>
-          <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Name *</label>
+          <label className="block text-sm font-medium text-[#A0AEC0] mb-2">
+            Name <span className="text-red-400">*</span>
+          </label>
           <Input
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             placeholder="e.g., Requirements Document"
-            className="bg-[#1A1B1E] border-[#2C2E33]"
+            className={`bg-[#1A1B1E] border-[#2C2E33] ${!formData.name ? 'border-red-400/50' : ''}`}
           />
+          {!formData.name && (
+            <p className="text-xs text-red-400 mt-1">Deliverable name is required</p>
+          )}
         </div>
 
         <div>
@@ -69,7 +74,9 @@ export default function DeliverableConfigPanel({ deliverable, onSave, onClose })
 
         {/* Output Type */}
         <div>
-          <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Output Type *</label>
+          <label className="block text-sm font-medium text-[#A0AEC0] mb-2">
+            Output Type <span className="text-red-400">*</span>
+          </label>
           <Select 
             value={formData.output_type} 
             onValueChange={(v) => setFormData({ ...formData, output_type: v })}
