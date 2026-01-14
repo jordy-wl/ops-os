@@ -21,7 +21,7 @@ const fieldTypeOptions = [
   { value: 'file', label: 'File Upload' }
 ];
 
-export default function TaskConfigPanel({ task, onSave, onClose }) {
+export default function TaskConfigPanel({ task, onSave, onClose, allStages, allDeliverables, allTasks, isLogicStage }) {
   const [formData, setFormData] = useState(task || {
     name: '',
     description: '',
@@ -40,7 +40,7 @@ export default function TaskConfigPanel({ task, onSave, onClose }) {
     }
   });
 
-  const [activeTab, setActiveTab] = useState('basic');
+  const [activeTab, setActiveTab] = useState(isLogicStage ? 'conditions' : 'basic');
 
   const { data: teams = [] } = useQuery({
     queryKey: ['teams'],
@@ -332,7 +332,7 @@ export default function TaskConfigPanel({ task, onSave, onClose }) {
         )}
 
         {/* Conditions Tab */}
-        {activeTab === 'conditions' && (
+        {(activeTab === 'conditions' || isLogicStage) && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-[#A0AEC0]">
@@ -396,48 +396,99 @@ export default function TaskConfigPanel({ task, onSave, onClose }) {
                   </Select>
                 </div>
 
-                {outcome.action === 'skip_to_stage' && (
+                {outcome.action === 'skip_to_stage' && allStages && (
                   <div>
-                    <label className="block text-xs text-[#A0AEC0] mb-1">Target Stage Template ID</label>
-                    <Input
-                      value={outcome.target_stage_id}
-                      onChange={(e) => updateOutcome(idx, { target_stage_id: e.target.value })}
-                      placeholder="Enter stage template ID"
-                      className="bg-[#1A1B1E] border-[#2C2E33] text-sm"
-                    />
+                    <label className="block text-xs text-[#A0AEC0] mb-1">Target Stage</label>
+                    <Select 
+                      value={outcome.target_stage_index?.toString() || ''} 
+                      onValueChange={(v) => updateOutcome(idx, { target_stage_index: parseInt(v), target_stage_name: allStages[parseInt(v)]?.name })}
+                    >
+                      <SelectTrigger className="bg-[#1A1B1E] border-[#2C2E33] text-sm">
+                        <SelectValue placeholder="Select stage..." />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#2C2E33]">
+                        {allStages.map((stage, sIdx) => (
+                          <SelectItem key={sIdx} value={sIdx.toString()}>
+                            Stage {sIdx + 1}: {stage.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <p className="text-xs text-[#4A5568] mt-1">Workflow will jump to this stage</p>
                   </div>
                 )}
 
-                {outcome.action === 'skip_to_deliverable' && (
+                {outcome.action === 'skip_to_deliverable' && allDeliverables && (
                   <div>
-                    <label className="block text-xs text-[#A0AEC0] mb-1">Target Deliverable Template ID</label>
-                    <Input
-                      value={outcome.target_deliverable_id}
-                      onChange={(e) => updateOutcome(idx, { target_deliverable_id: e.target.value })}
-                      placeholder="Enter deliverable template ID"
-                      className="bg-[#1A1B1E] border-[#2C2E33] text-sm"
-                    />
+                    <label className="block text-xs text-[#A0AEC0] mb-1">Target Deliverable</label>
+                    <Select 
+                      value={outcome.target_deliverable_key || ''} 
+                      onValueChange={(v) => {
+                        const [, stageIdx, , delIdx] = v.split('_');
+                        const deliverable = allDeliverables[v]?.[parseInt(delIdx)];
+                        updateOutcome(idx, { 
+                          target_deliverable_key: v,
+                          target_deliverable_name: deliverable?.name 
+                        });
+                      }}
+                    >
+                      <SelectTrigger className="bg-[#1A1B1E] border-[#2C2E33] text-sm">
+                        <SelectValue placeholder="Select deliverable..." />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#2C2E33]">
+                        {Object.keys(allDeliverables).map((key) => {
+                          const [, stageIdx] = key.split('_');
+                          const stageName = allStages?.[parseInt(stageIdx)]?.name;
+                          return allDeliverables[key].map((del, delIdx) => (
+                            <SelectItem key={`${key}_${delIdx}`} value={`stage_${stageIdx}`}>
+                              {stageName} → {del.name}
+                            </SelectItem>
+                          ));
+                        })}
+                      </SelectContent>
+                    </Select>
                     <p className="text-xs text-[#4A5568] mt-1">Workflow will jump to this deliverable and start its tasks</p>
                   </div>
                 )}
 
-                {outcome.action === 'skip_to_task' && (
+                {outcome.action === 'skip_to_task' && allTasks && (
                   <div>
-                    <label className="block text-xs text-[#A0AEC0] mb-1">Target Task Template ID</label>
-                    <Input
-                      value={outcome.target_task_id}
-                      onChange={(e) => updateOutcome(idx, { target_task_id: e.target.value })}
-                      placeholder="Enter task template ID"
-                      className="bg-[#1A1B1E] border-[#2C2E33] text-sm"
-                    />
+                    <label className="block text-xs text-[#A0AEC0] mb-1">Target Task</label>
+                    <Select 
+                      value={outcome.target_task_key || ''} 
+                      onValueChange={(v) => {
+                        const parts = v.split('_');
+                        const taskIdx = parseInt(parts[parts.length - 1]);
+                        const task = allTasks[v.substring(0, v.lastIndexOf('_'))]?.[taskIdx];
+                        updateOutcome(idx, { 
+                          target_task_key: v,
+                          target_task_name: task?.name 
+                        });
+                      }}
+                    >
+                      <SelectTrigger className="bg-[#1A1B1E] border-[#2C2E33] text-sm">
+                        <SelectValue placeholder="Select task..." />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#2C2E33]">
+                        {Object.keys(allTasks).map((key) => {
+                          const [, stageIdx, , delIdx] = key.split('_');
+                          const stageName = allStages?.[parseInt(stageIdx)]?.name;
+                          const delName = allDeliverables?.[`stage_${stageIdx}`]?.[parseInt(delIdx)]?.name;
+                          return allTasks[key].map((task, taskIdx) => (
+                            <SelectItem key={`${key}_${taskIdx}`} value={`${key}_${taskIdx}`}>
+                              {stageName} → {delName} → {task.name}
+                            </SelectItem>
+                          ));
+                        })}
+                      </SelectContent>
+                    </Select>
                     <p className="text-xs text-[#4A5568] mt-1">Workflow will jump to this specific task</p>
                   </div>
                 )}
 
                 {outcome.action === 'start_workflow' && (
                   <div>
-                    <label className="block text-xs text-[#A0AEC0] mb-1">Workflow Template ID</label>
+                    <label className="block text-xs text-[#A0AEC0] mb-1">Workflow Template</label>
                     <Input
                       value={outcome.target_workflow_template_id}
                       onChange={(e) => updateOutcome(idx, { target_workflow_template_id: e.target.value })}
@@ -460,7 +511,7 @@ export default function TaskConfigPanel({ task, onSave, onClose }) {
         )}
 
         {/* Assignment Tab */}
-        {activeTab === 'assignment' && (
+        {!isLogicStage && activeTab === 'assignment' && (
           <div className="space-y-4">
             <p className="text-sm text-[#A0AEC0]">
               Configure assignment hierarchy and reassignment permissions

@@ -19,7 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import DeliverableConfigPanel from './DeliverableConfigPanel';
 import TaskConfigPanel from './TaskConfigPanel';
 
-const STEPS = ['Basic Info', 'Stages', 'Deliverables', 'Tasks', 'Review'];
+const STEPS = ['Basic Info', 'Stages', 'Deliverables', 'Tasks', 'Logic', 'Review'];
 
 export default function ManualWorkflowBuilder({ onBack }) {
   const [currentStep, setCurrentStep] = useState(0);
@@ -259,6 +259,7 @@ export default function ManualWorkflowBuilder({ onBack }) {
           const tasks = formData.tasks[`stage_${stageIdx}_del_${delIdx}`] || [];
           return tasks.length > 0 && tasks.every(t => t.name);
         });
+      case 4: return true; // Logic stage is optional
       default: return true;
     }
   };
@@ -581,6 +582,69 @@ export default function ManualWorkflowBuilder({ onBack }) {
         )}
 
         {currentStep === 4 && (
+          <div className="max-w-5xl mx-auto space-y-6">
+            <h2 className="text-xl font-semibold mb-6">Configure Workflow Logic</h2>
+            <p className="text-sm text-[#A0AEC0] mb-4">
+              Define conditional outcomes for tasks that require branching logic. 
+              When a user completes these tasks, they'll choose an outcome which determines the workflow's next step.
+            </p>
+
+            {formData.stages.map((stage, stageIdx) => {
+              const deliverables = formData.deliverables[`stage_${stageIdx}`] || [];
+              return deliverables.map((del, delIdx) => {
+                const tasks = formData.tasks[`stage_${stageIdx}_del_${delIdx}`] || [];
+                return (
+                  <div key={`${stageIdx}-${delIdx}`} className="neumorphic-pressed rounded-xl p-5">
+                    <div className="mb-4">
+                      <p className="text-xs text-[#4A5568]">Stage {stageIdx + 1}: {stage.name}</p>
+                      <h3 className="font-medium">Deliverable: {del.name}</h3>
+                    </div>
+
+                    <div className="space-y-4">
+                      {tasks.map((task, taskIdx) => {
+                        const taskKey = `stage_${stageIdx}_del_${delIdx}`;
+                        const hasConditions = task.conditions?.outcomes?.length > 0;
+                        
+                        return (
+                          <div 
+                            key={taskIdx} 
+                            className="neumorphic-raised rounded-lg p-4 cursor-pointer hover:bg-[#2C2E33] transition-colors"
+                            onClick={() => setEditingTask({ stageIndex: stageIdx, delIndex: delIdx, taskIndex: taskIdx, data: task })}
+                          >
+                            <div className="flex items-start gap-3">
+                              <div className="w-6 h-6 rounded bg-[#2C2E33] flex items-center justify-center text-xs">
+                                {taskIdx + 1}
+                              </div>
+                              <div className="flex-1">
+                                <p className="font-medium">{task.name}</p>
+                                <p className="text-xs text-[#A0AEC0] mt-1">
+                                  {hasConditions 
+                                    ? `${task.conditions.outcomes.length} outcome(s) defined` 
+                                    : 'No conditional logic - click to add'}
+                                </p>
+                                {hasConditions && (
+                                  <div className="mt-2 flex flex-wrap gap-2">
+                                    {task.conditions.outcomes.map((outcome, idx) => (
+                                      <span key={idx} className="text-xs bg-[#00E5FF]/20 text-[#00E5FF] px-2 py-1 rounded">
+                                        {outcome.outcome_name}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              });
+            })}
+          </div>
+        )}
+
+        {currentStep === 5 && (
           <div className="max-w-4xl mx-auto">
             <h2 className="text-xl font-semibold mb-6">Review & Create</h2>
             
@@ -690,6 +754,10 @@ export default function ManualWorkflowBuilder({ onBack }) {
               task={editingTask.data}
               onSave={saveTask}
               onClose={() => setEditingTask(null)}
+              allStages={formData.stages}
+              allDeliverables={formData.deliverables}
+              allTasks={formData.tasks}
+              isLogicStage={currentStep === 4}
             />
           </div>
         </div>
