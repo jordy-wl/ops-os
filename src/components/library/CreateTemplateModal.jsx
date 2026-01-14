@@ -242,14 +242,13 @@ export default function CreateTemplateModal({ isOpen, onClose, template }) {
                           value={data.entity_type} 
                           onValueChange={(v) => updateRequiredData(idx, 'entity_type', v)}
                         >
-                          <SelectTrigger className="w-28 bg-[#1A1B1E] border-[#2C2E33] text-xs h-8">
+                          <SelectTrigger className="w-32 bg-[#1A1B1E] border-[#2C2E33] text-xs h-8">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent className="bg-[#2C2E33] border-[#3a3d44]">
-                            <SelectItem value="Client">Client</SelectItem>
-                            <SelectItem value="WorkflowInstance">Workflow</SelectItem>
-                            <SelectItem value="Contact">Contact</SelectItem>
-                            <SelectItem value="TaskInstance">Task</SelectItem>
+                            {AVAILABLE_ENTITIES.map(entity => (
+                              <SelectItem key={entity} value={entity}>{entity}</SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                         <Select 
@@ -260,7 +259,7 @@ export default function CreateTemplateModal({ isOpen, onClose, template }) {
                             <SelectValue placeholder="Select field..." />
                           </SelectTrigger>
                           <SelectContent className="bg-[#2C2E33] border-[#3a3d44]">
-                            {ENTITY_FIELDS[data.entity_type]?.map(field => (
+                            {getFieldsForEntity(data.entity_type).map(field => (
                               <SelectItem key={field.path} value={field.path}>
                                 {field.label}
                               </SelectItem>
