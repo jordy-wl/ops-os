@@ -27,6 +27,70 @@ export default function CreateTemplateModal({ isOpen, onClose, template }) {
     output_format: 'markdown'
   });
 
+  // Build Client fields from schema
+  const clientFields = useMemo(() => {
+    const clientSchema = {
+      name: { description: 'Client/company name' },
+      industry: { description: 'Industry' },
+      region: { description: 'Region' },
+      lifecycle_stage: { description: 'Lifecycle Stage' },
+      value: { description: 'Aggregate client value' },
+      currency: { description: 'Currency' },
+      website: { description: 'Website' },
+      logo_url: { description: 'Logo URL' },
+      sentiment_score: { description: 'Sentiment Score' },
+      risk_score: { description: 'Churn Risk Score' },
+      next_best_action: { description: 'AI-suggested next action' }
+    };
+    return Object.entries(clientSchema).map(([path, schema]) => ({
+      path,
+      label: getFieldLabel(path, schema)
+    }));
+  }, []);
+
+  // Fetch workflow templates and their task fields
+  const { data: workflowFields = [] } = useQuery({
+    queryKey: ['workflow-fields'],
+    queryFn: async () => {
+      const templates = await base44.entities.WorkflowTemplate.list();
+      const fields = [];
+      
+      // Add base workflow template fields
+      const baseFields = [
+        { path: 'name', label: 'Workflow Name' },
+        { path: 'description', label: 'Description' },
+        { path: 'category', label: 'Category' }
+      ];
+      fields.push(...baseFields);
+
+      // Fetch task templates to get custom data fields
+      if (templates.length > 0) {
+        const taskTemplates = await base44.entities.TaskTemplate.list();
+        const customFields = new Set();
+        
+        taskTemplates.forEach(task => {
+          if (task.data_field_definitions && Array.isArray(task.data_field_definitions)) {
+            task.data_field_definitions.forEach(field => {
+              customFields.add(JSON.stringify({
+                path: `task_fields.${field.field_code}`,
+                label: field.field_name
+              }));
+            });
+          }
+        });
+
+        customFields.forEach(fieldStr => {
+          fields.push(JSON.parse(fieldStr));
+        });
+      }
+
+      return fields;
+    },
+    enabled: isOpen
+  });
+
+  const entityOptions = ['Client', 'Workflow'];
+
   const createMutation = useMutation({
     mutationFn: (data) => template 
       ? base44.entities.DocumentTemplate.update(template.id, data)
