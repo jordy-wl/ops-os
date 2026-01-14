@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
@@ -18,8 +18,11 @@ import {
   List,
   Filter,
   MoreHorizontal,
-  Sparkles
+  Sparkles,
+  Edit,
+  Trash2
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 function WorkflowCard({ workflow, onClick }) {
   const getStatusColor = (status) => {
@@ -76,7 +79,7 @@ function WorkflowCard({ workflow, onClick }) {
   );
 }
 
-function TemplateCard({ template, onStart }) {
+function TemplateCard({ template, onStart, onEdit, onDelete }) {
   const categoryColors = {
     sales: 'from-blue-500 to-blue-600',
     onboarding: 'from-green-500 to-green-600',
@@ -90,11 +93,29 @@ function TemplateCard({ template, onStart }) {
   return (
     <div className="neumorphic-raised rounded-xl p-5 group">
       <div className="flex items-start gap-4">
-        <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${categoryColors[template.category] || categoryColors.custom} flex items-center justify-center`}>
+        <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${categoryColors[template.category] || categoryColors.custom} flex items-center justify-center flex-shrink-0`}>
           <GitMerge className="w-6 h-6 text-white" />
         </div>
-        <div className="flex-1">
-          <h3 className="font-medium mb-1">{template.name}</h3>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-2">
+            <h3 className="font-medium mb-1 flex-1">{template.name}</h3>
+            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+              <button
+                onClick={() => onEdit(template)}
+                className="p-1.5 rounded-lg hover:bg-[#2C2E33] text-[#A0AEC0] hover:text-[#00E5FF] transition-colors"
+                title="Edit template"
+              >
+                <Edit className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => onDelete(template)}
+                className="p-1.5 rounded-lg hover:bg-[#2C2E33] text-[#A0AEC0] hover:text-red-400 transition-colors"
+                title="Delete template"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
           <p className="text-sm text-[#A0AEC0] line-clamp-2 mb-3">{template.description || 'No description'}</p>
           <div className="flex items-center gap-4">
             <span className="text-xs text-[#4A5568] capitalize">{template.type || 'linear'}</span>
@@ -116,6 +137,7 @@ export default function Workflows() {
   const [activeTab, setActiveTab] = useState('control'); // 'control' or 'studio'
   const [viewMode, setViewMode] = useState('grid');
   const [showInsights, setShowInsights] = useState(false);
+  const queryClient = useQueryClient();
 
   const { data: instances = [], isLoading: instancesLoading } = useQuery({
     queryKey: ['workflow-instances'],
@@ -126,6 +148,30 @@ export default function Workflows() {
     queryKey: ['workflow-templates'],
     queryFn: () => base44.entities.WorkflowTemplate.list('-created_date', 50),
   });
+
+  const deleteTemplateMutation = useMutation({
+    mutationFn: async (templateId) => {
+      await base44.entities.WorkflowTemplate.delete(templateId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workflow-templates'] });
+      toast.success('Template deleted successfully');
+    },
+    onError: () => {
+      toast.error('Failed to delete template');
+    },
+  });
+
+  const handleEditTemplate = (template) => {
+    // Navigate to WorkflowBuilder with template ID for editing
+    window.location.href = createPageUrl('WorkflowBuilder') + `?edit=${template.id}`;
+  };
+
+  const handleDeleteTemplate = (template) => {
+    if (confirm(`Are you sure you want to delete "${template.name}"? This action cannot be undone.`)) {
+      deleteTemplateMutation.mutate(template.id);
+    }
+  };
 
   return (
     <div className="p-6">
@@ -267,7 +313,13 @@ export default function Workflows() {
           ) : (
             <div className="grid grid-cols-2 gap-4">
               {templates.map(template => (
-                <TemplateCard key={template.id} template={template} onStart={() => {}} />
+                <TemplateCard 
+                  key={template.id} 
+                  template={template} 
+                  onStart={() => {}} 
+                  onEdit={handleEditTemplate}
+                  onDelete={handleDeleteTemplate}
+                />
               ))}
             </div>
           )}
