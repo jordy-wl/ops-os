@@ -78,22 +78,22 @@ function ClientRow({ client, onNavigate, onDelete }) {
         </td>
         <td className="px-4 py-4">
         <div className={`w-3 h-3 rounded-full ${sentimentColors[client.sentiment_score] || 'bg-[#4A5568]'}`} />
-      </td>
-      <td className="px-4 py-4">
+        </td>
+        <td className="px-4 py-4">
         <span className={`px-2 py-1 rounded-full text-xs border ${lifecycleColors[client.lifecycle_stage] || lifecycleColors.prospect}`}>
           {client.lifecycle_stage?.replace('_', ' ') || 'Prospect'}
         </span>
-      </td>
-      <td className="px-4 py-4 text-[#A0AEC0]">
+        </td>
+        <td className="px-4 py-4 text-[#A0AEC0]">
         {client.region || '—'}
-      </td>
-      <td className="px-4 py-4 font-mono text-sm">
+        </td>
+        <td className="px-4 py-4 font-mono text-sm">
         {client.value ? `$${client.value.toLocaleString()}` : '—'}
-      </td>
-      <td className="px-4 py-4 text-xs font-mono text-[#4A5568]">
+        </td>
+        <td className="px-4 py-4 text-xs font-mono text-[#4A5568]">
         {client.updated_date ? new Date(client.updated_date).toLocaleDateString() : '—'}
-      </td>
-      <td className="px-4 py-4" onClick={(e) => e.stopPropagation()}>
+        </td>
+        <td className="px-4 py-4" onClick={(e) => e.stopPropagation()}>
         <button
           onClick={() => setShowDeleteDialog(true)}
           className="p-2 rounded-lg hover:bg-red-500/10 text-[#A0AEC0] hover:text-red-400 transition-colors"
