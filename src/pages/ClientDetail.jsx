@@ -179,6 +179,30 @@ export default function ClientDetail() {
           )}
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent className="bg-[#2C2E33] border-[#3a3d44]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-[#F5F5F5]">Delete Client</AlertDialogTitle>
+            <AlertDialogDescription className="text-[#A0AEC0]">
+              Are you sure you want to delete <strong>{client.name}</strong>? This will also delete all associated workflows, documents, communications, and data. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="flex gap-3">
+            <AlertDialogCancel className="bg-[#1A1B1E] border-[#2C2E33] text-[#F5F5F5] hover:bg-[#2C2E33]">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteMutation.mutate()}
+              disabled={deleteMutation.isPending}
+              className="bg-red-500/80 hover:bg-red-600 text-white"
+            >
+              {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
