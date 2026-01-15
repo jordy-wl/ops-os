@@ -270,28 +270,57 @@ Deno.serve(async (req) => {
                   started_at: new Date().toISOString()
                 });
 
-                // Release tasks for first deliverable of next stage
-                const firstStageTasks = await base44.entities.TaskInstance.filter({
-                  deliverable_instance_id: firstDel.id
-                }, 'sequence_order');
+                // Get deliverable template for first deliverable of next stage
+                  const nextDelTemplate = await base44.entities.DeliverableTemplate.filter({
+                    id: firstDel.deliverable_template_id
+                  });
 
-                for (const stageTask of firstStageTasks) {
-                  await base44.asServiceRole.entities.TaskInstance.update(stageTask.id, {
-                    status: 'not_started'
-                  });
-                  
-                  await base44.asServiceRole.entities.Event.create({
-                    event_type: 'task_released',
-                    source_entity_type: 'task_instance',
-                    source_entity_id: stageTask.id,
-                    actor_type: 'system',
-                    payload: {
-                      task_name: stageTask.name,
-                      assigned_user_id: stageTask.assigned_user_id
-                    },
-                    occurred_at: new Date().toISOString()
-                  });
-                }
+                  if (nextDelTemplate.length > 0) {
+                    // Get task templates for this deliverable
+                    const nextStageTaskTemplates = await base44.entities.TaskTemplate.filter({
+                      deliverable_template_id: nextDelTemplate[0].id
+                    }, 'sequence_order');
+
+                    // Create task instances for this deliverable
+                    for (const taskTemplate of nextStageTaskTemplates) {
+                      await base44.asServiceRole.entities.TaskInstance.create({
+                        deliverable_instance_id: firstDel.id,
+                        task_template_id: taskTemplate.id,
+                        workflow_instance_id: task.workflow_instance_id,
+                        client_id: task.client_id,
+                        name: taskTemplate.name,
+                        description: taskTemplate.description,
+                        instructions: taskTemplate.instructions,
+                        sequence_order: taskTemplate.sequence_order,
+                        status: 'not_started',
+                        priority: taskTemplate.priority || 'normal',
+                        assigned_user_id: taskTemplate.owner_type === 'user' ? taskTemplate.owner_id : user.id,
+                        owner_type: taskTemplate.owner_type,
+                        owner_id: taskTemplate.owner_id,
+                        is_ad_hoc: false,
+                        field_values: {}
+                      });
+                    }
+                  }
+
+                  // Release tasks for first deliverable of next stage
+                  const firstStageTasks = await base44.entities.TaskInstance.filter({
+                    deliverable_instance_id: firstDel.id
+                  }, 'sequence_order');
+
+                  for (const stageTask of firstStageTasks) {
+                    await base44.asServiceRole.entities.Event.create({
+                      event_type: 'task_released',
+                      source_entity_type: 'task_instance',
+                      source_entity_id: stageTask.id,
+                      actor_type: 'system',
+                      payload: {
+                        task_name: stageTask.name,
+                        assigned_user_id: stageTask.assigned_user_id
+                      },
+                      occurred_at: new Date().toISOString()
+                    });
+                  }
               }
             }
           }
