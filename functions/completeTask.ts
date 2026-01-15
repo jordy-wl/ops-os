@@ -173,7 +173,8 @@ Deno.serve(async (req) => {
 
         for (const targetTask of targetTasks) {
           await base44.asServiceRole.entities.TaskInstance.update(targetTask.id, {
-            status: 'in_progress'
+            status: 'in_progress',
+            assigned_user_id: targetTask.assigned_user_id || task.assigned_user_id
           });
           
           await base44.asServiceRole.entities.Event.create({
@@ -223,7 +224,8 @@ Deno.serve(async (req) => {
 
           for (const targetTask of firstTasks) {
             await base44.asServiceRole.entities.TaskInstance.update(targetTask.id, {
-              status: 'in_progress'
+              status: 'in_progress',
+              assigned_user_id: targetTask.assigned_user_id || task.assigned_user_id
             });
             
             await base44.asServiceRole.entities.Event.create({
@@ -267,7 +269,8 @@ Deno.serve(async (req) => {
 
           for (const nextTask of nextTasks) {
             await base44.asServiceRole.entities.TaskInstance.update(nextTask.id, {
-              status: 'in_progress'
+              status: 'in_progress',
+              assigned_user_id: nextTask.assigned_user_id || task.assigned_user_id
             });
             
             await base44.asServiceRole.entities.Event.create({
