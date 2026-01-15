@@ -116,9 +116,6 @@ Deno.serve(async (req) => {
     });
   }
 
-  // Get the selected outcome from field_values (if applicable)
-  const selectedOutcome = field_values?.outcome_selected || null;
-  
   // Check if all tasks in deliverable are completed
   const deliverableTasks = await base44.entities.TaskInstance.filter({
     deliverable_instance_id: task.deliverable_instance_id
