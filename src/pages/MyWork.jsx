@@ -414,35 +414,29 @@ export default function MyWork() {
               </div>
 
               {/* Outcomes */}
-              {taskTemplate && (
+              {taskTemplate?.conditions?.outcomes && taskTemplate.conditions.outcomes.length > 0 && (
                 <div>
-                  {taskTemplate?.conditions?.outcomes?.length > 0 ? (
-                    <>
-                      <h3 className="text-sm font-medium text-[#A0AEC0] mb-4">Select Outcome</h3>
-                      <div className="space-y-2">
-                        {taskTemplate.conditions.outcomes.map((outcome, idx) => (
-                          <div key={idx} className="flex items-center">
-                            <input
-                              type="radio"
-                              id={`outcome-${idx}`}
-                              name="task-outcome"
-                              value={outcome.outcome_name}
-                              checked={selectedOutcome === outcome.outcome_name}
-                              onChange={() => setSelectedOutcome(outcome.outcome_name)}
-                              className="w-4 h-4 text-[#00E5FF] bg-[#1A1B1E] border-[#2C2E33] focus:ring-[#00E5FF]"
-                            />
-                            <label htmlFor={`outcome-${idx}`} className="ml-2 text-sm text-[#F5F5F5] cursor-pointer">
-                              {outcome.outcome_name}
-                            </label>
-                          </div>
-                        ))}
-                      </div>
-                    </>
-                  ) : (
-                    <div className="text-xs text-[#4A5568] italic">
-                      No outcomes defined for this task template
-                    </div>
-                  )}
+                  <h3 className="text-sm font-medium text-[#A0AEC0] mb-4">Select Outcome <span className="text-red-400">*</span></h3>
+                  <div className="space-y-2">
+                    {taskTemplate.conditions.outcomes.map((outcome, idx) => (
+                      <label 
+                        key={idx} 
+                        className="flex items-center p-3 rounded-lg bg-[#1A1B1E] border border-[#2C2E33] hover:border-[#00E5FF]/50 cursor-pointer transition-colors"
+                      >
+                        <input
+                          type="radio"
+                          name="task-outcome"
+                          value={outcome.outcome_name}
+                          checked={selectedOutcome === outcome.outcome_name}
+                          onChange={() => setSelectedOutcome(outcome.outcome_name)}
+                          className="w-4 h-4 text-[#00E5FF] bg-[#1A1B1E] border-[#2C2E33] focus:ring-[#00E5FF]"
+                        />
+                        <span className="ml-3 text-sm text-[#F5F5F5]">
+                          {outcome.outcome_name}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
