@@ -126,67 +126,7 @@ Deno.serve(async (req) => {
   
   const allCompleted = deliverableTasks.every(t => t.id === task_instance_id || t.status === 'completed');
 
-  if (allCompleted && taskTemplate?.conditions?.outcomes?.length > 0 && selectedOutcome) {
-    // Task has conditional outcomes - handle workflow branching
-    const matchingOutcome = taskTemplate.conditions.outcomes.find(o => o.outcome_name === selectedOutcome);
-    
-    if (matchingOutcome) {
-      const action = matchingOutcome.action;
-      
-      if (action === 'continue') {
-        // Release next task/deliverable in sequence
-        // Fall through to default release logic below
-      } else if (action === 'skip_to_task' && matchingOutcome.target_task_key) {
-        // Skip to a specific task
-        const parts = matchingOutcome.target_task_key.split('_');
-        const taskIdx = parseInt(parts[parts.length - 1]);
-        const delKey = matchingOutcome.target_task_key.substring(0, matchingOutcome.target_task_key.lastIndexOf('_'));
-        
-        // Find the target task instance
-        const targetTasks = await base44.entities.TaskInstance.filter({
-          workflow_instance_id: task.workflow_instance_id,
-          task_template_id: matchingOutcome.target_task_id || ''
-        });
-        
-        if (targetTasks.length > 0) {
-          const targetTask = targetTasks[0];
-          await base44.asServiceRole.entities.TaskInstance.update(targetTask.id, {
-            status: 'not_started'
-          });
-          
-          await base44.asServiceRole.entities.Event.create({
-            event_type: 'task_released',
-            source_entity_type: 'task_instance',
-            source_entity_id: targetTask.id,
-            actor_type: 'system',
-            payload: {
-              task_name: targetTask.name,
-              assigned_user_id: targetTask.assigned_user_id,
-              reason: 'outcome_based_routing'
-            },
-            occurred_at: new Date().toISOString()
-          });
-        }
-        return Response.json({ success: true, enriched_fields: enrichmentResults, progress_percentage: 0 });
-      } else if (action === 'end_workflow') {
-        // Mark workflow as completed
-        await base44.asServiceRole.entities.WorkflowInstance.update(task.workflow_instance_id, {
-          status: 'completed',
-          completed_at: new Date().toISOString()
-        });
-        
-        await base44.asServiceRole.entities.Event.create({
-          event_type: 'workflow_completed',
-          source_entity_type: 'workflow_instance',
-          source_entity_id: task.workflow_instance_id,
-          actor_type: 'system',
-          payload: { reason: 'outcome_based_end', outcome: selectedOutcome },
-          occurred_at: new Date().toISOString()
-        });
-        return Response.json({ success: true, enriched_fields: enrichmentResults, progress_percentage: 100 });
-      }
-    }
-  } else if (allCompleted) {
+  if (allCompleted) {
     // Mark deliverable as completed
     await base44.asServiceRole.entities.DeliverableInstance.update(task.deliverable_instance_id, {
       status: 'completed',
