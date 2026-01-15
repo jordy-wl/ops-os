@@ -169,44 +169,15 @@ Deno.serve(async (req) => {
 
     // Generate documents if template has document_template_ids
     if (deliverableTemplate && deliverableTemplate.document_template_ids && deliverableTemplate.document_template_ids.length > 0) {
-      const generatedDocumentIds = [];
-      
       for (const documentTemplateId of deliverableTemplate.document_template_ids) {
         try {
           // Invoke document generation function
-          const docResponse = await base44.asServiceRole.functions.invoke('generateAIDocument', {
-            document_template_id: documentTemplateId,
-            client_id: task.client_id,
-            data: field_values,
-            workflow_instance_id: task.workflow_instance_id,
+          await base44.asServiceRole.functions.invoke('generateAIDocument', {
             deliverable_instance_id: task.deliverable_instance_id
           });
-
-          if (docResponse.data && docResponse.data.file_url) {
-            // Create DocumentInstance to link the document to the client
-            const docInstance = await base44.asServiceRole.entities.DocumentInstance.create({
-              client_id: task.client_id,
-              document_template_id: documentTemplateId,
-              deliverable_instance_id: task.deliverable_instance_id,
-              workflow_instance_id: task.workflow_instance_id,
-              file_url: docResponse.data.file_url,
-              status: 'generated',
-              generated_at: new Date().toISOString()
-            });
-
-            generatedDocumentIds.push(docInstance.id);
-          }
         } catch (err) {
           console.error(`Failed to generate document from template ${documentTemplateId}:`, err);
         }
-      }
-
-      // Update deliverable instance with generated document IDs
-      if (generatedDocumentIds.length > 0) {
-        const existingDocIds = deliverableInstance.document_ids || [];
-        await base44.asServiceRole.entities.DeliverableInstance.update(task.deliverable_instance_id, {
-          document_ids: [...existingDocIds, ...generatedDocumentIds]
-        });
       }
     }
 
