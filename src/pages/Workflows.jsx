@@ -61,8 +61,8 @@ function WorkflowCard({ workflow, onClick, onCancel }) {
           )}
         </div>
 
-      {/* Progress Bar */}
-      <div className="mb-4">
+        {/* Progress Bar */}
+        <div className="mb-4">
         <div className="flex items-center justify-between text-sm mb-2">
           <span className="text-[#A0AEC0]">Progress</span>
           <span className="font-mono">{workflow.progress_percentage || 0}%</span>
@@ -73,19 +73,20 @@ function WorkflowCard({ workflow, onClick, onCancel }) {
             style={{ width: `${workflow.progress_percentage || 0}%` }}
           />
         </div>
-      </div>
-
-      {/* Footer */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className={`w-2 h-2 rounded-full ${getStatusColor(workflow.status)}`} />
-          <span className="text-sm text-[#A0AEC0] capitalize">{workflow.status?.replace('_', ' ') || 'Not Started'}</span>
         </div>
-        {workflow.started_at && (
-          <span className="text-xs font-mono text-[#4A5568]">
-            {new Date(workflow.started_at).toLocaleDateString()}
-          </span>
-        )}
+
+        {/* Footer */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className={`w-2 h-2 rounded-full ${getStatusColor(workflow.status)}`} />
+            <span className="text-sm text-[#A0AEC0] capitalize">{workflow.status?.replace('_', ' ') || 'Not Started'}</span>
+          </div>
+          {workflow.started_at && (
+            <span className="text-xs font-mono text-[#4A5568]">
+              {new Date(workflow.started_at).toLocaleDateString()}
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );
