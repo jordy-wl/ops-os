@@ -111,6 +111,7 @@ export default function MyWork() {
   const [viewMode, setViewMode] = useState('kanban');
   const [selectedTask, setSelectedTask] = useState(null);
   const [fieldValues, setFieldValues] = useState({});
+  const [selectedOutcome, setSelectedOutcome] = useState(null);
   const [showCompleted, setShowCompleted] = useState(true);
   const [clearedTaskIds, setClearedTaskIds] = useState(() => {
     const saved = localStorage.getItem('clearedTaskIds');
@@ -144,11 +145,22 @@ export default function MyWork() {
     },
   });
 
+  const { data: taskTemplate } = useQuery({
+    queryKey: ['task-template', selectedTask?.task_template_id],
+    queryFn: async () => {
+      if (!selectedTask?.task_template_id) return null;
+      const templates = await base44.entities.TaskTemplate.filter({ id: selectedTask.task_template_id });
+      return templates[0] || null;
+    },
+    enabled: !!selectedTask?.task_template_id,
+  });
+
   const completeTaskMutation = useMutation({
-    mutationFn: async ({ taskId, fieldValues }) => {
+    mutationFn: async ({ taskId, fieldValues, outcome }) => {
       const response = await base44.functions.invoke('completeTask', {
         task_instance_id: taskId,
-        field_values: fieldValues
+        field_values: fieldValues,
+        outcome: outcome
       });
       return response.data;
     },
@@ -157,6 +169,7 @@ export default function MyWork() {
       toast.success('Task completed successfully!');
       setSelectedTask(null);
       setFieldValues({});
+      setSelectedOutcome(null);
     },
     onError: (error) => {
       toast.error('Failed to complete task: ' + error.message);
@@ -346,6 +359,7 @@ export default function MyWork() {
             onClick={() => {
               setSelectedTask(null);
               setFieldValues({});
+              setSelectedOutcome(null);
             }}
           />
           <div className="w-[600px] glass h-full overflow-y-auto shadow-2xl flex flex-col">
@@ -361,6 +375,7 @@ export default function MyWork() {
                   onClick={() => {
                     setSelectedTask(null);
                     setFieldValues({});
+                    setSelectedOutcome(null);
                   }}
                   className="p-2 rounded-lg hover:bg-[#2C2E33]"
                 >
@@ -397,6 +412,31 @@ export default function MyWork() {
                   onChange={setFieldValues}
                 />
               </div>
+
+              {/* Outcomes */}
+              {taskTemplate?.conditions?.outcomes?.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-medium text-[#A0AEC0] mb-4">Select Outcome</h3>
+                  <div className="space-y-2">
+                    {taskTemplate.conditions.outcomes.map((outcome, idx) => (
+                      <div key={idx} className="flex items-center">
+                        <input
+                          type="radio"
+                          id={`outcome-${idx}`}
+                          name="task-outcome"
+                          value={outcome.outcome_name}
+                          checked={selectedOutcome === outcome.outcome_name}
+                          onChange={() => setSelectedOutcome(outcome.outcome_name)}
+                          className="w-4 h-4 text-[#00E5FF] bg-[#1A1B1E] border-[#2C2E33] focus:ring-[#00E5FF]"
+                        />
+                        <label htmlFor={`outcome-${idx}`} className="ml-2 text-sm text-[#F5F5F5] cursor-pointer">
+                          {outcome.outcome_name}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Footer Actions */}
@@ -407,6 +447,7 @@ export default function MyWork() {
                   onClick={() => {
                     setSelectedTask(null);
                     setFieldValues({});
+                    setSelectedOutcome(null);
                   }}
                   className="flex-1 bg-transparent border-[#2C2E33] hover:bg-[#2C2E33]"
                 >
@@ -415,9 +456,10 @@ export default function MyWork() {
                 <Button
                   onClick={() => completeTaskMutation.mutate({
                     taskId: selectedTask.id,
-                    fieldValues
+                    fieldValues,
+                    outcome: selectedOutcome
                   })}
-                  disabled={completeTaskMutation.isPending}
+                  disabled={completeTaskMutation.isPending || (taskTemplate?.conditions?.outcomes?.length > 0 && !selectedOutcome)}
                   className="flex-1 bg-gradient-to-r from-[#00E5FF] to-[#0099ff] text-[#121212] hover:shadow-lg hover:shadow-[#00E5FF]/30"
                 >
                   {completeTaskMutation.isPending ? (
