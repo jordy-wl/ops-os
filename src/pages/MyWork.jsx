@@ -36,15 +36,16 @@ const priorityColors = {
   urgent: 'text-red-400',
 };
 
-function TaskCard({ task, onClick }) {
+function TaskCard({ task, onClick, onClear }) {
   const isBlocked = task.status === 'blocked';
   const isOverdue = task.due_date && new Date(task.due_date) < new Date();
+  const isCompleted = task.status === 'completed';
   
   return (
     <div 
       onClick={onClick}
       className={`
-        neumorphic-raised rounded-xl p-4 cursor-pointer
+        neumorphic-raised rounded-xl p-4 cursor-pointer group
         transition-all duration-200 hover:translate-y-[-2px]
         ${isBlocked ? 'border border-red-500/50' : ''}
         ${isOverdue && !isBlocked ? 'border border-orange-500/50' : ''}
@@ -52,13 +53,26 @@ function TaskCard({ task, onClick }) {
     >
       {/* Header */}
       <div className="flex items-start justify-between mb-2">
-        <div>
+        <div className="flex-1 min-w-0">
           <p className="text-xs text-[#A0AEC0] mb-1">{task.client_name || 'No Client'}</p>
           <p className="text-xs text-[#4A5568]">{task.workflow_name || 'Ad-hoc Task'}</p>
         </div>
-        <button className="p-1 rounded hover:bg-[#3a3d44]">
-          <MoreHorizontal className="w-4 h-4 text-[#4A5568]" />
-        </button>
+        {isCompleted ? (
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              onClear(task.id);
+            }}
+            className="p-1 rounded hover:bg-red-500/20 opacity-0 group-hover:opacity-100 transition-opacity"
+            title="Clear from view"
+          >
+            <X className="w-4 h-4 text-red-400" />
+          </button>
+        ) : (
+          <button className="p-1 rounded hover:bg-[#3a3d44]">
+            <MoreHorizontal className="w-4 h-4 text-[#4A5568]" />
+          </button>
+        )}
       </div>
       
       {/* Task Name */}
@@ -98,6 +112,10 @@ export default function MyWork() {
   const [selectedTask, setSelectedTask] = useState(null);
   const [fieldValues, setFieldValues] = useState({});
   const [showCompleted, setShowCompleted] = useState(true);
+  const [clearedTaskIds, setClearedTaskIds] = useState(() => {
+    const saved = localStorage.getItem('clearedTaskIds');
+    return saved ? JSON.parse(saved) : [];
+  });
   const queryClient = useQueryClient();
 
   const { data: tasks = [], isLoading } = useQuery({
@@ -145,7 +163,15 @@ export default function MyWork() {
     }
   });
 
-  const filteredTasks = showCompleted ? tasks : tasks.filter(t => t.status !== 'completed');
+  const handleClearTask = (taskId) => {
+    const newClearedIds = [...clearedTaskIds, taskId];
+    setClearedTaskIds(newClearedIds);
+    localStorage.setItem('clearedTaskIds', JSON.stringify(newClearedIds));
+  };
+
+  const filteredTasks = showCompleted 
+    ? tasks.filter(t => !clearedTaskIds.includes(t.id))
+    : tasks.filter(t => t.status !== 'completed' && !clearedTaskIds.includes(t.id));
   
   const tasksByStatus = statusColumns.reduce((acc, col) => {
     acc[col.id] = filteredTasks.filter(t => t.status === col.id);
@@ -239,6 +265,7 @@ export default function MyWork() {
                       key={task.id} 
                       task={task}
                       onClick={() => setSelectedTask(task)}
+                      onClear={handleClearTask}
                     />
                   ))}
                   
