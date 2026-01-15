@@ -211,8 +211,7 @@ Deno.serve(async (req) => {
           sequence_order: 1
         }, 'sequence_order', 1);
 
-        if (firstDeliverables.length > 0) {
-          const firstDel = firstDeliverables[0];
+        if (firstDel) {
           await base44.asServiceRole.entities.DeliverableInstance.update(firstDel.id, {
             status: 'in_progress',
             started_at: new Date().toISOString()
@@ -304,7 +303,9 @@ Deno.serve(async (req) => {
 
             const firstDeliverables = await base44.entities.DeliverableInstance.filter({
               stage_instance_id: nextStage.id
-            }, 'sequence_order', 1);
+            }, 'sequence_order');
+
+            const firstDel = firstDeliverables[0];
 
             if (firstDeliverables.length > 0) {
               const firstDel = firstDeliverables[0];
@@ -334,13 +335,13 @@ Deno.serve(async (req) => {
                   },
                   occurred_at: new Date().toISOString()
                 });
-              }
-            }
-          }
-        }
-      }
-    }
-  }
+                }
+                }
+                }
+                }
+                }
+                }
+                }
 
   const allWorkflowTasks = await base44.entities.TaskInstance.filter({
     workflow_instance_id: task.workflow_instance_id
