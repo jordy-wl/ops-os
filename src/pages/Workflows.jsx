@@ -21,7 +21,8 @@ import {
   Sparkles,
   Edit,
   Trash2,
-  XCircle
+  XCircle,
+  Trash
 } from 'lucide-react';
 import { toast } from 'sonner';
 
