@@ -14,14 +14,12 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Missing task_instance_id' }, { status: 400 });
   }
 
-  // Get the task instance
   const taskInstances = await base44.entities.TaskInstance.filter({ id: task_instance_id });
   if (taskInstances.length === 0) {
     return Response.json({ error: 'Task not found' }, { status: 404 });
   }
   const task = taskInstances[0];
 
-  // Get task template to understand data field definitions
   let taskTemplate = null;
   if (task.task_template_id) {
     const templates = await base44.entities.TaskTemplate.filter({ id: task.task_template_id });
@@ -30,7 +28,6 @@ Deno.serve(async (req) => {
     }
   }
 
-  // Process field values using data_field_definitions from TaskTemplate
   const enrichmentResults = [];
   
   if (taskTemplate && taskTemplate.data_field_definitions) {
@@ -39,7 +36,6 @@ Deno.serve(async (req) => {
       const fieldValue = field_values[fieldCode];
 
       if (fieldValue !== undefined && fieldDef.save_to_client_field) {
-        // Update client metadata directly with the field
         const clients = await base44.entities.Client.filter({ id: task.client_id });
         if (clients.length > 0) {
           const client = clients[0];
@@ -57,7 +53,6 @@ Deno.serve(async (req) => {
             value: fieldValue
           });
 
-          // Publish FIELD_UPDATED event
           await base44.asServiceRole.entities.Event.create({
             event_type: 'field_updated',
             source_entity_type: 'client',
@@ -77,14 +72,12 @@ Deno.serve(async (req) => {
     }
   }
 
-  // Update task status
   await base44.asServiceRole.entities.TaskInstance.update(task_instance_id, {
     status: 'completed',
     completed_at: new Date().toISOString(),
     field_values
   });
 
-  // Publish TASK_COMPLETED event
   await base44.asServiceRole.entities.Event.create({
     event_type: 'task_completed',
     source_entity_type: 'task_instance',
@@ -100,7 +93,6 @@ Deno.serve(async (req) => {
     occurred_at: new Date().toISOString()
   });
 
-  // Publish CLIENT_RECORD_ENRICHED event
   if (enrichmentResults.length > 0) {
     await base44.asServiceRole.entities.Event.create({
       event_type: 'client_record_enriched',
@@ -116,7 +108,6 @@ Deno.serve(async (req) => {
     });
   }
 
-  // Evaluate selected outcome
   let outcomeAction = null;
   if (selectedOutcomeName && taskTemplate?.conditions?.outcomes) {
     const selectedOutcome = taskTemplate.conditions.outcomes.find(
@@ -127,7 +118,6 @@ Deno.serve(async (req) => {
     }
   }
 
-  // Check if all tasks in deliverable are completed
   const deliverableTasks = await base44.entities.TaskInstance.filter({
     deliverable_instance_id: task.deliverable_instance_id
   });
@@ -135,13 +125,11 @@ Deno.serve(async (req) => {
   const allCompleted = deliverableTasks.every(t => t.id === task_instance_id || t.status === 'completed');
 
   if (allCompleted && task.deliverable_instance_id) {
-    // Mark deliverable as completed
     await base44.asServiceRole.entities.DeliverableInstance.update(task.deliverable_instance_id, {
       status: 'completed',
       completed_at: new Date().toISOString()
     });
 
-    // Publish DELIVERABLE_COMPLETED event
     await base44.asServiceRole.entities.Event.create({
       event_type: 'deliverable_completed',
       source_entity_type: 'deliverable_instance',
@@ -155,20 +143,16 @@ Deno.serve(async (req) => {
     });
   }
 
-  // Handle outcome-based routing (regardless of deliverable completion)
   if (outcomeAction === 'end_workflow') {
-    // Mark workflow as completed
     await base44.asServiceRole.entities.WorkflowInstance.update(task.workflow_instance_id, {
       status: 'completed',
       completed_at: new Date().toISOString()
     });
   } else if (outcomeAction === 'block_workflow') {
-    // Block the workflow
     await base44.asServiceRole.entities.WorkflowInstance.update(task.workflow_instance_id, {
       status: 'blocked'
     });
   } else if (outcomeAction === 'skip_to_deliverable') {
-    // Jump to a specific deliverable
     const selectedOutcome = taskTemplate?.conditions?.outcomes?.find(
       o => o.outcome_name === selectedOutcomeName
     );
@@ -207,7 +191,6 @@ Deno.serve(async (req) => {
       }
     }
   } else if (outcomeAction === 'skip_to_stage') {
-    // Jump to a specific stage
     const selectedOutcome = taskTemplate?.conditions?.outcomes?.find(
       o => o.outcome_name === selectedOutcomeName
     );
@@ -259,52 +242,51 @@ Deno.serve(async (req) => {
       }
     }
   } else if (allCompleted && task.deliverable_instance_id) {
-    // DEFAULT: Continue to next deliverable after completion
     const currentDeliverable = await base44.entities.DeliverableInstance.filter({ 
       id: task.deliverable_instance_id 
     });
 
     if (currentDeliverable.length > 0) {
       const currentDel = currentDeliverable[0];
-      
-      const nextDeliverables = await base44.entities.DeliverableInstance.filter({
-        stage_instance_id: currentDel.stage_instance_id,
-        sequence_order: { $gt: currentDel.sequence_order }
-      }, 'sequence_order', 1);
+      const allDeliverables = await base44.entities.DeliverableInstance.filter({
+        stage_instance_id: currentDel.stage_instance_id
+      }, 'sequence_order');
 
-      if (nextDeliverables.length > 0 && nextDeliverables[0].status === 'not_started') {
-        const nextDel = nextDeliverables[0];
-        await base44.asServiceRole.entities.DeliverableInstance.update(nextDel.id, {
-          status: 'in_progress',
-          started_at: new Date().toISOString()
-        });
-
-        const nextTasks = await base44.entities.TaskInstance.filter({
-          deliverable_instance_id: nextDel.id
-        }, 'sequence_order');
-
-        for (const nextTask of nextTasks) {
-          await base44.asServiceRole.entities.TaskInstance.update(nextTask.id, {
-            status: 'not_started'
+      const nextDelIndex = allDeliverables.findIndex(d => d.sequence_order > currentDel.sequence_order);
+      if (nextDelIndex >= 0) {
+        const nextDel = allDeliverables[nextDelIndex];
+        if (nextDel.status === 'not_started') {
+          await base44.asServiceRole.entities.DeliverableInstance.update(nextDel.id, {
+            status: 'in_progress',
+            started_at: new Date().toISOString()
           });
-          
-          await base44.asServiceRole.entities.Event.create({
-            event_type: 'task_released',
-            source_entity_type: 'task_instance',
-            source_entity_id: nextTask.id,
-            actor_type: 'system',
-            payload: {
-              task_name: nextTask.name,
-              assigned_user_id: nextTask.assigned_user_id
-            },
-            occurred_at: new Date().toISOString()
-          });
+
+          const nextTasks = await base44.entities.TaskInstance.filter({
+            deliverable_instance_id: nextDel.id
+          }, 'sequence_order');
+
+          for (const nextTask of nextTasks) {
+            await base44.asServiceRole.entities.TaskInstance.update(nextTask.id, {
+              status: 'not_started'
+            });
+            
+            await base44.asServiceRole.entities.Event.create({
+              event_type: 'task_released',
+              source_entity_type: 'task_instance',
+              source_entity_id: nextTask.id,
+              actor_type: 'system',
+              payload: {
+                task_name: nextTask.name,
+                assigned_user_id: nextTask.assigned_user_id
+              },
+              occurred_at: new Date().toISOString()
+            });
+          }
         }
       }
     }
   }
 
-  // Calculate workflow progress
   const allWorkflowTasks = await base44.entities.TaskInstance.filter({
     workflow_instance_id: task.workflow_instance_id
   });
