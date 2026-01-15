@@ -101,7 +101,28 @@ export default function MyWork() {
 
   const { data: tasks = [], isLoading } = useQuery({
     queryKey: ['my-tasks'],
-    queryFn: () => base44.entities.TaskInstance.list('-created_date', 50),
+    queryFn: async () => {
+      const tasks = await base44.entities.TaskInstance.list('-created_date', 50);
+
+      const clientIds = [...new Set(tasks.map(t => t.client_id).filter(Boolean))];
+      const workflowInstanceIds = [...new Set(tasks.map(t => t.workflow_instance_id).filter(Boolean))];
+
+      const clients = await Promise.all(
+        clientIds.map(id => base44.entities.Client.filter({ id }))
+      );
+      const clientMap = Object.fromEntries(clients.flat().map(c => [c.id, c.name]));
+
+      const workflowInstances = await Promise.all(
+        workflowInstanceIds.map(id => base44.entities.WorkflowInstance.filter({ id }))
+      );
+      const workflowMap = Object.fromEntries(workflowInstances.flat().map(w => [w.id, w.name]));
+
+      return tasks.map(task => ({
+        ...task,
+        client_name: clientMap[task.client_id] || 'No Client',
+        workflow_name: workflowMap[task.workflow_instance_id] || 'Ad-hoc Task',
+      }));
+    },
   });
 
   const completeTaskMutation = useMutation({

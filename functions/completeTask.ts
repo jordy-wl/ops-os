@@ -21,66 +21,59 @@ Deno.serve(async (req) => {
   }
   const task = taskInstances[0];
 
-  // Get task template to understand field mappings
-  const taskFieldMappings = await base44.entities.TaskFieldMapping.filter({
-    task_template_id: task.task_template_id
-  });
+  // Get task template to understand data field definitions
+  let taskTemplate = null;
+  if (task.task_template_id) {
+    const templates = await base44.entities.TaskTemplate.filter({ id: task.task_template_id });
+    if (templates.length > 0) {
+      taskTemplate = templates[0];
+    }
+  }
 
-  // Process field values and enrich client record
+  // Process field values using data_field_definitions from TaskTemplate
   const enrichmentResults = [];
   
-  for (const mapping of taskFieldMappings) {
-    const fieldDef = await base44.entities.FieldDefinition.filter({ id: mapping.field_definition_id });
-    if (fieldDef.length === 0) continue;
+  if (taskTemplate && taskTemplate.data_field_definitions) {
+    for (const fieldDef of taskTemplate.data_field_definitions) {
+      const fieldCode = fieldDef.field_code;
+      const fieldValue = field_values[fieldCode];
 
-    const fieldCode = fieldDef[0].code;
-    const fieldValue = field_values[fieldCode];
+      if (fieldValue !== undefined && fieldDef.save_to_client_field) {
+        // Update client metadata directly with the field
+        const clients = await base44.entities.Client.filter({ id: task.client_id });
+        if (clients.length > 0) {
+          const client = clients[0];
+          const updatedMetadata = {
+            ...(client.metadata || {}),
+            [fieldDef.save_to_client_field]: fieldValue
+          };
 
-    if (fieldValue !== undefined && mapping.mode === 'write') {
-      // Create or update FieldValue for the client
-      const existingValues = await base44.entities.FieldValue.filter({
-        object_type: 'client',
-        object_id: task.client_id,
-        field_definition_id: mapping.field_definition_id
-      });
+          await base44.asServiceRole.entities.Client.update(task.client_id, {
+            metadata: updatedMetadata
+          });
 
-      if (existingValues.length > 0) {
-        await base44.asServiceRole.entities.FieldValue.update(existingValues[0].id, {
-          value: { data: fieldValue },
-          source_task_instance_id: task_instance_id,
-          source_type: 'user_input'
-        });
-      } else {
-        await base44.asServiceRole.entities.FieldValue.create({
-          object_type: 'client',
-          object_id: task.client_id,
-          field_definition_id: mapping.field_definition_id,
-          value: { data: fieldValue },
-          source_task_instance_id: task_instance_id,
-          source_type: 'user_input'
-        });
+          enrichmentResults.push({
+            field: fieldDef.field_name,
+            value: fieldValue
+          });
+
+          // Publish FIELD_UPDATED event
+          await base44.asServiceRole.entities.Event.create({
+            event_type: 'field_updated',
+            source_entity_type: 'client',
+            source_entity_id: task.client_id,
+            actor_type: 'user',
+            actor_id: user.id,
+            payload: {
+              field_name: fieldDef.field_name,
+              field_code: fieldCode,
+              object_type: 'client',
+              object_id: task.client_id
+            },
+            occurred_at: new Date().toISOString()
+          });
+        }
       }
-
-      enrichmentResults.push({
-        field: fieldDef[0].name,
-        value: fieldValue
-      });
-
-      // Publish FIELD_UPDATED event
-      await base44.asServiceRole.entities.Event.create({
-        event_type: 'field_updated',
-        source_entity_type: 'field_value',
-        source_entity_id: task.client_id,
-        actor_type: 'user',
-        actor_id: user.id,
-        payload: {
-          field_name: fieldDef[0].name,
-          field_code: fieldCode,
-          object_type: 'client',
-          object_id: task.client_id
-        },
-        occurred_at: new Date().toISOString()
-      });
     }
   }
 
@@ -156,13 +149,15 @@ Deno.serve(async (req) => {
     });
     
     if (currentDeliverable.length > 0) {
+      const currentDel = currentDeliverable[0];
+      
+      // Try to find next deliverable in same stage
       const nextDeliverables = await base44.entities.DeliverableInstance.filter({
-        stage_instance_id: currentDeliverable[0].stage_instance_id,
-        sequence_order: currentDeliverable[0].sequence_order + 1,
-        status: 'not_started'
+        stage_instance_id: currentDel.stage_instance_id,
+        sequence_order: currentDel.sequence_order + 1
       }, 'sequence_order', 1);
 
-      if (nextDeliverables.length > 0) {
+      if (nextDeliverables.length > 0 && nextDeliverables[0].status === 'not_started') {
         const nextDel = nextDeliverables[0];
         
         await base44.asServiceRole.entities.DeliverableInstance.update(nextDel.id, {
@@ -173,9 +168,13 @@ Deno.serve(async (req) => {
         // Release tasks for next deliverable
         const nextTasks = await base44.entities.TaskInstance.filter({
           deliverable_instance_id: nextDel.id
-        });
+        }, 'sequence_order');
 
         for (const nextTask of nextTasks) {
+          await base44.asServiceRole.entities.TaskInstance.update(nextTask.id, {
+            status: 'not_started'
+          });
+          
           await base44.asServiceRole.entities.Event.create({
             event_type: 'task_released',
             source_entity_type: 'task_instance',
@@ -183,10 +182,87 @@ Deno.serve(async (req) => {
             actor_type: 'system',
             payload: {
               task_name: nextTask.name,
-              assigned_user_id: nextTask.owner_id
+              assigned_user_id: nextTask.assigned_user_id
             },
             occurred_at: new Date().toISOString()
           });
+        }
+      } else {
+        // No more deliverables in this stage, check if stage is complete
+        const allDeliverablesInStage = await base44.entities.DeliverableInstance.filter({
+          stage_instance_id: currentDel.stage_instance_id
+        });
+        
+        const stageComplete = allDeliverablesInStage.every(d => d.status === 'completed');
+        
+        if (stageComplete) {
+          // Mark stage as completed
+          await base44.asServiceRole.entities.StageInstance.update(currentDel.stage_instance_id, {
+            status: 'completed',
+            completed_at: new Date().toISOString()
+          });
+
+          // Get current stage to find next stage
+          const currentStages = await base44.entities.StageInstance.filter({
+            id: currentDel.stage_instance_id
+          });
+
+          if (currentStages.length > 0) {
+            const currentStage = currentStages[0];
+            
+            // Find next stage in workflow
+            const nextStages = await base44.entities.StageInstance.filter({
+              workflow_instance_id: task.workflow_instance_id,
+              sequence_order: currentStage.sequence_order + 1
+            }, 'sequence_order', 1);
+
+            if (nextStages.length > 0 && nextStages[0].status === 'not_started') {
+              const nextStage = nextStages[0];
+              
+              await base44.asServiceRole.entities.StageInstance.update(nextStage.id, {
+                status: 'in_progress',
+                started_at: new Date().toISOString()
+              });
+
+              // Find first deliverable in next stage
+              const firstDeliverables = await base44.entities.DeliverableInstance.filter({
+                stage_instance_id: nextStage.id,
+                sequence_order: 1
+              }, 'sequence_order', 1);
+
+              if (firstDeliverables.length > 0) {
+                const firstDel = firstDeliverables[0];
+                
+                await base44.asServiceRole.entities.DeliverableInstance.update(firstDel.id, {
+                  status: 'in_progress',
+                  started_at: new Date().toISOString()
+                });
+
+                // Release tasks for first deliverable of next stage
+                const firstStageTasks = await base44.entities.TaskInstance.filter({
+                  deliverable_instance_id: firstDel.id
+                }, 'sequence_order');
+
+                for (const stageTask of firstStageTasks) {
+                  await base44.asServiceRole.entities.TaskInstance.update(stageTask.id, {
+                    status: 'not_started'
+                  });
+                  
+                  await base44.asServiceRole.entities.Event.create({
+                    event_type: 'task_released',
+                    source_entity_type: 'task_instance',
+                    source_entity_id: stageTask.id,
+                    actor_type: 'system',
+                    payload: {
+                      task_name: stageTask.name,
+                      assigned_user_id: stageTask.assigned_user_id
+                    },
+                    occurred_at: new Date().toISOString()
+                  });
+                }
+              }
+            }
+          }
         }
       }
     }
