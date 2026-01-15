@@ -173,7 +173,7 @@ Deno.serve(async (req) => {
 
         for (const targetTask of targetTasks) {
           await base44.asServiceRole.entities.TaskInstance.update(targetTask.id, {
-            status: 'not_started'
+            status: 'in_progress'
           });
           
           await base44.asServiceRole.entities.Event.create({
@@ -223,7 +223,7 @@ Deno.serve(async (req) => {
 
           for (const targetTask of firstTasks) {
             await base44.asServiceRole.entities.TaskInstance.update(targetTask.id, {
-              status: 'not_started'
+              status: 'in_progress'
             });
             
             await base44.asServiceRole.entities.Event.create({
@@ -252,10 +252,10 @@ Deno.serve(async (req) => {
         stage_instance_id: currentDel.stage_instance_id
       }, 'sequence_order');
 
-      const nextDelIndex = allDeliverables.findIndex(d => d.sequence_order > currentDel.sequence_order);
+      const nextDelIndex = allDeliverables.findIndex(d => d.sequence_order > currentDel.sequence_order && d.status !== 'completed' && d.status !== 'skipped');
       if (nextDelIndex >= 0) {
         const nextDel = allDeliverables[nextDelIndex];
-        if (nextDel.status === 'not_started') {
+        if (nextDel.status === 'not_started' || nextDel.status === 'blocked') {
           await base44.asServiceRole.entities.DeliverableInstance.update(nextDel.id, {
             status: 'in_progress',
             started_at: new Date().toISOString()
@@ -267,7 +267,7 @@ Deno.serve(async (req) => {
 
           for (const nextTask of nextTasks) {
             await base44.asServiceRole.entities.TaskInstance.update(nextTask.id, {
-              status: 'not_started'
+              status: 'in_progress'
             });
             
             await base44.asServiceRole.entities.Event.create({
