@@ -143,7 +143,7 @@ Deno.serve(async (req) => {
       occurred_at: new Date().toISOString()
     });
 
-    // Release next deliverable tasks based on outcome routing
+    // Release next tasks/deliverables based on outcome routing
     const currentDeliverable = await base44.entities.DeliverableInstance.filter({ 
       id: task.deliverable_instance_id 
     });
@@ -151,26 +151,65 @@ Deno.serve(async (req) => {
     if (currentDeliverable.length > 0) {
       const currentDel = currentDeliverable[0];
       let nextDel = null;
+      let nextTask = null;
+      let nextStage = null;
+      let shouldEndWorkflow = false;
 
       // Check if task has outcome-based routing
       if (outcome && taskTemplate?.conditions?.outcomes) {
         const outcomeConfig = taskTemplate.conditions.outcomes.find(o => o.outcome_name === outcome);
 
-        if (outcomeConfig && outcomeConfig.next_deliverable_template_id) {
-          // Find next deliverable based on outcome routing
-          const nextDelsByTemplate = await base44.entities.DeliverableInstance.filter({
-            workflow_instance_id: task.workflow_instance_id,
-            deliverable_template_id: outcomeConfig.next_deliverable_template_id
-          });
+        if (outcomeConfig) {
+          switch (outcomeConfig.action) {
+            case 'skip_to_deliverable':
+              // Find deliverable by target_deliverable_key (which contains stage/deliverable indices)
+              if (outcomeConfig.target_deliverable_key) {
+                const allDels = await base44.entities.DeliverableInstance.filter({
+                  workflow_instance_id: task.workflow_instance_id
+                }, 'sequence_order');
 
-          if (nextDelsByTemplate.length > 0) {
-            nextDel = nextDelsByTemplate[0];
+                // Filter to get the right deliverable - this is complex without direct ID mapping
+                // For now, use the deliverable name to find it
+                if (outcomeConfig.target_deliverable_name) {
+                  nextDel = allDels.find(d => d.name === outcomeConfig.target_deliverable_name);
+                }
+              }
+              break;
+
+            case 'skip_to_task':
+              // Find task by target_task_name
+              if (outcomeConfig.target_task_name) {
+                const allTasks = await base44.entities.TaskInstance.filter({
+                  workflow_instance_id: task.workflow_instance_id
+                });
+                nextTask = allTasks.find(t => t.name === outcomeConfig.target_task_name);
+              }
+              break;
+
+            case 'skip_to_stage':
+              // Find stage by target_stage_name
+              if (outcomeConfig.target_stage_name) {
+                const allStages = await base44.entities.StageInstance.filter({
+                  workflow_instance_id: task.workflow_instance_id
+                }, 'sequence_order');
+                nextStage = allStages.find(s => s.name === outcomeConfig.target_stage_name);
+              }
+              break;
+
+            case 'end_workflow':
+              shouldEndWorkflow = true;
+              break;
+
+            case 'continue':
+            default:
+              // Continue to next deliverable sequentially
+              break;
           }
         }
       }
 
       // If no outcome-based routing, use sequential order
-      if (!nextDel) {
+      if (!nextDel && !nextTask && !nextStage && !shouldEndWorkflow) {
         const nextDeliverables = await base44.entities.DeliverableInstance.filter({
           stage_instance_id: currentDel.stage_instance_id,
           sequence_order: currentDel.sequence_order + 1
@@ -181,7 +220,38 @@ Deno.serve(async (req) => {
         }
       }
 
-      if (nextDel && nextDel.status === 'not_started') {
+      // Handle end workflow action
+      if (shouldEndWorkflow) {
+        await base44.asServiceRole.entities.WorkflowInstance.update(task.workflow_instance_id, {
+          status: 'completed',
+          completed_at: new Date().toISOString()
+        });
+      }
+      // Handle skip to task
+      else if (nextTask) {
+        await base44.asServiceRole.entities.TaskInstance.update(nextTask.id, {
+          status: 'in_progress'
+        });
+      }
+      // Handle skip to stage
+      else if (nextStage) {
+        await base44.asServiceRole.entities.StageInstance.update(nextStage.id, {
+          status: 'in_progress',
+          started_at: new Date().toISOString()
+        });
+
+        // Release first deliverable of that stage
+        const firstDels = await base44.entities.DeliverableInstance.filter({
+          stage_instance_id: nextStage.id,
+          sequence_order: 1
+        });
+
+        if (firstDels.length > 0) {
+          nextDel = firstDels[0];
+        }
+      }
+      // Handle skip to deliverable or continue
+      else if (nextDel && nextDel.status === 'not_started') {
         await base44.asServiceRole.entities.DeliverableInstance.update(nextDel.id, {
           status: 'in_progress',
           started_at: new Date().toISOString()
