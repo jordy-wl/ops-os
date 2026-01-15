@@ -136,9 +136,15 @@ Deno.serve(async (req) => {
 
   // Handle conditional outcome routing and task release
   const handleOutcomeRouting = async () => {
+    const currentDeliverable = await base44.entities.DeliverableInstance.filter({ 
+      id: task.deliverable_instance_id 
+    });
 
-        // OUTCOME-BASED ROUTING
-        if (outcomeAction === 'continue') {
+    if (currentDeliverable.length > 0) {
+      const currentDel = currentDeliverable[0];
+
+      // OUTCOME-BASED ROUTING
+      if (outcomeAction === 'continue') {
           // Continue to next deliverable in sequence (default behavior)
           const nextDeliverables = await base44.entities.DeliverableInstance.filter({
             stage_instance_id: currentDel.stage_instance_id,
