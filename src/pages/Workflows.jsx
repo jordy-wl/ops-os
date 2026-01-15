@@ -441,6 +441,7 @@ export default function Workflows() {
                   workflow={workflow} 
                   onClick={() => {}}
                   onCancel={handleCancelWorkflow}
+                  onDelete={handleDeleteWorkflow}
                 />
               ))}
             </div>
