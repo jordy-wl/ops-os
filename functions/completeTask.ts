@@ -181,9 +181,7 @@ Deno.serve(async (req) => {
         }
       }
 
-      if (nextDeliverables.length > 0 && nextDeliverables[0].status === 'not_started') {
-        const nextDel = nextDeliverables[0];
-        
+      if (nextDel && nextDel.status === 'not_started') {
         await base44.asServiceRole.entities.DeliverableInstance.update(nextDel.id, {
           status: 'in_progress',
           started_at: new Date().toISOString()
@@ -198,7 +196,7 @@ Deno.serve(async (req) => {
           await base44.asServiceRole.entities.TaskInstance.update(nextTask.id, {
             status: 'not_started'
           });
-          
+
           await base44.asServiceRole.entities.Event.create({
             event_type: 'task_released',
             source_entity_type: 'task_instance',
