@@ -329,6 +329,7 @@ export default function Clients() {
                 <th className="text-left px-4 py-3 text-xs font-medium text-[#A0AEC0] uppercase">Region</th>
                 <th className="text-left px-4 py-3 text-xs font-medium text-[#A0AEC0] uppercase">Value</th>
                 <th className="text-left px-4 py-3 text-xs font-medium text-[#A0AEC0] uppercase">Last Updated</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-[#A0AEC0] uppercase">Action</th>
               </tr>
             </thead>
             <tbody>
