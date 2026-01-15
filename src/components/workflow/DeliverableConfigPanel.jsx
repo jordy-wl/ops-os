@@ -31,8 +31,11 @@ export default function DeliverableConfigPanel({ deliverable, onSave, onClose })
   });
 
   const { data: documentTemplates = [] } = useQuery({
-    queryKey: ['document-templates'],
-    queryFn: () => base44.entities.DocumentTemplate.filter({ is_active: true }),
+    queryKey: ['document-templates-user'],
+    queryFn: async () => {
+      const user = await base44.auth.me();
+      return base44.entities.DocumentTemplate.filter({ is_active: true, created_by: user.email });
+    },
   });
 
   // Get the selected template to check if it has AI instructions
