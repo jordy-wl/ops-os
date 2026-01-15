@@ -62,21 +62,21 @@ function ClientRow({ client, onNavigate, onDelete }) {
         className="hover:bg-[#2C2E33] cursor-pointer transition-colors border-b border-[#2C2E33]"
       >
         <td className="px-4 py-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#2C2E33] to-[#1A1B1E] flex items-center justify-center">
-            {client.logo_url ? (
-              <img src={client.logo_url} alt="" className="w-8 h-8 rounded" />
-            ) : (
-              <Building2 className="w-5 h-5 text-[#A0AEC0]" />
-            )}
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#2C2E33] to-[#1A1B1E] flex items-center justify-center">
+              {client.logo_url ? (
+                <img src={client.logo_url} alt="" className="w-8 h-8 rounded" />
+              ) : (
+                <Building2 className="w-5 h-5 text-[#A0AEC0]" />
+              )}
+            </div>
+            <div>
+              <p className="font-medium">{client.name}</p>
+              <p className="text-xs text-[#4A5568] capitalize">{client.industry?.replace('_', ' ') || 'No industry'}</p>
+            </div>
           </div>
-          <div>
-            <p className="font-medium">{client.name}</p>
-            <p className="text-xs text-[#4A5568] capitalize">{client.industry?.replace('_', ' ') || 'No industry'}</p>
-          </div>
-        </div>
-      </td>
-      <td className="px-4 py-4">
+        </td>
+        <td className="px-4 py-4">
         <div className={`w-3 h-3 rounded-full ${sentimentColors[client.sentiment_score] || 'bg-[#4A5568]'}`} />
       </td>
       <td className="px-4 py-4">
