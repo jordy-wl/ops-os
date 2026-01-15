@@ -263,6 +263,12 @@ export default function Workflows() {
     }
   };
 
+  const handleDeleteWorkflow = (workflow) => {
+    if (confirm(`Are you sure you want to permanently delete this workflow and all its history? This action cannot be undone.`)) {
+      deleteWorkflowMutation.mutate(workflow.id);
+    }
+  };
+
   // Filter instances based on sub-tab
   const filteredInstances = instances.filter(workflow => {
     if (workflowSubTab === 'active') {
