@@ -172,19 +172,9 @@ Deno.serve(async (req) => {
         }, 'sequence_order');
 
         for (const targetTask of targetTasks) {
-          // Get task template to determine proper assignment
-          const targetTaskTemplate = await base44.entities.TaskTemplate.filter({ id: targetTask.task_template_id });
-          let assignedUserId = null;
-          if (targetTaskTemplate.length > 0) {
-            const tt = targetTaskTemplate[0];
-            if (tt.owner_type === 'user' && tt.owner_id) {
-              assignedUserId = tt.owner_id;
-            }
-          }
-
           await base44.asServiceRole.entities.TaskInstance.update(targetTask.id, {
             status: 'in_progress',
-            assigned_user_id: assignedUserId
+            assigned_user_id: task.assigned_user_id
           });
           
           await base44.asServiceRole.entities.Event.create({
@@ -232,19 +222,9 @@ Deno.serve(async (req) => {
           }, 'sequence_order');
 
           for (const targetTask of firstTasks) {
-            // Get task template to determine proper assignment
-            const targetTaskTemplate = await base44.entities.TaskTemplate.filter({ id: targetTask.task_template_id });
-            let assignedUserId = null;
-            if (targetTaskTemplate.length > 0) {
-              const tt = targetTaskTemplate[0];
-              if (tt.owner_type === 'user' && tt.owner_id) {
-                assignedUserId = tt.owner_id;
-              }
-            }
-
             await base44.asServiceRole.entities.TaskInstance.update(targetTask.id, {
               status: 'in_progress',
-              assigned_user_id: assignedUserId
+              assigned_user_id: task.assigned_user_id
             });
             
             await base44.asServiceRole.entities.Event.create({
@@ -286,19 +266,9 @@ Deno.serve(async (req) => {
         }, 'sequence_order');
 
         for (const nextTask of nextTasks) {
-          // Get task template to determine proper assignment
-          const nextTaskTemplate = await base44.entities.TaskTemplate.filter({ id: nextTask.task_template_id });
-          let assignedUserId = null;
-          if (nextTaskTemplate.length > 0) {
-            const tt = nextTaskTemplate[0];
-            if (tt.owner_type === 'user' && tt.owner_id) {
-              assignedUserId = tt.owner_id;
-            }
-          }
-
           await base44.asServiceRole.entities.TaskInstance.update(nextTask.id, {
             status: 'in_progress',
-            assigned_user_id: assignedUserId
+            assigned_user_id: task.assigned_user_id
           });
 
           await base44.asServiceRole.entities.Event.create({
