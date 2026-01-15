@@ -22,15 +22,14 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Workflow template not found' }, { status: 404 });
   }
 
-  // Get the current version
+  // Get the latest version (regardless of status)
   const versions = await base44.entities.WorkflowTemplateVersion.filter({ 
     workflow_template_id,
-    status: 'published'
   }, '-version_number', 1);
 
   const currentVersion = versions[0];
   if (!currentVersion) {
-    return Response.json({ error: 'No published version found' }, { status: 404 });
+    return Response.json({ error: 'No workflow version found for the template' }, { status: 404 });
   }
 
   // Create WorkflowInstance
