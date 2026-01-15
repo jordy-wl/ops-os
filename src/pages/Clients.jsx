@@ -20,11 +20,22 @@ import {
   ChevronRight,
   X,
   Sparkles,
-  FileText
+  FileText,
+  Trash2
 } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from 'sonner';
 
 const lifecycleColors = {
   prospect: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
