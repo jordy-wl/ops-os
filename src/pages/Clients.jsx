@@ -92,7 +92,41 @@ function ClientRow({ client, onNavigate, onDelete }) {
       <td className="px-4 py-4 text-xs font-mono text-[#4A5568]">
         {client.updated_date ? new Date(client.updated_date).toLocaleDateString() : '—'}
       </td>
+      <td className="px-4 py-4" onClick={(e) => e.stopPropagation()}>
+        <button
+          onClick={() => setShowDeleteDialog(true)}
+          className="p-2 rounded-lg hover:bg-red-500/10 text-[#A0AEC0] hover:text-red-400 transition-colors"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+      </td>
     </tr>
+
+    <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+      <AlertDialogContent className="bg-[#2C2E33] border-[#3a3d44]">
+        <AlertDialogHeader>
+          <AlertDialogTitle className="text-[#F5F5F5]">Delete Client</AlertDialogTitle>
+          <AlertDialogDescription className="text-[#A0AEC0]">
+            Are you sure you want to delete <strong>{client.name}</strong>? This will also delete all associated workflows, documents, communications, and data. This action cannot be undone.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <div className="flex gap-3">
+          <AlertDialogCancel className="bg-[#1A1B1E] border-[#2C2E33] text-[#F5F5F5] hover:bg-[#2C2E33]">
+            Cancel
+          </AlertDialogCancel>
+          <AlertDialogAction
+            onClick={() => {
+              onDelete(client.id);
+              setShowDeleteDialog(false);
+            }}
+            className="bg-red-500/80 hover:bg-red-600 text-white"
+          >
+            Delete
+          </AlertDialogAction>
+        </div>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }
 
