@@ -148,6 +148,7 @@ function TemplateCard({ template, onStart, onEdit, onDelete }) {
 
 export default function Workflows() {
   const [activeTab, setActiveTab] = useState('control'); // 'control' or 'studio'
+  const [workflowSubTab, setWorkflowSubTab] = useState('active'); // 'active', 'completed', 'cancelled'
   const [viewMode, setViewMode] = useState('grid');
   const [showInsights, setShowInsights] = useState(false);
   const queryClient = useQueryClient();
@@ -233,6 +234,18 @@ export default function Workflows() {
     }
   };
 
+  // Filter instances based on sub-tab
+  const filteredInstances = instances.filter(workflow => {
+    if (workflowSubTab === 'active') {
+      return ['in_progress', 'not_started', 'blocked'].includes(workflow.status);
+    } else if (workflowSubTab === 'completed') {
+      return workflow.status === 'completed';
+    } else if (workflowSubTab === 'cancelled') {
+      return workflow.status === 'cancelled';
+    }
+    return true;
+  });
+
   return (
     <div className="p-6">
       {/* Header */}
@@ -241,7 +254,7 @@ export default function Workflows() {
           <h1 className="text-2xl font-semibold mb-1">Workflows</h1>
           <p className="text-[#A0AEC0]">
             {activeTab === 'control' 
-              ? `${instances.length} active instances`
+              ? `${filteredInstances.length} ${workflowSubTab} workflows`
               : `${templates.length} templates`
             }
           </p>
@@ -288,6 +301,40 @@ export default function Workflows() {
       {activeTab === 'control' ? (
         /* Control Tower - Active Instances */
         <div>
+          {/* Sub-tabs for workflow status */}
+          <div className="neumorphic-pressed rounded-lg p-1 flex mb-6 w-fit">
+            <button
+              onClick={() => setWorkflowSubTab('active')}
+              className={`px-4 py-2 rounded-md text-sm transition-all ${
+                workflowSubTab === 'active' 
+                  ? 'bg-[#2C2E33] text-[#00E5FF] shadow' 
+                  : 'text-[#A0AEC0] hover:text-[#F5F5F5]'
+              }`}
+            >
+              Active
+            </button>
+            <button
+              onClick={() => setWorkflowSubTab('completed')}
+              className={`px-4 py-2 rounded-md text-sm transition-all ${
+                workflowSubTab === 'completed' 
+                  ? 'bg-[#2C2E33] text-[#00E5FF] shadow' 
+                  : 'text-[#A0AEC0] hover:text-[#F5F5F5]'
+              }`}
+            >
+              Completed
+            </button>
+            <button
+              onClick={() => setWorkflowSubTab('cancelled')}
+              className={`px-4 py-2 rounded-md text-sm transition-all ${
+                workflowSubTab === 'cancelled' 
+                  ? 'bg-[#2C2E33] text-[#00E5FF] shadow' 
+                  : 'text-[#A0AEC0] hover:text-[#F5F5F5]'
+              }`}
+            >
+              Cancelled
+            </button>
+          </div>
+
           {/* Filters */}
           <div className="flex items-center gap-4 mb-6">
             <button className="neumorphic-pressed px-4 py-2 rounded-lg flex items-center gap-2 text-sm text-[#A0AEC0] hover:text-[#F5F5F5]">
@@ -332,21 +379,28 @@ export default function Workflows() {
                 <div key={i} className="h-48 bg-[#2C2E33] rounded-xl animate-pulse" />
               ))}
             </div>
-          ) : instances.length === 0 ? (
+          ) : filteredInstances.length === 0 ? (
             <div className="neumorphic-pressed rounded-xl p-12 text-center">
               <GitMerge className="w-12 h-12 text-[#4A5568] mx-auto mb-4" />
-              <h3 className="font-medium mb-2">No Active Workflows</h3>
-              <p className="text-[#A0AEC0] mb-4">Start a new workflow from the Studio or push a client into a workflow.</p>
-              <button 
-                onClick={() => setActiveTab('studio')}
-                className="px-4 py-2 rounded-lg bg-[#2C2E33] text-[#00E5FF] text-sm hover:bg-[#3a3d44]"
-              >
-                Go to Studio
-              </button>
+              <h3 className="font-medium mb-2">No {workflowSubTab.charAt(0).toUpperCase() + workflowSubTab.slice(1)} Workflows</h3>
+              <p className="text-[#A0AEC0] mb-4">
+                {workflowSubTab === 'active' 
+                  ? 'Start a new workflow from the Studio or push a client into a workflow.'
+                  : `You don't have any ${workflowSubTab} workflows yet.`
+                }
+              </p>
+              {workflowSubTab === 'active' && (
+                <button 
+                  onClick={() => setActiveTab('studio')}
+                  className="px-4 py-2 rounded-lg bg-[#2C2E33] text-[#00E5FF] text-sm hover:bg-[#3a3d44]"
+                >
+                  Go to Studio
+                </button>
+              )}
             </div>
           ) : (
             <div className={viewMode === 'grid' ? 'grid grid-cols-3 gap-4' : 'space-y-3'}>
-              {instances.map(workflow => (
+              {filteredInstances.map(workflow => (
                 <WorkflowCard 
                   key={workflow.id} 
                   workflow={workflow} 
