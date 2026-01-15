@@ -97,6 +97,7 @@ export default function MyWork() {
   const [viewMode, setViewMode] = useState('kanban');
   const [selectedTask, setSelectedTask] = useState(null);
   const [fieldValues, setFieldValues] = useState({});
+  const [showCompleted, setShowCompleted] = useState(true);
   const queryClient = useQueryClient();
 
   const { data: tasks = [], isLoading } = useQuery({
@@ -144,8 +145,10 @@ export default function MyWork() {
     }
   });
 
+  const filteredTasks = showCompleted ? tasks : tasks.filter(t => t.status !== 'completed');
+  
   const tasksByStatus = statusColumns.reduce((acc, col) => {
-    acc[col.id] = tasks.filter(t => t.status === col.id);
+    acc[col.id] = filteredTasks.filter(t => t.status === col.id);
     return acc;
   }, {});
 
@@ -155,11 +158,24 @@ export default function MyWork() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-semibold mb-1">My Work</h1>
-          <p className="text-[#A0AEC0]">{tasks.length} tasks assigned to you</p>
+          <p className="text-[#A0AEC0]">{filteredTasks.length} tasks assigned to you</p>
         </div>
         
-        {/* View Toggle */}
-        <div className="neumorphic-pressed rounded-lg p-1 flex">
+        <div className="flex items-center gap-4">
+          {/* Show Completed Toggle */}
+          <button
+            onClick={() => setShowCompleted(!showCompleted)}
+            className={`px-4 py-2 rounded-lg text-sm transition-colors ${
+              showCompleted 
+                ? 'bg-[#2C2E33] text-[#A0AEC0] hover:text-[#F5F5F5]' 
+                : 'bg-[#00E5FF]/10 text-[#00E5FF] border border-[#00E5FF]/30'
+            }`}
+          >
+            {showCompleted ? 'Hide Completed' : 'Show Completed'}
+          </button>
+          
+          {/* View Toggle */}
+          <div className="neumorphic-pressed rounded-lg p-1 flex">
           <button
             onClick={() => setViewMode('kanban')}
             className={`px-4 py-2 rounded-md text-sm transition-all ${
@@ -249,7 +265,7 @@ export default function MyWork() {
               </tr>
             </thead>
             <tbody>
-              {tasks.map((task, idx) => {
+              {filteredTasks.map((task, idx) => {
                 const StatusIcon = statusColumns.find(s => s.id === task.status)?.icon || Circle;
                 return (
                   <tr 
