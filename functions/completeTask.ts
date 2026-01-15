@@ -134,33 +134,8 @@ Deno.serve(async (req) => {
     }
   }
 
-  if (allCompleted) {
-    // Mark deliverable as completed
-    await base44.asServiceRole.entities.DeliverableInstance.update(task.deliverable_instance_id, {
-      status: 'completed',
-      completed_at: new Date().toISOString()
-    });
-
-    // Publish DELIVERABLE_COMPLETED event
-      await base44.asServiceRole.entities.Event.create({
-        event_type: 'deliverable_completed',
-        source_entity_type: 'deliverable_instance',
-        source_entity_id: task.deliverable_instance_id,
-        actor_type: 'system',
-        payload: {
-          workflow_instance_id: task.workflow_instance_id,
-          client_id: task.client_id
-        },
-        occurred_at: new Date().toISOString()
-      });
-
-      // Handle conditional outcome routing
-      const currentDeliverable = await base44.entities.DeliverableInstance.filter({ 
-        id: task.deliverable_instance_id 
-      });
-
-      if (currentDeliverable.length > 0) {
-        const currentDel = currentDeliverable[0];
+  // Handle conditional outcome routing and task release
+  const handleOutcomeRouting = async () => {
 
         // OUTCOME-BASED ROUTING
         if (outcomeAction === 'continue') {
@@ -339,6 +314,32 @@ Deno.serve(async (req) => {
           }
         }
       }
+  };
+
+  if (allCompleted) {
+    // Mark deliverable as completed
+    await base44.asServiceRole.entities.DeliverableInstance.update(task.deliverable_instance_id, {
+      status: 'completed',
+      completed_at: new Date().toISOString()
+    });
+
+    // Publish DELIVERABLE_COMPLETED event
+    await base44.asServiceRole.entities.Event.create({
+      event_type: 'deliverable_completed',
+      source_entity_type: 'deliverable_instance',
+      source_entity_id: task.deliverable_instance_id,
+      actor_type: 'system',
+      payload: {
+        workflow_instance_id: task.workflow_instance_id,
+        client_id: task.client_id
+      },
+      occurred_at: new Date().toISOString()
+    });
+
+    await handleOutcomeRouting();
+  } else {
+    // Single task not part of deliverable - still route outcomes
+    await handleOutcomeRouting();
   }
 
   // Calculate workflow progress
