@@ -103,6 +103,9 @@ Deno.serve(async (req) => {
 
       // Create ALL TaskInstances (not just first deliverable)
       for (const taskTemplate of taskTemplates) {
+        // Only first stage's first deliverable tasks are 'not_started', others are 'blocked'
+        const isFirstDeliverable = stageTemplate.sequence_order === 1 && deliverableTemplate.sequence_order === 1;
+
         const taskInstance = await base44.asServiceRole.entities.TaskInstance.create({
           deliverable_instance_id: deliverableInstance.id,
           task_template_id: taskTemplate.id,
@@ -112,7 +115,7 @@ Deno.serve(async (req) => {
           description: taskTemplate.description,
           instructions: taskTemplate.instructions,
           sequence_order: taskTemplate.sequence_order,
-          status: stageTemplate.sequence_order === 1 && deliverableTemplate.sequence_order === 1 ? 'not_started' : 'not_started',
+          status: isFirstDeliverable ? 'not_started' : 'blocked',
           priority: taskTemplate.priority || 'normal',
           assigned_user_id: taskTemplate.owner_type === 'user' ? taskTemplate.owner_id : user.id,
           owner_type: taskTemplate.owner_type,
