@@ -63,7 +63,7 @@ export default function ManualWorkflowBuilder({ onBack, editingTemplateId }) {
       const latestVersion = versions[0];
       const stages = await base44.entities.StageTemplate.filter({ 
         workflow_template_version_id: latestVersion.id 
-      });
+      }, 'sequence_order');
 
       const deliverables = {};
       const tasks = {};
@@ -74,7 +74,7 @@ export default function ManualWorkflowBuilder({ onBack, editingTemplateId }) {
         
         const dels = await base44.entities.DeliverableTemplate.filter({ 
           stage_template_id: stage.id 
-        });
+        }, 'sequence_order');
 
         deliverables[stageKey] = dels.map(d => ({
           name: d.name,
@@ -90,7 +90,7 @@ export default function ManualWorkflowBuilder({ onBack, editingTemplateId }) {
           
           const taskList = await base44.entities.TaskTemplate.filter({ 
             deliverable_template_id: del.id 
-          });
+          }, 'sequence_order');
 
           tasks[taskKey] = taskList.map(t => ({
             name: t.name,
