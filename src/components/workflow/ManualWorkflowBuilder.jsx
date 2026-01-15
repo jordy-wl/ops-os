@@ -102,7 +102,10 @@ export default function ManualWorkflowBuilder({ onBack, editingTemplateId }) {
             requires_review: t.requires_review || false,
             can_be_overridden: t.can_be_overridden !== false,
             data_field_definitions: t.data_field_definitions || [],
-            conditions: t.conditions || {}
+            conditions: t.conditions || {},
+            owner_type: t.owner_type || '',
+            owner_id: t.owner_id || '',
+            assignment_config: t.assignment_config || {}
           }));
         }
       }
