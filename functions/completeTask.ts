@@ -38,49 +38,54 @@ Deno.serve(async (req) => {
   const workflowInstance = workflows[0];
   const instance_map = workflowInstance.metadata?.instance_map || { stages: {}, deliverables: {}, tasks: {} };
 
-  // Process field values and save to client record
+  // Process field values and automatically save all to client record
   const enrichmentResults = [];
-  
-  if (taskTemplate && taskTemplate.data_field_definitions) {
-    for (const fieldDef of taskTemplate.data_field_definitions) {
-      const fieldCode = fieldDef.field_code;
-      const fieldValue = field_values[fieldCode];
+  const clients = await base44.entities.Client.filter({ id: task.client_id });
 
-      if (fieldValue !== undefined && fieldDef.save_to_client_field) {
-        const clients = await base44.entities.Client.filter({ id: task.client_id });
-        if (clients.length > 0) {
-          const client = clients[0];
-          const updatedMetadata = {
-            ...(client.metadata || {}),
-            [fieldDef.save_to_client_field]: fieldValue
-          };
+  if (clients.length > 0 && Object.keys(field_values).length > 0) {
+    const client = clients[0];
+    const updatedMetadata = { ...(client.metadata || {}) };
 
-          await base44.asServiceRole.entities.Client.update(task.client_id, {
-            metadata: updatedMetadata
-          });
+    // Build a mapping of field codes to field names for logging
+    const fieldCodeToName = {};
+    if (taskTemplate && taskTemplate.data_field_definitions) {
+      taskTemplate.data_field_definitions.forEach(fieldDef => {
+        fieldCodeToName[fieldDef.field_code] = fieldDef.field_name;
+      });
+    }
 
-          enrichmentResults.push({
-            field: fieldDef.field_name,
-            value: fieldValue
-          });
-
-          await base44.asServiceRole.entities.Event.create({
-            event_type: 'field_updated',
-            source_entity_type: 'client',
-            source_entity_id: task.client_id,
-            actor_type: 'user',
-            actor_id: user.id,
-            payload: {
-              field_name: fieldDef.field_name,
-              field_code: fieldCode,
-              object_type: 'client',
-              object_id: task.client_id
-            },
-            occurred_at: new Date().toISOString()
-          });
-        }
+    // Automatically save all field values to client metadata
+    for (const [fieldCode, fieldValue] of Object.entries(field_values)) {
+      if (fieldValue !== undefined && fieldValue !== null && fieldValue !== '') {
+        updatedMetadata[fieldCode] = fieldValue;
+        const fieldName = fieldCodeToName[fieldCode] || fieldCode;
+        enrichmentResults.push({
+          field: fieldName,
+          value: fieldValue
+        });
       }
     }
+
+    // Update client with new metadata
+    await base44.asServiceRole.entities.Client.update(task.client_id, {
+      metadata: updatedMetadata
+    });
+
+    // Log enrichment event
+    await base44.asServiceRole.entities.Event.create({
+      event_type: 'client_record_enriched',
+      source_entity_type: 'client',
+      source_entity_id: task.client_id,
+      actor_type: 'user',
+      actor_id: user.id,
+      payload: {
+        enriched_by_task: task.id,
+        task_name: task.name,
+        fields_count: enrichmentResults.length,
+        fields: enrichmentResults
+      },
+      occurred_at: new Date().toISOString()
+    });
   }
 
   // Update task status to completed
