@@ -20,34 +20,46 @@ import {
   MoreHorizontal,
   Sparkles,
   Edit,
-  Trash2
+  Trash2,
+  XCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-function WorkflowCard({ workflow, onClick }) {
+function WorkflowCard({ workflow, onClick, onCancel }) {
   const getStatusColor = (status) => {
     switch(status) {
       case 'completed': return 'bg-green-500';
       case 'blocked': return 'bg-red-500';
       case 'in_progress': return 'bg-[#00E5FF]';
+      case 'cancelled': return 'bg-gray-500';
       default: return 'bg-[#4A5568]';
     }
   };
 
   return (
-    <div 
-      onClick={onClick}
-      className="neumorphic-raised rounded-xl p-5 cursor-pointer transition-all duration-200 hover:translate-y-[-2px] group"
-    >
-      <div className="flex items-start justify-between mb-4">
-        <div>
-          <h3 className="font-medium text-lg mb-1">{workflow.client_name || 'Unknown Client'}</h3>
-          <p className="text-sm text-[#A0AEC0]">{workflow.name}</p>
+    <div className="neumorphic-raised rounded-xl p-5 group">
+      <div 
+        onClick={onClick}
+        className="cursor-pointer"
+      >
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <h3 className="font-medium text-lg mb-1">{workflow.client_name || 'Unknown Client'}</h3>
+            <p className="text-sm text-[#A0AEC0]">{workflow.name}</p>
+          </div>
+          {workflow.status !== 'completed' && workflow.status !== 'cancelled' && (
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                onCancel(workflow);
+              }}
+              className="p-2 rounded-lg hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-opacity"
+              title="Cancel workflow"
+            >
+              <XCircle className="w-4 h-4 text-red-400" />
+            </button>
+          )}
         </div>
-        <button className="p-2 rounded-lg hover:bg-[#3a3d44] opacity-0 group-hover:opacity-100 transition-opacity">
-          <MoreHorizontal className="w-4 h-4 text-[#A0AEC0]" />
-        </button>
-      </div>
 
       {/* Progress Bar */}
       <div className="mb-4">
@@ -162,6 +174,22 @@ export default function Workflows() {
     },
   });
 
+  const cancelWorkflowMutation = useMutation({
+    mutationFn: async (workflowInstanceId) => {
+      const response = await base44.functions.invoke('cancelWorkflow', {
+        workflow_instance_id: workflowInstanceId
+      });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workflow-instances'] });
+      toast.success('Workflow cancelled successfully');
+    },
+    onError: () => {
+      toast.error('Failed to cancel workflow');
+    },
+  });
+
   const handleEditTemplate = (template) => {
     // Navigate to WorkflowBuilder with template ID for editing
     window.location.href = createPageUrl('WorkflowBuilder') + `?edit=${template.id}`;
@@ -170,6 +198,12 @@ export default function Workflows() {
   const handleDeleteTemplate = (template) => {
     if (confirm(`Are you sure you want to delete "${template.name}"? This action cannot be undone.`)) {
       deleteTemplateMutation.mutate(template.id);
+    }
+  };
+
+  const handleCancelWorkflow = (workflow) => {
+    if (confirm(`Are you sure you want to cancel this workflow? All pending tasks will be deleted.`)) {
+      cancelWorkflowMutation.mutate(workflow.id);
     }
   };
 
@@ -287,7 +321,12 @@ export default function Workflows() {
           ) : (
             <div className={viewMode === 'grid' ? 'grid grid-cols-3 gap-4' : 'space-y-3'}>
               {instances.map(workflow => (
-                <WorkflowCard key={workflow.id} workflow={workflow} onClick={() => {}} />
+                <WorkflowCard 
+                  key={workflow.id} 
+                  workflow={workflow} 
+                  onClick={() => {}}
+                  onCancel={handleCancelWorkflow}
+                />
               ))}
             </div>
           )}

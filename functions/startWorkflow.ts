@@ -104,6 +104,7 @@ Deno.serve(async (req) => {
               sequence_order: taskTemplate.sequence_order,
               status: 'not_started',
               priority: taskTemplate.priority || 'normal',
+              assigned_user_id: taskTemplate.owner_type === 'user' ? taskTemplate.owner_id : user.id,
               owner_type: taskTemplate.owner_type,
               owner_id: taskTemplate.owner_id,
               is_ad_hoc: false,

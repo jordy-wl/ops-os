@@ -13,8 +13,8 @@ import ProductDetail from './pages/ProductDetail';
 import ServiceDetail from './pages/ServiceDetail';
 import Settings from './pages/Settings';
 import Strategy from './pages/Strategy';
-import Workflows from './pages/Workflows';
 import WorkflowBuilder from './pages/WorkflowBuilder';
+import Workflows from './pages/Workflows';
 import __Layout from './Layout.jsx';
 
 
@@ -34,8 +34,8 @@ export const PAGES = {
     "ServiceDetail": ServiceDetail,
     "Settings": Settings,
     "Strategy": Strategy,
-    "Workflows": Workflows,
     "WorkflowBuilder": WorkflowBuilder,
+    "Workflows": Workflows,
 }
 
 export const pagesConfig = {
