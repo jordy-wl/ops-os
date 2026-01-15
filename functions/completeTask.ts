@@ -257,33 +257,85 @@ Deno.serve(async (req) => {
       const nextDelIndex = allDeliverables.findIndex(d => d.sequence_order > currentDel.sequence_order && d.status !== 'completed' && d.status !== 'skipped');
       if (nextDelIndex >= 0) {
         const nextDel = allDeliverables[nextDelIndex];
-        if (nextDel.status === 'not_started' || nextDel.status === 'blocked') {
-          await base44.asServiceRole.entities.DeliverableInstance.update(nextDel.id, {
+        await base44.asServiceRole.entities.DeliverableInstance.update(nextDel.id, {
+          status: 'in_progress',
+          started_at: new Date().toISOString()
+        });
+
+        const nextTasks = await base44.entities.TaskInstance.filter({
+          deliverable_instance_id: nextDel.id
+        }, 'sequence_order');
+
+        for (const nextTask of nextTasks) {
+          await base44.asServiceRole.entities.TaskInstance.update(nextTask.id, {
             status: 'in_progress',
-            started_at: new Date().toISOString()
+            assigned_user_id: nextTask.assigned_user_id || task.assigned_user_id
           });
 
-          const nextTasks = await base44.entities.TaskInstance.filter({
-            deliverable_instance_id: nextDel.id
+          await base44.asServiceRole.entities.Event.create({
+            event_type: 'task_released',
+            source_entity_type: 'task_instance',
+            source_entity_id: nextTask.id,
+            actor_type: 'system',
+            payload: {
+              task_name: nextTask.name,
+              assigned_user_id: nextTask.assigned_user_id
+            },
+            occurred_at: new Date().toISOString()
+          });
+        }
+      } else {
+        // If no next deliverable in current stage, find next stage
+        const currentStage = await base44.entities.StageInstance.filter({ 
+          id: currentDel.stage_instance_id 
+        });
+        if (currentStage.length > 0) {
+          const allStages = await base44.entities.StageInstance.filter({
+            workflow_instance_id: task.workflow_instance_id
           }, 'sequence_order');
 
-          for (const nextTask of nextTasks) {
-            await base44.asServiceRole.entities.TaskInstance.update(nextTask.id, {
+          const nextStageIndex = allStages.findIndex(s => s.sequence_order > currentStage[0].sequence_order && s.status !== 'completed' && s.status !== 'skipped');
+          if (nextStageIndex >= 0) {
+            const nextStage = allStages[nextStageIndex];
+            await base44.asServiceRole.entities.StageInstance.update(nextStage.id, {
               status: 'in_progress',
-              assigned_user_id: nextTask.assigned_user_id || task.assigned_user_id
+              started_at: new Date().toISOString()
             });
-            
-            await base44.asServiceRole.entities.Event.create({
-              event_type: 'task_released',
-              source_entity_type: 'task_instance',
-              source_entity_id: nextTask.id,
-              actor_type: 'system',
-              payload: {
-                task_name: nextTask.name,
-                assigned_user_id: nextTask.assigned_user_id
-              },
-              occurred_at: new Date().toISOString()
-            });
+
+            const firstDeliverables = await base44.entities.DeliverableInstance.filter({
+              stage_instance_id: nextStage.id
+            }, 'sequence_order', 1);
+
+            if (firstDeliverables.length > 0) {
+              const firstDel = firstDeliverables[0];
+              await base44.asServiceRole.entities.DeliverableInstance.update(firstDel.id, {
+                status: 'in_progress',
+                started_at: new Date().toISOString()
+              });
+
+              const firstTasks = await base44.entities.TaskInstance.filter({
+                deliverable_instance_id: firstDel.id
+              }, 'sequence_order');
+
+              for (const targetTask of firstTasks) {
+                await base44.asServiceRole.entities.TaskInstance.update(targetTask.id, {
+                  status: 'in_progress',
+                  assigned_user_id: targetTask.assigned_user_id || task.assigned_user_id
+                });
+
+                await base44.asServiceRole.entities.Event.create({
+                  event_type: 'task_released',
+                  source_entity_type: 'task_instance',
+                  source_entity_id: targetTask.id,
+                  actor_type: 'system',
+                  payload: {
+                    task_name: targetTask.name,
+                    assigned_user_id: targetTask.assigned_user_id
+                  },
+                  occurred_at: new Date().toISOString()
+                });
+              }
+            }
           }
         }
       }

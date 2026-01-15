@@ -401,7 +401,7 @@ export default function TaskConfigPanel({ task, onSave, onClose, allStages, allD
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-[#2C2E33]">
-                      <SelectItem value="continue">Continue to Next Task</SelectItem>
+                      <SelectItem value="continue">Continue Workflow</SelectItem>
                       <SelectItem value="skip_to_stage">Skip to Stage</SelectItem>
                       <SelectItem value="skip_to_deliverable">Skip to Deliverable</SelectItem>
                       <SelectItem value="skip_to_task">Skip to Task</SelectItem>
