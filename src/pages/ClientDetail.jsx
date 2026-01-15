@@ -24,8 +24,25 @@ import ProactiveInsightsWidget from '@/components/ai/ProactiveInsightsWidget';
 
 export default function ClientDetail() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const urlParams = new URLSearchParams(window.location.search);
   const clientId = urlParams.get('id');
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      await base44.functions.invoke('deleteClient', { client_id: clientId });
+    },
+    onSuccess: () => {
+      toast.success('Client deleted successfully');
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      navigate(createPageUrl('Clients'));
+    },
+    onError: (error) => {
+      toast.error('Failed to delete client');
+      console.error(error);
+    },
+  });
 
   const { data: client, isLoading } = useQuery({
     queryKey: ['client', clientId],
