@@ -230,6 +230,22 @@ export default function Workflows() {
     },
   });
 
+  const deleteWorkflowMutation = useMutation({
+    mutationFn: async (workflowInstanceId) => {
+      const response = await base44.functions.invoke('deleteWorkflow', {
+        workflow_instance_id: workflowInstanceId
+      });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workflow-instances'] });
+      toast.success('Workflow deleted successfully');
+    },
+    onError: () => {
+      toast.error('Failed to delete workflow');
+    },
+  });
+
   const handleEditTemplate = (template) => {
     // Navigate to WorkflowBuilder with template ID for editing
     window.location.href = createPageUrl('WorkflowBuilder') + `?edit=${template.id}`;
