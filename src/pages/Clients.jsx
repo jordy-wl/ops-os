@@ -94,14 +94,14 @@ function ClientRow({ client, onNavigate, onDelete }) {
         {client.updated_date ? new Date(client.updated_date).toLocaleDateString() : '—'}
         </td>
         <td className="px-4 py-4" onClick={(e) => e.stopPropagation()}>
-        <button
-          onClick={() => setShowDeleteDialog(true)}
-          className="p-2 rounded-lg hover:bg-red-500/10 text-[#A0AEC0] hover:text-red-400 transition-colors"
-        >
-          <Trash2 className="w-4 h-4" />
-        </button>
-      </td>
-    </tr>
+          <button
+            onClick={() => setShowDeleteDialog(true)}
+            className="p-2 rounded-lg hover:bg-red-500/10 text-[#A0AEC0] hover:text-red-400 transition-colors"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </td>
+        </tr>
 
     <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
       <AlertDialogContent className="bg-[#2C2E33] border-[#3a3d44]">
