@@ -29,29 +29,41 @@ Deno.serve(async (req) => {
       for (const stage of stages) {
         const deliverables = await base44.entities.DeliverableInstance.filter({ stage_instance_id: stage.id });
         for (const deliverable of deliverables) {
-          await base44.asServiceRole.entities.TaskInstance.delete({ deliverable_instance_id: deliverable.id });
-          await base44.asServiceRole.entities.DocumentInstance.delete({ deliverable_instance_id: deliverable.id });
-          await base44.asServiceRole.entities.DeliverableInstance.delete({ id: deliverable.id });
+          const tasks = await base44.entities.TaskInstance.filter({ deliverable_instance_id: deliverable.id });
+          for (const task of tasks) {
+            await base44.asServiceRole.entities.TaskInstance.delete(task.id);
+          }
+          const documents = await base44.entities.DocumentInstance.filter({ deliverable_instance_id: deliverable.id });
+          for (const doc of documents) {
+            await base44.asServiceRole.entities.DocumentInstance.delete(doc.id);
+          }
+          await base44.asServiceRole.entities.DeliverableInstance.delete(deliverable.id);
         }
-        await base44.asServiceRole.entities.StageInstance.delete({ id: stage.id });
+        await base44.asServiceRole.entities.StageInstance.delete(stage.id);
       }
-      await base44.asServiceRole.entities.WorkflowInstance.delete({ id: workflow.id });
+      await base44.asServiceRole.entities.WorkflowInstance.delete(workflow.id);
     }
 
     // Delete communications
-    await base44.asServiceRole.entities.CommunicationLog.delete({ client_id });
+    const communications = await base44.entities.CommunicationLog.filter({ source_entity_id: client_id });
+    for (const comm of communications) {
+      await base44.asServiceRole.entities.CommunicationLog.delete(comm.id);
+    }
 
     // Delete client contacts
     const clientContacts = await base44.entities.ClientContact.filter({ client_id });
     for (const cc of clientContacts) {
-      await base44.asServiceRole.entities.ClientContact.delete({ id: cc.id });
+      await base44.asServiceRole.entities.ClientContact.delete(cc.id);
     }
 
     // Delete events related to client
-    await base44.asServiceRole.entities.Event.delete({ source_entity_id: client_id });
+    const events = await base44.entities.Event.filter({ source_entity_id: client_id });
+    for (const event of events) {
+      await base44.asServiceRole.entities.Event.delete(event.id);
+    }
 
     // Delete client
-    await base44.asServiceRole.entities.Client.delete({ id: client_id });
+    await base44.asServiceRole.entities.Client.delete(client_id);
 
     return Response.json({ 
       success: true, 
