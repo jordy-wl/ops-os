@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-function WorkflowCard({ workflow, onClick, onCancel }) {
+function WorkflowCard({ workflow, onClick, onCancel, onDelete }) {
   const getStatusColor = (status) => {
     switch(status) {
       case 'completed': return 'bg-green-500';
@@ -48,18 +48,30 @@ function WorkflowCard({ workflow, onClick, onCancel }) {
             <h3 className="font-medium text-lg mb-1">{workflow.client_name || 'Unknown Client'}</h3>
             <p className="text-sm text-[#A0AEC0]">{workflow.name}</p>
           </div>
-          {workflow.status !== 'completed' && workflow.status !== 'cancelled' && (
+          <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            {workflow.status !== 'completed' && workflow.status !== 'cancelled' && (
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCancel(workflow);
+                }}
+                className="p-2 rounded-lg hover:bg-red-500/10"
+                title="Cancel workflow"
+              >
+                <XCircle className="w-4 h-4 text-red-400" />
+              </button>
+            )}
             <button 
               onClick={(e) => {
                 e.stopPropagation();
-                onCancel(workflow);
+                onDelete(workflow);
               }}
-              className="p-2 rounded-lg hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-opacity"
-              title="Cancel workflow"
+              className="p-2 rounded-lg hover:bg-red-500/10"
+              title="Delete workflow"
             >
-              <XCircle className="w-4 h-4 text-red-400" />
+              <Trash className="w-4 h-4 text-red-400" />
             </button>
-          )}
+          </div>
         </div>
 
         {/* Progress Bar */}
