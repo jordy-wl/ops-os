@@ -155,30 +155,45 @@ Deno.serve(async (req) => {
     event_id: workflowStartedEvent.id 
   }).catch(err => console.error('AI Operator trigger failed:', err));
 
-  // Publish TASK_RELEASED event (single event for all released tasks)
-  const releasedTasks = await base44.entities.TaskInstance.filter({
-    workflow_instance_id: workflowInstance.id,
-    status: 'not_started'
+  // Release only the first deliverable's tasks
+  const firstStageDeliverables = await base44.entities.DeliverableInstance.filter({
+    stage_instance_id: stageInstances[0]?.id,
+    sequence_order: 1
   });
 
-  if (releasedTasks.length > 0) {
-    const taskReleasedEvent = await base44.asServiceRole.entities.Event.create({
-      event_type: 'task_released',
-      source_entity_type: 'task_instance',
-      source_entity_id: releasedTasks[0].id,
-      actor_type: 'system',
-      payload: { 
-        workflow_instance_id: workflowInstance.id,
-        client_id,
-        task_count: releasedTasks.length
-      },
-      occurred_at: new Date().toISOString()
+  if (firstStageDeliverables.length > 0) {
+    const firstDeliverable = firstStageDeliverables[0];
+    
+    // Mark first deliverable as in_progress
+    await base44.asServiceRole.entities.DeliverableInstance.update(firstDeliverable.id, {
+      status: 'in_progress',
+      started_at: new Date().toISOString()
     });
 
-    // Trigger AI Operator monitoring
-    base44.asServiceRole.functions.invoke('aiOperatorMonitor', { 
-      event_id: taskReleasedEvent.id 
-    }).catch(err => console.error('AI Operator trigger failed:', err));
+    // Release tasks from first deliverable
+    const releasedTasks = await base44.entities.TaskInstance.filter({
+      deliverable_instance_id: firstDeliverable.id
+    }, 'sequence_order');
+
+    if (releasedTasks.length > 0) {
+      const taskReleasedEvent = await base44.asServiceRole.entities.Event.create({
+        event_type: 'task_released',
+        source_entity_type: 'task_instance',
+        source_entity_id: releasedTasks[0].id,
+        actor_type: 'system',
+        payload: { 
+          workflow_instance_id: workflowInstance.id,
+          client_id,
+          task_count: releasedTasks.length
+        },
+        occurred_at: new Date().toISOString()
+      });
+
+      // Trigger AI Operator monitoring
+      base44.asServiceRole.functions.invoke('aiOperatorMonitor', { 
+        event_id: taskReleasedEvent.id 
+      }).catch(err => console.error('AI Operator trigger failed:', err));
+    }
   }
 
   return Response.json({ 
