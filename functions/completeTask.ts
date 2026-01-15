@@ -172,9 +172,10 @@ Deno.serve(async (req) => {
         }, 'sequence_order');
 
         for (const targetTask of targetTasks) {
+          const assignedUserId = targetTask.assigned_user_id || task.assigned_user_id || user.id;
           await base44.asServiceRole.entities.TaskInstance.update(targetTask.id, {
             status: 'in_progress',
-            assigned_user_id: targetTask.assigned_user_id || task.assigned_user_id
+            assigned_user_id: assignedUserId
           });
           
           await base44.asServiceRole.entities.Event.create({
@@ -222,9 +223,10 @@ Deno.serve(async (req) => {
           }, 'sequence_order');
 
           for (const targetTask of firstTasks) {
+            const assignedUserId = targetTask.assigned_user_id || task.assigned_user_id || user.id;
             await base44.asServiceRole.entities.TaskInstance.update(targetTask.id, {
               status: 'in_progress',
-              assigned_user_id: targetTask.assigned_user_id || task.assigned_user_id
+              assigned_user_id: assignedUserId
             });
             
             await base44.asServiceRole.entities.Event.create({
@@ -266,9 +268,10 @@ Deno.serve(async (req) => {
         }, 'sequence_order');
 
         for (const nextTask of nextTasks) {
+          const assignedUserId = nextTask.assigned_user_id || task.assigned_user_id || user.id;
           await base44.asServiceRole.entities.TaskInstance.update(nextTask.id, {
             status: 'in_progress',
-            assigned_user_id: nextTask.assigned_user_id || task.assigned_user_id
+            assigned_user_id: assignedUserId
           });
 
           await base44.asServiceRole.entities.Event.create({
