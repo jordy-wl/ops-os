@@ -42,13 +42,17 @@ Deno.serve(async (req) => {
     started_at: new Date().toISOString(),
     progress_percentage: 0,
     owner_type: template[0].owner_type || 'user',
-    owner_id: template[0].owner_id || user.id
+    owner_id: template[0].owner_id || user.id,
+    metadata: { instance_map: { stages: {}, deliverables: {}, tasks: {} } }
   });
 
   // Get all stages for this version
   const stageTemplates = await base44.entities.StageTemplate.filter({
     workflow_template_version_id: currentVersion.id
   }, 'sequence_order');
+
+  // Build instance map as we create instances
+  const instance_map = { stages: {}, deliverables: {}, tasks: {} };
 
   // Create StageInstances
   const stageInstances = [];
@@ -65,61 +69,70 @@ Deno.serve(async (req) => {
     });
     stageInstances.push(stageInstance);
 
+    // Store stage mapping
+    const stageKey = `stage_${stageTemplate.sequence_order}`;
+    instance_map.stages[stageKey] = stageInstance.id;
+
     // Get deliverables for this stage
     const deliverableTemplates = await base44.entities.DeliverableTemplate.filter({
       stage_template_id: stageTemplate.id
     }, 'sequence_order');
 
-    // Create DeliverableInstances for first stage only
-    if (stageTemplate.sequence_order === 1) {
-      for (const deliverableTemplate of deliverableTemplates) {
-        const deliverableInstance = await base44.asServiceRole.entities.DeliverableInstance.create({
-          stage_instance_id: stageInstance.id,
-          deliverable_template_id: deliverableTemplate.id,
+    // Create ALL DeliverableInstances (not just first stage)
+    for (const deliverableTemplate of deliverableTemplates) {
+      const deliverableInstance = await base44.asServiceRole.entities.DeliverableInstance.create({
+        stage_instance_id: stageInstance.id,
+        deliverable_template_id: deliverableTemplate.id,
+        workflow_instance_id: workflowInstance.id,
+        name: deliverableTemplate.name,
+        sequence_order: deliverableTemplate.sequence_order,
+        status: stageTemplate.sequence_order === 1 && deliverableTemplate.sequence_order === 1 ? 'in_progress' : 'not_started',
+        owner_type: deliverableTemplate.owner_type,
+        owner_id: deliverableTemplate.owner_id,
+        fields: {}
+      });
+
+      // Store deliverable mapping
+      const deliverableKey = `stage_${stageTemplate.sequence_order}_deliverable_${deliverableTemplate.sequence_order}`;
+      instance_map.deliverables[deliverableKey] = deliverableInstance.id;
+
+      // Get tasks for this deliverable
+      const taskTemplates = await base44.entities.TaskTemplate.filter({
+        deliverable_template_id: deliverableTemplate.id
+      }, 'sequence_order');
+
+      // Create ALL TaskInstances (not just first deliverable)
+      for (const taskTemplate of taskTemplates) {
+        const taskInstance = await base44.asServiceRole.entities.TaskInstance.create({
+          deliverable_instance_id: deliverableInstance.id,
+          task_template_id: taskTemplate.id,
           workflow_instance_id: workflowInstance.id,
-          name: deliverableTemplate.name,
-          sequence_order: deliverableTemplate.sequence_order,
-          status: deliverableTemplate.sequence_order === 1 ? 'in_progress' : 'not_started',
-          owner_type: deliverableTemplate.owner_type,
-          owner_id: deliverableTemplate.owner_id,
-          fields: {}
+          client_id,
+          name: taskTemplate.name,
+          description: taskTemplate.description,
+          instructions: taskTemplate.instructions,
+          sequence_order: taskTemplate.sequence_order,
+          status: stageTemplate.sequence_order === 1 && deliverableTemplate.sequence_order === 1 ? 'not_started' : 'not_started',
+          priority: taskTemplate.priority || 'normal',
+          assigned_user_id: taskTemplate.owner_type === 'user' ? taskTemplate.owner_id : user.id,
+          owner_type: taskTemplate.owner_type,
+          owner_id: taskTemplate.owner_id,
+          is_ad_hoc: false,
+          field_values: {}
         });
 
-        // Get tasks for this deliverable
-        const taskTemplates = await base44.entities.TaskTemplate.filter({
-          deliverable_template_id: deliverableTemplate.id
-        }, 'sequence_order');
-
-        // Create TaskInstances for first deliverable only
-        if (deliverableTemplate.sequence_order === 1) {
-          for (const taskTemplate of taskTemplates) {
-            await base44.asServiceRole.entities.TaskInstance.create({
-              deliverable_instance_id: deliverableInstance.id,
-              task_template_id: taskTemplate.id,
-              workflow_instance_id: workflowInstance.id,
-              client_id,
-              name: taskTemplate.name,
-              description: taskTemplate.description,
-              instructions: taskTemplate.instructions,
-              sequence_order: taskTemplate.sequence_order,
-              status: 'not_started',
-              priority: taskTemplate.priority || 'normal',
-              assigned_user_id: taskTemplate.owner_type === 'user' ? taskTemplate.owner_id : user.id,
-              owner_type: taskTemplate.owner_type,
-              owner_id: taskTemplate.owner_id,
-              is_ad_hoc: false,
-              field_values: {}
-            });
-          }
-        }
+        // Store task mapping
+        const taskKey = `stage_${stageTemplate.sequence_order}_deliverable_${deliverableTemplate.sequence_order}_task_${taskTemplate.sequence_order}`;
+        instance_map.tasks[taskKey] = taskInstance.id;
       }
     }
   }
 
-  // Update workflow instance status
+  // Update workflow instance with complete instance map
   await base44.asServiceRole.entities.WorkflowInstance.update(workflowInstance.id, {
     status: 'in_progress',
-    current_stage_id: stageInstances[0]?.id
+    current_stage_id: stageInstances[0]?.id,
+    metadata: { instance_map }
   });
 
   // Publish WORKFLOW_INSTANCE_STARTED event
