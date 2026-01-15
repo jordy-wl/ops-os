@@ -220,8 +220,23 @@ function CreateClientModal({ isOpen, onClose }) {
 
 export default function Clients() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
+
+  const deleteMutation = useMutation({
+    mutationFn: async (clientId) => {
+      await base44.functions.invoke('deleteClient', { client_id: clientId });
+    },
+    onSuccess: () => {
+      toast.success('Client deleted successfully');
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+    },
+    onError: (error) => {
+      toast.error('Failed to delete client');
+      console.error(error);
+    },
+  });
 
   const urlParams = new URLSearchParams(window.location.search);
   const shouldShowCreate = urlParams.get('action') === 'create';
