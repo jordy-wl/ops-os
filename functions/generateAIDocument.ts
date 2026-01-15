@@ -136,13 +136,26 @@ Follow the template structure and generation instructions precisely.
       add_context_from_internet: false
     });
 
-    // Create document instance
+    // Determine file extension based on format
+    const fileExtension = documentTemplate.output_format === 'html' ? 'html' : 'md';
+    const fileName = `${documentTemplate.name.replace(/\s+/g, '_')}_${new Date().getTime()}.${fileExtension}`;
+
+    // Upload generated content to file storage
+    const uploadResponse = await base44.integrations.Core.UploadFile({
+      file: new Blob([aiResponse], { type: 'text/plain' }), 
+      filename: fileName
+    });
+
+    const fileUrl = uploadResponse.file_url;
+
+    // Create document instance with file_url
     const documentInstance = await base44.entities.DocumentInstance.create({
       deliverable_instance_id: deliverable_instance_id,
       client_id: workflowInstance.client_id,
       document_template_id: documentTemplate.id,
       name: `${documentTemplate.name} - ${client?.name || 'Client'}`,
       content: aiResponse,
+      file_url: fileUrl,
       format: documentTemplate.output_format || 'markdown',
       status: 'draft',
       generated_by: 'ai',
