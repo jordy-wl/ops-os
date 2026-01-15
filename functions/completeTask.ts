@@ -8,7 +8,7 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { task_instance_id, field_values = {} } = await req.json();
+  const { task_instance_id, field_values = {}, outcome } = await req.json();
 
   if (!task_instance_id) {
     return Response.json({ error: 'Missing task_instance_id' }, { status: 400 });
