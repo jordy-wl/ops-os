@@ -141,32 +141,6 @@ Deno.serve(async (req) => {
       },
       occurred_at: new Date().toISOString()
     });
-  } else if (!allCompleted && task.deliverable_instance_id) {
-    // There are still tasks remaining in the current deliverable - release the next one
-    const nextTasksInDeliverable = await base44.entities.TaskInstance.filter({
-      deliverable_instance_id: task.deliverable_instance_id,
-      sequence_order: { $gt: task.sequence_order },
-      status: 'not_started'
-    }, 'sequence_order', 1);
-
-    if (nextTasksInDeliverable.length > 0) {
-      const nextTask = nextTasksInDeliverable[0];
-      await base44.asServiceRole.entities.TaskInstance.update(nextTask.id, {
-        status: 'in_progress'
-      });
-
-      await base44.asServiceRole.entities.Event.create({
-        event_type: 'task_released',
-        source_entity_type: 'task_instance',
-        source_entity_id: nextTask.id,
-        actor_type: 'system',
-        payload: {
-          task_name: nextTask.name,
-          assigned_user_id: nextTask.assigned_user_id
-        },
-        occurred_at: new Date().toISOString()
-      });
-    }
   }
 
   if (outcomeAction === 'end_workflow') {
