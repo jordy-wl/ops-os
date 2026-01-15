@@ -52,12 +52,14 @@ const sentimentColors = {
   negative: 'bg-red-500',
 };
 
-function ClientRow({ client, onNavigate }) {
+function ClientRow({ client, onNavigate, onDelete }) {
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  
   return (
-    <tr 
-      onClick={onNavigate}
-      className="hover:bg-[#2C2E33] cursor-pointer transition-colors border-b border-[#2C2E33]"
-    >
+    <>
+      <tr 
+        className="hover:bg-[#2C2E33] cursor-pointer transition-colors border-b border-[#2C2E33]"
+      >
       <td className="px-4 py-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#2C2E33] to-[#1A1B1E] flex items-center justify-center">
