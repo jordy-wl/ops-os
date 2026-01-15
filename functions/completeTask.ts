@@ -8,18 +8,20 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { task_instance_id, field_values = {}, outcome: selectedOutcomeName } = await req.json();
+  const { task_instance_id, field_values = {} } = await req.json();
 
   if (!task_instance_id) {
     return Response.json({ error: 'Missing task_instance_id' }, { status: 400 });
   }
 
+  // Get the task instance
   const taskInstances = await base44.entities.TaskInstance.filter({ id: task_instance_id });
   if (taskInstances.length === 0) {
     return Response.json({ error: 'Task not found' }, { status: 404 });
   }
   const task = taskInstances[0];
 
+  // Get task template to understand data field definitions
   let taskTemplate = null;
   if (task.task_template_id) {
     const templates = await base44.entities.TaskTemplate.filter({ id: task.task_template_id });
@@ -28,6 +30,7 @@ Deno.serve(async (req) => {
     }
   }
 
+  // Process field values using data_field_definitions from TaskTemplate
   const enrichmentResults = [];
   
   if (taskTemplate && taskTemplate.data_field_definitions) {
@@ -36,6 +39,7 @@ Deno.serve(async (req) => {
       const fieldValue = field_values[fieldCode];
 
       if (fieldValue !== undefined && fieldDef.save_to_client_field) {
+        // Update client metadata directly with the field
         const clients = await base44.entities.Client.filter({ id: task.client_id });
         if (clients.length > 0) {
           const client = clients[0];
@@ -53,6 +57,7 @@ Deno.serve(async (req) => {
             value: fieldValue
           });
 
+          // Publish FIELD_UPDATED event
           await base44.asServiceRole.entities.Event.create({
             event_type: 'field_updated',
             source_entity_type: 'client',
@@ -72,12 +77,14 @@ Deno.serve(async (req) => {
     }
   }
 
+  // Update task status
   await base44.asServiceRole.entities.TaskInstance.update(task_instance_id, {
     status: 'completed',
     completed_at: new Date().toISOString(),
     field_values
   });
 
+  // Publish TASK_COMPLETED event
   await base44.asServiceRole.entities.Event.create({
     event_type: 'task_completed',
     source_entity_type: 'task_instance',
@@ -93,6 +100,7 @@ Deno.serve(async (req) => {
     occurred_at: new Date().toISOString()
   });
 
+  // Publish CLIENT_RECORD_ENRICHED event
   if (enrichmentResults.length > 0) {
     await base44.asServiceRole.entities.Event.create({
       event_type: 'client_record_enriched',
@@ -108,28 +116,21 @@ Deno.serve(async (req) => {
     });
   }
 
-  let outcomeAction = null;
-  if (selectedOutcomeName && taskTemplate?.conditions?.outcomes) {
-    const selectedOutcome = taskTemplate.conditions.outcomes.find(
-      o => o.outcome_name === selectedOutcomeName
-    );
-    if (selectedOutcome) {
-      outcomeAction = selectedOutcome.action;
-    }
-  }
-
+  // Check if all tasks in deliverable are completed
   const deliverableTasks = await base44.entities.TaskInstance.filter({
     deliverable_instance_id: task.deliverable_instance_id
   });
   
   const allCompleted = deliverableTasks.every(t => t.id === task_instance_id || t.status === 'completed');
 
-  if (allCompleted && task.deliverable_instance_id) {
+  if (allCompleted) {
+    // Mark deliverable as completed
     await base44.asServiceRole.entities.DeliverableInstance.update(task.deliverable_instance_id, {
       status: 'completed',
       completed_at: new Date().toISOString()
     });
 
+    // Publish DELIVERABLE_COMPLETED event
     await base44.asServiceRole.entities.Event.create({
       event_type: 'deliverable_completed',
       source_entity_type: 'deliverable_instance',
@@ -141,136 +142,39 @@ Deno.serve(async (req) => {
       },
       occurred_at: new Date().toISOString()
     });
-  }
 
-  if (outcomeAction === 'end_workflow') {
-    await base44.asServiceRole.entities.WorkflowInstance.update(task.workflow_instance_id, {
-      status: 'completed',
-      completed_at: new Date().toISOString()
-    });
-  } else if (outcomeAction === 'block_workflow') {
-    await base44.asServiceRole.entities.WorkflowInstance.update(task.workflow_instance_id, {
-      status: 'blocked'
-    });
-  } else if (outcomeAction === 'skip_to_deliverable') {
-    const selectedOutcome = taskTemplate?.conditions?.outcomes?.find(
-      o => o.outcome_name === selectedOutcomeName
-    );
-    if (selectedOutcome?.target_deliverable_id) {
-      const targetDeliverables = await base44.entities.DeliverableInstance.filter({
-        id: selectedOutcome.target_deliverable_id
-      });
-      if (targetDeliverables.length > 0) {
-        const targetDel = targetDeliverables[0];
-        await base44.asServiceRole.entities.DeliverableInstance.update(targetDel.id, {
-          status: 'in_progress',
-          started_at: new Date().toISOString()
-        });
-
-        const targetTasks = await base44.entities.TaskInstance.filter({
-          deliverable_instance_id: targetDel.id
-        }, 'sequence_order');
-
-        for (const targetTask of targetTasks) {
-          await base44.asServiceRole.entities.TaskInstance.update(targetTask.id, {
-            status: 'in_progress',
-            assigned_user_id: task.assigned_user_id
-          });
-          
-          await base44.asServiceRole.entities.Event.create({
-            event_type: 'task_released',
-            source_entity_type: 'task_instance',
-            source_entity_id: targetTask.id,
-            actor_type: 'system',
-            payload: {
-              task_name: targetTask.name,
-              assigned_user_id: targetTask.assigned_user_id
-            },
-            occurred_at: new Date().toISOString()
-          });
-        }
-      }
-    }
-  } else if (outcomeAction === 'skip_to_stage') {
-    const selectedOutcome = taskTemplate?.conditions?.outcomes?.find(
-      o => o.outcome_name === selectedOutcomeName
-    );
-    if (selectedOutcome?.target_stage_id) {
-      const targetStages = await base44.entities.StageInstance.filter({
-        id: selectedOutcome.target_stage_id
-      });
-      if (targetStages.length > 0) {
-        const targetStage = targetStages[0];
-        await base44.asServiceRole.entities.StageInstance.update(targetStage.id, {
-          status: 'in_progress',
-          started_at: new Date().toISOString()
-        });
-
-        const firstDeliverables = await base44.entities.DeliverableInstance.filter({
-          stage_instance_id: targetStage.id,
-          sequence_order: 1
-        }, 'sequence_order', 1);
-
-        if (firstDel) {
-          await base44.asServiceRole.entities.DeliverableInstance.update(firstDel.id, {
-            status: 'in_progress',
-            started_at: new Date().toISOString()
-          });
-
-          const firstTasks = await base44.entities.TaskInstance.filter({
-            deliverable_instance_id: firstDel.id
-          }, 'sequence_order');
-
-          for (const targetTask of firstTasks) {
-            await base44.asServiceRole.entities.TaskInstance.update(targetTask.id, {
-              status: 'in_progress',
-              assigned_user_id: task.assigned_user_id
-            });
-            
-            await base44.asServiceRole.entities.Event.create({
-              event_type: 'task_released',
-              source_entity_type: 'task_instance',
-              source_entity_id: targetTask.id,
-              actor_type: 'system',
-              payload: {
-                task_name: targetTask.name,
-                assigned_user_id: targetTask.assigned_user_id
-              },
-              occurred_at: new Date().toISOString()
-            });
-          }
-        }
-      }
-    }
-  } else if (allCompleted && task.deliverable_instance_id) {
+    // Release next deliverable tasks
     const currentDeliverable = await base44.entities.DeliverableInstance.filter({ 
       id: task.deliverable_instance_id 
     });
-
+    
     if (currentDeliverable.length > 0) {
       const currentDel = currentDeliverable[0];
-      const allDeliverables = await base44.entities.DeliverableInstance.filter({
-        stage_instance_id: currentDel.stage_instance_id
-      }, 'sequence_order');
+      
+      // Try to find next deliverable in same stage
+      const nextDeliverables = await base44.entities.DeliverableInstance.filter({
+        stage_instance_id: currentDel.stage_instance_id,
+        sequence_order: currentDel.sequence_order + 1
+      }, 'sequence_order', 1);
 
-      const nextDelIndex = allDeliverables.findIndex(d => d.sequence_order > currentDel.sequence_order && d.status !== 'completed' && d.status !== 'skipped');
-      if (nextDelIndex >= 0) {
-        const nextDel = allDeliverables[nextDelIndex];
+      if (nextDeliverables.length > 0 && nextDeliverables[0].status === 'not_started') {
+        const nextDel = nextDeliverables[0];
+        
         await base44.asServiceRole.entities.DeliverableInstance.update(nextDel.id, {
           status: 'in_progress',
           started_at: new Date().toISOString()
         });
 
+        // Release tasks for next deliverable
         const nextTasks = await base44.entities.TaskInstance.filter({
           deliverable_instance_id: nextDel.id
         }, 'sequence_order');
 
         for (const nextTask of nextTasks) {
           await base44.asServiceRole.entities.TaskInstance.update(nextTask.id, {
-            status: 'in_progress',
-            assigned_user_id: task.assigned_user_id
+            status: 'not_started'
           });
-
+          
           await base44.asServiceRole.entities.Event.create({
             event_type: 'task_released',
             source_entity_type: 'task_instance',
@@ -284,73 +188,93 @@ Deno.serve(async (req) => {
           });
         }
       } else {
-        // If no next deliverable in current stage, find next stage
-        const currentStage = await base44.entities.StageInstance.filter({ 
-          id: currentDel.stage_instance_id 
+        // No more deliverables in this stage, check if stage is complete
+        const allDeliverablesInStage = await base44.entities.DeliverableInstance.filter({
+          stage_instance_id: currentDel.stage_instance_id
         });
-        if (currentStage.length > 0) {
-          const allStages = await base44.entities.StageInstance.filter({
-            workflow_instance_id: task.workflow_instance_id
-          }, 'sequence_order');
+        
+        const stageComplete = allDeliverablesInStage.every(d => d.status === 'completed');
+        
+        if (stageComplete) {
+          // Mark stage as completed
+          await base44.asServiceRole.entities.StageInstance.update(currentDel.stage_instance_id, {
+            status: 'completed',
+            completed_at: new Date().toISOString()
+          });
 
-          const nextStageIndex = allStages.findIndex(s => s.sequence_order > currentStage[0].sequence_order && s.status !== 'completed' && s.status !== 'skipped');
-          if (nextStageIndex >= 0) {
-            const nextStage = allStages[nextStageIndex];
-            await base44.asServiceRole.entities.StageInstance.update(nextStage.id, {
-              status: 'in_progress',
-              started_at: new Date().toISOString()
-            });
+          // Get current stage to find next stage
+          const currentStages = await base44.entities.StageInstance.filter({
+            id: currentDel.stage_instance_id
+          });
 
-            const firstDeliverables = await base44.entities.DeliverableInstance.filter({
-              stage_instance_id: nextStage.id
-            }, 'sequence_order');
+          if (currentStages.length > 0) {
+            const currentStage = currentStages[0];
+            
+            // Find next stage in workflow
+            const nextStages = await base44.entities.StageInstance.filter({
+              workflow_instance_id: task.workflow_instance_id,
+              sequence_order: currentStage.sequence_order + 1
+            }, 'sequence_order', 1);
 
-            const firstDel = firstDeliverables[0];
-
-            if (firstDeliverables.length > 0) {
-              const firstDel = firstDeliverables[0];
-              await base44.asServiceRole.entities.DeliverableInstance.update(firstDel.id, {
+            if (nextStages.length > 0 && nextStages[0].status === 'not_started') {
+              const nextStage = nextStages[0];
+              
+              await base44.asServiceRole.entities.StageInstance.update(nextStage.id, {
                 status: 'in_progress',
                 started_at: new Date().toISOString()
               });
 
-              const firstTasks = await base44.entities.TaskInstance.filter({
-                deliverable_instance_id: firstDel.id
-              }, 'sequence_order');
+              // Find first deliverable in next stage
+              const firstDeliverables = await base44.entities.DeliverableInstance.filter({
+                stage_instance_id: nextStage.id,
+                sequence_order: 1
+              }, 'sequence_order', 1);
 
-              for (const targetTask of firstTasks) {
-                await base44.asServiceRole.entities.TaskInstance.update(targetTask.id, {
+              if (firstDeliverables.length > 0) {
+                const firstDel = firstDeliverables[0];
+                
+                await base44.asServiceRole.entities.DeliverableInstance.update(firstDel.id, {
                   status: 'in_progress',
-                  assigned_user_id: targetTask.assigned_user_id || task.assigned_user_id
+                  started_at: new Date().toISOString()
                 });
 
-                await base44.asServiceRole.entities.Event.create({
-                  event_type: 'task_released',
-                  source_entity_type: 'task_instance',
-                  source_entity_id: targetTask.id,
-                  actor_type: 'system',
-                  payload: {
-                    task_name: targetTask.name,
-                    assigned_user_id: targetTask.assigned_user_id
-                  },
-                  occurred_at: new Date().toISOString()
-                });
-                }
-                }
-                }
-                }
-                }
-                }
-                }
+                // Release tasks for first deliverable of next stage
+                const firstStageTasks = await base44.entities.TaskInstance.filter({
+                  deliverable_instance_id: firstDel.id
+                }, 'sequence_order');
 
+                for (const stageTask of firstStageTasks) {
+                  await base44.asServiceRole.entities.TaskInstance.update(stageTask.id, {
+                    status: 'not_started'
+                  });
+                  
+                  await base44.asServiceRole.entities.Event.create({
+                    event_type: 'task_released',
+                    source_entity_type: 'task_instance',
+                    source_entity_id: stageTask.id,
+                    actor_type: 'system',
+                    payload: {
+                      task_name: stageTask.name,
+                      assigned_user_id: stageTask.assigned_user_id
+                    },
+                    occurred_at: new Date().toISOString()
+                  });
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Calculate workflow progress
   const allWorkflowTasks = await base44.entities.TaskInstance.filter({
     workflow_instance_id: task.workflow_instance_id
   });
   
   const completedCount = allWorkflowTasks.filter(t => t.status === 'completed').length;
-  const progressPercentage = allWorkflowTasks.length > 0 
-    ? Math.round((completedCount / allWorkflowTasks.length) * 100)
-    : 0;
+  const progressPercentage = Math.round((completedCount / allWorkflowTasks.length) * 100);
 
   await base44.asServiceRole.entities.WorkflowInstance.update(task.workflow_instance_id, {
     progress_percentage: progressPercentage

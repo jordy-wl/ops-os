@@ -93,12 +93,6 @@ Deno.serve(async (req) => {
         // Create TaskInstances for first deliverable only
         if (deliverableTemplate.sequence_order === 1) {
           for (const taskTemplate of taskTemplates) {
-            // Determine assigned user based on task template's assignment config
-            let assignedUserId = null;
-            if (taskTemplate.owner_type === 'user' && taskTemplate.owner_id) {
-              assignedUserId = taskTemplate.owner_id;
-            }
-
             await base44.asServiceRole.entities.TaskInstance.create({
               deliverable_instance_id: deliverableInstance.id,
               task_template_id: taskTemplate.id,
@@ -110,7 +104,7 @@ Deno.serve(async (req) => {
               sequence_order: taskTemplate.sequence_order,
               status: 'not_started',
               priority: taskTemplate.priority || 'normal',
-              assigned_user_id: assignedUserId,
+              assigned_user_id: taskTemplate.owner_type === 'user' ? taskTemplate.owner_id : user.id,
               owner_type: taskTemplate.owner_type,
               owner_id: taskTemplate.owner_id,
               is_ad_hoc: false,

@@ -122,11 +122,7 @@ export default function MyWork() {
   const { data: tasks = [], isLoading } = useQuery({
     queryKey: ['my-tasks'],
     queryFn: async () => {
-      const user = await base44.auth.me();
-      const tasks = user ? await base44.entities.TaskInstance.filter({
-        assigned_user_id: user.id,
-        status: { $ne: 'completed' }
-      }, '-created_date', 50) : [];
+      const tasks = await base44.entities.TaskInstance.list('-created_date', 50);
 
       const clientIds = [...new Set(tasks.map(t => t.client_id).filter(Boolean))];
       const workflowInstanceIds = [...new Set(tasks.map(t => t.workflow_instance_id).filter(Boolean))];
