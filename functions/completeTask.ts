@@ -131,6 +131,23 @@ Deno.serve(async (req) => {
   const allTasksCompleted = deliverableTasks.every(t => t.id === task_instance_id || t.status === 'completed');
 
   if (allTasksCompleted) {
+    // Get deliverable instance and its template for document generation
+    const deliverableInstances = await base44.entities.DeliverableInstance.filter({
+      id: task.deliverable_instance_id
+    });
+    const deliverableInstance = deliverableInstances[0];
+
+    // Fetch deliverable template to check for document templates
+    let deliverableTemplate = null;
+    if (deliverableInstance && deliverableInstance.deliverable_template_id) {
+      const templates = await base44.entities.DeliverableTemplate.filter({
+        id: deliverableInstance.deliverable_template_id
+      });
+      if (templates.length > 0) {
+        deliverableTemplate = templates[0];
+      }
+    }
+
     // Mark deliverable as completed
     await base44.asServiceRole.entities.DeliverableInstance.update(task.deliverable_instance_id, {
       status: 'completed',
@@ -149,6 +166,49 @@ Deno.serve(async (req) => {
       },
       occurred_at: new Date().toISOString()
     });
+
+    // Generate documents if template has document_template_ids
+    if (deliverableTemplate && deliverableTemplate.document_template_ids && deliverableTemplate.document_template_ids.length > 0) {
+      const generatedDocumentIds = [];
+      
+      for (const documentTemplateId of deliverableTemplate.document_template_ids) {
+        try {
+          // Invoke document generation function
+          const docResponse = await base44.asServiceRole.functions.invoke('generateAIDocument', {
+            document_template_id: documentTemplateId,
+            client_id: task.client_id,
+            data: field_values,
+            workflow_instance_id: task.workflow_instance_id,
+            deliverable_instance_id: task.deliverable_instance_id
+          });
+
+          if (docResponse.data && docResponse.data.file_url) {
+            // Create DocumentInstance to link the document to the client
+            const docInstance = await base44.asServiceRole.entities.DocumentInstance.create({
+              client_id: task.client_id,
+              document_template_id: documentTemplateId,
+              deliverable_instance_id: task.deliverable_instance_id,
+              workflow_instance_id: task.workflow_instance_id,
+              file_url: docResponse.data.file_url,
+              status: 'generated',
+              generated_at: new Date().toISOString()
+            });
+
+            generatedDocumentIds.push(docInstance.id);
+          }
+        } catch (err) {
+          console.error(`Failed to generate document from template ${documentTemplateId}:`, err);
+        }
+      }
+
+      // Update deliverable instance with generated document IDs
+      if (generatedDocumentIds.length > 0) {
+        const existingDocIds = deliverableInstance.document_ids || [];
+        await base44.asServiceRole.entities.DeliverableInstance.update(task.deliverable_instance_id, {
+          document_ids: [...existingDocIds, ...generatedDocumentIds]
+        });
+      }
+    }
 
     // Get current deliverable to determine next action
     const currentDeliverables = await base44.entities.DeliverableInstance.filter({
