@@ -335,17 +335,6 @@ export default function TaskConfigPanel({ task, onSave, onClose, allStages, allD
                   />
                   <label className="text-xs text-[#A0AEC0]">Required field</label>
                 </div>
-
-                <div>
-                  <label className="block text-xs text-[#A0AEC0] mb-1">Save to Client Metadata Key</label>
-                  <Input
-                    value={field.save_to_client_field || ''}
-                    onChange={(e) => updateDataField(idx, { save_to_client_field: e.target.value })}
-                    placeholder="e.g., customer_segment, annual_budget"
-                    className="bg-[#1A1B1E] border-[#2C2E33] text-sm"
-                  />
-                  <p className="text-xs text-[#4A5568] mt-1">Value will be saved to client's metadata with this key</p>
-                </div>
               </div>
             ))}
 
