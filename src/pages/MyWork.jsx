@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import TaskCompletionModal from '@/components/TaskCompletionModal';
+import TaskFormFields from '@/components/tasks/TaskFormFields';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 import { 
   LayoutGrid, 
   List, 
@@ -14,7 +16,9 @@ import {
   Circle,
   ArrowUpCircle,
   MoreHorizontal,
-  ChevronRight
+  ChevronRight,
+  X,
+  Loader2
 } from 'lucide-react';
 
 const statusColumns = [
@@ -92,12 +96,31 @@ function TaskCard({ task, onClick }) {
 export default function MyWork() {
   const [viewMode, setViewMode] = useState('kanban');
   const [selectedTask, setSelectedTask] = useState(null);
-  const [completingTask, setCompletingTask] = useState(null);
+  const [fieldValues, setFieldValues] = useState({});
   const queryClient = useQueryClient();
 
   const { data: tasks = [], isLoading } = useQuery({
     queryKey: ['my-tasks'],
     queryFn: () => base44.entities.TaskInstance.list('-created_date', 50),
+  });
+
+  const completeTaskMutation = useMutation({
+    mutationFn: async ({ taskId, fieldValues }) => {
+      const response = await base44.functions.invoke('completeTask', {
+        task_instance_id: taskId,
+        field_values: fieldValues
+      });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['my-tasks'] });
+      toast.success('Task completed successfully!');
+      setSelectedTask(null);
+      setFieldValues({});
+    },
+    onError: (error) => {
+      toast.error('Failed to complete task: ' + error.message);
+    }
   });
 
   const tasksByStatus = statusColumns.reduce((acc, col) => {
@@ -250,63 +273,101 @@ export default function MyWork() {
         </div>
       )}
 
-      {/* Task Drawer */}
+      {/* Task Workspace Drawer */}
       {selectedTask && (
         <div className="fixed inset-0 z-50 flex">
           <div 
             className="flex-1 bg-black/50 backdrop-blur-sm"
-            onClick={() => setSelectedTask(null)}
+            onClick={() => {
+              setSelectedTask(null);
+              setFieldValues({});
+            }}
           />
-          <div className="w-[500px] glass h-full overflow-y-auto p-6 shadow-2xl">
-            {/* Breadcrumbs */}
-            <div className="flex items-center gap-2 text-sm text-[#A0AEC0] mb-6">
-              <span>{selectedTask.client_name || 'No Client'}</span>
-              <ChevronRight className="w-4 h-4" />
-              <span>{selectedTask.workflow_name || 'Ad-hoc'}</span>
+          <div className="w-[600px] glass h-full overflow-y-auto shadow-2xl flex flex-col">
+            {/* Header */}
+            <div className="p-6 border-b border-[#2C2E33] flex-shrink-0">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2 text-sm text-[#A0AEC0]">
+                  <span>{selectedTask.client_name || 'No Client'}</span>
+                  <ChevronRight className="w-4 h-4" />
+                  <span>{selectedTask.workflow_name || 'Ad-hoc'}</span>
+                </div>
+                <button 
+                  onClick={() => {
+                    setSelectedTask(null);
+                    setFieldValues({});
+                  }}
+                  className="p-2 rounded-lg hover:bg-[#2C2E33]"
+                >
+                  <X className="w-5 h-5 text-[#A0AEC0]" />
+                </button>
+              </div>
+              <h2 className="text-xl font-semibold">{selectedTask.name}</h2>
             </div>
 
-            <h2 className="text-xl font-semibold mb-4">{selectedTask.name}</h2>
-            
-            {selectedTask.instructions && (
-              <div className="mb-6">
-                <h3 className="text-sm font-medium text-[#A0AEC0] mb-2">Instructions</h3>
-                <div className="neumorphic-pressed rounded-lg p-4 text-sm">
-                  {selectedTask.instructions}
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              {selectedTask.instructions && (
+                <div>
+                  <h3 className="text-sm font-medium text-[#A0AEC0] mb-2">Instructions</h3>
+                  <div className="neumorphic-pressed rounded-lg p-4 text-sm text-[#A0AEC0]">
+                    {selectedTask.instructions}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {selectedTask.description && (
-              <div className="mb-6">
-                <h3 className="text-sm font-medium text-[#A0AEC0] mb-2">Description</h3>
-                <p className="text-[#A0AEC0]">{selectedTask.description}</p>
-              </div>
-            )}
+              {selectedTask.description && (
+                <div>
+                  <h3 className="text-sm font-medium text-[#A0AEC0] mb-2">Description</h3>
+                  <p className="text-[#A0AEC0] text-sm">{selectedTask.description}</p>
+                </div>
+              )}
 
-            {/* Action Button */}
-            <button 
-              onClick={() => {
-                setCompletingTask(selectedTask);
-                setSelectedTask(null);
-              }}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-[#00E5FF] to-[#0099ff] text-[#121212] font-medium hover:shadow-lg hover:shadow-[#00E5FF]/30 transition-all"
-            >
-              Complete Task
-            </button>
+              {/* Task Form Fields */}
+              <div>
+                <h3 className="text-sm font-medium text-[#A0AEC0] mb-4">Task Details</h3>
+                <TaskFormFields
+                  taskTemplateId={selectedTask.task_template_id}
+                  initialValues={selectedTask.field_values || {}}
+                  onChange={setFieldValues}
+                />
+              </div>
+            </div>
+
+            {/* Footer Actions */}
+            <div className="p-6 border-t border-[#2C2E33] flex-shrink-0">
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setSelectedTask(null);
+                    setFieldValues({});
+                  }}
+                  className="flex-1 bg-transparent border-[#2C2E33] hover:bg-[#2C2E33]"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => completeTaskMutation.mutate({
+                    taskId: selectedTask.id,
+                    fieldValues
+                  })}
+                  disabled={completeTaskMutation.isPending}
+                  className="flex-1 bg-gradient-to-r from-[#00E5FF] to-[#0099ff] text-[#121212] hover:shadow-lg hover:shadow-[#00E5FF]/30"
+                >
+                  {completeTaskMutation.isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Completing...
+                    </>
+                  ) : (
+                    'Complete Task'
+                  )}
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
-      )}
-
-      {/* Task Completion Modal */}
-      {completingTask && (
-        <TaskCompletionModal
-          task={completingTask}
-          onClose={() => setCompletingTask(null)}
-          onSuccess={() => {
-            queryClient.invalidateQueries({ queryKey: ['my-tasks'] });
-            setCompletingTask(null);
-          }}
-        />
       )}
       </div>
       );
