@@ -7,15 +7,8 @@ import { Label } from '@/components/ui/label';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 
-export default function TaskFormFields({ taskTemplateId, initialValues = {}, onChange }) {
+export default function TaskFormFields({ taskTemplate, initialValues = {}, onChange }) {
   const [fieldValues, setFieldValues] = useState(initialValues);
-
-  const { data: taskTemplate } = useQuery({
-    queryKey: ['task-template', taskTemplateId],
-    queryFn: () => base44.entities.TaskTemplate.filter({ id: taskTemplateId }),
-    enabled: !!taskTemplateId,
-    select: (data) => data[0],
-  });
 
   const dataFieldDefinitions = taskTemplate?.data_field_definitions || [];
 

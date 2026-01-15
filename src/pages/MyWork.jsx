@@ -407,7 +407,7 @@ export default function MyWork() {
               <div>
                 <h3 className="text-sm font-medium text-[#A0AEC0] mb-4">Task Details</h3>
                 <TaskFormFields
-                  taskTemplateId={selectedTask.task_template_id}
+                  taskTemplate={taskTemplate}
                   initialValues={selectedTask.field_values || {}}
                   onChange={setFieldValues}
                 />
