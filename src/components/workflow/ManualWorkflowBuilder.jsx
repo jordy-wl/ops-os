@@ -329,6 +329,11 @@ export default function ManualWorkflowBuilder({ onBack, editingTemplateId }) {
             name: delData.name,
             description: delData.description,
             sequence_order: delIdx + 1,
+            output_type: delData.output_type || 'document',
+            document_template_ids: delData.document_template_ids || [],
+            auto_generate_ai_document: delData.auto_generate_ai_document !== false,
+            is_required: delData.is_required !== false,
+            estimated_duration_hours: delData.estimated_duration_hours || 0,
             owner_type: 'user',
             owner_id: user.id
           });
