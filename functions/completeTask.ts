@@ -143,19 +143,43 @@ Deno.serve(async (req) => {
       occurred_at: new Date().toISOString()
     });
 
-    // Release next deliverable tasks
+    // Release next deliverable tasks based on outcome routing
     const currentDeliverable = await base44.entities.DeliverableInstance.filter({ 
       id: task.deliverable_instance_id 
     });
-    
+
     if (currentDeliverable.length > 0) {
       const currentDel = currentDeliverable[0];
-      
-      // Try to find next deliverable in same stage
-      const nextDeliverables = await base44.entities.DeliverableInstance.filter({
-        stage_instance_id: currentDel.stage_instance_id,
-        sequence_order: currentDel.sequence_order + 1
-      }, 'sequence_order', 1);
+      let nextDel = null;
+
+      // Check if task has outcome-based routing
+      if (outcome && taskTemplate?.conditions?.outcomes) {
+        const outcomeConfig = taskTemplate.conditions.outcomes.find(o => o.outcome_name === outcome);
+
+        if (outcomeConfig && outcomeConfig.next_deliverable_template_id) {
+          // Find next deliverable based on outcome routing
+          const nextDelsByTemplate = await base44.entities.DeliverableInstance.filter({
+            workflow_instance_id: task.workflow_instance_id,
+            deliverable_template_id: outcomeConfig.next_deliverable_template_id
+          });
+
+          if (nextDelsByTemplate.length > 0) {
+            nextDel = nextDelsByTemplate[0];
+          }
+        }
+      }
+
+      // If no outcome-based routing, use sequential order
+      if (!nextDel) {
+        const nextDeliverables = await base44.entities.DeliverableInstance.filter({
+          stage_instance_id: currentDel.stage_instance_id,
+          sequence_order: currentDel.sequence_order + 1
+        }, 'sequence_order', 1);
+
+        if (nextDeliverables.length > 0 && nextDeliverables[0].status === 'not_started') {
+          nextDel = nextDeliverables[0];
+        }
+      }
 
       if (nextDeliverables.length > 0 && nextDeliverables[0].status === 'not_started') {
         const nextDel = nextDeliverables[0];
