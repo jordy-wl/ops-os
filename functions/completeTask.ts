@@ -8,7 +8,7 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { task_instance_id, field_values = {} } = await req.json();
+  const { task_instance_id, field_values = {}, outcome: selectedOutcomeName } = await req.json();
 
   if (!task_instance_id) {
     return Response.json({ error: 'Missing task_instance_id' }, { status: 400 });
@@ -122,6 +122,17 @@ Deno.serve(async (req) => {
   });
   
   const allCompleted = deliverableTasks.every(t => t.id === task_instance_id || t.status === 'completed');
+
+  // Evaluate conditional outcomes if a task outcome was selected
+  let outcomeAction = null;
+  if (selectedOutcomeName && taskTemplate?.conditions?.outcomes) {
+    const selectedOutcome = taskTemplate.conditions.outcomes.find(
+      o => o.outcome_name === selectedOutcomeName
+    );
+    if (selectedOutcome) {
+      outcomeAction = selectedOutcome.action;
+    }
+  }
 
   if (allCompleted) {
     // Mark deliverable as completed
