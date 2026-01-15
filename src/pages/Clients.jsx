@@ -338,6 +338,7 @@ export default function Clients() {
                   key={client.id} 
                   client={client} 
                   onNavigate={() => navigate(createPageUrl('ClientDetail') + '?id=' + client.id)}
+                  onDelete={(clientId) => deleteMutation.mutate(clientId)}
                 />
               ))}
             </tbody>
