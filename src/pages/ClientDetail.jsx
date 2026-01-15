@@ -128,9 +128,20 @@ export default function ClientDetail() {
         Back to Clients
       </button>
 
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold mb-1">{client.name}</h1>
-        <p className="text-[#A0AEC0] capitalize">{client.industry?.replace('_', ' ') || 'No industry'}</p>
+      <div className="mb-6 flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold mb-1">{client.name}</h1>
+          <p className="text-[#A0AEC0] capitalize">{client.industry?.replace('_', ' ') || 'No industry'}</p>
+        </div>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => setShowDeleteDialog(true)}
+          className="border-red-500/50 text-red-400 hover:bg-red-500/10"
+        >
+          <Trash2 className="w-4 h-4 mr-2" />
+          Delete
+        </Button>
       </div>
 
       {/* Three Column Layout */}
