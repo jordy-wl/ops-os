@@ -162,11 +162,44 @@ Deno.serve(async (req) => {
 
       if (nextDeliverables.length > 0 && nextDeliverables[0].status === 'not_started') {
         const nextDel = nextDeliverables[0];
-        
+
         await base44.asServiceRole.entities.DeliverableInstance.update(nextDel.id, {
           status: 'in_progress',
           started_at: new Date().toISOString()
         });
+
+        // Get deliverable template to create tasks
+        const delTemplate = await base44.entities.DeliverableTemplate.filter({
+          id: nextDel.deliverable_template_id
+        });
+
+        if (delTemplate.length > 0) {
+          // Get task templates for this deliverable
+          const taskTemplates = await base44.entities.TaskTemplate.filter({
+            deliverable_template_id: delTemplate[0].id
+          }, 'sequence_order');
+
+          // Create task instances for this deliverable
+          for (const taskTemplate of taskTemplates) {
+            await base44.asServiceRole.entities.TaskInstance.create({
+              deliverable_instance_id: nextDel.id,
+              task_template_id: taskTemplate.id,
+              workflow_instance_id: task.workflow_instance_id,
+              client_id: task.client_id,
+              name: taskTemplate.name,
+              description: taskTemplate.description,
+              instructions: taskTemplate.instructions,
+              sequence_order: taskTemplate.sequence_order,
+              status: 'not_started',
+              priority: taskTemplate.priority || 'normal',
+              assigned_user_id: taskTemplate.owner_type === 'user' ? taskTemplate.owner_id : user.id,
+              owner_type: taskTemplate.owner_type,
+              owner_id: taskTemplate.owner_id,
+              is_ad_hoc: false,
+              field_values: {}
+            });
+          }
+        }
 
         // Release tasks for next deliverable
         const nextTasks = await base44.entities.TaskInstance.filter({
@@ -174,10 +207,6 @@ Deno.serve(async (req) => {
         }, 'sequence_order');
 
         for (const nextTask of nextTasks) {
-          await base44.asServiceRole.entities.TaskInstance.update(nextTask.id, {
-            status: 'not_started'
-          });
-          
           await base44.asServiceRole.entities.Event.create({
             event_type: 'task_released',
             source_entity_type: 'task_instance',
