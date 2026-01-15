@@ -281,15 +281,16 @@ Deno.serve(async (req) => {
             started_at: new Date().toISOString()
           });
 
-          // Release all tasks in this deliverable
-          const nextTasks = await base44.entities.TaskInstance.filter({
-            deliverable_instance_id: nextDelId
-          }, 'sequence_order');
+          // Release all blocked tasks in this deliverable
+              const nextTasks = await base44.entities.TaskInstance.filter({
+                deliverable_instance_id: nextDelId,
+                status: 'blocked'
+              }, 'sequence_order');
 
-          for (const nextTask of nextTasks) {
-            await base44.asServiceRole.entities.TaskInstance.update(nextTask.id, {
-              status: 'not_started'
-            });
+              for (const nextTask of nextTasks) {
+                await base44.asServiceRole.entities.TaskInstance.update(nextTask.id, {
+                  status: 'not_started'
+                });
 
             await base44.asServiceRole.entities.Event.create({
               event_type: 'task_released',
