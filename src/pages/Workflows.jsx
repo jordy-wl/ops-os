@@ -154,7 +154,32 @@ export default function Workflows() {
 
   const { data: instances = [], isLoading: instancesLoading } = useQuery({
     queryKey: ['workflow-instances'],
-    queryFn: () => base44.entities.WorkflowInstance.list('-created_date', 50),
+    queryFn: async () => {
+      const workflowInstances = await base44.entities.WorkflowInstance.list('-created_date', 50);
+      
+      // Get unique client IDs
+      const clientIds = [...new Set(workflowInstances.map(w => w.client_id).filter(Boolean))];
+      
+      // Fetch all clients
+      const clients = await Promise.all(
+        clientIds.map(id => base44.entities.Client.filter({ id }))
+      );
+      
+      // Create a client lookup map
+      const clientMap = {};
+      clients.forEach(clientArray => {
+        if (clientArray.length > 0) {
+          const client = clientArray[0];
+          clientMap[client.id] = client.name;
+        }
+      });
+      
+      // Attach client names to workflow instances
+      return workflowInstances.map(workflow => ({
+        ...workflow,
+        client_name: clientMap[workflow.client_id] || 'Unknown Client'
+      }));
+    },
   });
 
   const { data: templates = [], isLoading: templatesLoading } = useQuery({
