@@ -299,7 +299,7 @@ export default function Offerings() {
               <ProductCard
                 key={product.id}
                 product={product}
-                onClick={() => navigate(createPageUrl('ProductDetail') + `?id=${product.id}`)}
+                onClick={() => navigate(createPageUrl('OfferingDetail') + `?id=${product.id}&type=product`)}
               />
             ))}
           </div>
@@ -327,7 +327,7 @@ export default function Offerings() {
               <ServiceCard
                 key={service.id}
                 service={service}
-                onClick={() => navigate(createPageUrl('ServiceDetail') + `?id=${service.id}`)}
+                onClick={() => navigate(createPageUrl('OfferingDetail') + `?id=${service.id}&type=service`)}
               />
             ))}
           </div>

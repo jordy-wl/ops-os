@@ -16,6 +16,7 @@ import Strategy from './pages/Strategy';
 import WorkflowBuilder from './pages/WorkflowBuilder';
 import Workflows from './pages/Workflows';
 import OfferingDetail from './pages/OfferingDetail';
+import DealBuilder from './pages/DealBuilder';
 import __Layout from './Layout.jsx';
 
 
@@ -38,6 +39,7 @@ export const PAGES = {
     "WorkflowBuilder": WorkflowBuilder,
     "Workflows": Workflows,
     "OfferingDetail": OfferingDetail,
+    "DealBuilder": DealBuilder,
 }
 
 export const pagesConfig = {
