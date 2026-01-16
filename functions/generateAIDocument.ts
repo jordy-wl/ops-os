@@ -63,6 +63,8 @@ Deno.serve(async (req) => {
       for (const dataReq of documentTemplate.required_entity_data) {
         const { entity_type, field_path, description } = dataReq;
         
+        if (!field_path) continue; // Skip if field_path is undefined
+        
         if (entity_type === 'Client' && client) {
           const value = getNestedValue(client, field_path);
           if (value !== undefined) {
