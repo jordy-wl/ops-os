@@ -180,9 +180,10 @@ Follow the template structure and generation instructions precisely.
       const pdfBytes = doc.output('arraybuffer');
       const fileName = `${documentTemplate.name.replace(/\s+/g, '_')}_${new Date().getTime()}.pdf`;
       
-      const uploadResponse = await base44.integrations.Core.UploadFile({
-        file: new Blob([pdfBytes], { type: 'application/pdf' }),
-        filename: fileName
+      const pdfFile = new File([pdfBytes], fileName, { type: 'application/pdf' });
+      
+      const uploadResponse = await base44.asServiceRole.integrations.Core.UploadFile({
+        file: pdfFile
       });
       
       fileUrl = uploadResponse.file_url;
