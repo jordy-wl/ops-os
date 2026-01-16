@@ -136,17 +136,66 @@ Follow the template structure and generation instructions precisely.
       add_context_from_internet: false
     });
 
-    // Determine file extension based on format
-    const fileExtension = documentTemplate.output_format === 'html' ? 'html' : 'md';
-    const fileName = `${documentTemplate.name.replace(/\s+/g, '_')}_${new Date().getTime()}.${fileExtension}`;
+    // Determine file extension and handle PDF generation
+    let fileUrl;
+    let finalContent = aiResponse;
+    
+    if (documentTemplate.output_format === 'pdf') {
+      // Generate PDF from markdown content
+      const jsPDF = (await import('npm:jspdf@2.5.2')).default;
+      const doc = new jsPDF();
+      
+      // Simple text wrapping for PDF
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const margin = 20;
+      const maxWidth = pageWidth - (margin * 2);
+      let y = 20;
+      
+      // Add title
+      doc.setFontSize(16);
+      doc.text(documentTemplate.name, margin, y);
+      y += 10;
+      
+      // Add content (strip markdown and format)
+      doc.setFontSize(10);
+      const lines = stripHtml(aiResponse).split('\n');
+      
+      for (const line of lines) {
+        if (y > 280) {
+          doc.addPage();
+          y = 20;
+        }
+        
+        if (line.trim()) {
+          const wrappedLines = doc.splitTextToSize(line, maxWidth);
+          doc.text(wrappedLines, margin, y);
+          y += wrappedLines.length * 7;
+        } else {
+          y += 5;
+        }
+      }
+      
+      const pdfBytes = doc.output('arraybuffer');
+      const fileName = `${documentTemplate.name.replace(/\s+/g, '_')}_${new Date().getTime()}.pdf`;
+      
+      const uploadResponse = await base44.integrations.Core.UploadFile({
+        file: new Blob([pdfBytes], { type: 'application/pdf' }),
+        filename: fileName
+      });
+      
+      fileUrl = uploadResponse.file_url;
+    } else {
+      // HTML or Markdown
+      const fileExtension = documentTemplate.output_format === 'html' ? 'html' : 'md';
+      const fileName = `${documentTemplate.name.replace(/\s+/g, '_')}_${new Date().getTime()}.${fileExtension}`;
 
-    // Upload generated content to file storage
-    const uploadResponse = await base44.integrations.Core.UploadFile({
-      file: new Blob([aiResponse], { type: 'text/plain' }), 
-      filename: fileName
-    });
+      const uploadResponse = await base44.integrations.Core.UploadFile({
+        file: new Blob([aiResponse], { type: 'text/plain' }), 
+        filename: fileName
+      });
 
-    const fileUrl = uploadResponse.file_url;
+      fileUrl = uploadResponse.file_url;
+    }
 
     // Create document instance with file_url
     const documentInstance = await base44.entities.DocumentInstance.create({
@@ -154,7 +203,7 @@ Follow the template structure and generation instructions precisely.
       client_id: workflowInstance.client_id,
       document_template_id: documentTemplate.id,
       name: `${documentTemplate.name} - ${client?.name || 'Client'}`,
-      content: aiResponse,
+      content: finalContent,
       file_url: fileUrl,
       format: documentTemplate.output_format || 'markdown',
       status: 'draft',
