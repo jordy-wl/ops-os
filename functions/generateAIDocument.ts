@@ -197,8 +197,8 @@ Follow the template structure and generation instructions precisely.
       fileUrl = uploadResponse.file_url;
     }
 
-    // Create document instance with file_url
-    const documentInstance = await base44.entities.DocumentInstance.create({
+    // Create document instance with file_url (using service role for reliable creation)
+    const documentInstance = await base44.asServiceRole.entities.DocumentInstance.create({
       deliverable_instance_id: deliverable_instance_id,
       client_id: workflowInstance.client_id,
       document_template_id: documentTemplate.id,
@@ -215,7 +215,7 @@ Follow the template structure and generation instructions precisely.
     });
 
     // Update deliverable instance with document reference
-    await base44.entities.DeliverableInstance.update(deliverable_instance_id, {
+    await base44.asServiceRole.entities.DeliverableInstance.update(deliverable_instance_id, {
       document_ids: [...(deliverableInstance.document_ids || []), documentInstance.id],
       ai_summary: `AI-generated document: ${documentInstance.name}`
     });
