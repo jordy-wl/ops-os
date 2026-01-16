@@ -144,7 +144,7 @@ Follow the template structure and generation instructions precisely.
     
     if (documentTemplate.output_format === 'pdf') {
       // Generate PDF from markdown content
-      const jsPDF = (await import('npm:jspdf@2.5.2')).default;
+      const { jsPDF } = await import('npm:jspdf@2.5.2');
       const doc = new jsPDF();
       
       // Simple text wrapping for PDF
