@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
-import { FileText, Sparkles, Database, ChevronDown, ChevronRight } from 'lucide-react';
+import { FileText, Sparkles, Database, ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
+import { toast } from 'sonner';
 import GenerateDocumentModal from '@/components/documents/GenerateDocumentModal';
 import DocumentViewer from '@/components/documents/DocumentViewer';
 import OfferingRecommendations from './OfferingRecommendations';
@@ -9,6 +12,20 @@ export default function ClientDataAndAssets({ client, documents }) {
   const [showGenerateDocModal, setShowGenerateDocModal] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState(null);
   const [expandedSections, setExpandedSections] = useState({});
+  const queryClient = useQueryClient();
+
+  const deleteDocumentMutation = useMutation({
+    mutationFn: async (documentId) => {
+      await base44.entities.DocumentInstance.delete(documentId);
+    },
+    onSuccess: () => {
+      toast.success('Document deleted');
+      queryClient.invalidateQueries({ queryKey: ['documents', client.id] });
+    },
+    onError: () => {
+      toast.error('Failed to delete document');
+    }
+  });
 
   const toggleSection = (section) => {
     setExpandedSections(prev => ({
@@ -64,24 +81,38 @@ export default function ClientDataAndAssets({ client, documents }) {
         ) : (
           <div className="space-y-2">
             {documents.slice(0, 5).map((doc) => (
-              <button
+              <div
                 key={doc.id}
-                onClick={() => setSelectedDocument(doc)}
-                className="w-full neumorphic-pressed rounded-lg p-3 hover:bg-[#2C2E33] transition-colors text-left"
+                className="w-full neumorphic-pressed rounded-lg p-3 hover:bg-[#2C2E33] transition-colors flex items-center justify-between group"
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <FileText className="w-4 h-4 text-[#BD00FF] flex-shrink-0" />
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium truncate">{doc.name}</p>
-                      <p className="text-xs text-[#4A5568]">
-                        {new Date(doc.generated_at).toLocaleDateString()}
-                      </p>
-                    </div>
+                <button
+                  onClick={() => setSelectedDocument(doc)}
+                  className="flex items-center gap-2 min-w-0 flex-1 text-left"
+                >
+                  <FileText className="w-4 h-4 text-[#BD00FF] flex-shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium truncate">{doc.name}</p>
+                    <p className="text-xs text-[#4A5568]">
+                      {new Date(doc.generated_at).toLocaleDateString()}
+                    </p>
                   </div>
-                  <span className="text-xs text-[#A0AEC0] capitalize flex-shrink-0">{doc.status}</span>
+                </button>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <span className="text-xs text-[#A0AEC0] capitalize">{doc.status}</span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (confirm('Are you sure you want to delete this document?')) {
+                        deleteDocumentMutation.mutate(doc.id);
+                      }
+                    }}
+                    className="p-1 rounded hover:bg-red-500/20 opacity-0 group-hover:opacity-100 transition-opacity"
+                    title="Delete document"
+                  >
+                    <Trash2 className="w-4 h-4 text-red-400" />
+                  </button>
                 </div>
-              </button>
+              </div>
             ))}
           </div>
         )}
