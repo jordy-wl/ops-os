@@ -200,24 +200,6 @@ export default function ClientFirmographics({ client, contacts = [] }) {
         )}
       </div>
 
-      {/* Additional Metadata */}
-      {client.metadata && Object.keys(client.metadata).filter(key => !key.startsWith('_')).length > 0 && (
-        <div className="neumorphic-raised rounded-xl p-6">
-          <h3 className="text-sm font-medium text-[#A0AEC0] mb-4">Additional Details</h3>
-          <div className="space-y-2 text-sm">
-            {Object.entries(client.metadata)
-              .filter(([key]) => !key.startsWith('_'))
-              .slice(0, 5)
-              .map(([key, value]) => (
-                <div key={key} className="flex justify-between">
-                  <span className="text-[#A0AEC0] capitalize">{key.replace(/_/g, ' ')}:</span>
-                  <span className="text-[#F5F5F5] truncate ml-2">{String(value)}</span>
-                </div>
-              ))}
-          </div>
-        </div>
-      )}
-
       {/* Send Client Form */}
       {contacts.length > 0 && (
         <SendFormPanel clientId={client.id} contacts={contacts} />

@@ -16,11 +16,12 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from 'sonner';
 import ClientFirmographics from '@/components/clients/ClientFirmographics';
-import ClientActivityFeed from '@/components/clients/ClientActivityFeed';
 import ClientDataAndAssets from '@/components/clients/ClientDataAndAssets';
 import ClientCommunicationPanel from '@/components/clients/ClientCommunicationPanel';
-import InsightsPanel from '@/components/analytics/InsightsPanel';
-import ProactiveInsightsWidget from '@/components/ai/ProactiveInsightsWidget';
+import ClientWorkflowsPanel from '@/components/clients/ClientWorkflowsPanel';
+import ClientCommunicationsPanel from '@/components/clients/ClientCommunicationsPanel';
+import ClientInsightsPanel from '@/components/clients/ClientInsightsPanel';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function ClientDetail() {
   const navigate = useNavigate();
@@ -147,36 +148,45 @@ export default function ClientDetail() {
       {/* Three Column Layout */}
       <div className="grid grid-cols-12 gap-6">
         {/* Left Column - Firmographics */}
-        <div className="col-span-3">
+        <div className="col-span-3 space-y-6">
           <ClientFirmographics client={client} contacts={clientContacts} />
-        </div>
-
-        {/* Middle Column - Activity & Insights */}
-        <div className="col-span-5 space-y-6">
-          <ProactiveInsightsWidget clientId={clientId} />
-          <ClientActivityFeed 
-            client={client}
-            workflowInstances={workflowInstances}
-            communications={communications}
-          />
-          <div className="neumorphic-raised rounded-xl p-4">
-            <h3 className="font-semibold mb-4">AI-Powered Insights</h3>
-            <InsightsPanel clientId={clientId} />
-          </div>
-        </div>
-
-        {/* Right Column - Data & Assets */}
-        <div className="col-span-4 space-y-6">
-          <ClientDataAndAssets 
-            client={client}
-            documents={documents}
-          />
           {clientContacts.length > 0 && (
             <ClientCommunicationPanel 
               client={client}
               contacts={clientContacts}
             />
           )}
+        </div>
+
+        {/* Middle Column - Tabbed Interface */}
+        <div className="col-span-5">
+          <Tabs defaultValue="workflows" className="w-full">
+            <TabsList className="bg-[#2C2E33] w-full grid grid-cols-3">
+              <TabsTrigger value="workflows">Workflows</TabsTrigger>
+              <TabsTrigger value="communications">Communications</TabsTrigger>
+              <TabsTrigger value="insights">Insights</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="workflows" className="mt-4">
+              <ClientWorkflowsPanel clientId={clientId} />
+            </TabsContent>
+            
+            <TabsContent value="communications" className="mt-4">
+              <ClientCommunicationsPanel clientId={clientId} />
+            </TabsContent>
+            
+            <TabsContent value="insights" className="mt-4">
+              <ClientInsightsPanel clientId={clientId} />
+            </TabsContent>
+          </Tabs>
+        </div>
+
+        {/* Right Column - Data & Assets */}
+        <div className="col-span-4">
+          <ClientDataAndAssets 
+            client={client}
+            documents={documents}
+          />
         </div>
       </div>
 

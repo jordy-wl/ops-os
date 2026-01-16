@@ -1,17 +1,22 @@
 import React, { useState } from 'react';
 import { FileText, Sparkles, Database, ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import GenerateDocumentModal from '@/components/documents/GenerateDocumentModal';
 import DocumentViewer from '@/components/documents/DocumentViewer';
-import OfferingRecommendations from './OfferingRecommendations';
+import ClientDealsPanel from './ClientDealsPanel';
 
 export default function ClientDataAndAssets({ client, documents }) {
   const [showGenerateDocModal, setShowGenerateDocModal] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState(null);
-  const [expandedSections, setExpandedSections] = useState({});
+  const [expandedSections, setExpandedSections] = useState({
+    documents: true,
+    data: false,
+    deals: false
+  });
   const queryClient = useQueryClient();
 
   const deleteDocumentMutation = useMutation({
@@ -60,26 +65,36 @@ export default function ClientDataAndAssets({ client, documents }) {
   return (
     <div className="space-y-4">
       {/* Documents */}
-      <div className="neumorphic-raised rounded-xl p-4">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-medium text-[#A0AEC0]">Documents</h3>
-          <Button
-            size="sm"
-            onClick={() => setShowGenerateDocModal(true)}
-            className="bg-gradient-to-r from-[#BD00FF] to-[#9000cc] text-white text-xs"
-          >
-            <Sparkles className="w-3 h-3 mr-1" />
-            Generate
-          </Button>
-        </div>
+      <Collapsible open={expandedSections.documents} onOpenChange={(open) => setExpandedSections(prev => ({ ...prev, documents: open }))}>
+        <div className="neumorphic-raised rounded-xl p-4">
+        <CollapsibleTrigger asChild>
+          <button className="w-full flex items-center justify-between mb-3 group">
+            <h3 className="text-sm font-medium text-[#A0AEC0] flex items-center gap-2">
+              <ChevronRight className={`w-4 h-4 transition-transform ${expandedSections.documents ? 'rotate-90' : ''}`} />
+              Documents
+            </h3>
+            <Button
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowGenerateDocModal(true);
+              }}
+              className="bg-gradient-to-r from-[#BD00FF] to-[#9000cc] text-white text-xs"
+            >
+              <Sparkles className="w-3 h-3 mr-1" />
+              Generate
+            </Button>
+          </button>
+        </CollapsibleTrigger>
         
-        {documents.length === 0 ? (
-          <div className="neumorphic-pressed rounded-lg p-6 text-center">
-            <FileText className="w-8 h-8 text-[#4A5568] mx-auto mb-2" />
-            <p className="text-sm text-[#A0AEC0]">No documents yet</p>
-          </div>
-        ) : (
-          <div className="space-y-2">
+        <CollapsibleContent>
+          {documents.length === 0 ? (
+            <div className="neumorphic-pressed rounded-lg p-6 text-center">
+              <FileText className="w-8 h-8 text-[#4A5568] mx-auto mb-2" />
+              <p className="text-sm text-[#A0AEC0]">No documents yet</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
             {documents.slice(0, 5).map((doc) => (
               <div
                 key={doc.id}
@@ -114,32 +129,32 @@ export default function ClientDataAndAssets({ client, documents }) {
                 </div>
               </div>
             ))}
-          </div>
-        )}
-      </div>
-
-      {/* Offering Recommendations */}
-      <OfferingRecommendations 
-        clientId={client.id}
-        clientName={client.name}
-        insights={client.insights}
-      />
+            </div>
+          )}
+        </CollapsibleContent>
+        </div>
+      </Collapsible>
 
       {/* Collected Data Fields */}
-      <div className="neumorphic-raised rounded-xl p-4">
-        <div className="flex items-center gap-2 mb-3">
-          <Database className="w-4 h-4 text-[#00E5FF]" />
-          <h3 className="text-sm font-medium text-[#A0AEC0]">Collected Data</h3>
-        </div>
+      <Collapsible open={expandedSections.data} onOpenChange={(open) => setExpandedSections(prev => ({ ...prev, data: open }))}>
+        <div className="neumorphic-raised rounded-xl p-4">
+        <CollapsibleTrigger asChild>
+          <button className="w-full flex items-center gap-2 mb-3 group">
+            <ChevronRight className={`w-4 h-4 text-[#A0AEC0] transition-transform ${expandedSections.data ? 'rotate-90' : ''}`} />
+            <Database className="w-4 h-4 text-[#00E5FF]" />
+            <h3 className="text-sm font-medium text-[#A0AEC0]">Collected Data</h3>
+          </button>
+        </CollapsibleTrigger>
         
-        {Object.keys(groupedMetadata).length === 0 ? (
-          <div className="neumorphic-pressed rounded-lg p-6 text-center">
-            <Database className="w-8 h-8 text-[#4A5568] mx-auto mb-2" />
-            <p className="text-sm text-[#A0AEC0]">No data collected yet</p>
-            <p className="text-xs text-[#4A5568] mt-1">Data will be populated from workflow tasks</p>
-          </div>
-        ) : (
-          <div className="space-y-2">
+        <CollapsibleContent>
+          {Object.keys(groupedMetadata).length === 0 ? (
+            <div className="neumorphic-pressed rounded-lg p-6 text-center">
+              <Database className="w-8 h-8 text-[#4A5568] mx-auto mb-2" />
+              <p className="text-sm text-[#A0AEC0]">No data collected yet</p>
+              <p className="text-xs text-[#4A5568] mt-1">Data will be populated from workflow tasks</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
             {Object.entries(groupedMetadata).map(([category, fields]) => (
               <div key={category} className="neumorphic-pressed rounded-lg overflow-hidden">
                 <button
@@ -173,9 +188,26 @@ export default function ClientDataAndAssets({ client, documents }) {
                 )}
               </div>
             ))}
-          </div>
-        )}
-      </div>
+            </div>
+          )}
+        </CollapsibleContent>
+        </div>
+      </Collapsible>
+
+      {/* Deals */}
+      <Collapsible open={expandedSections.deals} onOpenChange={(open) => setExpandedSections(prev => ({ ...prev, deals: open }))}>
+        <div className="neumorphic-raised rounded-xl p-4">
+          <CollapsibleTrigger asChild>
+            <button className="w-full flex items-center gap-2 mb-3 group">
+              <ChevronRight className={`w-4 h-4 text-[#A0AEC0] transition-transform ${expandedSections.deals ? 'rotate-90' : ''}`} />
+              <h3 className="text-sm font-medium text-[#A0AEC0]">Deals & Purchases</h3>
+            </button>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <ClientDealsPanel clientId={client.id} />
+          </CollapsibleContent>
+        </div>
+      </Collapsible>
 
       {/* Modals */}
       <GenerateDocumentModal
