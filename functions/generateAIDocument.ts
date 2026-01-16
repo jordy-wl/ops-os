@@ -192,9 +192,10 @@ Follow the template structure and generation instructions precisely.
       const fileExtension = documentTemplate.output_format === 'html' ? 'html' : 'md';
       const fileName = `${documentTemplate.name.replace(/\s+/g, '_')}_${new Date().getTime()}.${fileExtension}`;
 
-      const uploadResponse = await base44.integrations.Core.UploadFile({
-        file: new Blob([aiResponse], { type: 'text/plain' }), 
-        filename: fileName
+      const textFile = new File([aiResponse], fileName, { type: 'text/plain' });
+
+      const uploadResponse = await base44.asServiceRole.integrations.Core.UploadFile({
+        file: textFile
       });
 
       fileUrl = uploadResponse.file_url;
