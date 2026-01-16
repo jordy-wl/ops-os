@@ -205,12 +205,13 @@ Follow the template structure and generation instructions precisely.
     const documentInstance = await base44.asServiceRole.entities.DocumentInstance.create({
       deliverable_instance_id: deliverable_instance_id,
       client_id: workflowInstance.client_id,
+      workflow_instance_id: workflowInstance.id,
       document_template_id: documentTemplate.id,
       name: `${documentTemplate.name} - ${client?.name || 'Client'}`,
-      content: finalContent,
+      generated_content: aiResponse,
       file_url: fileUrl,
-      format: documentTemplate.output_format || 'markdown',
-      status: 'draft',
+      status: 'generated',
+      generated_at: new Date().toISOString(),
       generated_by: 'ai',
       metadata: {
         generated_at: new Date().toISOString(),
