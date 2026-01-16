@@ -170,6 +170,13 @@ export default function MyWork() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['my-tasks'] });
+      // Invalidate client's documents to refresh on client detail page
+      if (selectedTask?.client_id) {
+        queryClient.invalidateQueries({ queryKey: ['documents', selectedTask.client_id] });
+        queryClient.invalidateQueries({ queryKey: ['client', selectedTask.client_id] });
+      }
+      // Invalidate library documents query
+      queryClient.invalidateQueries({ queryKey: ['library-documents'] });
       toast.success('Task completed successfully!');
       setSelectedTask(null);
       setFieldValues({});
