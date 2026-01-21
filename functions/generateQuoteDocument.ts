@@ -21,30 +21,77 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Deal not found' }, { status: 404 });
     }
 
-    const [client, lineItems] = await Promise.all([
+    // Fetch client, line items, and contacts in parallel
+    const [client, lineItems, dealContactRelations] = await Promise.all([
       base44.entities.Client.filter({ id: deal.client_id }).then(r => r[0]),
-      base44.entities.DealLineItem.filter({ deal_id: deal_id })
+      base44.entities.DealLineItem.filter({ deal_id: deal_id }),
+      deal.deal_contacts?.length > 0 
+        ? Promise.all(deal.deal_contacts.map(id => base44.entities.Contact.filter({ id }).then(r => r[0])))
+        : []
     ]);
 
-    // Fetch all offerings
-    const productIds = lineItems.filter(li => li.offering_type === 'product').map(li => li.offering_id);
-    const serviceIds = lineItems.filter(li => li.offering_type === 'service').map(li => li.offering_id);
+    // Calculate deal value using the CPQ function
+    const calculationResponse = await base44.functions.invoke('calculateDealValue', {
+      deal_id: deal_id,
+      client_id: deal.client_id,
+      line_items: lineItems.map(item => ({
+        offering_id: item.offering_id,
+        offering_type: item.offering_type,
+        quantity: item.quantity,
+        custom_price: item.unit_price,
+        selected_pricing_rule_ids: []
+      }))
+    });
 
-    const [products, services] = await Promise.all([
-      productIds.length > 0 ? base44.entities.Product.filter({ id: { $in: productIds } }) : [],
-      serviceIds.length > 0 ? base44.entities.Service.filter({ id: { $in: serviceIds } }) : []
-    ]);
+    const calculatedDeal = calculationResponse.data;
 
-    // Build line items text
-    const lineItemsText = lineItems.map(item => {
-      const offering = item.offering_type === 'product'
-        ? products.find(p => p.id === item.offering_id)
-        : services.find(s => s.id === item.offering_id);
+    // Fetch term blocks if specified
+    let termBlocksContent = '';
+    if (deal.terms_and_conditions?.length > 0) {
+      const termBlocks = await Promise.all(
+        deal.terms_and_conditions.map(id => 
+          base44.entities.TermBlock.filter({ id }).then(r => r[0])
+        )
+      );
       
-      return `- ${offering?.name || 'Unknown'}: ${item.quantity} × $${item.unit_price.toLocaleString()} ${item.discount_percentage > 0 ? `(-${item.discount_percentage}%)` : ''} = $${item.total_line_value.toLocaleString()}`;
-    }).join('\n');
+      termBlocksContent = termBlocks
+        .filter(Boolean)
+        .map(block => `### ${block.name}\n\n${block.content}\n`)
+        .join('\n');
+    }
 
-    const totalValue = lineItems.reduce((sum, item) => sum + item.total_line_value, 0);
+    // Build detailed line items with pricing rules
+    const lineItemsDetail = calculatedDeal.line_items.map(item => {
+      let detail = `**${item.offering_name}**\n`;
+      detail += `- Quantity: ${item.quantity}\n`;
+      detail += `- Unit Price: $${item.unit_price.toLocaleString()}\n`;
+      detail += `- Base Total: $${item.subtotal.toLocaleString()}\n`;
+      
+      if (item.applied_rules?.length > 0) {
+        detail += `- Applied Pricing Rules:\n`;
+        item.applied_rules.forEach(rule => {
+          detail += `  - ${rule.rule_name} (${rule.calculation_method.replace('_', ' ')}): $${rule.fee_value.toLocaleString()}`;
+          if (rule.is_pass_through) detail += ` (Pass-through)`;
+          if (rule.frequency) detail += ` - ${rule.frequency}`;
+          detail += `\n`;
+        });
+      }
+      
+      if (item.pass_through_fees > 0) {
+        detail += `- Pass-through Fees: $${item.pass_through_fees.toLocaleString()}\n`;
+      }
+      
+      detail += `- **Line Total: $${item.line_total.toLocaleString()}**\n`;
+      
+      return detail;
+    }).join('\n\n');
+
+    // Build contacts section
+    const contactsSection = dealContactRelations.length > 0
+      ? dealContactRelations.map(c => 
+          `${c.first_name} ${c.last_name}${c.job_title ? ` - ${c.job_title}` : ''}\n${c.email}${c.phone ? ` | ${c.phone}` : ''}`
+        ).join('\n\n')
+      : 'N/A';
 
     // Generate quote document using AI
     const aiPrompt = `
@@ -60,20 +107,33 @@ DEAL INFORMATION:
 - Stage: ${deal.stage}
 - Expected Close Date: ${deal.expected_close_date || 'TBD'}
 
-LINE ITEMS:
-${lineItemsText}
+DEAL CONTACTS:
+${contactsSection}
 
-TOTAL VALUE: $${totalValue.toLocaleString()}
+LINE ITEMS WITH DETAILED PRICING:
+${lineItemsDetail}
+
+PRICING SUMMARY:
+- Subtotal: $${calculatedDeal.summary.subtotal.toLocaleString()}
+- Pass-through Fees: $${calculatedDeal.summary.pass_through_fees.toLocaleString()}
+- **TOTAL VALUE: $${calculatedDeal.summary.grand_total.toLocaleString()}**
+
+${deal.custom_terms ? `CUSTOM TERMS:\n${deal.custom_terms}\n` : ''}
+
+${termBlocksContent ? `STANDARD TERMS & CONDITIONS:\n${termBlocksContent}` : ''}
 
 Please create a complete, professional quote document in markdown format that includes:
-1. Header with company information and quote details
-2. Client information section
-3. Detailed line items with descriptions
-4. Pricing breakdown
-5. Terms and conditions
-6. Signature section
+1. Header with company information, quote number, and date
+2. Client information section with contacts
+3. Executive summary
+4. Detailed line items table with all pricing rules, frequencies, and pass-through fees clearly shown
+5. Pricing breakdown and summary
+6. Payment terms and conditions
+7. Custom terms if provided
+8. Standard terms and conditions from the term blocks
+9. Acceptance and signature section
 
-Make it formal, clear, and ready to send to the client.
+Make it formal, clear, comprehensive, and ready to send to the client. Emphasize transparency in pricing with all fees clearly itemized.
     `.trim();
 
     const quoteContent = await base44.integrations.Core.InvokeLLM({
@@ -92,28 +152,34 @@ Make it formal, clear, and ready to send to the client.
     
     doc.setFontSize(16);
     doc.text(`Quote: ${deal.name}`, margin, y);
-    y += 15;
+    y += 10;
     
     doc.setFontSize(10);
+    doc.text(`Generated: ${new Date().toLocaleDateString()}`, margin, y);
+    y += 15;
+    
     const lines = quoteContent.split('\n');
     
     for (const line of lines) {
-      if (y > 280) {
+      if (y > 270) {
         doc.addPage();
         y = 20;
       }
       
       if (line.trim()) {
-        const wrappedLines = doc.splitTextToSize(line.replace(/[#*]/g, ''), maxWidth);
-        doc.text(wrappedLines, margin, y);
-        y += wrappedLines.length * 7;
+        const cleanLine = line.replace(/[#*]/g, '').trim();
+        if (cleanLine) {
+          const wrappedLines = doc.splitTextToSize(cleanLine, maxWidth);
+          doc.text(wrappedLines, margin, y);
+          y += wrappedLines.length * 5;
+        }
       } else {
-        y += 5;
+        y += 3;
       }
     }
     
     const pdfBytes = doc.output('arraybuffer');
-    const fileName = `Quote_${deal.name.replace(/\s+/g, '_')}_${new Date().getTime()}.pdf`;
+    const fileName = `Quote_${deal.name.replace(/\s+/g, '_')}_v${(await base44.entities.Quote.filter({ deal_id: deal_id })).length + 1}_${Date.now()}.pdf`;
     const pdfFile = new File([pdfBytes], fileName, { type: 'application/pdf' });
     
     const uploadResponse = await base44.asServiceRole.integrations.Core.UploadFile({
@@ -124,22 +190,35 @@ Make it formal, clear, and ready to send to the client.
     const existingQuotes = await base44.entities.Quote.filter({ deal_id: deal_id });
     const versionNumber = existingQuotes.length + 1;
 
-    // Create quote record
+    // Generate secure token for deal room access
+    const dealRoomToken = crypto.randomUUID();
+
+    // Create quote record with full content
     const quote = await base44.asServiceRole.entities.Quote.create({
       deal_id: deal_id,
       version_number: versionNumber,
       generated_at: new Date().toISOString(),
       generated_by: user.id,
-      total_quoted_value: totalValue,
+      total_quoted_value: calculatedDeal.summary.grand_total,
       quote_document_url: uploadResponse.file_url,
-      status: 'draft'
+      status: 'draft',
+      content: quoteContent,
+      deal_room_token: dealRoomToken
+    });
+
+    // Update deal with deal room URL
+    await base44.asServiceRole.entities.Deal.update(deal_id, {
+      deal_room_url: `/deal-room?token=${dealRoomToken}`,
+      deal_room_token: dealRoomToken
     });
 
     return Response.json({
       success: true,
       quote_id: quote.id,
       quote_url: uploadResponse.file_url,
-      version: versionNumber
+      version: versionNumber,
+      deal_room_url: `/deal-room?token=${dealRoomToken}`,
+      deal_room_token: dealRoomToken
     });
 
   } catch (error) {
