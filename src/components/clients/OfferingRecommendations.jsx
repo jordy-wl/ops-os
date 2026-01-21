@@ -10,7 +10,7 @@ export default function OfferingRecommendations({ clientId, clientName, insights
 
   const generateMutation = useMutation({
     mutationFn: async () => {
-      const response = await base44.functions.invoke('aiMatchOfferings', { 
+      const response = await base44.functions.invoke('aiSuggestOfferings', { 
         client_id: clientId 
       });
       return response.data;
@@ -18,6 +18,7 @@ export default function OfferingRecommendations({ clientId, clientName, insights
     onSuccess: (data) => {
       toast.success('AI recommendations generated');
       queryClient.invalidateQueries({ queryKey: ['clients'] });
+      queryClient.invalidateQueries({ queryKey: ['client', clientId] });
     },
     onError: (error) => {
       toast.error(error.message || 'Failed to generate recommendations');

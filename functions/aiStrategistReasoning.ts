@@ -26,12 +26,15 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'AI Strategist agent not configured or disabled' }, { status: 403 });
     }
 
-    // CONTEXT RETRIEVAL ("Look" Phase) - Fetch Current State & Desired State
-    const [workflowInstances, clients, templates, space] = await Promise.all([
+    // CONTEXT RETRIEVAL ("Look" Phase) - Fetch Current State & Desired State + Offerings Data
+    const [workflowInstances, clients, templates, space, products, services, pricingRules] = await Promise.all([
       base44.asServiceRole.entities.WorkflowInstance.list('-updated_date', 50),
       base44.asServiceRole.entities.Client.list('-updated_date', 50),
       base44.asServiceRole.entities.WorkflowTemplate.list('-updated_date', 50),
       base44.asServiceRole.entities.StrategySpace.filter({ id: strategySpaceId }),
+      base44.asServiceRole.entities.Product.filter({ is_active: true }),
+      base44.asServiceRole.entities.Service.filter({ is_active: true }),
+      base44.asServiceRole.entities.PricingRule.filter({ is_active: true })
     ]);
 
     const strategySpace = space[0];
@@ -43,7 +46,7 @@ Deno.serve(async (req) => {
       10
     );
 
-    // Build context summary for the LLM
+    // Build context summary for the LLM (including offerings data)
     const contextSummary = {
       total_workflows: workflowInstances.length,
       active_workflows: workflowInstances.filter(w => w.status === 'in_progress').length,
@@ -54,6 +57,13 @@ Deno.serve(async (req) => {
         return acc;
       }, {}),
       available_templates: templates.length,
+      total_products: products.length,
+      total_services: services.length,
+      total_pricing_rules: pricingRules.length,
+      offerings_by_category: [
+        ...products.map(p => ({ type: 'product', category: p.category, name: p.name })),
+        ...services.map(s => ({ type: 'service', category: s.category, name: s.name }))
+      ]
     };
 
     // Fetch Rolling Summaries (Long-term Memory)
