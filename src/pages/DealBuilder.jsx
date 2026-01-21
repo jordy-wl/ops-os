@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tantml:react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { ArrowLeft, Plus, Trash2, Package, Wrench, DollarSign, Sparkles, FileText, Users, FileSignature, Calculator } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -452,15 +452,14 @@ export default function DealBuilder() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Add Line Item Modal */}
+      <AddLineItemModal
+        isOpen={isAddLineItemOpen}
+        onClose={() => setIsAddLineItemOpen(false)}
+        onAdd={handleAddLineItem}
+        clientId={clientId || deal?.client_id}
+      />
     </div>
   );
-  }
-
-  {/* Add Line Item Modal */}
-  <AddLineItemModal
-  isOpen={isAddLineItemOpen}
-  onClose={() => setIsAddLineItemOpen(false)}
-  onAdd={handleAddLineItem}
-  clientId={clientId || deal?.client_id}
-  />
 }
