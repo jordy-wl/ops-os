@@ -4,7 +4,9 @@ import ClientDetail from './pages/ClientDetail';
 import ClientForm from './pages/ClientForm';
 import Clients from './pages/Clients';
 import DealBuilder from './pages/DealBuilder';
+import DealRoom from './pages/DealRoom';
 import FormTemplates from './pages/FormTemplates';
+import Glossary from './pages/Glossary';
 import KnowledgeLibrary from './pages/KnowledgeLibrary';
 import Library from './pages/Library';
 import MyWork from './pages/MyWork';
@@ -17,8 +19,8 @@ import Settings from './pages/Settings';
 import Strategy from './pages/Strategy';
 import WorkflowBuilder from './pages/WorkflowBuilder';
 import Workflows from './pages/Workflows';
-import DealRoom from './pages/DealRoom';
-import Glossary from './pages/Glossary';
+import DocumentTemplates from './pages/DocumentTemplates';
+import BrandKits from './pages/BrandKits';
 import __Layout from './Layout.jsx';
 
 
@@ -29,7 +31,9 @@ export const PAGES = {
     "ClientForm": ClientForm,
     "Clients": Clients,
     "DealBuilder": DealBuilder,
+    "DealRoom": DealRoom,
     "FormTemplates": FormTemplates,
+    "Glossary": Glossary,
     "KnowledgeLibrary": KnowledgeLibrary,
     "Library": Library,
     "MyWork": MyWork,
@@ -42,8 +46,8 @@ export const PAGES = {
     "Strategy": Strategy,
     "WorkflowBuilder": WorkflowBuilder,
     "Workflows": Workflows,
-    "DealRoom": DealRoom,
-    "Glossary": Glossary,
+    "DocumentTemplates": DocumentTemplates,
+    "BrandKits": BrandKits,
 }
 
 export const pagesConfig = {
