@@ -339,6 +339,24 @@ export default function CreateServiceModal({ isOpen, onClose, editingService }) 
 
           <div>
             <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Associated Workflows</label>
+            
+            {/* Selected Workflows */}
+            {formData.associated_workflows?.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-2">
+                {formData.associated_workflows.map(workflowId => {
+                  const workflow = workflows.find(w => w.id === workflowId);
+                  return workflow ? (
+                    <div key={workflowId} className="flex items-center gap-2 text-sm bg-orange-500/20 text-orange-400 px-3 py-1 rounded-lg">
+                      <span>{workflow.name}</span>
+                      <button onClick={() => toggleWorkflow(workflowId)} className="hover:text-orange-300">
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ) : null;
+                })}
+              </div>
+            )}
+
             <Input
               value={workflowSearch}
               onChange={(e) => setWorkflowSearch(e.target.value)}
