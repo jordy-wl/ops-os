@@ -15,9 +15,14 @@ export default function CreateServiceModal({ isOpen, onClose, editingService }) 
     short_description: '',
     description: '',
     category: 'consulting',
-    pricing_model: { type: 'hourly' },
     base_price: '',
     currency: 'USD',
+    calculation_method: 'fixed_fee',
+    fee_value: '',
+    fee_unit: 'USD',
+    minimum_fee: '',
+    maximum_fee: '',
+    frequency: 'one_time',
     features: [],
     target_audience: [],
     associated_workflows: [],
@@ -39,9 +44,14 @@ export default function CreateServiceModal({ isOpen, onClose, editingService }) 
         short_description: editingService.short_description || '',
         description: editingService.description || '',
         category: editingService.category || 'consulting',
-        pricing_model: editingService.pricing_model || { type: 'hourly' },
         base_price: editingService.base_price || '',
         currency: editingService.currency || 'USD',
+        calculation_method: editingService.calculation_method || 'fixed_fee',
+        fee_value: editingService.fee_value || '',
+        fee_unit: editingService.fee_unit || 'USD',
+        minimum_fee: editingService.minimum_fee || '',
+        maximum_fee: editingService.maximum_fee || '',
+        frequency: editingService.frequency || 'one_time',
         features: editingService.features || [],
         target_audience: editingService.target_audience || [],
         associated_workflows: editingService.associated_workflows || [],
@@ -62,9 +72,14 @@ export default function CreateServiceModal({ isOpen, onClose, editingService }) 
         short_description: '',
         description: '',
         category: 'consulting',
-        pricing_model: { type: 'hourly' },
         base_price: '',
         currency: 'USD',
+        calculation_method: 'fixed_fee',
+        fee_value: '',
+        fee_unit: 'USD',
+        minimum_fee: '',
+        maximum_fee: '',
+        frequency: 'one_time',
         features: [],
         target_audience: [],
         associated_workflows: [],
@@ -95,9 +110,10 @@ export default function CreateServiceModal({ isOpen, onClose, editingService }) 
 
   const handleSubmit = () => {
     const submitData = { ...formData };
-    if (submitData.base_price) {
-      submitData.base_price = parseFloat(submitData.base_price);
-    }
+    if (submitData.base_price) submitData.base_price = parseFloat(submitData.base_price);
+    if (submitData.fee_value) submitData.fee_value = parseFloat(submitData.fee_value);
+    if (submitData.minimum_fee) submitData.minimum_fee = parseFloat(submitData.minimum_fee);
+    if (submitData.maximum_fee) submitData.maximum_fee = parseFloat(submitData.maximum_fee);
     createMutation.mutate(submitData);
   };
 
@@ -145,42 +161,22 @@ export default function CreateServiceModal({ isOpen, onClose, editingService }) 
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Category</label>
-              <Select value={formData.category} onValueChange={(v) => setFormData({ ...formData, category: v })}>
-                <SelectTrigger className="bg-[#1A1B1E] border-[#2C2E33]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-[#2C2E33] border-[#3a3d44]">
-                  <SelectItem value="consulting">Consulting</SelectItem>
-                  <SelectItem value="advisory">Advisory</SelectItem>
-                  <SelectItem value="implementation">Implementation</SelectItem>
-                  <SelectItem value="training">Training</SelectItem>
-                  <SelectItem value="support">Support</SelectItem>
-                  <SelectItem value="managed_services">Managed Services</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Pricing Model</label>
-              <Select 
-                value={formData.pricing_model?.type || 'hourly'} 
-                onValueChange={(v) => setFormData({ ...formData, pricing_model: { type: v } })}
-              >
-                <SelectTrigger className="bg-[#1A1B1E] border-[#2C2E33]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-[#2C2E33] border-[#3a3d44]">
-                  <SelectItem value="hourly">Hourly</SelectItem>
-                  <SelectItem value="retainer">Retainer</SelectItem>
-                  <SelectItem value="fixed">Fixed Fee</SelectItem>
-                  <SelectItem value="value_based">Value-Based</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Category</label>
+            <Select value={formData.category} onValueChange={(v) => setFormData({ ...formData, category: v })}>
+              <SelectTrigger className="bg-[#1A1B1E] border-[#2C2E33]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-[#2C2E33] border-[#3a3d44]">
+                <SelectItem value="consulting">Consulting</SelectItem>
+                <SelectItem value="advisory">Advisory</SelectItem>
+                <SelectItem value="implementation">Implementation</SelectItem>
+                <SelectItem value="training">Training</SelectItem>
+                <SelectItem value="support">Support</SelectItem>
+                <SelectItem value="managed_services">Managed Services</SelectItem>
+                <SelectItem value="other">Other</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -194,7 +190,6 @@ export default function CreateServiceModal({ isOpen, onClose, editingService }) 
                 className="bg-[#1A1B1E] border-[#2C2E33] focus:border-[#00E5FF]"
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Currency</label>
               <Input
@@ -203,6 +198,74 @@ export default function CreateServiceModal({ isOpen, onClose, editingService }) 
                 placeholder="USD"
                 className="bg-[#1A1B1E] border-[#2C2E33] focus:border-[#00E5FF]"
               />
+            </div>
+          </div>
+
+          {/* Pricing Configuration */}
+          <div className="border-t border-[#2C2E33] pt-4 space-y-4">
+            <h3 className="text-sm font-medium text-[#F5F5F5]">Pricing Configuration</h3>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Calculation Method</label>
+                <Select value={formData.calculation_method} onValueChange={(v) => setFormData({ ...formData, calculation_method: v })}>
+                  <SelectTrigger className="bg-[#1A1B1E] border-[#2C2E33]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#2C2E33] border-[#3a3d44]">
+                    <SelectItem value="fixed_fee">Fixed Fee</SelectItem>
+                    <SelectItem value="percentage_of_value">Percentage of Value</SelectItem>
+                    <SelectItem value="per_unit">Per Unit</SelectItem>
+                    <SelectItem value="per_transaction">Per Transaction</SelectItem>
+                    <SelectItem value="bps_of_value">Basis Points (BPS)</SelectItem>
+                    <SelectItem value="tiered">Tiered</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Frequency</label>
+                <Select value={formData.frequency} onValueChange={(v) => setFormData({ ...formData, frequency: v })}>
+                  <SelectTrigger className="bg-[#1A1B1E] border-[#2C2E33]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#2C2E33] border-[#3a3d44]">
+                    <SelectItem value="one_time">One Time</SelectItem>
+                    <SelectItem value="monthly">Monthly</SelectItem>
+                    <SelectItem value="quarterly">Quarterly</SelectItem>
+                    <SelectItem value="annually">Annually</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Fee Value</label>
+                <Input
+                  type="number"
+                  value={formData.fee_value}
+                  onChange={(e) => setFormData({ ...formData, fee_value: e.target.value })}
+                  className="bg-[#1A1B1E] border-[#2C2E33]"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Minimum Fee</label>
+                <Input
+                  type="number"
+                  value={formData.minimum_fee}
+                  onChange={(e) => setFormData({ ...formData, minimum_fee: e.target.value })}
+                  className="bg-[#1A1B1E] border-[#2C2E33]"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Maximum Fee</label>
+                <Input
+                  type="number"
+                  value={formData.maximum_fee}
+                  onChange={(e) => setFormData({ ...formData, maximum_fee: e.target.value })}
+                  className="bg-[#1A1B1E] border-[#2C2E33]"
+                />
+              </div>
             </div>
           </div>
 

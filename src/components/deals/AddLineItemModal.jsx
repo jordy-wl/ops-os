@@ -4,9 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Package, Wrench, Search, X } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Package, Wrench, Search } from 'lucide-react';
 
 export default function AddLineItemModal({ isOpen, onClose, onAdd, clientId }) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -14,7 +12,6 @@ export default function AddLineItemModal({ isOpen, onClose, onAdd, clientId }) {
   const [selectedOffering, setSelectedOffering] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [customPrice, setCustomPrice] = useState('');
-  const [selectedPricingRules, setSelectedPricingRules] = useState([]);
 
   const { data: products = [] } = useQuery({
     queryKey: ['products'],
@@ -24,11 +21,6 @@ export default function AddLineItemModal({ isOpen, onClose, onAdd, clientId }) {
   const { data: services = [] } = useQuery({
     queryKey: ['services'],
     queryFn: () => base44.entities.Service.filter({ is_active: true })
-  });
-
-  const { data: pricingRules = [] } = useQuery({
-    queryKey: ['pricing-rules'],
-    queryFn: () => base44.entities.PricingRule.filter({ is_active: true })
   });
 
   const offerings = offeringType === 'product' ? products : services;
@@ -43,25 +35,15 @@ export default function AddLineItemModal({ isOpen, onClose, onAdd, clientId }) {
       offering_id: selectedOffering.id,
       offering_type: offeringType,
       quantity: Number(quantity),
-      custom_price: customPrice ? Number(customPrice) : null,
-      selected_pricing_rule_ids: selectedPricingRules
+      custom_price: customPrice ? Number(customPrice) : null
     });
 
     // Reset form
     setSelectedOffering(null);
     setQuantity(1);
     setCustomPrice('');
-    setSelectedPricingRules([]);
     setSearchTerm('');
     onClose();
-  };
-
-  const togglePricingRule = (ruleId) => {
-    setSelectedPricingRules(prev => 
-      prev.includes(ruleId) 
-        ? prev.filter(id => id !== ruleId)
-        : [...prev, ruleId]
-    );
   };
 
   return (
@@ -137,6 +119,11 @@ export default function AddLineItemModal({ isOpen, onClose, onAdd, clientId }) {
                   <div>
                     <p className="font-medium">{offering.name}</p>
                     <p className="text-xs text-[#A0AEC0]">{offering.short_description}</p>
+                    {offering.calculation_method && offering.calculation_method !== 'fixed_fee' && (
+                      <p className="text-xs text-[#4A5568] mt-1">
+                        {offering.calculation_method} • {offering.frequency}
+                      </p>
+                    )}
                   </div>
                   {offering.base_price && (
                     <p className="text-sm font-mono">${offering.base_price.toLocaleString()}</p>
@@ -170,27 +157,6 @@ export default function AddLineItemModal({ isOpen, onClose, onAdd, clientId }) {
                     className="bg-[#1A1B1E] border-[#2C2E33]"
                   />
                 </div>
-              </div>
-
-              {/* Pricing Rules */}
-              <div>
-                <label className="text-sm text-[#A0AEC0] mb-2 block">Apply Pricing Rules (Optional)</label>
-                <div className="flex flex-wrap gap-2">
-                  {pricingRules.map(rule => (
-                    <Badge
-                      key={rule.id}
-                      onClick={() => togglePricingRule(rule.id)}
-                      className={`cursor-pointer ${
-                        selectedPricingRules.includes(rule.id)
-                          ? 'bg-[#00E5FF] text-[#121212]'
-                          : 'bg-[#2C2E33] text-[#A0AEC0] hover:bg-[#3a3d44]'
-                      }`}
-                    >
-                      {rule.name}
-                    </Badge>
-                  ))}
-                </div>
-                <p className="text-xs text-[#4A5568] mt-2">Leave empty for automatic rule application</p>
               </div>
             </>
           )}
