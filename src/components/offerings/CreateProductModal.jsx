@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 
-export default function CreateProductModal({ isOpen, onClose }) {
+export default function CreateProductModal({ isOpen, onClose, editingProduct }) {
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
     name: '',
@@ -32,8 +32,28 @@ export default function CreateProductModal({ isOpen, onClose }) {
     enabled: isOpen
   });
 
+  React.useEffect(() => {
+    if (editingProduct) {
+      setFormData({
+        name: editingProduct.name || '',
+        short_description: editingProduct.short_description || '',
+        description: editingProduct.description || '',
+        category: editingProduct.category || 'software',
+        base_price: editingProduct.base_price || '',
+        currency: editingProduct.currency || 'USD',
+        features: editingProduct.features || [],
+        target_audience: editingProduct.target_audience || [],
+        associated_workflows: editingProduct.associated_workflows || [],
+        pricing_model: editingProduct.pricing_model || { type: 'one_time' },
+        is_active: editingProduct.is_active !== undefined ? editingProduct.is_active : true
+      });
+    }
+  }, [editingProduct]);
+
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Product.create(data),
+    mutationFn: (data) => editingProduct 
+      ? base44.entities.Product.update(editingProduct.id, data)
+      : base44.entities.Product.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       onClose();
@@ -99,7 +119,7 @@ export default function CreateProductModal({ isOpen, onClose }) {
       <div className="absolute inset-0 bg-black/70" onClick={onClose} />
       <div className="glass rounded-2xl p-6 w-full max-w-2xl relative z-10 shadow-2xl border border-white/10 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold">New Product</h2>
+          <h2 className="text-xl font-semibold">{editingProduct ? 'Edit Product' : 'New Product'}</h2>
           <button onClick={onClose} className="p-2 rounded-lg hover:bg-[#2C2E33]">
             <X className="w-5 h-5 text-[#A0AEC0]" />
           </button>
@@ -280,7 +300,7 @@ export default function CreateProductModal({ isOpen, onClose }) {
             disabled={!formData.name || createMutation.isPending}
             className="flex-1 bg-gradient-to-r from-[#00E5FF] to-[#0099ff] text-[#121212] hover:shadow-lg hover:shadow-[#00E5FF]/30"
           >
-            {createMutation.isPending ? 'Creating...' : 'Create Product'}
+            {createMutation.isPending ? (editingProduct ? 'Updating...' : 'Creating...') : (editingProduct ? 'Update Product' : 'Create Product')}
           </Button>
         </div>
       </div>

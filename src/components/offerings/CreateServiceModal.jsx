@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 
-export default function CreateServiceModal({ isOpen, onClose }) {
+export default function CreateServiceModal({ isOpen, onClose, editingService }) {
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
     name: '',
@@ -32,8 +32,28 @@ export default function CreateServiceModal({ isOpen, onClose }) {
     enabled: isOpen
   });
 
+  React.useEffect(() => {
+    if (editingService) {
+      setFormData({
+        name: editingService.name || '',
+        short_description: editingService.short_description || '',
+        description: editingService.description || '',
+        category: editingService.category || 'consulting',
+        pricing_model: editingService.pricing_model || { type: 'hourly' },
+        base_price: editingService.base_price || '',
+        currency: editingService.currency || 'USD',
+        features: editingService.features || [],
+        target_audience: editingService.target_audience || [],
+        associated_workflows: editingService.associated_workflows || [],
+        is_active: editingService.is_active !== undefined ? editingService.is_active : true
+      });
+    }
+  }, [editingService]);
+
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Service.create(data),
+    mutationFn: (data) => editingService
+      ? base44.entities.Service.update(editingService.id, data)
+      : base44.entities.Service.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['services'] });
       onClose();
@@ -88,7 +108,7 @@ export default function CreateServiceModal({ isOpen, onClose }) {
       <div className="absolute inset-0 bg-black/70" onClick={onClose} />
       <div className="glass rounded-2xl p-6 w-full max-w-2xl relative z-10 shadow-2xl border border-white/10 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold">New Service</h2>
+          <h2 className="text-xl font-semibold">{editingService ? 'Edit Service' : 'New Service'}</h2>
           <button onClick={onClose} className="p-2 rounded-lg hover:bg-[#2C2E33]">
             <X className="w-5 h-5 text-[#A0AEC0]" />
           </button>
@@ -269,7 +289,7 @@ export default function CreateServiceModal({ isOpen, onClose }) {
             disabled={!formData.name || createMutation.isPending}
             className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:shadow-lg hover:shadow-orange-500/30"
           >
-            {createMutation.isPending ? 'Creating...' : 'Create Service'}
+            {createMutation.isPending ? (editingService ? 'Updating...' : 'Creating...') : (editingService ? 'Update Service' : 'Create Service')}
           </Button>
         </div>
       </div>

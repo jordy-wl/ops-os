@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 
-export default function CreateConceptModal({ isOpen, onClose }) {
+export default function CreateConceptModal({ isOpen, onClose, editingConcept }) {
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
     name: '',
@@ -28,8 +28,24 @@ export default function CreateConceptModal({ isOpen, onClose }) {
     enabled: isOpen
   });
 
+  React.useEffect(() => {
+    if (editingConcept) {
+      setFormData({
+        name: editingConcept.name || '',
+        type: editingConcept.type || 'methodology',
+        description: editingConcept.description || '',
+        key_principles: editingConcept.key_principles || [],
+        use_cases: editingConcept.use_cases || [],
+        associated_workflows: editingConcept.associated_workflows || [],
+        version: editingConcept.version || '1.0'
+      });
+    }
+  }, [editingConcept]);
+
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.BusinessConcept.create(data),
+    mutationFn: (data) => editingConcept
+      ? base44.entities.BusinessConcept.update(editingConcept.id, data)
+      : base44.entities.BusinessConcept.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['business-concepts'] });
       onClose();
@@ -76,7 +92,7 @@ export default function CreateConceptModal({ isOpen, onClose }) {
       <div className="absolute inset-0 bg-black/70" onClick={onClose} />
       <div className="glass rounded-2xl p-6 w-full max-w-2xl relative z-10 shadow-2xl border border-white/10 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold">New Business Concept</h2>
+          <h2 className="text-xl font-semibold">{editingConcept ? 'Edit Business Concept' : 'New Business Concept'}</h2>
           <button onClick={onClose} className="p-2 rounded-lg hover:bg-[#2C2E33]">
             <X className="w-5 h-5 text-[#A0AEC0]" />
           </button>
@@ -214,7 +230,7 @@ export default function CreateConceptModal({ isOpen, onClose }) {
             disabled={!formData.name || createMutation.isPending}
             className="flex-1 bg-gradient-to-r from-[#BD00FF] to-[#8B00CC] text-white hover:shadow-lg hover:shadow-[#BD00FF]/30"
           >
-            {createMutation.isPending ? 'Creating...' : 'Create Concept'}
+            {createMutation.isPending ? (editingConcept ? 'Updating...' : 'Creating...') : (editingConcept ? 'Update Concept' : 'Create Concept')}
           </Button>
         </div>
       </div>

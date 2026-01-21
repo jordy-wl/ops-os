@@ -10,9 +10,15 @@ import {
   Search,
   Plus,
   Building2,
-  ChevronRight
+  ChevronRight,
+  Edit,
+  Trash2,
+  MoreVertical
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { toast } from 'sonner';
 import CreateProductModal from '@/components/offerings/CreateProductModal';
 import CreateServiceModal from '@/components/offerings/CreateServiceModal';
 import CreateConceptModal from '@/components/offerings/CreateConceptModal';
@@ -29,114 +35,195 @@ const categoryColors = {
   framework: 'from-indigo-500 to-indigo-600',
 };
 
-function ProductCard({ product, onClick }) {
+function ProductCard({ product, onClick, onEdit, onDelete, userRole }) {
   return (
-    <div
-      onClick={onClick}
-      className="neumorphic-raised rounded-xl p-5 cursor-pointer transition-all hover:translate-y-[-2px] group"
-    >
+    <div className="neumorphic-raised rounded-xl p-5 transition-all hover:translate-y-[-2px] group">
       <div className="flex items-start gap-4">
-        <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${categoryColors[product.category] || 'from-[#2C2E33] to-[#1A1B1E]'} flex items-center justify-center`}>
-          <Package className="w-6 h-6 text-white" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <h3 className="font-medium mb-1 truncate">{product.name}</h3>
-          <p className="text-sm text-[#A0AEC0] line-clamp-2 mb-3">
-            {product.description || 'No description'}
-          </p>
-          <div className="flex items-center gap-3 text-xs text-[#4A5568]">
-            {product.sku && <span className="font-mono">{product.sku}</span>}
-            {product.unit_price && (
-              <>
-                <span>•</span>
-                <span className="font-mono">
-                  ${product.unit_price.toLocaleString()} {product.currency || 'USD'}
-                </span>
-              </>
-            )}
-            {product.category && (
-              <>
-                <span>•</span>
-                <span className="capitalize">{product.category.replace('_', ' ')}</span>
-              </>
-            )}
+        <div 
+          onClick={onClick}
+          className="flex items-start gap-4 flex-1 min-w-0 cursor-pointer"
+        >
+          <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${categoryColors[product.category] || 'from-[#2C2E33] to-[#1A1B1E]'} flex items-center justify-center`}>
+            <Package className="w-6 h-6 text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-medium mb-1 truncate">{product.name}</h3>
+            <p className="text-sm text-[#A0AEC0] line-clamp-2 mb-3">
+              {product.description || 'No description'}
+            </p>
+            <div className="flex items-center gap-3 text-xs text-[#4A5568]">
+              {product.sku && <span className="font-mono">{product.sku}</span>}
+              {product.unit_price && (
+                <>
+                  <span>•</span>
+                  <span className="font-mono">
+                    ${product.unit_price.toLocaleString()} {product.currency || 'USD'}
+                  </span>
+                </>
+              )}
+              {product.category && (
+                <>
+                  <span>•</span>
+                  <span className="capitalize">{product.category.replace('_', ' ')}</span>
+                </>
+              )}
+            </div>
           </div>
         </div>
-        <ChevronRight className="w-5 h-5 text-[#4A5568] group-hover:text-[#00E5FF] transition-colors" />
+        
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button 
+              onClick={(e) => e.stopPropagation()}
+              className="p-2 rounded-lg hover:bg-[#2C2E33] transition-colors"
+            >
+              <MoreVertical className="w-4 h-4 text-[#A0AEC0]" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="bg-[#2C2E33] border-[#3a3d44]">
+            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(product); }}>
+              <Edit className="w-4 h-4 mr-2" />
+              Edit
+            </DropdownMenuItem>
+            {userRole === 'admin' && (
+              <DropdownMenuItem 
+                onClick={(e) => { e.stopPropagation(); onDelete(product); }}
+                className="text-red-400 focus:text-red-300"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );
 }
 
-function ServiceCard({ service, onClick }) {
+function ServiceCard({ service, onClick, onEdit, onDelete, userRole }) {
   return (
-    <div
-      onClick={onClick}
-      className="neumorphic-raised rounded-xl p-5 cursor-pointer transition-all hover:translate-y-[-2px] group"
-    >
+    <div className="neumorphic-raised rounded-xl p-5 transition-all hover:translate-y-[-2px] group">
       <div className="flex items-start gap-4">
-        <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${categoryColors[service.category] || 'from-[#2C2E33] to-[#1A1B1E]'} flex items-center justify-center`}>
-          <Wrench className="w-6 h-6 text-white" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <h3 className="font-medium mb-1 truncate">{service.name}</h3>
-          <p className="text-sm text-[#A0AEC0] line-clamp-2 mb-3">
-            {service.description || 'No description'}
-          </p>
-          <div className="flex items-center gap-3 text-xs text-[#4A5568]">
-            {service.pricing_model && (
-              <span className="capitalize">{service.pricing_model.replace('_', ' ')}</span>
-            )}
-            {service.base_price && (
-              <>
-                <span>•</span>
-                <span className="font-mono">
-                  ${service.base_price.toLocaleString()} {service.currency || 'USD'}
-                </span>
-              </>
-            )}
-            {service.category && (
-              <>
-                <span>•</span>
-                <span className="capitalize">{service.category.replace('_', ' ')}</span>
-              </>
-            )}
+        <div 
+          onClick={onClick}
+          className="flex items-start gap-4 flex-1 min-w-0 cursor-pointer"
+        >
+          <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${categoryColors[service.category] || 'from-[#2C2E33] to-[#1A1B1E]'} flex items-center justify-center`}>
+            <Wrench className="w-6 h-6 text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-medium mb-1 truncate">{service.name}</h3>
+            <p className="text-sm text-[#A0AEC0] line-clamp-2 mb-3">
+              {service.description || 'No description'}
+            </p>
+            <div className="flex items-center gap-3 text-xs text-[#4A5568]">
+              {service.pricing_model && (
+                <span className="capitalize">{service.pricing_model.replace('_', ' ')}</span>
+              )}
+              {service.base_price && (
+                <>
+                  <span>•</span>
+                  <span className="font-mono">
+                    ${service.base_price.toLocaleString()} {service.currency || 'USD'}
+                  </span>
+                </>
+              )}
+              {service.category && (
+                <>
+                  <span>•</span>
+                  <span className="capitalize">{service.category.replace('_', ' ')}</span>
+                </>
+              )}
+            </div>
           </div>
         </div>
-        <ChevronRight className="w-5 h-5 text-[#4A5568] group-hover:text-[#00E5FF] transition-colors" />
+        
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button 
+              onClick={(e) => e.stopPropagation()}
+              className="p-2 rounded-lg hover:bg-[#2C2E33] transition-colors"
+            >
+              <MoreVertical className="w-4 h-4 text-[#A0AEC0]" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="bg-[#2C2E33] border-[#3a3d44]">
+            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(service); }}>
+              <Edit className="w-4 h-4 mr-2" />
+              Edit
+            </DropdownMenuItem>
+            {userRole === 'admin' && (
+              <DropdownMenuItem 
+                onClick={(e) => { e.stopPropagation(); onDelete(service); }}
+                className="text-red-400 focus:text-red-300"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );
 }
 
-function ConceptCard({ concept, onClick }) {
+function ConceptCard({ concept, onClick, onEdit, onDelete, userRole }) {
   return (
-    <div
-      onClick={onClick}
-      className="neumorphic-raised rounded-xl p-5 cursor-pointer transition-all hover:translate-y-[-2px] group"
-    >
+    <div className="neumorphic-raised rounded-xl p-5 transition-all hover:translate-y-[-2px] group">
       <div className="flex items-start gap-4">
-        <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${categoryColors[concept.type] || 'from-[#2C2E33] to-[#1A1B1E]'} flex items-center justify-center`}>
-          <Lightbulb className="w-6 h-6 text-white" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <h3 className="font-medium mb-1 truncate">{concept.name}</h3>
-          <p className="text-sm text-[#A0AEC0] line-clamp-2 mb-3">
-            {concept.description || 'No description'}
-          </p>
-          <div className="flex items-center gap-3 text-xs text-[#4A5568]">
-            {concept.type && (
-              <span className="capitalize">{concept.type.replace('_', ' ')}</span>
-            )}
-            {concept.version && (
-              <>
-                <span>•</span>
-                <span>v{concept.version}</span>
-              </>
-            )}
+        <div 
+          onClick={onClick}
+          className="flex items-start gap-4 flex-1 min-w-0 cursor-pointer"
+        >
+          <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${categoryColors[concept.type] || 'from-[#2C2E33] to-[#1A1B1E]'} flex items-center justify-center`}>
+            <Lightbulb className="w-6 h-6 text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-medium mb-1 truncate">{concept.name}</h3>
+            <p className="text-sm text-[#A0AEC0] line-clamp-2 mb-3">
+              {concept.description || 'No description'}
+            </p>
+            <div className="flex items-center gap-3 text-xs text-[#4A5568]">
+              {concept.type && (
+                <span className="capitalize">{concept.type.replace('_', ' ')}</span>
+              )}
+              {concept.version && (
+                <>
+                  <span>•</span>
+                  <span>v{concept.version}</span>
+                </>
+              )}
+            </div>
           </div>
         </div>
-        <ChevronRight className="w-5 h-5 text-[#4A5568] group-hover:text-[#00E5FF] transition-colors" />
+        
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button 
+              onClick={(e) => e.stopPropagation()}
+              className="p-2 rounded-lg hover:bg-[#2C2E33] transition-colors"
+            >
+              <MoreVertical className="w-4 h-4 text-[#A0AEC0]" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="bg-[#2C2E33] border-[#3a3d44]">
+            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(concept); }}>
+              <Edit className="w-4 h-4 mr-2" />
+              Edit
+            </DropdownMenuItem>
+            {userRole === 'admin' && (
+              <DropdownMenuItem 
+                onClick={(e) => { e.stopPropagation(); onDelete(concept); }}
+                className="text-red-400 focus:text-red-300"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );
@@ -148,7 +235,15 @@ export default function Offerings() {
   const [showCreateProduct, setShowCreateProduct] = useState(false);
   const [showCreateService, setShowCreateService] = useState(false);
   const [showCreateConcept, setShowCreateConcept] = useState(false);
+  const [editingItem, setEditingItem] = useState(null);
+  const [deletingItem, setDeletingItem] = useState(null);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const { data: currentUser } = useQuery({
+    queryKey: ['current-user'],
+    queryFn: () => base44.auth.me()
+  });
 
   const { data: products = [], isLoading: productsLoading } = useQuery({
     queryKey: ['products'],
@@ -164,6 +259,63 @@ export default function Offerings() {
     queryKey: ['business-concepts'],
     queryFn: () => base44.entities.BusinessConcept.list('-created_date', 100),
   });
+
+  const deleteProductMutation = useMutation({
+    mutationFn: (id) => base44.entities.Product.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast.success('Product deleted');
+      setDeletingItem(null);
+    }
+  });
+
+  const deleteServiceMutation = useMutation({
+    mutationFn: (id) => base44.entities.Service.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['services'] });
+      toast.success('Service deleted');
+      setDeletingItem(null);
+    }
+  });
+
+  const deleteConceptMutation = useMutation({
+    mutationFn: (id) => base44.entities.BusinessConcept.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['business-concepts'] });
+      toast.success('Concept deleted');
+      setDeletingItem(null);
+    }
+  });
+
+  const handleEdit = (item, type) => {
+    setEditingItem({ ...item, type });
+    if (type === 'product') setShowCreateProduct(true);
+    if (type === 'service') setShowCreateService(true);
+    if (type === 'concept') setShowCreateConcept(true);
+  };
+
+  const handleDelete = (item, type) => {
+    setDeletingItem({ ...item, type });
+  };
+
+  const confirmDelete = () => {
+    if (!deletingItem) return;
+    
+    if (deletingItem.type === 'product') {
+      deleteProductMutation.mutate(deletingItem.id);
+    } else if (deletingItem.type === 'service') {
+      deleteServiceMutation.mutate(deletingItem.id);
+    } else if (deletingItem.type === 'concept') {
+      deleteConceptMutation.mutate(deletingItem.id);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setEditingItem(null);
+    setShowCreateProduct(false);
+    setShowCreateService(false);
+    setShowCreateConcept(false);
+  };
 
   const filteredProducts = products.filter(p =>
     p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -300,6 +452,9 @@ export default function Offerings() {
                 key={product.id}
                 product={product}
                 onClick={() => navigate(createPageUrl('OfferingDetail') + `?id=${product.id}&type=product`)}
+                onEdit={(p) => handleEdit(p, 'product')}
+                onDelete={(p) => handleDelete(p, 'product')}
+                userRole={currentUser?.role}
               />
             ))}
           </div>
@@ -328,6 +483,9 @@ export default function Offerings() {
                 key={service.id}
                 service={service}
                 onClick={() => navigate(createPageUrl('OfferingDetail') + `?id=${service.id}&type=service`)}
+                onEdit={(s) => handleEdit(s, 'service')}
+                onDelete={(s) => handleDelete(s, 'service')}
+                userRole={currentUser?.role}
               />
             ))}
           </div>
@@ -356,6 +514,9 @@ export default function Offerings() {
                 key={concept.id}
                 concept={concept}
                 onClick={() => navigate(createPageUrl('BusinessConceptDetail') + `?id=${concept.id}`)}
+                onEdit={(c) => handleEdit(c, 'concept')}
+                onDelete={(c) => handleDelete(c, 'concept')}
+                userRole={currentUser?.role}
               />
             ))}
           </div>
@@ -363,9 +524,44 @@ export default function Offerings() {
       )}
 
       {/* Modals */}
-      <CreateProductModal isOpen={showCreateProduct} onClose={() => setShowCreateProduct(false)} />
-      <CreateServiceModal isOpen={showCreateService} onClose={() => setShowCreateService(false)} />
-      <CreateConceptModal isOpen={showCreateConcept} onClose={() => setShowCreateConcept(false)} />
+      <CreateProductModal 
+        isOpen={showCreateProduct} 
+        onClose={handleCloseModal}
+        editingProduct={editingItem?.type === 'product' ? editingItem : null}
+      />
+      <CreateServiceModal 
+        isOpen={showCreateService} 
+        onClose={handleCloseModal}
+        editingService={editingItem?.type === 'service' ? editingItem : null}
+      />
+      <CreateConceptModal 
+        isOpen={showCreateConcept} 
+        onClose={handleCloseModal}
+        editingConcept={editingItem?.type === 'concept' ? editingItem : null}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deletingItem} onOpenChange={() => setDeletingItem(null)}>
+        <AlertDialogContent className="bg-[#2C2E33] border-[#3a3d44]">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription className="text-[#A0AEC0]">
+              This will permanently delete "{deletingItem?.name}". This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-transparent border-[#2C2E33] hover:bg-[#2C2E33]">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
