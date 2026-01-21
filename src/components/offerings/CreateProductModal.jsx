@@ -33,6 +33,7 @@ export default function CreateProductModal({ isOpen, onClose, editingProduct }) 
   });
   const [newFeature, setNewFeature] = useState('');
   const [newAudience, setNewAudience] = useState('');
+  const [workflowSearch, setWorkflowSearch] = useState('');
 
   const { data: workflows = [] } = useQuery({
     queryKey: ['workflow-templates'],
@@ -349,21 +350,29 @@ export default function CreateProductModal({ isOpen, onClose, editingProduct }) 
 
           <div>
             <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Associated Workflows</label>
+            <Input
+              value={workflowSearch}
+              onChange={(e) => setWorkflowSearch(e.target.value)}
+              placeholder="Search workflows..."
+              className="bg-[#1A1B1E] border-[#2C2E33] focus:border-[#00E5FF] mb-2"
+            />
             <div className="space-y-2 max-h-40 overflow-y-auto bg-[#1A1B1E] rounded-lg p-3">
               {workflows.length === 0 ? (
                 <p className="text-xs text-[#4A5568]">No workflows available</p>
               ) : (
-                workflows.map(workflow => (
-                  <div key={workflow.id} className="flex items-center gap-2">
-                    <Checkbox
-                      checked={formData.associated_workflows?.includes(workflow.id)}
-                      onCheckedChange={() => toggleWorkflow(workflow.id)}
-                    />
-                    <label className="text-sm cursor-pointer" onClick={() => toggleWorkflow(workflow.id)}>
-                      {workflow.name}
-                    </label>
-                  </div>
-                ))
+                workflows
+                  .filter(w => w.name.toLowerCase().includes(workflowSearch.toLowerCase()))
+                  .map(workflow => (
+                    <div key={workflow.id} className="flex items-center gap-2">
+                      <Checkbox
+                        checked={formData.associated_workflows?.includes(workflow.id)}
+                        onCheckedChange={() => toggleWorkflow(workflow.id)}
+                      />
+                      <label className="text-sm cursor-pointer" onClick={() => toggleWorkflow(workflow.id)}>
+                        {workflow.name}
+                      </label>
+                    </div>
+                  ))
               )}
             </div>
           </div>
