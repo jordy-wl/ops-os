@@ -25,7 +25,9 @@ export default function DealBuilder() {
     stage: 'prospecting',
     expected_close_date: '',
     probability: 50,
+    deal_owner_id: '',
     terms_and_conditions: [],
+    custom_terms: '',
     deal_contacts: []
   });
 
@@ -50,6 +52,16 @@ export default function DealBuilder() {
       return clients[0];
     },
     enabled: !!(clientId || deal?.client_id)
+  });
+
+  const { data: users = [] } = useQuery({
+    queryKey: ['users'],
+    queryFn: () => base44.entities.User.list()
+  });
+
+  const { data: termBlocks = [] } = useQuery({
+    queryKey: ['term-blocks'],
+    queryFn: () => base44.entities.TermBlock.list()
   });
 
   const { data: existingLineItems = [] } = useQuery({
@@ -211,9 +223,9 @@ export default function DealBuilder() {
       <div className="p-6">
         <div className="max-w-2xl mx-auto">
           <h1 className="text-2xl font-bold mb-6">Create New Deal</h1>
-          <div className="neumorphic-raised rounded-xl p-6 space-y-4">
+          <div className="neumorphic-raised rounded-xl p-6 space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto">
             <div>
-              <label className="text-sm text-[#A0AEC0] mb-2 block">Deal Name</label>
+              <label className="text-sm text-[#A0AEC0] mb-2 block">Deal Name *</label>
               <Input
                 value={dealData.name}
                 onChange={(e) => setDealData({ ...dealData, name: e.target.value })}
@@ -221,46 +233,126 @@ export default function DealBuilder() {
                 className="bg-[#1A1B1E] border-[#2C2E33]"
               />
             </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm text-[#A0AEC0] mb-2 block">Stage</label>
+                <Select value={dealData.stage} onValueChange={(v) => setDealData({ ...dealData, stage: v })}>
+                  <SelectTrigger className="bg-[#1A1B1E] border-[#2C2E33]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="prospecting">Prospecting</SelectItem>
+                    <SelectItem value="qualified">Qualified</SelectItem>
+                    <SelectItem value="proposal">Proposal</SelectItem>
+                    <SelectItem value="negotiation">Negotiation</SelectItem>
+                    <SelectItem value="closed_won">Closed Won</SelectItem>
+                    <SelectItem value="closed_lost">Closed Lost</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label className="text-sm text-[#A0AEC0] mb-2 block">Probability (%)</label>
+                <Input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={dealData.probability}
+                  onChange={(e) => setDealData({ ...dealData, probability: Number(e.target.value) })}
+                  className="bg-[#1A1B1E] border-[#2C2E33]"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm text-[#A0AEC0] mb-2 block">Expected Close Date</label>
+                <Input
+                  type="date"
+                  value={dealData.expected_close_date}
+                  onChange={(e) => setDealData({ ...dealData, expected_close_date: e.target.value })}
+                  className="bg-[#1A1B1E] border-[#2C2E33]"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm text-[#A0AEC0] mb-2 block">Deal Owner</label>
+                <Select value={dealData.deal_owner_id} onValueChange={(v) => setDealData({ ...dealData, deal_owner_id: v })}>
+                  <SelectTrigger className="bg-[#1A1B1E] border-[#2C2E33]">
+                    <SelectValue placeholder="Select owner..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {users.map(user => (
+                      <SelectItem key={user.id} value={user.id}>
+                        {user.full_name || user.email}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
             <div>
-              <label className="text-sm text-[#A0AEC0] mb-2 block">Stage</label>
-              <Select value={dealData.stage} onValueChange={(v) => setDealData({ ...dealData, stage: v })}>
+              <label className="text-sm text-[#A0AEC0] mb-2 block">Initial Terms & Conditions</label>
+              <Select
+                value={dealData.terms_and_conditions.length > 0 ? dealData.terms_and_conditions[0] : ''}
+                onValueChange={(v) => {
+                  if (v && !dealData.terms_and_conditions.includes(v)) {
+                    setDealData({ ...dealData, terms_and_conditions: [...dealData.terms_and_conditions, v] });
+                  }
+                }}
+              >
                 <SelectTrigger className="bg-[#1A1B1E] border-[#2C2E33]">
-                  <SelectValue />
+                  <SelectValue placeholder="Add term blocks..." />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="prospecting">Prospecting</SelectItem>
-                  <SelectItem value="qualified">Qualified</SelectItem>
-                  <SelectItem value="proposal">Proposal</SelectItem>
-                  <SelectItem value="negotiation">Negotiation</SelectItem>
-                  <SelectItem value="closed_won">Closed Won</SelectItem>
-                  <SelectItem value="closed_lost">Closed Lost</SelectItem>
+                  {termBlocks.map(block => (
+                    <SelectItem key={block.id} value={block.id}>
+                      {block.name} ({block.category})
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
+              {dealData.terms_and_conditions.length > 0 && (
+                <div className="mt-2 space-y-1">
+                  {dealData.terms_and_conditions.map(termId => {
+                    const block = termBlocks.find(b => b.id === termId);
+                    return (
+                      <div key={termId} className="flex items-center gap-2 text-xs bg-[#1A1B1E] px-2 py-1 rounded">
+                        <span className="flex-1">{block?.name}</span>
+                        <button
+                          onClick={() => setDealData({
+                            ...dealData,
+                            terms_and_conditions: dealData.terms_and_conditions.filter(id => id !== termId)
+                          })}
+                          className="text-red-400 hover:text-red-300"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
+
             <div>
-              <label className="text-sm text-[#A0AEC0] mb-2 block">Expected Close Date</label>
+              <label className="text-sm text-[#A0AEC0] mb-2 block">Custom Terms</label>
               <Input
-                type="date"
-                value={dealData.expected_close_date}
-                onChange={(e) => setDealData({ ...dealData, expected_close_date: e.target.value })}
+                value={dealData.custom_terms}
+                onChange={(e) => setDealData({ ...dealData, custom_terms: e.target.value })}
+                placeholder="Any deal-specific custom terms..."
                 className="bg-[#1A1B1E] border-[#2C2E33]"
               />
             </div>
-            <div>
-              <label className="text-sm text-[#A0AEC0] mb-2 block">Probability (%)</label>
-              <Input
-                type="number"
-                value={dealData.probability}
-                onChange={(e) => setDealData({ ...dealData, probability: Number(e.target.value) })}
-                className="bg-[#1A1B1E] border-[#2C2E33]"
-              />
-            </div>
+
             <Button
               onClick={handleCreateDeal}
               disabled={!dealData.name || createDealMutation.isPending}
               className="w-full bg-gradient-to-r from-[#00E5FF] to-[#0099ff] text-[#121212]"
             >
-              Create Deal
+              {createDealMutation.isPending ? 'Creating...' : 'Create Deal'}
             </Button>
           </div>
         </div>

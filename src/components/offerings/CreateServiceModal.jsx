@@ -1,29 +1,36 @@
 import React, { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { X, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 
 export default function CreateServiceModal({ isOpen, onClose }) {
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
     name: '',
+    short_description: '',
     description: '',
     category: 'consulting',
-    pricing_model: 'fixed_fee',
+    pricing_model: { type: 'hourly' },
     base_price: '',
     currency: 'USD',
-    features_included: [],
-    deliverables: [],
+    features: [],
     target_audience: [],
+    associated_workflows: [],
     is_active: true
   });
   const [newFeature, setNewFeature] = useState('');
-  const [newDeliverable, setNewDeliverable] = useState('');
   const [newAudience, setNewAudience] = useState('');
+
+  const { data: workflows = [] } = useQuery({
+    queryKey: ['workflow-templates'],
+    queryFn: () => base44.entities.WorkflowTemplate.list(),
+    enabled: isOpen
+  });
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Service.create(data),
@@ -32,14 +39,15 @@ export default function CreateServiceModal({ isOpen, onClose }) {
       onClose();
       setFormData({
         name: '',
+        short_description: '',
         description: '',
         category: 'consulting',
-        pricing_model: 'fixed_fee',
+        pricing_model: { type: 'hourly' },
         base_price: '',
         currency: 'USD',
-        features_included: [],
-        deliverables: [],
+        features: [],
         target_audience: [],
+        associated_workflows: [],
         is_active: true
       });
     },
@@ -54,6 +62,15 @@ export default function CreateServiceModal({ isOpen, onClose }) {
 
   const removeItem = (field, index) => {
     setFormData({ ...formData, [field]: formData[field].filter((_, i) => i !== index) });
+  };
+
+  const toggleWorkflow = (workflowId) => {
+    const workflows = formData.associated_workflows || [];
+    if (workflows.includes(workflowId)) {
+      setFormData({ ...formData, associated_workflows: workflows.filter(id => id !== workflowId) });
+    } else {
+      setFormData({ ...formData, associated_workflows: [...workflows, workflowId] });
+    }
   };
 
   const handleSubmit = () => {
@@ -89,11 +106,21 @@ export default function CreateServiceModal({ isOpen, onClose }) {
           </div>
 
           <div>
+            <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Short Description</label>
+            <Input
+              value={formData.short_description}
+              onChange={(e) => setFormData({ ...formData, short_description: e.target.value })}
+              placeholder="Brief one-liner..."
+              className="bg-[#1A1B1E] border-[#2C2E33] focus:border-[#00E5FF]"
+            />
+          </div>
+
+          <div>
             <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Description</label>
             <Textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Describe the service..."
+              placeholder="Detailed service description..."
               className="bg-[#1A1B1E] border-[#2C2E33] focus:border-[#00E5FF] h-24"
             />
           </div>
@@ -107,10 +134,11 @@ export default function CreateServiceModal({ isOpen, onClose }) {
                 </SelectTrigger>
                 <SelectContent className="bg-[#2C2E33] border-[#3a3d44]">
                   <SelectItem value="consulting">Consulting</SelectItem>
+                  <SelectItem value="advisory">Advisory</SelectItem>
                   <SelectItem value="implementation">Implementation</SelectItem>
-                  <SelectItem value="support">Support</SelectItem>
                   <SelectItem value="training">Training</SelectItem>
-                  <SelectItem value="managed_service">Managed Service</SelectItem>
+                  <SelectItem value="support">Support</SelectItem>
+                  <SelectItem value="managed_services">Managed Services</SelectItem>
                   <SelectItem value="other">Other</SelectItem>
                 </SelectContent>
               </Select>
@@ -118,16 +146,18 @@ export default function CreateServiceModal({ isOpen, onClose }) {
 
             <div>
               <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Pricing Model</label>
-              <Select value={formData.pricing_model} onValueChange={(v) => setFormData({ ...formData, pricing_model: v })}>
+              <Select 
+                value={formData.pricing_model?.type || 'hourly'} 
+                onValueChange={(v) => setFormData({ ...formData, pricing_model: { type: v } })}
+              >
                 <SelectTrigger className="bg-[#1A1B1E] border-[#2C2E33]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-[#2C2E33] border-[#3a3d44]">
-                  <SelectItem value="subscription">Subscription</SelectItem>
-                  <SelectItem value="per_project">Per Project</SelectItem>
                   <SelectItem value="hourly">Hourly</SelectItem>
-                  <SelectItem value="fixed_fee">Fixed Fee</SelectItem>
-                  <SelectItem value="custom">Custom</SelectItem>
+                  <SelectItem value="retainer">Retainer</SelectItem>
+                  <SelectItem value="fixed">Fixed Fee</SelectItem>
+                  <SelectItem value="value_based">Value-Based</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -157,24 +187,24 @@ export default function CreateServiceModal({ isOpen, onClose }) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Features Included</label>
+            <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Features</label>
             <div className="flex gap-2 mb-2">
               <Input
                 value={newFeature}
                 onChange={(e) => setNewFeature(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && addItem('features_included', newFeature, setNewFeature)}
+                onKeyPress={(e) => e.key === 'Enter' && addItem('features', newFeature, setNewFeature)}
                 placeholder="Add a feature..."
                 className="bg-[#1A1B1E] border-[#2C2E33] focus:border-[#00E5FF]"
               />
-              <Button onClick={() => addItem('features_included', newFeature, setNewFeature)} size="sm" className="bg-[#00E5FF]/20 text-[#00E5FF]">
+              <Button onClick={() => addItem('features', newFeature, setNewFeature)} size="sm" className="bg-[#00E5FF]/20 text-[#00E5FF]">
                 <Plus className="w-4 h-4" />
               </Button>
             </div>
-            <div className="space-y-2">
-              {formData.features_included.map((feature, idx) => (
+            <div className="space-y-2 max-h-32 overflow-y-auto">
+              {formData.features.map((feature, idx) => (
                 <div key={idx} className="flex items-center gap-2 text-sm bg-[#1A1B1E] px-3 py-2 rounded-lg">
                   <span className="flex-1">{feature}</span>
-                  <button onClick={() => removeItem('features_included', idx)} className="text-red-400 hover:text-red-300">
+                  <button onClick={() => removeItem('features', idx)} className="text-red-400 hover:text-red-300">
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
@@ -183,28 +213,49 @@ export default function CreateServiceModal({ isOpen, onClose }) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Deliverables</label>
+            <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Target Audience</label>
             <div className="flex gap-2 mb-2">
               <Input
-                value={newDeliverable}
-                onChange={(e) => setNewDeliverable(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && addItem('deliverables', newDeliverable, setNewDeliverable)}
-                placeholder="Add a deliverable..."
+                value={newAudience}
+                onChange={(e) => setNewAudience(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && addItem('target_audience', newAudience, setNewAudience)}
+                placeholder="e.g., Enterprise, SMBs..."
                 className="bg-[#1A1B1E] border-[#2C2E33] focus:border-[#00E5FF]"
               />
-              <Button onClick={() => addItem('deliverables', newDeliverable, setNewDeliverable)} size="sm" className="bg-[#00E5FF]/20 text-[#00E5FF]">
+              <Button onClick={() => addItem('target_audience', newAudience, setNewAudience)} size="sm" className="bg-[#00E5FF]/20 text-[#00E5FF]">
                 <Plus className="w-4 h-4" />
               </Button>
             </div>
-            <div className="space-y-2">
-              {formData.deliverables.map((deliverable, idx) => (
+            <div className="space-y-2 max-h-32 overflow-y-auto">
+              {formData.target_audience.map((audience, idx) => (
                 <div key={idx} className="flex items-center gap-2 text-sm bg-[#1A1B1E] px-3 py-2 rounded-lg">
-                  <span className="flex-1">{deliverable}</span>
-                  <button onClick={() => removeItem('deliverables', idx)} className="text-red-400 hover:text-red-300">
+                  <span className="flex-1">{audience}</span>
+                  <button onClick={() => removeItem('target_audience', idx)} className="text-red-400 hover:text-red-300">
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
               ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Associated Workflows</label>
+            <div className="space-y-2 max-h-40 overflow-y-auto bg-[#1A1B1E] rounded-lg p-3">
+              {workflows.length === 0 ? (
+                <p className="text-xs text-[#4A5568]">No workflows available</p>
+              ) : (
+                workflows.map(workflow => (
+                  <div key={workflow.id} className="flex items-center gap-2">
+                    <Checkbox
+                      checked={formData.associated_workflows?.includes(workflow.id)}
+                      onCheckedChange={() => toggleWorkflow(workflow.id)}
+                    />
+                    <label className="text-sm cursor-pointer" onClick={() => toggleWorkflow(workflow.id)}>
+                      {workflow.name}
+                    </label>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>
