@@ -4,7 +4,9 @@ import { base44 } from '@/api/base44Client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Package, Wrench, Search } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Package, Wrench, Search, X } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 export default function AddLineItemModal({ isOpen, onClose, onAdd, clientId }) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -12,7 +14,6 @@ export default function AddLineItemModal({ isOpen, onClose, onAdd, clientId }) {
   const [selectedOffering, setSelectedOffering] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [customPrice, setCustomPrice] = useState('');
-
   const { data: products = [] } = useQuery({
     queryKey: ['products'],
     queryFn: () => base44.entities.Product.filter({ is_active: true })
@@ -116,7 +117,7 @@ export default function AddLineItemModal({ isOpen, onClose, onAdd, clientId }) {
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <div>
+                  <div className="flex-1">
                     <p className="font-medium">{offering.name}</p>
                     <p className="text-xs text-[#A0AEC0]">{offering.short_description}</p>
                     {offering.calculation_method && offering.calculation_method !== 'fixed_fee' && (
@@ -158,6 +159,8 @@ export default function AddLineItemModal({ isOpen, onClose, onAdd, clientId }) {
                   />
                 </div>
               </div>
+
+
             </>
           )}
 
