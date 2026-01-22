@@ -144,6 +144,24 @@ export default function CreateTemplateModal({ isOpen, onClose, template }) {
     enabled: isOpen
   });
 
+  const { data: workflowTemplates = [] } = useQuery({
+    queryKey: ['workflow-templates-list'],
+    queryFn: () => base44.entities.WorkflowTemplate.list('-created_date', 100),
+    enabled: isOpen
+  });
+
+  const { data: products = [] } = useQuery({
+    queryKey: ['products-list'],
+    queryFn: () => base44.entities.Product.list('-created_date', 100),
+    enabled: isOpen
+  });
+
+  const { data: services = [] } = useQuery({
+    queryKey: ['services-list'],
+    queryFn: () => base44.entities.Service.list('-created_date', 100),
+    enabled: isOpen
+  });
+
   const createMutation = useMutation({
     mutationFn: (data) => template 
       ? base44.entities.DocumentTemplate.update(template.id, data)
@@ -204,7 +222,7 @@ export default function CreateTemplateModal({ isOpen, onClose, template }) {
     const section = updated[sectionIndex];
     section.data_references = [
       ...(section.data_references || []),
-      { entity_type: 'Client', field_paths: [], usage_prompt: '', use_entire_entity: false }
+      { entity_type: 'Client', field_paths: [], usage_prompt: '', use_entire_entity: false, entity_id: null }
     ];
     setFormData({ ...formData, sections: updated });
   };
@@ -432,15 +450,38 @@ export default function CreateTemplateModal({ isOpen, onClose, template }) {
                                                   <SelectItem value="Service">Service</SelectItem>
                                                 </SelectContent>
                                               </Select>
-                                              <label className="flex items-center gap-1 text-xs text-[#A0AEC0]">
-                                                <input
-                                                  type="checkbox"
-                                                  checked={ref.use_entire_entity || false}
-                                                  onChange={(e) => updateDataReference(index, refIdx, 'use_entire_entity', e.target.checked)}
-                                                  className="rounded"
-                                                />
-                                                Entire entity
-                                              </label>
+                                              <div className="flex items-center gap-2 flex-1">
+                                                <label className="flex items-center gap-1 text-xs text-[#A0AEC0]">
+                                                  <input
+                                                    type="checkbox"
+                                                    checked={ref.use_entire_entity || false}
+                                                    onChange={(e) => updateDataReference(index, refIdx, 'use_entire_entity', e.target.checked)}
+                                                    className="rounded"
+                                                  />
+                                                  Entire entity
+                                                </label>
+                                                {ref.use_entire_entity && ref.entity_type !== 'Client' && (
+                                                  <Select 
+                                                    value={ref.entity_id || ''} 
+                                                    onValueChange={(v) => updateDataReference(index, refIdx, 'entity_id', v)}
+                                                  >
+                                                    <SelectTrigger className="flex-1 bg-[#2C2E33] border-[#3a3d44] text-xs h-7">
+                                                      <SelectValue placeholder={`Select ${ref.entity_type.toLowerCase()}...`} />
+                                                    </SelectTrigger>
+                                                    <SelectContent className="bg-[#2C2E33] border-[#3a3d44]">
+                                                      {ref.entity_type === 'Workflow' && workflowTemplates.map(wf => (
+                                                        <SelectItem key={wf.id} value={wf.id}>{wf.name}</SelectItem>
+                                                      ))}
+                                                      {ref.entity_type === 'Product' && products.map(prod => (
+                                                        <SelectItem key={prod.id} value={prod.id}>{prod.name}</SelectItem>
+                                                      ))}
+                                                      {ref.entity_type === 'Service' && services.map(serv => (
+                                                        <SelectItem key={serv.id} value={serv.id}>{serv.name}</SelectItem>
+                                                      ))}
+                                                    </SelectContent>
+                                                  </Select>
+                                                )}
+                                              </div>
                                               <button 
                                                 onClick={() => removeDataReference(index, refIdx)}
                                                 className="ml-auto p-1 hover:bg-[#3a3d44] rounded"
