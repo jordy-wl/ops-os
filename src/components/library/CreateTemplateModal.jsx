@@ -5,11 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { X, Plus, Trash2, Sparkles, FileText, Database, GripVertical, BarChart, Palette } from 'lucide-react';
+import { X, Plus, Trash2, Sparkles, FileText, Database, GripVertical, BarChart, Palette, FileCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import ReactQuill from 'react-quill';
 import MultiSelectField from './MultiSelectField';
+import ChartTableConfig from './ChartTableConfig';
 
 // Helper to convert schema type to readable label
 const getFieldLabel = (fieldName, fieldSchema) => {
@@ -25,7 +26,8 @@ export default function CreateTemplateModal({ isOpen, onClose, template }) {
     category: 'other',
     sections: [],
     brand_kit_id: null,
-    output_format: 'pdf'
+    output_format: 'pdf',
+    include_appendix: false
   });
 
   useEffect(() => {
@@ -199,6 +201,10 @@ export default function CreateTemplateModal({ isOpen, onClose, template }) {
     setFormData({ ...formData, sections: updated });
   };
 
+  const updateSectionField = (index) => (field, value) => {
+    updateSection(index, field, value);
+  };
+
   const removeSection = (index) => {
     const updated = [...(formData.sections || [])];
     updated.splice(index, 1);
@@ -347,6 +353,20 @@ export default function CreateTemplateModal({ isOpen, onClose, template }) {
                 </Select>
               </div>
             </div>
+
+            <div className="pt-3 border-t border-[#2C2E33]">
+              <label className="flex items-center gap-2 text-sm text-[#A0AEC0] cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={formData.include_appendix || false}
+                  onChange={(e) => setFormData({ ...formData, include_appendix: e.target.checked })}
+                  className="rounded"
+                />
+                <FileCheck className="w-4 h-4" />
+                Include Appendix
+                <span className="text-xs text-[#4A5568]">(Auto-generates supplementary information)</span>
+              </label>
+            </div>
           </div>
 
           {/* Document Sections */}
@@ -409,7 +429,6 @@ export default function CreateTemplateModal({ isOpen, onClose, template }) {
                                        <SelectItem value="text">Text</SelectItem>
                                        <SelectItem value="chart">Chart</SelectItem>
                                        <SelectItem value="table">Table</SelectItem>
-                                       <SelectItem value="appendix">Appendix</SelectItem>
                                       </SelectContent>
                                     </Select>
                                   </div>
@@ -505,36 +524,34 @@ export default function CreateTemplateModal({ isOpen, onClose, template }) {
                                     </>
                                   )}
 
-                                  {section.type === 'chart' && (
-                                    <div className="grid grid-cols-2 gap-3">
-                                      <Select 
-                                        value={section.chart_type || 'bar'} 
-                                        onValueChange={(v) => updateSection(index, 'chart_type', v)}
-                                      >
-                                        <SelectTrigger className="bg-[#1A1B1E] border-[#2C2E33] text-sm">
-                                          <SelectValue placeholder="Chart type..." />
-                                        </SelectTrigger>
-                                        <SelectContent className="bg-[#2C2E33] border-[#3a3d44]">
-                                          <SelectItem value="bar">Bar Chart</SelectItem>
-                                          <SelectItem value="line">Line Chart</SelectItem>
-                                          <SelectItem value="pie">Pie Chart</SelectItem>
-                                          <SelectItem value="area">Area Chart</SelectItem>
-                                        </SelectContent>
-                                      </Select>
-                                      <div className="flex items-center gap-2 text-xs text-[#4A5568]">
-                                        <BarChart className="w-4 h-4" />
-                                        Configure data source in advanced settings
-                                      </div>
+                                  {(section.type === 'chart' || section.type === 'table') && (
+                                    <div className="space-y-3">
+                                      {section.type === 'chart' && (
+                                        <Select 
+                                          value={section.chart_type || 'bar'} 
+                                          onValueChange={(v) => updateSection(index, 'chart_type', v)}
+                                        >
+                                          <SelectTrigger className="bg-[#1A1B1E] border-[#2C2E33] text-sm">
+                                            <SelectValue placeholder="Chart type..." />
+                                          </SelectTrigger>
+                                          <SelectContent className="bg-[#2C2E33] border-[#3a3d44]">
+                                            <SelectItem value="bar">Bar Chart</SelectItem>
+                                            <SelectItem value="line">Line Chart</SelectItem>
+                                            <SelectItem value="pie">Pie Chart</SelectItem>
+                                            <SelectItem value="area">Area Chart</SelectItem>
+                                          </SelectContent>
+                                        </Select>
+                                      )}
+                                      
+                                      <ChartTableConfig
+                                        section={section}
+                                        updateSection={updateSectionField(index)}
+                                        getFieldOptionsForEntity={getFieldOptionsForEntity}
+                                        workflowTemplates={workflowTemplates}
+                                        products={products}
+                                        services={services}
+                                      />
                                     </div>
-                                  )}
-
-                                  {section.type === 'appendix' && (
-                                    <Textarea
-                                      value={section.ai_prompt}
-                                      onChange={(e) => updateSection(index, 'ai_prompt', e.target.value)}
-                                      placeholder="AI instructions for appendix content..."
-                                      className="bg-[#1A1B1E] border-[#2C2E33] text-sm h-20"
-                                    />
                                   )}
                                 </div>
                                 <button 
