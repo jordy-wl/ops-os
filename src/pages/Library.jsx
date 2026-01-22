@@ -4,6 +4,9 @@ import { base44 } from '@/api/base44Client';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import CreateTemplateModal from '@/components/library/CreateTemplateModal';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   BookOpen,
   FileText,
@@ -20,7 +23,8 @@ import {
   Lightbulb,
   Filter,
   Palette,
-  Trash
+  Trash,
+  X
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
