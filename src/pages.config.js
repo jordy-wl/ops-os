@@ -1,10 +1,12 @@
 import AIWorkflowStudio from './pages/AIWorkflowStudio';
+import BrandKits from './pages/BrandKits';
 import BusinessConceptDetail from './pages/BusinessConceptDetail';
 import ClientDetail from './pages/ClientDetail';
 import ClientForm from './pages/ClientForm';
 import Clients from './pages/Clients';
 import DealBuilder from './pages/DealBuilder';
 import DealRoom from './pages/DealRoom';
+import DocumentTemplates from './pages/DocumentTemplates';
 import FormTemplates from './pages/FormTemplates';
 import Glossary from './pages/Glossary';
 import KnowledgeLibrary from './pages/KnowledgeLibrary';
@@ -19,19 +21,19 @@ import Settings from './pages/Settings';
 import Strategy from './pages/Strategy';
 import WorkflowBuilder from './pages/WorkflowBuilder';
 import Workflows from './pages/Workflows';
-import DocumentTemplates from './pages/DocumentTemplates';
-import BrandKits from './pages/BrandKits';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
     "AIWorkflowStudio": AIWorkflowStudio,
+    "BrandKits": BrandKits,
     "BusinessConceptDetail": BusinessConceptDetail,
     "ClientDetail": ClientDetail,
     "ClientForm": ClientForm,
     "Clients": Clients,
     "DealBuilder": DealBuilder,
     "DealRoom": DealRoom,
+    "DocumentTemplates": DocumentTemplates,
     "FormTemplates": FormTemplates,
     "Glossary": Glossary,
     "KnowledgeLibrary": KnowledgeLibrary,
@@ -46,8 +48,6 @@ export const PAGES = {
     "Strategy": Strategy,
     "WorkflowBuilder": WorkflowBuilder,
     "Workflows": Workflows,
-    "DocumentTemplates": DocumentTemplates,
-    "BrandKits": BrandKits,
 }
 
 export const pagesConfig = {

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
@@ -18,7 +18,9 @@ import {
   Link as LinkIcon,
   ClipboardList,
   Lightbulb,
-  Filter
+  Filter,
+  Palette,
+  Trash
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -90,12 +92,15 @@ function TemplateCard({ template, onEdit }) {
 
 export default function Library() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('documents'); // documents, forms, sops, assets, knowledge
+  const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState('documents'); // documents, forms, sops, assets, knowledge, brandkits
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [clientFilter, setClientFilter] = useState('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState(null);
+  const [showBrandKitModal, setShowBrandKitModal] = useState(false);
+  const [editingBrandKit, setEditingBrandKit] = useState(null);
 
   const { data: templates = [], isLoading: templatesLoading } = useQuery({
     queryKey: ['document-templates'],
@@ -117,6 +122,12 @@ export default function Library() {
     queryKey: ['clients'],
     queryFn: () => base44.entities.Client.list('name', 100),
     enabled: activeTab === 'documents',
+  });
+
+  const { data: brandKits = [], isLoading: brandKitsLoading } = useQuery({
+    queryKey: ['brand-kits'],
+    queryFn: () => base44.entities.BrandKit.list('-created_date', 50),
+    enabled: activeTab === 'brandkits',
   });
 
   const filteredTemplates = templates.filter(t => {
@@ -209,6 +220,17 @@ export default function Library() {
           >
             <Lightbulb className="w-4 h-4 inline mr-2" />
             Knowledge
+          </button>
+          <button
+            onClick={() => setActiveTab('brandkits')}
+            className={`px-4 py-2 rounded-md text-sm transition-all ${
+              activeTab === 'brandkits' 
+                ? 'bg-[#2C2E33] text-[#00E5FF] shadow' 
+                : 'text-[#A0AEC0] hover:text-[#F5F5F5]'
+            }`}
+          >
+            <Palette className="w-4 h-4 inline mr-2" />
+            Brand Kits
           </button>
         </div>
 
@@ -434,6 +456,258 @@ export default function Library() {
           </div>
         )
       )}
+
+      {activeTab === 'brandkits' && (
+        <div>
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-sm font-semibold text-[#A0AEC0]">Brand Kits</h3>
+            <button 
+              onClick={() => setShowBrandKitModal(true)}
+              className="px-4 py-2 rounded-lg bg-gradient-to-r from-[#00E5FF] to-[#0099ff] text-[#121212] font-medium text-sm hover:shadow-lg hover:shadow-[#00E5FF]/30 transition-all flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              New Brand Kit
+            </button>
+          </div>
+
+          {brandKitsLoading ? (
+            <div className="grid grid-cols-3 gap-4">
+              {[1,2,3].map(i => (
+                <div key={i} className="h-48 bg-[#2C2E33] rounded-xl animate-pulse" />
+              ))}
+            </div>
+          ) : brandKits.length === 0 ? (
+            <div className="neumorphic-pressed rounded-xl p-12 text-center">
+              <Palette className="w-12 h-12 text-[#4A5568] mx-auto mb-4" />
+              <h3 className="font-medium mb-2">No Brand Kits</h3>
+              <p className="text-[#A0AEC0] mb-4">Create a brand kit to apply consistent styling to your documents.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 gap-4">
+              {brandKits.map(kit => (
+                <BrandKitCard 
+                  key={kit.id} 
+                  kit={kit} 
+                  onEdit={() => setEditingBrandKit(kit)}
+                  queryClient={queryClient}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {showBrandKitModal && (
+        <BrandKitModal 
+          isOpen={showBrandKitModal}
+          onClose={() => {
+            setShowBrandKitModal(false);
+            setEditingBrandKit(null);
+          }}
+          brandKit={editingBrandKit}
+        />
+      )}
+    </div>
+  );
+}
+
+function BrandKitCard({ kit, onEdit, queryClient }) {
+  const deleteMutation = useMutation({
+    mutationFn: () => base44.entities.BrandKit.delete(kit.id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['brand-kits'] });
+    }
+  });
+
+  return (
+    <div className="neumorphic-raised rounded-xl p-5 group relative">
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex items-center gap-3 flex-1">
+          {kit.logo_url && (
+            <img src={kit.logo_url} alt={kit.name} className="w-10 h-10 object-contain rounded" />
+          )}
+          <div className="flex-1 min-w-0">
+            <h3 className="font-medium truncate">{kit.name}</h3>
+            {kit.is_default && (
+              <span className="text-xs px-2 py-0.5 rounded bg-[#00E5FF]/20 text-[#00E5FF]">Default</span>
+            )}
+          </div>
+        </div>
+        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button 
+            onClick={onEdit}
+            className="p-1.5 rounded-lg hover:bg-[#3a3d44]"
+          >
+            <Edit className="w-4 h-4 text-[#A0AEC0]" />
+          </button>
+          <button 
+            onClick={() => deleteMutation.mutate()}
+            className="p-1.5 rounded-lg hover:bg-red-500/20"
+          >
+            <Trash className="w-4 h-4 text-red-400" />
+          </button>
+        </div>
+      </div>
+
+      <p className="text-sm text-[#A0AEC0] line-clamp-2 mb-4">
+        {kit.description || 'No description'}
+      </p>
+
+      <div className="flex items-center gap-2">
+        <div 
+          className="w-6 h-6 rounded-full border-2 border-white/20" 
+          style={{ backgroundColor: kit.primary_color }}
+        />
+        <div 
+          className="w-6 h-6 rounded-full border-2 border-white/20" 
+          style={{ backgroundColor: kit.secondary_color }}
+        />
+        <div 
+          className="w-6 h-6 rounded-full border-2 border-white/20" 
+          style={{ backgroundColor: kit.accent_color }}
+        />
+        <span className="text-xs text-[#4A5568] ml-auto">{kit.font_family?.split(',')[0]}</span>
+      </div>
+    </div>
+  );
+}
+
+function BrandKitModal({ isOpen, onClose, brandKit }) {
+  const queryClient = useQueryClient();
+  const [formData, setFormData] = useState(brandKit || {
+    name: '',
+    description: '',
+    logo_url: '',
+    primary_color: '#00E5FF',
+    secondary_color: '#BD00FF',
+    accent_color: '#F5F5F5',
+    font_family: 'Inter, sans-serif',
+    font_family_heading: 'Poppins, sans-serif',
+    is_default: false
+  });
+
+  const mutation = useMutation({
+    mutationFn: (data) => brandKit
+      ? base44.entities.BrandKit.update(brandKit.id, data)
+      : base44.entities.BrandKit.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['brand-kits'] });
+      onClose();
+    }
+  });
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/70" onClick={onClose} />
+      <div className="glass rounded-2xl w-full max-w-2xl relative z-10 p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold flex items-center gap-2">
+            <Palette className="w-5 h-5 text-[#00E5FF]" />
+            {brandKit ? 'Edit' : 'Create'} Brand Kit
+          </h2>
+          <button onClick={onClose} className="p-2 rounded-lg hover:bg-[#2C2E33]">
+            <X className="w-5 h-5 text-[#A0AEC0]" />
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Name *</label>
+            <Input
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="e.g., Company Brand Kit"
+              className="bg-[#1A1B1E] border-[#2C2E33]"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Description</label>
+            <Textarea
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder="Brief description..."
+              className="bg-[#1A1B1E] border-[#2C2E33] h-20"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Logo URL</label>
+            <Input
+              value={formData.logo_url}
+              onChange={(e) => setFormData({ ...formData, logo_url: e.target.value })}
+              placeholder="https://..."
+              className="bg-[#1A1B1E] border-[#2C2E33]"
+            />
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Primary Color</label>
+              <input
+                type="color"
+                value={formData.primary_color}
+                onChange={(e) => setFormData({ ...formData, primary_color: e.target.value })}
+                className="w-full h-10 rounded-lg cursor-pointer"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Secondary Color</label>
+              <input
+                type="color"
+                value={formData.secondary_color}
+                onChange={(e) => setFormData({ ...formData, secondary_color: e.target.value })}
+                className="w-full h-10 rounded-lg cursor-pointer"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Accent Color</label>
+              <input
+                type="color"
+                value={formData.accent_color}
+                onChange={(e) => setFormData({ ...formData, accent_color: e.target.value })}
+                className="w-full h-10 rounded-lg cursor-pointer"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Body Font</label>
+              <Input
+                value={formData.font_family}
+                onChange={(e) => setFormData({ ...formData, font_family: e.target.value })}
+                placeholder="Inter, sans-serif"
+                className="bg-[#1A1B1E] border-[#2C2E33]"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Heading Font</label>
+              <Input
+                value={formData.font_family_heading}
+                onChange={(e) => setFormData({ ...formData, font_family_heading: e.target.value })}
+                placeholder="Poppins, sans-serif"
+                className="bg-[#1A1B1E] border-[#2C2E33]"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="flex gap-3 mt-6">
+          <Button variant="outline" onClick={onClose} className="flex-1">
+            Cancel
+          </Button>
+          <Button 
+            onClick={() => mutation.mutate(formData)}
+            disabled={!formData.name || mutation.isPending}
+            className="flex-1 bg-gradient-to-r from-[#00E5FF] to-[#0099ff] text-[#121212]"
+          >
+            {mutation.isPending ? 'Saving...' : brandKit ? 'Update' : 'Create'}
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
