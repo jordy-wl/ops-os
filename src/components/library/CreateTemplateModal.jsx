@@ -323,20 +323,31 @@ export default function CreateTemplateModal({ isOpen, onClose, template }) {
               Branding & Output
             </h3>
             
-            <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Brand Kit</label>
-                <Select value={formData.brand_kit_id || ''} onValueChange={(v) => setFormData({ ...formData, brand_kit_id: v || null })}>
-                  <SelectTrigger className="bg-[#1A1B1E] border-[#2C2E33]">
-                    <SelectValue placeholder="Select brand kit..." />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[#2C2E33] border-[#3a3d44]">
-                    <SelectItem value={null}>None</SelectItem>
-                    {brandKits.map(kit => (
-                      <SelectItem key={kit.id} value={kit.id}>{kit.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <label className="flex items-center gap-2 text-sm text-[#A0AEC0] cursor-pointer mb-2">
+                  <input
+                    type="checkbox"
+                    checked={!!formData.brand_kit_id}
+                    onChange={(e) => setFormData({ ...formData, brand_kit_id: e.target.checked ? (brandKits[0]?.id || null) : null })}
+                    className="rounded"
+                  />
+                  <Palette className="w-4 h-4" />
+                  Include Brand Kit
+                </label>
+                
+                {formData.brand_kit_id && (
+                  <Select value={formData.brand_kit_id} onValueChange={(v) => setFormData({ ...formData, brand_kit_id: v })}>
+                    <SelectTrigger className="bg-[#1A1B1E] border-[#2C2E33]">
+                      <SelectValue placeholder="Select brand kit..." />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#2C2E33] border-[#3a3d44]">
+                      {brandKits.map(kit => (
+                        <SelectItem key={kit.id} value={kit.id}>{kit.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
 
               <div>
@@ -353,20 +364,6 @@ export default function CreateTemplateModal({ isOpen, onClose, template }) {
                 </Select>
               </div>
             </div>
-
-            <div className="pt-3 border-t border-[#2C2E33]">
-              <label className="flex items-center gap-2 text-sm text-[#A0AEC0] cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={formData.include_appendix || false}
-                  onChange={(e) => setFormData({ ...formData, include_appendix: e.target.checked })}
-                  className="rounded"
-                />
-                <FileCheck className="w-4 h-4" />
-                Include Appendix
-                <span className="text-xs text-[#4A5568]">(Auto-generates supplementary information)</span>
-              </label>
-            </div>
           </div>
 
           {/* Document Sections */}
@@ -381,10 +378,22 @@ export default function CreateTemplateModal({ isOpen, onClose, template }) {
                   <p className="text-xs text-[#A0AEC0]">Build your document section by section with AI</p>
                 </div>
               </div>
-              <Button size="sm" onClick={addSection} className="bg-[#BD00FF]/20 text-[#BD00FF] hover:bg-[#BD00FF]/30 h-8">
-                <Plus className="w-3 h-3 mr-1" />
-                Add Section
-              </Button>
+              <div className="flex items-center gap-3">
+                <label className="flex items-center gap-2 text-xs text-[#A0AEC0] cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.include_appendix || false}
+                    onChange={(e) => setFormData({ ...formData, include_appendix: e.target.checked })}
+                    className="rounded"
+                  />
+                  <FileCheck className="w-4 h-4" />
+                  Include Appendix
+                </label>
+                <Button size="sm" onClick={addSection} className="bg-[#BD00FF]/20 text-[#BD00FF] hover:bg-[#BD00FF]/30 h-8">
+                  <Plus className="w-3 h-3 mr-1" />
+                  Add Section
+                </Button>
+              </div>
             </div>
 
             {(!formData.sections || formData.sections.length === 0) ? (
