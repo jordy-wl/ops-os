@@ -97,6 +97,18 @@ export default function CreateTemplateModal({ isOpen, onClose, template }) {
     enabled: isOpen
   });
 
+  const { data: brandKits = [] } = useQuery({
+    queryKey: ['brand-kits'],
+    queryFn: () => base44.entities.BrandKit.list('-created_date', 50),
+    enabled: isOpen
+  });
+
+  const { data: glossaryTerms = [] } = useQuery({
+    queryKey: ['glossary-terms'],
+    queryFn: () => base44.entities.GlossaryTerm.list('term', 100),
+    enabled: isOpen
+  });
+
   const entityOptions = ['Client', 'Workflow'];
 
   const createMutation = useMutation({
