@@ -24,7 +24,6 @@ export default function CreateTemplateModal({ isOpen, onClose, template }) {
     description: '',
     category: 'other',
     sections: [],
-    glossary_term_ids: [],
     brand_kit_id: null,
     output_format: 'pdf'
   });
@@ -144,14 +143,6 @@ export default function CreateTemplateModal({ isOpen, onClose, template }) {
     queryFn: () => base44.entities.BrandKit.list('-created_date', 50),
     enabled: isOpen
   });
-
-  const { data: glossaryTerms = [] } = useQuery({
-    queryKey: ['glossary-terms'],
-    queryFn: () => base44.entities.GlossaryTerm.list('term', 100),
-    enabled: isOpen
-  });
-
-  const entityOptions = ['Client', 'Workflow'];
 
   const createMutation = useMutation({
     mutationFn: (data) => template 
@@ -397,11 +388,10 @@ export default function CreateTemplateModal({ isOpen, onClose, template }) {
                                         <SelectValue />
                                       </SelectTrigger>
                                       <SelectContent className="bg-[#2C2E33] border-[#3a3d44]">
-                                        <SelectItem value="text">Text</SelectItem>
-                                        <SelectItem value="chart">Chart</SelectItem>
-                                        <SelectItem value="table">Table</SelectItem>
-                                        <SelectItem value="glossary">Glossary</SelectItem>
-                                        <SelectItem value="appendix">Appendix</SelectItem>
+                                       <SelectItem value="text">Text</SelectItem>
+                                       <SelectItem value="chart">Chart</SelectItem>
+                                       <SelectItem value="table">Table</SelectItem>
+                                       <SelectItem value="appendix">Appendix</SelectItem>
                                       </SelectContent>
                                     </Select>
                                   </div>
@@ -497,10 +487,13 @@ export default function CreateTemplateModal({ isOpen, onClose, template }) {
                                     </div>
                                   )}
 
-                                  {section.type === 'glossary' && (
-                                    <p className="text-xs text-[#4A5568]">
-                                      Automatically includes selected glossary terms below
-                                    </p>
+                                  {section.type === 'appendix' && (
+                                    <Textarea
+                                      value={section.ai_prompt}
+                                      onChange={(e) => updateSection(index, 'ai_prompt', e.target.value)}
+                                      placeholder="AI instructions for appendix content..."
+                                      className="bg-[#1A1B1E] border-[#2C2E33] text-sm h-20"
+                                    />
                                   )}
                                 </div>
                                 <button 
@@ -520,16 +513,6 @@ export default function CreateTemplateModal({ isOpen, onClose, template }) {
                 </Droppable>
               </DragDropContext>
             )}
-
-            <div className="mt-4">
-              <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Glossary Terms</label>
-              <MultiSelectField
-                options={glossaryTerms.map(t => ({ path: t.id, label: t.term }))}
-                value={formData.glossary_term_ids || []}
-                onChange={(v) => setFormData({ ...formData, glossary_term_ids: v })}
-                placeholder="Select terms for glossary/appendix..."
-              />
-            </div>
           </div>
         </div>
 
