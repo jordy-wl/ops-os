@@ -56,6 +56,48 @@ export default function CreateTemplateModal({ isOpen, onClose, template }) {
     }));
   }, []);
 
+  // Build Product fields from schema
+  const productFields = useMemo(() => {
+    const productSchema = {
+      name: { description: 'Product name' },
+      short_description: { description: 'Short description' },
+      description: { description: 'Description' },
+      features: { description: 'Features' },
+      target_audience: { description: 'Target audience' },
+      base_price: { description: 'Base price' },
+      calculation_method: { description: 'Calculation method' },
+      fee_value: { description: 'Fee value' },
+      fee_unit: { description: 'Fee unit' },
+      frequency: { description: 'Frequency' },
+      category: { description: 'Category' }
+    };
+    return Object.entries(productSchema).map(([path, schema]) => ({
+      path,
+      label: getFieldLabel(path, schema)
+    }));
+  }, []);
+
+  // Build Service fields from schema
+  const serviceFields = useMemo(() => {
+    const serviceSchema = {
+      name: { description: 'Service name' },
+      short_description: { description: 'Short description' },
+      description: { description: 'Description' },
+      features: { description: 'Features' },
+      target_audience: { description: 'Target audience' },
+      base_price: { description: 'Base price' },
+      calculation_method: { description: 'Calculation method' },
+      fee_value: { description: 'Fee value' },
+      fee_unit: { description: 'Fee unit' },
+      frequency: { description: 'Frequency' },
+      category: { description: 'Category' }
+    };
+    return Object.entries(serviceSchema).map(([path, schema]) => ({
+      path,
+      label: getFieldLabel(path, schema)
+    }));
+  }, []);
+
   // Fetch workflow templates and their task fields
   const { data: workflowFields = [] } = useQuery({
     queryKey: ['workflow-fields'],
@@ -171,9 +213,19 @@ export default function CreateTemplateModal({ isOpen, onClose, template }) {
     const section = updated[sectionIndex];
     section.data_references = [
       ...(section.data_references || []),
-      { entity_type: 'Client', field_paths: [], usage_prompt: '' }
+      { entity_type: 'Client', field_paths: [], usage_prompt: '', use_entire_entity: false }
     ];
     setFormData({ ...formData, sections: updated });
+  };
+
+  const getFieldOptionsForEntity = (entityType) => {
+    switch (entityType) {
+      case 'Client': return clientFields;
+      case 'Workflow': return workflowFields;
+      case 'Product': return productFields;
+      case 'Service': return serviceFields;
+      default: return [];
+    }
   };
 
   const updateDataReference = (sectionIndex, refIndex, field, value) => {
@@ -374,33 +426,48 @@ export default function CreateTemplateModal({ isOpen, onClose, template }) {
                                           </button>
                                         </div>
                                         {section.data_references?.map((ref, refIdx) => (
-                                          <div key={refIdx} className="flex gap-2 mb-2">
-                                            <Select 
-                                              value={ref.entity_type} 
-                                              onValueChange={(v) => updateDataReference(index, refIdx, 'entity_type', v)}
-                                            >
-                                              <SelectTrigger className="w-28 bg-[#1A1B1E] border-[#2C2E33] text-xs h-7">
-                                                <SelectValue />
-                                              </SelectTrigger>
-                                              <SelectContent className="bg-[#2C2E33] border-[#3a3d44]">
-                                                <SelectItem value="Client">Client</SelectItem>
-                                                <SelectItem value="Workflow">Workflow</SelectItem>
-                                              </SelectContent>
-                                            </Select>
-                                            <div className="flex-1">
-                                              <MultiSelectField
-                                                options={ref.entity_type === 'Client' ? clientFields : workflowFields}
-                                                value={ref.field_paths || []}
-                                                onChange={(v) => updateDataReference(index, refIdx, 'field_paths', v)}
-                                                placeholder="Fields..."
-                                              />
+                                          <div key={refIdx} className="space-y-2 mb-3 p-2 bg-[#1A1B1E] rounded">
+                                            <div className="flex gap-2">
+                                              <Select 
+                                                value={ref.entity_type} 
+                                                onValueChange={(v) => updateDataReference(index, refIdx, 'entity_type', v)}
+                                              >
+                                                <SelectTrigger className="w-28 bg-[#2C2E33] border-[#3a3d44] text-xs h-7">
+                                                  <SelectValue />
+                                                </SelectTrigger>
+                                                <SelectContent className="bg-[#2C2E33] border-[#3a3d44]">
+                                                  <SelectItem value="Client">Client</SelectItem>
+                                                  <SelectItem value="Workflow">Workflow</SelectItem>
+                                                  <SelectItem value="Product">Product</SelectItem>
+                                                  <SelectItem value="Service">Service</SelectItem>
+                                                </SelectContent>
+                                              </Select>
+                                              <label className="flex items-center gap-1 text-xs text-[#A0AEC0]">
+                                                <input
+                                                  type="checkbox"
+                                                  checked={ref.use_entire_entity || false}
+                                                  onChange={(e) => updateDataReference(index, refIdx, 'use_entire_entity', e.target.checked)}
+                                                  className="rounded"
+                                                />
+                                                Entire entity
+                                              </label>
+                                              <button 
+                                                onClick={() => removeDataReference(index, refIdx)}
+                                                className="ml-auto p-1 hover:bg-[#3a3d44] rounded"
+                                              >
+                                                <Trash2 className="w-3 h-3 text-red-400" />
+                                              </button>
                                             </div>
-                                            <button 
-                                              onClick={() => removeDataReference(index, refIdx)}
-                                              className="p-1 hover:bg-[#3a3d44] rounded"
-                                            >
-                                              <Trash2 className="w-3 h-3 text-red-400" />
-                                            </button>
+                                            {!ref.use_entire_entity && (
+                                              <div>
+                                                <MultiSelectField
+                                                  options={getFieldOptionsForEntity(ref.entity_type)}
+                                                  value={ref.field_paths || []}
+                                                  onChange={(v) => updateDataReference(index, refIdx, 'field_paths', v)}
+                                                  placeholder="Select specific fields..."
+                                                />
+                                              </div>
+                                            )}
                                           </div>
                                         ))}
                                       </div>
