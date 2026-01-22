@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import puppeteer from 'npm:puppeteer@23.11.0';
 
 Deno.serve(async (req) => {
   try {
@@ -50,137 +51,256 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Document template not found' }, { status: 404 });
     }
 
+    // Fetch brand kit if specified
+    let brandKit = null;
+    if (documentTemplate.brand_kit_id) {
+      brandKit = await base44.entities.BrandKit.filter({ 
+        id: documentTemplate.brand_kit_id 
+      }).then(r => r[0]);
+    }
+
+    // Fetch glossary terms if specified
+    let glossaryTerms = [];
+    if (documentTemplate.glossary_term_ids?.length > 0) {
+      glossaryTerms = await Promise.all(
+        documentTemplate.glossary_term_ids.map(id =>
+          base44.entities.GlossaryTerm.filter({ id }).then(r => r[0])
+        )
+      );
+    }
+
     // Gather all task instances for this deliverable
     const taskInstances = await base44.entities.TaskInstance.filter({
       deliverable_instance_id: deliverable_instance_id,
       status: 'completed'
     });
 
-    // Build context data from required_entity_data
-    const contextData = {};
-    
-    if (documentTemplate.required_entity_data) {
-      for (const dataReq of documentTemplate.required_entity_data) {
-        const { entity_type, field_path, description } = dataReq;
-        
-        if (!field_path) continue; // Skip if field_path is undefined
-        
-        if (entity_type === 'Client' && client) {
-          const value = getNestedValue(client, field_path);
-          if (value !== undefined) {
-            contextData[`client_${field_path.replace(/\./g, '_')}`] = {
-              value,
-              description: description || `Client ${field_path}`
-            };
-          }
-        } else if (entity_type === 'WorkflowInstance' && workflowInstance) {
-          const value = getNestedValue(workflowInstance, field_path);
-          if (value !== undefined) {
-            contextData[`workflow_${field_path.replace(/\./g, '_')}`] = {
-              value,
-              description: description || `Workflow ${field_path}`
-            };
-          }
-        } else if (entity_type === 'TaskInstance') {
-          // Collect all task field values
-          for (const task of taskInstances) {
-            if (task.field_values) {
-              for (const [fieldName, fieldValue] of Object.entries(task.field_values)) {
-                contextData[`task_${task.name}_${fieldName}`.replace(/\s+/g, '_').toLowerCase()] = {
-                  value: fieldValue,
-                  description: `From task "${task.name}": ${fieldName}`
-                };
-              }
+    // Build context data helper function
+    const buildContextData = (dataReferences) => {
+      const contextData = {};
+      for (const ref of dataReferences) {
+        const { entity_type, field_paths } = ref;
+        for (const field_path of field_paths || []) {
+          if (entity_type === 'Client' && client) {
+            const value = getNestedValue(client, field_path);
+            if (value !== undefined) {
+              contextData[`client_${field_path.replace(/\./g, '_')}`] = {
+                value,
+                description: `Client ${field_path}`
+              };
+            }
+          } else if (entity_type === 'Workflow' && workflowInstance) {
+            const value = getNestedValue(workflowInstance, field_path);
+            if (value !== undefined) {
+              contextData[`workflow_${field_path.replace(/\./g, '_')}`] = {
+                value,
+                description: `Workflow ${field_path}`
+              };
             }
           }
         }
       }
-    }
+      // Add task data
+      for (const task of taskInstances) {
+        if (task.field_values) {
+          for (const [fieldName, fieldValue] of Object.entries(task.field_values)) {
+            contextData[`task_${task.name}_${fieldName}`.replace(/\s+/g, '_').toLowerCase()] = {
+              value: fieldValue,
+              description: `From task "${task.name}": ${fieldName}`
+            };
+          }
+        }
+      }
+      return contextData;
+    };
 
-    // Build AI prompt
-    const contextString = Object.entries(contextData)
-      .map(([key, data]) => `- ${data.description}: ${JSON.stringify(data.value)}`)
-      .join('\n');
+    // Generate content for each section
+    const sections = documentTemplate.sections || [];
+    const generatedSections = [];
 
-    const aiPrompt = `
-You are generating a professional business document based on the following template and context.
+    for (const section of sections.sort((a, b) => a.order - b.order)) {
+      if (section.type === 'text') {
+        const contextData = buildContextData(section.data_references || []);
+        const contextString = Object.entries(contextData)
+          .map(([key, data]) => `- ${data.description}: ${JSON.stringify(data.value)}`)
+          .join('\n');
 
-DOCUMENT TEMPLATE STRUCTURE:
-${documentTemplate.document_outline || 'Standard business document'}
+        const sectionPrompt = `
+Generate content for the "${section.title}" section of a professional business document.
 
-TEMPLATE CONTENT BASE:
-${stripHtml(documentTemplate.content_template || '')}
-
-AI GENERATION INSTRUCTIONS:
-${documentTemplate.ai_prompt_instructions || 'Generate professional, clear content based on the context provided.'}
+SECTION INSTRUCTIONS:
+${section.ai_prompt || 'Generate professional, clear content.'}
 
 CONTEXT DATA:
 ${contextString}
 
-CLIENT INFORMATION:
-- Name: ${client?.name || 'N/A'}
-- Industry: ${client?.industry || 'N/A'}
-- Region: ${client?.region || 'N/A'}
-- Lifecycle Stage: ${client?.lifecycle_stage || 'N/A'}
+CLIENT: ${client?.name || 'N/A'} (${client?.industry || 'N/A'})
+WORKFLOW: ${workflowInstance?.name || 'N/A'}
 
-WORKFLOW INFORMATION:
-- Workflow: ${workflowInstance?.name || 'N/A'}
-- Status: ${workflowInstance?.status || 'N/A'}
+Generate the section content in HTML format with appropriate heading tags.
+        `.trim();
 
-Please generate the complete document content in ${documentTemplate.output_format || 'markdown'} format. 
-Use all the context data provided above to create a comprehensive, professional document.
-Follow the template structure and generation instructions precisely.
-    `.trim();
+        const content = await base44.integrations.Core.InvokeLLM({
+          prompt: sectionPrompt,
+          add_context_from_internet: false
+        });
 
-    // Call AI to generate document
-    const aiResponse = await base44.integrations.Core.InvokeLLM({
-      prompt: aiPrompt,
-      add_context_from_internet: false
-    });
+        generatedSections.push({
+          title: section.title,
+          type: section.type,
+          content
+        });
+      } else if (section.type === 'chart') {
+        generatedSections.push({
+          title: section.title,
+          type: section.type,
+          content: `<div class="chart-placeholder"><p>Chart: ${section.chart_type || 'bar'}</p><p>${section.title}</p></div>`
+        });
+      } else if (section.type === 'glossary') {
+        const glossaryHtml = glossaryTerms.map(term => 
+          `<div class="glossary-term"><strong>${term.term}</strong>: ${term.definition}</div>`
+        ).join('\n');
+        generatedSections.push({
+          title: section.title,
+          type: section.type,
+          content: `<div class="glossary">${glossaryHtml}</div>`
+        });
+      } else if (section.type === 'table' || section.type === 'appendix') {
+        generatedSections.push({
+          title: section.title,
+          type: section.type,
+          content: `<div class="${section.type}"><p>${section.title} content will be generated here.</p></div>`
+        });
+      }
+    }
 
-    // Determine file extension and handle PDF generation
+    // Build branded HTML document
+    const sectionsHtml = generatedSections.map(section => `
+      <section class="document-section ${section.type}">
+        <h2>${section.title}</h2>
+        ${section.content}
+      </section>
+    `).join('\n');
+
+    const brandedHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>${documentTemplate.name}</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=${encodeURIComponent(brandKit?.font_family_heading || 'Poppins')}:wght@300;400;600&family=${encodeURIComponent(brandKit?.font_family || 'Inter')}:wght@300;400;500&display=swap');
+    
+    body {
+      font-family: ${brandKit?.font_family || 'Inter, sans-serif'};
+      color: #333;
+      line-height: 1.6;
+      margin: 0;
+      padding: 40px;
+    }
+    
+    h1, h2, h3 {
+      font-family: ${brandKit?.font_family_heading || 'Poppins, sans-serif'};
+      color: ${brandKit?.primary_color || '#00E5FF'};
+    }
+    
+    h1 { font-size: 32px; margin-bottom: 10px; }
+    h2 { font-size: 24px; margin-top: 30px; margin-bottom: 15px; }
+    h3 { font-size: 18px; margin-top: 20px; }
+    
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 3px solid ${brandKit?.primary_color || '#00E5FF'};
+      padding-bottom: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .logo {
+      max-width: 200px;
+      max-height: 80px;
+    }
+    
+    .document-section {
+      margin-bottom: 40px;
+    }
+    
+    .chart-placeholder {
+      background: ${brandKit?.accent_color || '#F5F5F5'};
+      padding: 40px;
+      text-align: center;
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+    
+    .glossary-term {
+      margin: 10px 0;
+      padding: 10px;
+      background: ${brandKit?.accent_color || '#F5F5F5'};
+      border-left: 3px solid ${brandKit?.secondary_color || '#BD00FF'};
+    }
+    
+    .footer {
+      margin-top: 60px;
+      padding-top: 20px;
+      border-top: 2px solid ${brandKit?.primary_color || '#00E5FF'};
+      text-align: center;
+      font-size: 12px;
+      color: #666;
+    }
+    
+    ${brandKit?.custom_css || ''}
+  </style>
+</head>
+<body>
+  ${brandKit?.header_html_template || `
+    <div class="header">
+      ${brandKit?.logo_url ? `<img src="${brandKit.logo_url}" class="logo" alt="Logo" />` : ''}
+      <div>
+        <h1>${documentTemplate.name}</h1>
+        <p>Generated for ${client?.name || 'Client'}</p>
+      </div>
+    </div>
+  `}
+  
+  ${sectionsHtml}
+  
+  ${brandKit?.footer_html_template || `
+    <div class="footer">
+      <p>Generated on ${new Date().toLocaleDateString()}</p>
+    </div>
+  `}
+</body>
+</html>
+    `;
+
     let fileUrl;
-    let finalContent = aiResponse;
+    let finalContent = brandedHtml;
     
     if (documentTemplate.output_format === 'pdf') {
-      // Generate PDF from markdown content
-      const { jsPDF } = await import('npm:jspdf@2.5.2');
-      const doc = new jsPDF();
+      // Generate PDF using Puppeteer for better rendering
+      const browser = await puppeteer.launch({
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+      });
+      const page = await browser.newPage();
+      await page.setContent(brandedHtml);
       
-      // Simple text wrapping for PDF
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const margin = 20;
-      const maxWidth = pageWidth - (margin * 2);
-      let y = 20;
+      const pdfBuffer = await page.pdf({
+        format: 'A4',
+        margin: {
+          top: brandKit?.page_margins?.top || '1in',
+          right: brandKit?.page_margins?.right || '1in',
+          bottom: brandKit?.page_margins?.bottom || '1in',
+          left: brandKit?.page_margins?.left || '1in'
+        },
+        printBackground: true
+      });
       
-      // Add title
-      doc.setFontSize(16);
-      doc.text(documentTemplate.name, margin, y);
-      y += 10;
+      await browser.close();
       
-      // Add content (strip markdown and format)
-      doc.setFontSize(10);
-      const lines = stripHtml(aiResponse).split('\n');
-      
-      for (const line of lines) {
-        if (y > 280) {
-          doc.addPage();
-          y = 20;
-        }
-        
-        if (line.trim()) {
-          const wrappedLines = doc.splitTextToSize(line, maxWidth);
-          doc.text(wrappedLines, margin, y);
-          y += wrappedLines.length * 7;
-        } else {
-          y += 5;
-        }
-      }
-      
-      const pdfBytes = doc.output('arraybuffer');
       const fileName = `${documentTemplate.name.replace(/\s+/g, '_')}_${new Date().getTime()}.pdf`;
-      
-      const pdfFile = new File([pdfBytes], fileName, { type: 'application/pdf' });
+      const pdfFile = new File([pdfBuffer], fileName, { type: 'application/pdf' });
       
       const uploadResponse = await base44.asServiceRole.integrations.Core.UploadFile({
         file: pdfFile
@@ -192,7 +312,7 @@ Follow the template structure and generation instructions precisely.
       const fileExtension = documentTemplate.output_format === 'html' ? 'html' : 'md';
       const fileName = `${documentTemplate.name.replace(/\s+/g, '_')}_${new Date().getTime()}.${fileExtension}`;
 
-      const textFile = new File([aiResponse], fileName, { type: 'text/plain' });
+      const textFile = new File([finalContent], fileName, { type: 'text/plain' });
 
       const uploadResponse = await base44.asServiceRole.integrations.Core.UploadFile({
         file: textFile
@@ -208,14 +328,15 @@ Follow the template structure and generation instructions precisely.
       workflow_instance_id: workflowInstance.id,
       document_template_id: documentTemplate.id,
       name: `${documentTemplate.name} - ${client?.name || 'Client'}`,
-      generated_content: aiResponse,
+      generated_content: finalContent,
       file_url: fileUrl,
       status: 'generated',
       generated_at: new Date().toISOString(),
       generated_by: 'ai',
       metadata: {
         generated_at: new Date().toISOString(),
-        context_data: contextData
+        sections: generatedSections.length,
+        brand_kit: brandKit?.name || 'none'
       }
     });
 
@@ -229,7 +350,8 @@ Follow the template structure and generation instructions precisely.
       success: true,
       document_instance_id: documentInstance.id,
       document_name: documentInstance.name,
-      content_preview: aiResponse.substring(0, 200) + '...'
+      file_url: fileUrl,
+      sections_generated: generatedSections.length
     });
 
   } catch (error) {
