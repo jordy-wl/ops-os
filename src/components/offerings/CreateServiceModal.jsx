@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { toast } from 'sonner';
 
 export default function CreateServiceModal({ isOpen, onClose, editingService }) {
   const queryClient = useQueryClient();
@@ -73,6 +74,7 @@ export default function CreateServiceModal({ isOpen, onClose, editingService }) 
       : base44.entities.Service.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['services'] });
+      toast.success(editingService ? 'Service updated' : 'Service created');
       onClose();
       setFormData({
         name: '',
@@ -96,6 +98,9 @@ export default function CreateServiceModal({ isOpen, onClose, editingService }) 
         is_active: true
       });
     },
+    onError: (error) => {
+      toast.error(error.message || 'Failed to save service');
+    }
   });
 
   const addItem = (field, value, setter) => {
