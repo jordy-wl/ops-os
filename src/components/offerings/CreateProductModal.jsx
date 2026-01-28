@@ -21,17 +21,6 @@ export default function CreateProductModal({ isOpen, onClose, editingProduct }) 
     short_description: '',
     description: '',
     category: 'software',
-    base_price: '',
-    currency: 'USD',
-    calculation_method: 'fixed_fee',
-    fee_value: '',
-    fee_unit: 'USD',
-    minimum_fee: '',
-    maximum_fee: '',
-    frequency: 'one_time',
-    is_pass_through: false,
-    tiered_structure: [],
-    conditions: {},
     features: [],
     target_audience: [],
     associated_workflows: [],
@@ -55,17 +44,6 @@ export default function CreateProductModal({ isOpen, onClose, editingProduct }) 
         short_description: editingProduct.short_description || '',
         description: editingProduct.description || '',
         category: editingProduct.category || 'software',
-        base_price: editingProduct.base_price || '',
-        currency: editingProduct.currency || 'USD',
-        calculation_method: editingProduct.calculation_method || 'fixed_fee',
-        fee_value: editingProduct.fee_value || '',
-        fee_unit: editingProduct.fee_unit || 'USD',
-        minimum_fee: editingProduct.minimum_fee || '',
-        maximum_fee: editingProduct.maximum_fee || '',
-        frequency: editingProduct.frequency || 'one_time',
-        is_pass_through: editingProduct.is_pass_through || false,
-        tiered_structure: editingProduct.tiered_structure || [],
-        conditions: editingProduct.conditions || {},
         features: editingProduct.features || [],
         target_audience: editingProduct.target_audience || [],
         associated_workflows: editingProduct.associated_workflows || [],
@@ -102,17 +80,6 @@ export default function CreateProductModal({ isOpen, onClose, editingProduct }) 
         short_description: '',
         description: '',
         category: 'software',
-        base_price: '',
-        currency: 'USD',
-        calculation_method: 'fixed_fee',
-        fee_value: '',
-        fee_unit: 'USD',
-        minimum_fee: '',
-        maximum_fee: '',
-        frequency: 'one_time',
-        is_pass_through: false,
-        tiered_structure: [],
-        conditions: {},
         features: [],
         target_audience: [],
         associated_workflows: [],
@@ -160,15 +127,7 @@ export default function CreateProductModal({ isOpen, onClose, editingProduct }) 
   };
 
   const handleSubmit = () => {
-    const submitData = { ...formData };
-    if (submitData.base_price) {
-      submitData.base_price = parseFloat(submitData.base_price);
-    }
-    // Parse numeric fields or set to null if empty
-    submitData.fee_value = submitData.fee_value ? parseFloat(submitData.fee_value) : null;
-    submitData.minimum_fee = submitData.minimum_fee ? parseFloat(submitData.minimum_fee) : null;
-    submitData.maximum_fee = submitData.maximum_fee ? parseFloat(submitData.maximum_fee) : null;
-    createMutation.mutate(submitData);
+    createMutation.mutate(formData);
   };
 
   if (!isOpen) return null;
@@ -285,61 +244,6 @@ export default function CreateProductModal({ isOpen, onClose, editingProduct }) 
                 setLocalPricingOptions={setLocalPricingOptions}
               />
             )}
-          </div>
-
-          {/* Legacy Pricing Configuration */}
-          <div className="space-y-4 border-t border-[#2C2E33] pt-4">
-            <h3 className="text-sm font-medium text-[#F5F5F5]">Base Pricing Configuration</h3>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Frequency</label>
-                <Select value={formData.frequency} onValueChange={(v) => setFormData({ ...formData, frequency: v })}>
-                  <SelectTrigger className="bg-[#1A1B1E] border-[#2C2E33]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[#2C2E33] border-[#3a3d44]">
-                    <SelectItem value="one_time">One Time</SelectItem>
-                    <SelectItem value="monthly">Monthly</SelectItem>
-                    <SelectItem value="quarterly">Quarterly</SelectItem>
-                    <SelectItem value="annually">Annually</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Fee Value</label>
-                <Input
-                  type="number"
-                  value={formData.fee_value}
-                  onChange={(e) => setFormData({ ...formData, fee_value: e.target.value })}
-                  className="bg-[#1A1B1E] border-[#2C2E33] focus:border-[#00E5FF]"
-                  placeholder="Optional"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Minimum Fee</label>
-                <Input
-                  type="number"
-                  value={formData.minimum_fee}
-                  onChange={(e) => setFormData({ ...formData, minimum_fee: e.target.value })}
-                  className="bg-[#1A1B1E] border-[#2C2E33] focus:border-[#00E5FF]"
-                  placeholder="Optional"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Maximum Fee</label>
-                <Input
-                  type="number"
-                  value={formData.maximum_fee}
-                  onChange={(e) => setFormData({ ...formData, maximum_fee: e.target.value })}
-                  className="bg-[#1A1B1E] border-[#2C2E33] focus:border-[#00E5FF]"
-                  placeholder="Optional"
-                />
-              </div>
-            </div>
           </div>
 
           <div>
