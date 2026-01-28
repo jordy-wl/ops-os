@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import PricingOptionsManager from './PricingOptionsManager';
+import LocalPricingOptionsEditor from './LocalPricingOptionsEditor';
 
 export default function CreateProductModal({ isOpen, onClose, editingProduct }) {
   const queryClient = useQueryClient();
