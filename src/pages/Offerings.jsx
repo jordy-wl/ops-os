@@ -230,15 +230,25 @@ function ConceptCard({ concept, onClick, onEdit, onDelete, userRole }) {
 }
 
 export default function Offerings() {
-  const [activeTab, setActiveTab] = useState('products');
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  
+  const urlParams = new URLSearchParams(window.location.search);
+  const tabFromUrl = urlParams.get('tab');
+  
+  const [activeTab, setActiveTab] = useState(tabFromUrl || 'products');
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateProduct, setShowCreateProduct] = useState(false);
   const [showCreateService, setShowCreateService] = useState(false);
   const [showCreateConcept, setShowCreateConcept] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [deletingItem, setDeletingItem] = useState(null);
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
+  
+  React.useEffect(() => {
+    if (tabFromUrl && ['products', 'services', 'concepts'].includes(tabFromUrl)) {
+      setActiveTab(tabFromUrl);
+    }
+  }, [tabFromUrl]);
 
   const { data: currentUser } = useQuery({
     queryKey: ['current-user'],
@@ -451,7 +461,7 @@ export default function Offerings() {
               <ProductCard
                 key={product.id}
                 product={product}
-                onClick={() => navigate(createPageUrl('OfferingDetail') + `?id=${product.id}&type=product`)}
+                onClick={() => navigate(createPageUrl('ProductDetail') + `?id=${product.id}`)}
                 onEdit={(p) => handleEdit(p, 'product')}
                 onDelete={(p) => handleDelete(p, 'product')}
                 userRole={currentUser?.role}
@@ -482,7 +492,7 @@ export default function Offerings() {
               <ServiceCard
                 key={service.id}
                 service={service}
-                onClick={() => navigate(createPageUrl('OfferingDetail') + `?id=${service.id}&type=service`)}
+                onClick={() => navigate(createPageUrl('ServiceDetail') + `?id=${service.id}`)}
                 onEdit={(s) => handleEdit(s, 'service')}
                 onDelete={(s) => handleDelete(s, 'service')}
                 userRole={currentUser?.role}

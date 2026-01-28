@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { useNavigate } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
 import { X, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 
 export default function CreateProductModal({ isOpen, onClose, editingProduct }) {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
     short_description: '',
