@@ -39,6 +39,7 @@ export default function CreateServiceModal({ isOpen, onClose, editingService }) 
   const [newFeature, setNewFeature] = useState('');
   const [newAudience, setNewAudience] = useState('');
   const [workflowSearch, setWorkflowSearch] = useState('');
+  const [localPricingOptions, setLocalPricingOptions] = useState([]);
 
   const { data: workflows = [] } = useQuery({
     queryKey: ['workflow-templates'],
