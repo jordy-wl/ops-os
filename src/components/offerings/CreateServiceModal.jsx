@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
+import PricingOptionsManager from './PricingOptionsManager';
 
 export default function CreateServiceModal({ isOpen, onClose, editingService }) {
   const queryClient = useQueryClient();
@@ -241,9 +242,16 @@ export default function CreateServiceModal({ isOpen, onClose, editingService }) 
             </div>
           </div>
 
-          {/* Pricing Configuration */}
+          {/* Pricing Options */}
+          {editingService && (
+            <div className="border-t border-[#2C2E33] pt-4">
+              <PricingOptionsManager serviceId={editingService.id} isEditing={true} />
+            </div>
+          )}
+
+          {/* Legacy Pricing Configuration */}
           <div className="space-y-4 border-t border-[#2C2E33] pt-4">
-            <h3 className="text-sm font-medium text-[#F5F5F5]">Pricing Configuration</h3>
+            <h3 className="text-sm font-medium text-[#F5F5F5]">Base Pricing Configuration</h3>
             
             <div className="grid grid-cols-2 gap-4">
               <div>

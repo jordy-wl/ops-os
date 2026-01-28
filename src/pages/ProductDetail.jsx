@@ -20,6 +20,7 @@ import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import CreateProductModal from '@/components/offerings/CreateProductModal';
+import PricingOptionsManager from '@/components/offerings/PricingOptionsManager';
 
 export default function ProductDetail() {
   const navigate = useNavigate();
@@ -150,6 +151,11 @@ export default function ProductDetail() {
 
         {/* Details Grid */}
         <div className="grid grid-cols-2 gap-6 mb-6">
+          {/* Pricing Options */}
+          <div className="col-span-2 neumorphic-raised rounded-xl p-6">
+            <PricingOptionsManager productId={productId} isEditing={false} />
+          </div>
+
           {/* Description */}
           {product.description && (
             <div className="col-span-2 neumorphic-raised rounded-xl p-6">
