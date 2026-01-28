@@ -49,8 +49,21 @@ export default function CreateServiceModal({ isOpen, onClose, editingService }) 
         associated_workflows: editingService.associated_workflows || [],
         is_active: editingService.is_active !== undefined ? editingService.is_active : true
       });
+    } else if (!editingService && isOpen) {
+      // Reset form when opening for new creation
+      setFormData({
+        name: '',
+        short_description: '',
+        description: '',
+        category: 'consulting',
+        features: [],
+        target_audience: [],
+        associated_workflows: [],
+        is_active: true
+      });
+      setLocalPricingOptions([]);
     }
-  }, [editingService]);
+  }, [editingService, isOpen]);
 
   const createMutation = useMutation({
     mutationFn: (data) => editingService

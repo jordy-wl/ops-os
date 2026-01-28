@@ -49,8 +49,21 @@ export default function CreateProductModal({ isOpen, onClose, editingProduct }) 
         associated_workflows: editingProduct.associated_workflows || [],
         is_active: editingProduct.is_active !== undefined ? editingProduct.is_active : true
       });
+    } else if (!editingProduct && isOpen) {
+      // Reset form when opening for new creation
+      setFormData({
+        name: '',
+        short_description: '',
+        description: '',
+        category: 'software',
+        features: [],
+        target_audience: [],
+        associated_workflows: [],
+        is_active: true
+      });
+      setLocalPricingOptions([]);
     }
-  }, [editingProduct]);
+  }, [editingProduct, isOpen]);
 
   const createMutation = useMutation({
     mutationFn: (data) => editingProduct 
