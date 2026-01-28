@@ -174,24 +174,23 @@ export default function CreateProductModal({ isOpen, onClose, editingProduct }) 
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Category</label>
-              <Select value={formData.category} onValueChange={(v) => setFormData({ ...formData, category: v })}>
-                <SelectTrigger className="bg-[#1A1B1E] border-[#2C2E33]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-[#2C2E33] border-[#3a3d44]">
-                  <SelectItem value="software">Software</SelectItem>
-                  <SelectItem value="consulting">Consulting</SelectItem>
-                  <SelectItem value="managed_services">Managed Services</SelectItem>
-                  <SelectItem value="implementation">Implementation</SelectItem>
-                  <SelectItem value="training">Training</SelectItem>
-                  <SelectItem value="support">Support</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Category</label>
+            <Select value={formData.category} onValueChange={(v) => setFormData({ ...formData, category: v })}>
+              <SelectTrigger className="bg-[#1A1B1E] border-[#2C2E33]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-[#2C2E33] border-[#3a3d44]">
+                <SelectItem value="software">Software</SelectItem>
+                <SelectItem value="consulting">Consulting</SelectItem>
+                <SelectItem value="managed_services">Managed Services</SelectItem>
+                <SelectItem value="implementation">Implementation</SelectItem>
+                <SelectItem value="training">Training</SelectItem>
+                <SelectItem value="support">Support</SelectItem>
+                <SelectItem value="other">Other</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
           {/* Pricing Options */}
           <div className="border-t border-[#2C2E33] pt-4">
