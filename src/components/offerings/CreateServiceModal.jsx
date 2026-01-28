@@ -77,8 +77,23 @@ export default function CreateServiceModal({ isOpen, onClose, editingService }) 
     mutationFn: (data) => editingService
       ? base44.entities.Service.update(editingService.id, data)
       : base44.entities.Service.create(data),
-    onSuccess: () => {
+    onSuccess: async (createdService) => {
       queryClient.invalidateQueries({ queryKey: ['services'] });
+      
+      // If creating a new service with local pricing options, bulk create them
+      if (!editingService && localPricingOptions.length > 0) {
+        try {
+          const pricingOptionsToCreate = localPricingOptions.map(po => ({
+            ...po,
+            service_id: createdService.id
+          }));
+          await base44.entities.PricingOption.bulkCreate(pricingOptionsToCreate);
+          queryClient.invalidateQueries({ queryKey: ['pricing-options'] });
+        } catch (error) {
+          toast.error('Service created, but failed to save pricing options: ' + error.message);
+        }
+      }
+      
       toast.success(editingService ? 'Service updated' : 'Service created');
       onClose();
       setFormData({
@@ -102,6 +117,7 @@ export default function CreateServiceModal({ isOpen, onClose, editingService }) 
         associated_workflows: [],
         is_active: true
       });
+      setLocalPricingOptions([]);
       if (!editingService) {
         navigate(createPageUrl('Offerings') + '?tab=services');
       }
