@@ -77,8 +77,23 @@ export default function CreateProductModal({ isOpen, onClose, editingProduct }) 
     mutationFn: (data) => editingProduct 
       ? base44.entities.Product.update(editingProduct.id, data)
       : base44.entities.Product.create(data),
-    onSuccess: () => {
+    onSuccess: async (createdProduct) => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      
+      // If creating a new product with local pricing options, bulk create them
+      if (!editingProduct && localPricingOptions.length > 0) {
+        try {
+          const pricingOptionsToCreate = localPricingOptions.map(po => ({
+            ...po,
+            product_id: createdProduct.id
+          }));
+          await base44.entities.PricingOption.bulkCreate(pricingOptionsToCreate);
+          queryClient.invalidateQueries({ queryKey: ['pricing-options'] });
+        } catch (error) {
+          toast.error('Product created, but failed to save pricing options: ' + error.message);
+        }
+      }
+      
       toast.success(editingProduct ? 'Product updated' : 'Product created');
       onClose();
       setFormData({
@@ -102,6 +117,7 @@ export default function CreateProductModal({ isOpen, onClose, editingProduct }) 
         associated_workflows: [],
         is_active: true
       });
+      setLocalPricingOptions([]);
       if (!editingProduct) {
         navigate(createPageUrl('Offerings') + '?tab=products');
       }
