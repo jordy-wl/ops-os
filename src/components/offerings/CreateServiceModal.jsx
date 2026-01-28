@@ -135,6 +135,10 @@ export default function CreateServiceModal({ isOpen, onClose, editingService }) 
     if (submitData.base_price) {
       submitData.base_price = parseFloat(submitData.base_price);
     }
+    // Parse numeric fields or set to null if empty
+    submitData.fee_value = submitData.fee_value ? parseFloat(submitData.fee_value) : null;
+    submitData.minimum_fee = submitData.minimum_fee ? parseFloat(submitData.minimum_fee) : null;
+    submitData.maximum_fee = submitData.maximum_fee ? parseFloat(submitData.maximum_fee) : null;
     createMutation.mutate(submitData);
   };
 
