@@ -276,11 +276,16 @@ export default function CreateProductModal({ isOpen, onClose, editingProduct }) 
           </div>
 
           {/* Pricing Options */}
-          {editingProduct && (
-            <div className="border-t border-[#2C2E33] pt-4">
+          <div className="border-t border-[#2C2E33] pt-4">
+            {editingProduct ? (
               <PricingOptionsManager productId={editingProduct.id} isEditing={true} />
-            </div>
-          )}
+            ) : (
+              <LocalPricingOptionsEditor 
+                localPricingOptions={localPricingOptions}
+                setLocalPricingOptions={setLocalPricingOptions}
+              />
+            )}
+          </div>
 
           {/* Legacy Pricing Configuration */}
           <div className="space-y-4 border-t border-[#2C2E33] pt-4">
