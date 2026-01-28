@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { toast } from 'sonner';
 
 export default function CreateProductModal({ isOpen, onClose, editingProduct }) {
   const queryClient = useQueryClient();
@@ -76,6 +77,7 @@ export default function CreateProductModal({ isOpen, onClose, editingProduct }) 
       : base44.entities.Product.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast.success(editingProduct ? 'Product updated' : 'Product created');
       onClose();
       setFormData({
         name: '',
@@ -98,7 +100,13 @@ export default function CreateProductModal({ isOpen, onClose, editingProduct }) 
         associated_workflows: [],
         is_active: true
       });
+      if (!editingProduct) {
+        navigate(createPageUrl('Offerings') + '?tab=products');
+      }
     },
+    onError: (error) => {
+      toast.error(error.message || 'Failed to save product');
+    }
   });
 
   const addFeature = () => {
