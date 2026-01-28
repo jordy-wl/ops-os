@@ -193,47 +193,6 @@ export default function CreateProductModal({ isOpen, onClose, editingProduct }) 
               </Select>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Calculation Method</label>
-              <Select value={formData.calculation_method} onValueChange={(v) => setFormData({ ...formData, calculation_method: v })}>
-                <SelectTrigger className="bg-[#1A1B1E] border-[#2C2E33]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-[#2C2E33] border-[#3a3d44]">
-                  <SelectItem value="fixed_fee">Fixed Fee</SelectItem>
-                  <SelectItem value="percentage_of_value">Percentage of Value</SelectItem>
-                  <SelectItem value="per_unit">Per Unit</SelectItem>
-                  <SelectItem value="per_transaction">Per Transaction</SelectItem>
-                  <SelectItem value="bps_of_value">Basis Points (BPS)</SelectItem>
-                  <SelectItem value="tiered">Tiered</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Base Price</label>
-              <Input
-                type="number"
-                value={formData.base_price}
-                onChange={(e) => setFormData({ ...formData, base_price: e.target.value })}
-                placeholder="0.00"
-                className="bg-[#1A1B1E] border-[#2C2E33] focus:border-[#00E5FF]"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-[#A0AEC0] mb-2">Currency</label>
-              <Input
-                value={formData.currency}
-                onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-                placeholder="USD"
-                className="bg-[#1A1B1E] border-[#2C2E33] focus:border-[#00E5FF]"
-              />
-            </div>
-          </div>
-
           {/* Pricing Options */}
           <div className="border-t border-[#2C2E33] pt-4">
             {editingProduct ? (
