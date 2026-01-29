@@ -183,13 +183,13 @@ export default function LocalPricingOptionsEditor({ localPricingOptions, setLoca
                 </SelectTrigger>
                 <SelectContent className="bg-[#2C2E33] border-[#3a3d44]">
                   <SelectItem value="one_time">One Time</SelectItem>
+                  <SelectItem value="per_event">Per Event</SelectItem>
                   <SelectItem value="per_transaction">Per Transaction</SelectItem>
                   <SelectItem value="daily">Daily</SelectItem>
                   <SelectItem value="weekly">Weekly</SelectItem>
                   <SelectItem value="monthly">Monthly</SelectItem>
                   <SelectItem value="quarterly">Quarterly</SelectItem>
                   <SelectItem value="annually">Annually</SelectItem>
-                  <SelectItem value="per_event">Per Event</SelectItem>
                 </SelectContent>
               </Select>
             </div>
