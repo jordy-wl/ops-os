@@ -30,9 +30,16 @@ import {
   FastForward,
   MessageSquare,
   Building2,
-  Bot,
-  Plus
+  Plus,
+  ChevronDown
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 const statusColumns = [
   { id: 'not_started', label: 'Not Started', icon: Circle },
@@ -226,6 +233,13 @@ export default function MyWork() {
     }
   });
 
+  const { data: allUsers = [] } = useQuery({
+    queryKey: ['all-users'],
+    queryFn: async () => {
+      return await base44.entities.User.list();
+    },
+  });
+
   const addCommentMutation = useMutation({
     mutationFn: async ({ taskId, comment }) => {
       const user = await base44.auth.me();
@@ -237,6 +251,27 @@ export default function MyWork() {
         text: comment
       });
       await base44.entities.TaskInstance.update(taskId, { comments });
+
+      // Parse mentions and create notifications
+      const mentionRegex = /@(\S+)/g;
+      const mentions = [...comment.matchAll(mentionRegex)];
+      
+      for (const match of mentions) {
+        const mentionedEmail = match[1];
+        const mentionedUser = allUsers.find(u => u.email === mentionedEmail);
+        
+        if (mentionedUser) {
+          await base44.functions.invoke('createNotification', {
+            recipient_user_id: mentionedUser.id,
+            type: 'comment_mention',
+            entity_type: 'TaskInstance',
+            entity_id: taskId,
+            message: `${user.full_name} mentioned you in a comment on "${task.name}"`,
+            action_url: createPageUrl('MyWork'),
+            metadata: { task_id: taskId, comment }
+          });
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['my-tasks'] });
@@ -531,9 +566,7 @@ export default function MyWork() {
               <div className="flex gap-4 border-b border-[#2C2E33] -mb-6 pb-2">
                 {[
                   { id: 'details', label: 'Details', icon: CheckCircle2 },
-                  { id: 'actions', label: 'Actions', icon: Flag },
                   { id: 'comments', label: 'Comments', icon: MessageSquare },
-                  { id: 'assistant', label: 'Assistant', icon: Bot },
                   { id: 'client', label: 'Client', icon: Building2 },
                 ].map(tab => {
                   const Icon = tab.icon;
@@ -614,101 +647,6 @@ export default function MyWork() {
             </div>
               )}
 
-              {drawerTab === 'actions' && (
-                <div className="h-full overflow-y-auto p-6 space-y-4">
-                  <p className="text-sm text-[#A0AEC0] mb-6">
-                    Manage this task with available actions based on workflow rules.
-                  </p>
-
-                  <button
-                    onClick={() => {
-                      const notes = prompt('Why are you dumping this task?');
-                      if (notes) {
-                        taskActionMutation.mutate({ taskId: selectedTask.id, action: 'dumped', notes });
-                      }
-                    }}
-                    disabled={!taskTemplate?.can_be_dumped}
-                    className={`w-full p-4 rounded-lg border text-left transition-colors ${
-                      taskTemplate?.can_be_dumped
-                        ? 'border-[#2C2E33] hover:border-red-400/50 hover:bg-red-500/10'
-                        : 'border-[#2C2E33] opacity-50 cursor-not-allowed'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3 mb-2">
-                      <Trash2 className="w-5 h-5 text-red-400" />
-                      <h4 className="font-medium">Dump Task</h4>
-                    </div>
-                    <p className="text-sm text-[#A0AEC0]">
-                      Cancel this task and the workflow instance
-                    </p>
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      const delay = prompt('Delay by how many days? (1, 3, or 7)');
-                      if (delay && ['1', '3', '7'].includes(delay)) {
-                        const notes = `Delayed by ${delay} day(s)`;
-                        taskActionMutation.mutate({ taskId: selectedTask.id, action: 'delayed', notes });
-                      }
-                    }}
-                    disabled={!taskTemplate?.can_be_delayed}
-                    className={`w-full p-4 rounded-lg border text-left transition-colors ${
-                      taskTemplate?.can_be_delayed
-                        ? 'border-[#2C2E33] hover:border-orange-400/50 hover:bg-orange-500/10'
-                        : 'border-[#2C2E33] opacity-50 cursor-not-allowed'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3 mb-2">
-                      <PauseCircle className="w-5 h-5 text-orange-400" />
-                      <h4 className="font-medium">Delay Task</h4>
-                    </div>
-                    <p className="text-sm text-[#A0AEC0]">
-                      Postpone for 1, 3, or 7 days
-                    </p>
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      const notes = prompt('Why are you overriding this task?');
-                      if (notes) {
-                        taskActionMutation.mutate({ taskId: selectedTask.id, action: 'overridden', notes });
-                      }
-                    }}
-                    disabled={!taskTemplate?.can_be_overridden}
-                    className={`w-full p-4 rounded-lg border text-left transition-colors ${
-                      taskTemplate?.can_be_overridden
-                        ? 'border-[#2C2E33] hover:border-[#00E5FF]/50 hover:bg-[#00E5FF]/10'
-                        : 'border-[#2C2E33] opacity-50 cursor-not-allowed'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3 mb-2">
-                      <FastForward className="w-5 h-5 text-[#00E5FF]" />
-                      <h4 className="font-medium">Override Task</h4>
-                    </div>
-                    <p className="text-sm text-[#A0AEC0]">
-                      Complete without data input (leave notes)
-                    </p>
-                  </button>
-
-                  <button
-                    disabled={!taskTemplate?.can_add_subtask}
-                    className={`w-full p-4 rounded-lg border text-left transition-colors ${
-                      taskTemplate?.can_add_subtask
-                        ? 'border-[#2C2E33] hover:border-green-400/50 hover:bg-green-500/10'
-                        : 'border-[#2C2E33] opacity-50 cursor-not-allowed'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3 mb-2">
-                      <Plus className="w-5 h-5 text-green-400" />
-                      <h4 className="font-medium">Add Subtask</h4>
-                    </div>
-                    <p className="text-sm text-[#A0AEC0]">
-                      Insert a new task after this one
-                    </p>
-                  </button>
-                </div>
-              )}
-
               {drawerTab === 'comments' && (
                 <div className="h-full flex flex-col p-6">
                   <div className="flex-1 overflow-y-auto space-y-4 mb-4">
@@ -748,61 +686,109 @@ export default function MyWork() {
                 </div>
               )}
 
-              {drawerTab === 'assistant' && (
-                <div className="h-full p-6">
-                  <TaskChatbot
-                    task={selectedTask}
-                    taskTemplate={taskTemplate}
-                    deliverableInstance={taskContext?.deliverableInstance}
-                    workflowInstance={taskContext?.workflowInstance}
-                    client={taskContext?.client}
-                    deals={taskContext?.deals}
-                  />
-                </div>
-              )}
-
               {drawerTab === 'client' && (
                 <ClientSummaryTab clientId={selectedTask.client_id} />
               )}
             </div>
 
-            {/* Footer Actions - Only show on details tab */}
-            {drawerTab === 'details' && (
-              <div className="p-6 border-t border-[#2C2E33] flex-shrink-0">
-                <div className="flex gap-3">
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setSelectedTask(null);
-                      setFieldValues({});
-                      setSelectedOutcome(null);
-                      setDrawerTab('details');
-                    }}
-                    className="flex-1 bg-transparent border-[#2C2E33] hover:bg-[#2C2E33]"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    onClick={() => completeTaskMutation.mutate({
-                      taskId: selectedTask.id,
-                      fieldValues,
-                      outcome: selectedOutcome
-                    })}
-                    disabled={completeTaskMutation.isPending || (taskTemplate?.conditions?.outcomes?.length > 0 && !selectedOutcome)}
-                    className="flex-1 bg-gradient-to-r from-[#00E5FF] to-[#0099ff] text-[#121212] hover:shadow-lg hover:shadow-[#00E5FF]/30"
-                  >
-                    {completeTaskMutation.isPending ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Completing...
-                      </>
-                    ) : (
-                      'Complete Task'
-                    )}
-                  </Button>
-                </div>
+            {/* Footer Actions */}
+            <div className="p-6 border-t border-[#2C2E33] flex-shrink-0">
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setSelectedTask(null);
+                    setFieldValues({});
+                    setSelectedOutcome(null);
+                    setDrawerTab('details');
+                  }}
+                  className="flex-1 bg-transparent border-[#2C2E33] hover:bg-[#2C2E33]"
+                >
+                  Cancel
+                </Button>
+                
+                {taskTemplate && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" className="gap-2 bg-transparent border-[#2C2E33] hover:bg-[#2C2E33]">
+                        <Flag className="w-4 h-4" />
+                        Actions
+                        <ChevronDown className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-56 bg-[#1A1B1E] border-[#2C2E33] text-[#F5F5F5]">
+                      <DropdownMenuItem
+                        onClick={() => {
+                          const notes = prompt('Why are you dumping this task?');
+                          if (notes) {
+                            taskActionMutation.mutate({ taskId: selectedTask.id, action: 'dumped', notes });
+                          }
+                        }}
+                        disabled={!taskTemplate?.can_be_dumped}
+                        className="flex items-center gap-2 text-red-400 hover:bg-[#2C2E33] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Dump Task
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          const delay = prompt('Delay by how many days? (1, 3, or 7)');
+                          if (delay && ['1', '3', '7'].includes(delay)) {
+                            const notes = `Delayed by ${delay} day(s)`;
+                            taskActionMutation.mutate({ taskId: selectedTask.id, action: 'delayed', notes });
+                          }
+                        }}
+                        disabled={!taskTemplate?.can_be_delayed}
+                        className="flex items-center gap-2 text-orange-400 hover:bg-[#2C2E33] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <PauseCircle className="w-4 h-4" />
+                        Delay Task
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          const notes = prompt('Why are you overriding this task?');
+                          if (notes) {
+                            taskActionMutation.mutate({ taskId: selectedTask.id, action: 'overridden', notes });
+                          }
+                        }}
+                        disabled={!taskTemplate?.can_be_overridden}
+                        className="flex items-center gap-2 text-[#00E5FF] hover:bg-[#2C2E33] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <FastForward className="w-4 h-4" />
+                        Override Task
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator className="bg-[#2C2E33]" />
+                      <DropdownMenuItem
+                        disabled={!taskTemplate?.can_add_subtask}
+                        className="flex items-center gap-2 text-green-400 hover:bg-[#2C2E33] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Add Subtask
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+
+                <Button
+                  onClick={() => completeTaskMutation.mutate({
+                    taskId: selectedTask.id,
+                    fieldValues,
+                    outcome: selectedOutcome
+                  })}
+                  disabled={completeTaskMutation.isPending || (taskTemplate?.conditions?.outcomes?.length > 0 && !selectedOutcome)}
+                  className="flex-1 bg-gradient-to-r from-[#00E5FF] to-[#0099ff] text-[#121212] hover:shadow-lg hover:shadow-[#00E5FF]/30"
+                >
+                  {completeTaskMutation.isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Completing...
+                    </>
+                  ) : (
+                    'Complete Task'
+                  )}
+                </Button>
               </div>
-            )}
+            </div>
           </div>
         </div>
       )}

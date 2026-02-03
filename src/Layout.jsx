@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from './utils';
+import NotificationPanel from './components/NotificationPanel';
 import {
   CheckCircle,
   GitMerge,
@@ -12,7 +13,6 @@ import {
   Settings,
   Plus,
   Search,
-  Bell,
   Command
 } from 'lucide-react';
 
@@ -199,10 +199,7 @@ export default function Layout({ children, currentPageName }) {
 
           {/* Right Icons */}
           <div className="flex items-center gap-2 md:gap-4">
-            <button className="relative p-2 rounded-lg hover:bg-[#2C2E33] transition-colors">
-              <Bell className="w-4 h-4 md:w-5 md:h-5 text-[#A0AEC0]" />
-              <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#00E5FF] animate-pulse" />
-            </button>
+            <NotificationPanel />
             <div className="w-7 h-7 md:w-8 md:h-8 rounded-full neumorphic-raised flex items-center justify-center text-xs md:text-sm font-medium">
               U
             </div>
