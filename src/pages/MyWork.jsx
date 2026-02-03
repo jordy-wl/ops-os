@@ -4,7 +4,11 @@ import { base44 } from '@/api/base44Client';
 import TaskFormFields from '@/components/tasks/TaskFormFields';
 import CalendarView from '@/components/mywork/CalendarView';
 import OrganiseView from '@/components/mywork/OrganiseView';
+import AnalyticsDashboard from '@/components/mywork/AnalyticsDashboard';
+import TaskChatbot from '@/components/tasks/TaskChatbot';
+import ClientSummaryTab from '@/components/tasks/ClientSummaryTab';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { 
   LayoutGrid, 
@@ -20,7 +24,14 @@ import {
   MoreHorizontal,
   ChevronRight,
   X,
-  Loader2
+  Loader2,
+  Trash2,
+  PauseCircle,
+  FastForward,
+  MessageSquare,
+  Building2,
+  Bot,
+  Plus
 } from 'lucide-react';
 
 const statusColumns = [
@@ -113,6 +124,7 @@ export default function MyWork() {
   const [activeTab, setActiveTab] = useState('kanban');
   const [viewMode, setViewMode] = useState('kanban');
   const [selectedTask, setSelectedTask] = useState(null);
+  const [drawerTab, setDrawerTab] = useState('details');
   const [fieldValues, setFieldValues] = useState({});
   const [selectedOutcome, setSelectedOutcome] = useState(null);
   const [showCompleted, setShowCompleted] = useState(true);
@@ -120,6 +132,7 @@ export default function MyWork() {
     const saved = localStorage.getItem('clearedTaskIds');
     return saved ? JSON.parse(saved) : [];
   });
+  const [newComment, setNewComment] = useState('');
   const queryClient = useQueryClient();
 
   const { data: tasks = [], isLoading } = useQuery({
@@ -162,6 +175,31 @@ export default function MyWork() {
     enabled: !!selectedTask?.task_template_id,
   });
 
+  const { data: taskContext } = useQuery({
+    queryKey: ['task-context', selectedTask?.id],
+    queryFn: async () => {
+      if (!selectedTask) return null;
+
+      const [deliverableInstance, workflowInstance, client, deals] = await Promise.all([
+        selectedTask.deliverable_instance_id 
+          ? base44.entities.DeliverableInstance.filter({ id: selectedTask.deliverable_instance_id }).then(r => r[0])
+          : null,
+        selectedTask.workflow_instance_id 
+          ? base44.entities.WorkflowInstance.filter({ id: selectedTask.workflow_instance_id }).then(r => r[0])
+          : null,
+        selectedTask.client_id 
+          ? base44.entities.Client.filter({ id: selectedTask.client_id }).then(r => r[0])
+          : null,
+        selectedTask.client_id 
+          ? base44.entities.Deal.filter({ client_id: selectedTask.client_id })
+          : [],
+      ]);
+
+      return { deliverableInstance, workflowInstance, client, deals };
+    },
+    enabled: !!selectedTask,
+  });
+
   const completeTaskMutation = useMutation({
     mutationFn: async ({ taskId, fieldValues, outcome }) => {
       const response = await base44.functions.invoke('completeTask', {
@@ -173,12 +211,10 @@ export default function MyWork() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['my-tasks'] });
-      // Invalidate client's documents to refresh on client detail page
       if (selectedTask?.client_id) {
         queryClient.invalidateQueries({ queryKey: ['documents', selectedTask.client_id] });
         queryClient.invalidateQueries({ queryKey: ['client', selectedTask.client_id] });
       }
-      // Invalidate library documents query (matches the query key in Library.js)
       queryClient.invalidateQueries({ queryKey: ['document-instances'] });
       toast.success('Task completed successfully!');
       setSelectedTask(null);
@@ -188,6 +224,58 @@ export default function MyWork() {
     onError: (error) => {
       toast.error('Failed to complete task: ' + error.message);
     }
+  });
+
+  const addCommentMutation = useMutation({
+    mutationFn: async ({ taskId, comment }) => {
+      const user = await base44.auth.me();
+      const task = await base44.entities.TaskInstance.filter({ id: taskId }).then(r => r[0]);
+      const comments = task.comments || [];
+      comments.push({
+        user_id: user.id,
+        timestamp: new Date().toISOString(),
+        text: comment
+      });
+      await base44.entities.TaskInstance.update(taskId, { comments });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['my-tasks'] });
+      setNewComment('');
+      toast.success('Comment added');
+    },
+  });
+
+  const taskActionMutation = useMutation({
+    mutationFn: async ({ taskId, action, notes }) => {
+      const user = await base44.auth.me();
+      const task = await base44.entities.TaskInstance.filter({ id: taskId }).then(r => r[0]);
+      const audit_trail = task.audit_trail || [];
+      
+      const auditEntry = {
+        action,
+        user_id: user.id,
+        timestamp: new Date().toISOString(),
+        details: { notes }
+      };
+      audit_trail.push(auditEntry);
+
+      const updates = { audit_trail, action_notes: notes };
+      
+      if (action === 'dumped') {
+        updates.status = 'failed';
+        updates.personal_status = 'dump';
+      } else if (action === 'delayed') {
+        updates.personal_status = 'dump';
+      } else if (action === 'overridden') {
+        updates.status = 'completed';
+      }
+
+      await base44.entities.TaskInstance.update(taskId, updates);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['my-tasks'] });
+      toast.success('Task action recorded');
+    },
   });
 
   const handleClearTask = (taskId) => {
@@ -398,11 +486,7 @@ export default function MyWork() {
       )}
 
       {activeTab === 'analytics' && (
-        <div className="neumorphic-raised rounded-xl p-12 text-center">
-          <LayoutGrid className="w-16 h-16 mx-auto mb-4 text-[#A0AEC0]" />
-          <h3 className="text-lg font-medium mb-2">Analytics Dashboard</h3>
-          <p className="text-[#A0AEC0]">Coming soon - Track your productivity metrics and KPIs</p>
-        </div>
+        <AnalyticsDashboard />
       )}
 
       {activeTab === 'organise' && (
@@ -420,7 +504,7 @@ export default function MyWork() {
               setSelectedOutcome(null);
             }}
           />
-          <div className="w-[600px] glass h-full overflow-y-auto shadow-2xl flex flex-col">
+          <div className="w-[700px] glass h-full shadow-2xl flex flex-col">
             {/* Header */}
             <div className="p-6 border-b border-[#2C2E33] flex-shrink-0">
               <div className="flex items-center justify-between mb-4">
@@ -434,17 +518,47 @@ export default function MyWork() {
                     setSelectedTask(null);
                     setFieldValues({});
                     setSelectedOutcome(null);
+                    setDrawerTab('details');
                   }}
                   className="p-2 rounded-lg hover:bg-[#2C2E33]"
                 >
                   <X className="w-5 h-5 text-[#A0AEC0]" />
                 </button>
               </div>
-              <h2 className="text-xl font-semibold">{selectedTask.name}</h2>
+              <h2 className="text-xl font-semibold mb-4">{selectedTask.name}</h2>
+
+              {/* Drawer Tabs */}
+              <div className="flex gap-4 border-b border-[#2C2E33] -mb-6 pb-2">
+                {[
+                  { id: 'details', label: 'Details', icon: CheckCircle2 },
+                  { id: 'actions', label: 'Actions', icon: Flag },
+                  { id: 'comments', label: 'Comments', icon: MessageSquare },
+                  { id: 'assistant', label: 'Assistant', icon: Bot },
+                  { id: 'client', label: 'Client', icon: Building2 },
+                ].map(tab => {
+                  const Icon = tab.icon;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setDrawerTab(tab.id)}
+                      className={`flex items-center gap-2 px-3 py-2 text-sm transition-colors ${
+                        drawerTab === tab.id
+                          ? 'text-[#00E5FF] border-b-2 border-[#00E5FF]'
+                          : 'text-[#A0AEC0] hover:text-[#F5F5F5]'
+                      }`}
+                    >
+                      <Icon className="w-4 h-4" />
+                      {tab.label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+            <div className="flex-1 overflow-hidden">
+              {drawerTab === 'details' && (
+                <div className="h-full overflow-y-auto p-6 space-y-6">
               {selectedTask.instructions && (
                 <div>
                   <h3 className="text-sm font-medium text-[#A0AEC0] mb-2">Instructions</h3>
@@ -532,7 +646,8 @@ export default function MyWork() {
                   )}
                 </Button>
               </div>
-            </div>
+              </div>
+            )}
           </div>
         </div>
       )}
