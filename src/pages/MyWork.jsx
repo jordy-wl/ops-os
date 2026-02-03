@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import TaskFormFields from '@/components/tasks/TaskFormFields';
+import CalendarView from '@/components/mywork/CalendarView';
+import OrganiseView from '@/components/mywork/OrganiseView';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { 
@@ -392,15 +394,7 @@ export default function MyWork() {
       )}
 
       {activeTab === 'calendar' && (
-        <div className="neumorphic-raised rounded-xl p-12 text-center">
-          <Calendar className="w-16 h-16 mx-auto mb-4 text-[#A0AEC0]" />
-          <h3 className="text-lg font-medium mb-2">Calendar View</h3>
-          <p className="text-[#A0AEC0] mb-4">Coming soon - View and schedule your tasks on a calendar</p>
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#00E5FF]/10 text-[#00E5FF] rounded-lg text-sm">
-            <Clock className="w-4 h-4" />
-            Microsoft Calendar sync in progress
-          </div>
-        </div>
+        <CalendarView onTaskClick={setSelectedTask} />
       )}
 
       {activeTab === 'analytics' && (
@@ -412,11 +406,7 @@ export default function MyWork() {
       )}
 
       {activeTab === 'organise' && (
-        <div className="neumorphic-raised rounded-xl p-12 text-center">
-          <List className="w-16 h-16 mx-auto mb-4 text-[#A0AEC0]" />
-          <h3 className="text-lg font-medium mb-2">Organise View</h3>
-          <p className="text-[#A0AEC0]">Coming soon - Drag and drop tasks to prioritize and schedule</p>
-        </div>
+        <OrganiseView />
       )}
 
       {/* Task Workspace Drawer */}
