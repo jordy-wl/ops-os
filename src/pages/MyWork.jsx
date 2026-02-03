@@ -108,6 +108,7 @@ function TaskCard({ task, onClick, onClear }) {
 }
 
 export default function MyWork() {
+  const [activeTab, setActiveTab] = useState('kanban');
   const [viewMode, setViewMode] = useState('kanban');
   const [selectedTask, setSelectedTask] = useState(null);
   const [fieldValues, setFieldValues] = useState({});
@@ -205,13 +206,36 @@ export default function MyWork() {
   return (
     <div className="p-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-semibold mb-1">My Work</h1>
-          <p className="text-[#A0AEC0]">{filteredTasks.length} tasks assigned to you</p>
+      <div className="mb-8">
+        <h1 className="text-2xl font-semibold mb-1">My Work</h1>
+        <p className="text-[#A0AEC0]">{filteredTasks.length} tasks assigned to you</p>
+      </div>
+
+      {/* Tabs */}
+      <div className="mb-6 border-b border-[#2C2E33]">
+        <div className="flex gap-6">
+          {['kanban', 'calendar', 'analytics', 'organise'].map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`pb-3 px-1 text-sm font-medium transition-colors relative ${
+                activeTab === tab
+                  ? 'text-[#00E5FF]'
+                  : 'text-[#A0AEC0] hover:text-[#F5F5F5]'
+              }`}
+            >
+              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              {activeTab === tab && (
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#00E5FF]" />
+              )}
+            </button>
+          ))}
         </div>
-        
-        <div className="flex items-center gap-4">
+      </div>
+
+      {/* Tab Controls - Only show for Kanban tab */}
+      {activeTab === 'kanban' && (
+        <div className="flex items-center justify-end gap-4 mb-6">
           {/* Show Completed Toggle */}
           <button
             onClick={() => setShowCompleted(!showCompleted)}
@@ -226,41 +250,44 @@ export default function MyWork() {
           
           {/* View Toggle */}
           <div className="neumorphic-pressed rounded-lg p-1 flex">
-          <button
-            onClick={() => setViewMode('kanban')}
-            className={`px-4 py-2 rounded-md text-sm transition-all ${
-              viewMode === 'kanban' 
-                ? 'bg-[#2C2E33] text-[#00E5FF] shadow' 
-                : 'text-[#A0AEC0] hover:text-[#F5F5F5]'
-            }`}
-          >
-            <LayoutGrid className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => setViewMode('list')}
-            className={`px-4 py-2 rounded-md text-sm transition-all ${
-              viewMode === 'list' 
-                ? 'bg-[#2C2E33] text-[#00E5FF] shadow' 
-                : 'text-[#A0AEC0] hover:text-[#F5F5F5]'
-            }`}
-          >
-            <List className="w-4 h-4" />
-          </button>
+            <button
+              onClick={() => setViewMode('kanban')}
+              className={`px-4 py-2 rounded-md text-sm transition-all ${
+                viewMode === 'kanban' 
+                  ? 'bg-[#2C2E33] text-[#00E5FF] shadow' 
+                  : 'text-[#A0AEC0] hover:text-[#F5F5F5]'
+              }`}
+            >
+              <LayoutGrid className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`px-4 py-2 rounded-md text-sm transition-all ${
+                viewMode === 'list' 
+                  ? 'bg-[#2C2E33] text-[#00E5FF] shadow' 
+                  : 'text-[#A0AEC0] hover:text-[#F5F5F5]'
+              }`}
+            >
+              <List className="w-4 h-4" />
+            </button>
+          </div>
         </div>
-        </div>
-      </div>
+      )}
 
-      {isLoading ? (
-        <div className="grid grid-cols-5 gap-4">
-          {statusColumns.map((col) => (
-            <div key={col.id} className="space-y-4">
-              <div className="h-8 bg-[#2C2E33] rounded animate-pulse" />
-              <div className="h-32 bg-[#2C2E33] rounded animate-pulse" />
-              <div className="h-32 bg-[#2C2E33] rounded animate-pulse" />
+      {/* Tab Content */}
+      {activeTab === 'kanban' && (
+        <>
+          {isLoading ? (
+            <div className="grid grid-cols-5 gap-4">
+              {statusColumns.map((col) => (
+                <div key={col.id} className="space-y-4">
+                  <div className="h-8 bg-[#2C2E33] rounded animate-pulse" />
+                  <div className="h-32 bg-[#2C2E33] rounded animate-pulse" />
+                  <div className="h-32 bg-[#2C2E33] rounded animate-pulse" />
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      ) : viewMode === 'kanban' ? (
+          ) : viewMode === 'kanban' ? (
         /* Kanban View */
         <div className="grid grid-cols-5 gap-4 overflow-x-auto">
           {statusColumns.map((column) => {
@@ -359,6 +386,36 @@ export default function MyWork() {
               })}
             </tbody>
           </table>
+        </div>
+          )}
+        </>
+      )}
+
+      {activeTab === 'calendar' && (
+        <div className="neumorphic-raised rounded-xl p-12 text-center">
+          <Calendar className="w-16 h-16 mx-auto mb-4 text-[#A0AEC0]" />
+          <h3 className="text-lg font-medium mb-2">Calendar View</h3>
+          <p className="text-[#A0AEC0] mb-4">Coming soon - View and schedule your tasks on a calendar</p>
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#00E5FF]/10 text-[#00E5FF] rounded-lg text-sm">
+            <Clock className="w-4 h-4" />
+            Microsoft Calendar sync in progress
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'analytics' && (
+        <div className="neumorphic-raised rounded-xl p-12 text-center">
+          <LayoutGrid className="w-16 h-16 mx-auto mb-4 text-[#A0AEC0]" />
+          <h3 className="text-lg font-medium mb-2">Analytics Dashboard</h3>
+          <p className="text-[#A0AEC0]">Coming soon - Track your productivity metrics and KPIs</p>
+        </div>
+      )}
+
+      {activeTab === 'organise' && (
+        <div className="neumorphic-raised rounded-xl p-12 text-center">
+          <List className="w-16 h-16 mx-auto mb-4 text-[#A0AEC0]" />
+          <h3 className="text-lg font-medium mb-2">Organise View</h3>
+          <p className="text-[#A0AEC0]">Coming soon - Drag and drop tasks to prioritize and schedule</p>
         </div>
       )}
 
