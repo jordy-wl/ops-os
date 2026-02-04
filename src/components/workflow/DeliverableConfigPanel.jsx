@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { FileText, Video, CheckSquare, FileSpreadsheet, X, Sparkles } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
+import { FileText, Video, CheckSquare, FileSpreadsheet, X, Sparkles, Database } from 'lucide-react';
 
 const outputTypeIcons = {
   document: FileText,
@@ -27,8 +29,13 @@ export default function DeliverableConfigPanel({ deliverable, onSave, onClose })
     document_template_ids: [],
     auto_generate_ai_document: true,
     meeting_config: {},
-    data_mapping: {}
+    data_mapping: {},
+    trigger_entity_update_enabled: false,
+    target_entity_name: 'Deal',
+    critical_fields: []
   });
+
+  const [availableFields, setAvailableFields] = useState([]);
 
   const { data: documentTemplates = [] } = useQuery({
     queryKey: ['document-templates-user'],
@@ -43,6 +50,32 @@ export default function DeliverableConfigPanel({ deliverable, onSave, onClose })
   const isAITemplate = selectedTemplate?.ai_prompt_instructions;
 
   const OutputIcon = outputTypeIcons[formData.output_type] || FileText;
+
+  // Fetch entity schema when target entity changes
+  useEffect(() => {
+    if (formData.trigger_entity_update_enabled && formData.target_entity_name) {
+      fetchEntityFields(formData.target_entity_name);
+    }
+  }, [formData.trigger_entity_update_enabled, formData.target_entity_name]);
+
+  const fetchEntityFields = async (entityName) => {
+    try {
+      const schema = await base44.entities[entityName].schema();
+      const fields = Object.keys(schema.properties || {});
+      setAvailableFields(fields);
+    } catch (error) {
+      console.error('Failed to fetch entity schema:', error);
+      setAvailableFields([]);
+    }
+  };
+
+  const toggleCriticalField = (fieldName) => {
+    const current = formData.critical_fields || [];
+    const updated = current.includes(fieldName)
+      ? current.filter(f => f !== fieldName)
+      : [...current, fieldName];
+    setFormData({ ...formData, critical_fields: updated });
+  };
 
   return (
     <div className="space-y-6">
@@ -231,6 +264,110 @@ export default function DeliverableConfigPanel({ deliverable, onSave, onClose })
             className="w-4 h-4"
           />
           <label className="text-sm text-[#A0AEC0]">Required deliverable</label>
+        </div>
+
+        {/* Entity Update Trigger Section */}
+        <div className="border-t border-[#2C2E33] pt-6 mt-6">
+          <div className="flex items-start gap-3 mb-4">
+            <Database className="w-5 h-5 text-[#00E5FF] mt-0.5" />
+            <div className="flex-1">
+              <h4 className="font-medium mb-1">Entity Update Trigger</h4>
+              <p className="text-xs text-[#4A5568]">
+                Automatically create or update an entity record when this deliverable completes
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            {/* Enable Toggle */}
+            <div className="flex items-center justify-between p-3 rounded-lg bg-[#1A1B1E] border border-[#2C2E33]">
+              <label className="text-sm text-[#A0AEC0]">Enable entity update on completion</label>
+              <Switch
+                checked={formData.trigger_entity_update_enabled}
+                onCheckedChange={(checked) => setFormData({ 
+                  ...formData, 
+                  trigger_entity_update_enabled: checked,
+                  critical_fields: checked ? formData.critical_fields : []
+                })}
+              />
+            </div>
+
+            {/* Target Entity Selection */}
+            {formData.trigger_entity_update_enabled && (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-[#A0AEC0] mb-2">
+                    Target Entity <span className="text-red-400">*</span>
+                  </label>
+                  <Select 
+                    value={formData.target_entity_name} 
+                    onValueChange={(v) => setFormData({ ...formData, target_entity_name: v, critical_fields: [] })}
+                  >
+                    <SelectTrigger className="bg-[#1A1B1E] border-[#2C2E33]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#2C2E33] border-[#3a3d44]">
+                      <SelectItem value="Deal">Deal</SelectItem>
+                      <SelectItem value="Client">Client</SelectItem>
+                      <SelectItem value="Contact">Contact</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-[#4A5568] mt-1">
+                    Which entity should be created/updated with task data
+                  </p>
+                </div>
+
+                {/* Critical Fields Selection */}
+                <div>
+                  <label className="block text-sm font-medium text-[#A0AEC0] mb-2">
+                    Critical Fields
+                  </label>
+                  <div className="neumorphic-pressed rounded-lg p-4 max-h-64 overflow-y-auto">
+                    {availableFields.length === 0 ? (
+                      <p className="text-xs text-[#4A5568] text-center py-4">
+                        Loading fields...
+                      </p>
+                    ) : (
+                      <div className="space-y-2">
+                        {availableFields.map((field) => (
+                          <div 
+                            key={field}
+                            className="flex items-center gap-2 p-2 rounded hover:bg-[#2C2E33] cursor-pointer"
+                            onClick={() => toggleCriticalField(field)}
+                          >
+                            <Checkbox 
+                              checked={formData.critical_fields?.includes(field)}
+                              onCheckedChange={() => toggleCriticalField(field)}
+                            />
+                            <label className="text-sm text-[#F5F5F5] cursor-pointer flex-1">
+                              {field}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-xs text-[#4A5568] mt-2">
+                    Select fields that must be populated for the entity to be considered complete. 
+                    Missing critical fields will be tracked in the entity's <code className="text-[#00E5FF]">missing_data_fields</code> array.
+                  </p>
+                </div>
+
+                {/* Info Banner */}
+                <div className="neumorphic-pressed rounded-lg p-3 border-l-2 border-[#00E5FF]">
+                  <div className="flex items-start gap-2">
+                    <Sparkles className="w-4 h-4 text-[#00E5FF] mt-0.5" />
+                    <div>
+                      <p className="text-sm text-[#00E5FF] font-medium">Auto-Update Active</p>
+                      <p className="text-xs text-[#A0AEC0] mt-1">
+                        When tasks within this deliverable are completed, their data will automatically populate the {formData.target_entity_name} entity.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
