@@ -81,7 +81,10 @@ export default function ManualWorkflowBuilder({ onBack, editingTemplateId }) {
           description: d.description,
           output_type: d.output_type || 'document',
           document_template_ids: d.document_template_ids || [],
-          auto_generate_ai_document: d.auto_generate_ai_document || false
+          auto_generate_ai_document: d.auto_generate_ai_document || false,
+          trigger_entity_update_enabled: d.trigger_entity_update_enabled || false,
+          target_entity_name: d.target_entity_name || 'Deal',
+          critical_fields: d.critical_fields || []
         }));
 
         for (let delIdx = 0; delIdx < dels.length; delIdx++) {
@@ -334,6 +337,9 @@ export default function ManualWorkflowBuilder({ onBack, editingTemplateId }) {
             auto_generate_ai_document: delData.auto_generate_ai_document !== false,
             is_required: delData.is_required !== false,
             estimated_duration_hours: delData.estimated_duration_hours || 0,
+            trigger_entity_update_enabled: delData.trigger_entity_update_enabled || false,
+            target_entity_name: delData.target_entity_name || 'Deal',
+            critical_fields: delData.critical_fields || [],
             owner_type: 'user',
             owner_id: user.id
           });
