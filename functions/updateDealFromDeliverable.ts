@@ -29,11 +29,21 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'DeliverableInstance not found' }, { status: 404 });
     }
 
-    // 2. Fetch DeliverableTemplate for metadata (optional - contains critical fields config)
+    // 2. Fetch DeliverableTemplate for metadata (contains trigger config and critical fields)
     const deliverableTemplates = await base44.entities.DeliverableTemplate.filter({ 
       id: deliverableInstance.deliverable_template_id 
     });
     const deliverableTemplate = deliverableTemplates[0];
+    
+    // Check if entity update is enabled for this deliverable
+    if (!deliverableTemplate?.trigger_entity_update_enabled) {
+      return Response.json({ 
+        success: false, 
+        message: 'Entity update trigger not enabled for this deliverable' 
+      });
+    }
+    
+    const targetEntity = deliverableTemplate.target_entity_name || 'Deal';
 
     // 3. Fetch StageInstance to determine Deal status
     const stageInstances = await base44.entities.StageInstance.filter({
@@ -128,19 +138,27 @@ Deno.serve(async (req) => {
       }
     });
 
-    // 7. Check if Deal already exists for this client and workflow
-    const existingDeals = await base44.entities.Deal.filter({
+    // 7. Check if entity already exists for this client and workflow
+    const existingEntities = await base44.entities[targetEntity].filter({
       client_id: clientId,
       'metadata.workflow_instance_id': workflowInstanceId
     });
 
-    let deal;
-    if (existingDeals.length > 0) {
-      // Update existing Deal
-      deal = await base44.entities.Deal.update(existingDeals[0].id, {
-        ...dealData,
+    let entity;
+    if (existingEntities.length > 0) {
+      // Update existing entity - only update fields with new data
+      const updateData = {};
+      Object.entries(dealData).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && 
+            (Array.isArray(value) ? value.length > 0 : value !== '')) {
+          updateData[key] = value;
+        }
+      });
+      
+      entity = await base44.entities[targetEntity].update(existingEntities[0].id, {
+        ...updateData,
         metadata: {
-          ...existingDeals[0].metadata,
+          ...existingEntities[0].metadata,
           workflow_instance_id: workflowInstanceId,
           last_updated_from_deliverable: deliverableInstanceId,
           last_updated_at: new Date().toISOString(),
@@ -148,8 +166,8 @@ Deno.serve(async (req) => {
         }
       });
     } else {
-      // Create new Deal
-      deal = await base44.entities.Deal.create({
+      // Create new entity
+      entity = await base44.entities[targetEntity].create({
         ...dealData,
         metadata: {
           workflow_instance_id: workflowInstanceId,
@@ -161,29 +179,30 @@ Deno.serve(async (req) => {
     }
 
     // 8. Identify missing critical fields
-    const criticalFields = deliverableTemplate?.metadata?.critical_deal_fields || [
+    const criticalFields = deliverableTemplate.critical_fields || [
       'name', 'deal_category', 'opportunity_type', 'solution', 
       'projected_revenue', 'expected_close_date', 'pain_points', 
       'desired_outcomes', 'decision_makers'
     ];
 
     const missingFields = criticalFields.filter(field => {
-      const value = deal[field];
+      const value = entity[field];
       return !value || (Array.isArray(value) && value.length === 0);
     });
 
-    if (missingFields.length > 0) {
-      await base44.entities.Deal.update(deal.id, {
+    if (missingFields.length > 0 && targetEntity === 'Deal') {
+      await base44.entities[targetEntity].update(entity.id, {
         missing_data_fields: missingFields
       });
     }
 
     return Response.json({
       success: true,
-      deal,
+      entity,
+      entityType: targetEntity,
       missingFields,
       tasksProcessed: taskInstances.length,
-      message: existingDeals.length > 0 ? 'Deal updated successfully' : 'Deal created successfully'
+      message: existingEntities.length > 0 ? `${targetEntity} updated successfully` : `${targetEntity} created successfully`
     });
 
   } catch (error) {
