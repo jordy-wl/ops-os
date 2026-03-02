@@ -66,7 +66,7 @@ describe('POST /api/ai/chat', () => {
     expect(res.headers.get('Content-Type')).toBe('text/event-stream')
   })
 
-  it('calls assembleContext with blockId when provided', async () => {
+  it('calls assembleContext with blockId and message (query) when provided', async () => {
     await chatEndpoint(
       makeReq({
         message: 'Summarise this block',
@@ -77,14 +77,15 @@ describe('POST /api/ai/chat', () => {
     expect(assembleContext).toHaveBeenCalledWith(
       '00000000-0000-0000-0000-000000000001',
       'uuid-org-1',
-      'user_111'
+      'user_111',
+      'Summarise this block'
     )
   })
 
-  it('calls assembleContext with null when no blockId', async () => {
+  it('calls assembleContext with null blockId and message when no blockId provided', async () => {
     await chatEndpoint(makeReq({ message: 'What happened today?' }))
 
-    expect(assembleContext).toHaveBeenCalledWith(null, 'uuid-org-1', 'user_111')
+    expect(assembleContext).toHaveBeenCalledWith(null, 'uuid-org-1', 'user_111', 'What happened today?')
   })
 
   it('passes conversationHistory to Claude messages', async () => {
