@@ -15,6 +15,7 @@ import { withAuth, AuthContext } from '@/lib/auth/withAuth'
 
 // Helpers
 const makeReq = () => new NextRequest('http://localhost/api/test')
+const makeCtx = (params: Record<string, string> = {}) => ({ params: Promise.resolve(params) })
 const makeHandler = () =>
   vi.fn<[NextRequest, AuthContext, Record<string, string>], Promise<NextResponse>>().mockResolvedValue(
     NextResponse.json({ data: 'ok' }, { status: 200 })
@@ -42,7 +43,7 @@ describe('withAuth', () => {
       vi.mocked(auth).mockResolvedValue({ userId: null, orgId: null } as ReturnType<typeof auth> extends Promise<infer T> ? T : never)
 
       const handler = withAuth(makeHandler())
-      const res = await handler(makeReq())
+      const res = await handler(makeReq(), makeCtx())
 
       expect(res.status).toBe(401)
       const body = await res.json()
@@ -56,7 +57,7 @@ describe('withAuth', () => {
       vi.mocked(auth).mockResolvedValue({ userId: 'user_111', orgId: null } as ReturnType<typeof auth> extends Promise<infer T> ? T : never)
 
       const handler = withAuth(makeHandler())
-      const res = await handler(makeReq())
+      const res = await handler(makeReq(), makeCtx())
 
       expect(res.status).toBe(403)
       const body = await res.json()
@@ -68,7 +69,7 @@ describe('withAuth', () => {
       makeSupabaseMock({ data: null, error: { code: 'PGRST500', message: 'DB error' } })
 
       const handler = withAuth(makeHandler())
-      const res = await handler(makeReq())
+      const res = await handler(makeReq(), makeCtx())
 
       expect(res.status).toBe(403)
       const body = await res.json()
@@ -84,7 +85,7 @@ describe('withAuth', () => {
       const innerHandler = makeHandler()
       const handler = withAuth(innerHandler)
       const req = makeReq()
-      const res = await handler(req)
+      const res = await handler(req, makeCtx())
 
       expect(res.status).toBe(200)
       expect(innerHandler).toHaveBeenCalledWith(
@@ -133,7 +134,7 @@ describe('withAuth', () => {
       const innerHandler = makeHandler()
       const handler = withAuth(innerHandler)
       const req = makeReq()
-      const res = await handler(req)
+      const res = await handler(req, makeCtx())
 
       expect(res.status).toBe(200)
       expect(innerHandler).toHaveBeenCalledWith(
@@ -162,7 +163,7 @@ describe('withAuth', () => {
       vi.mocked(createServerClient).mockReturnValue(mockSupabase as ReturnType<typeof createServerClient>)
 
       const handler = withAuth(makeHandler())
-      const res = await handler(makeReq())
+      const res = await handler(makeReq(), makeCtx())
 
       expect(res.status).toBe(403)
       const body = await res.json()

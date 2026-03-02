@@ -22,9 +22,9 @@
 |---------|-------|------|--------|-------------|
 | P1-S2-OPS-01 | Git Init + GitHub Actions CI Pipeline | DevOps | DONE | 2026-03-02 |
 | P1-S2-BE-01 | Workflow Engine — Job Processor | Backend | REVIEW | 2026-03-02 |
-| P1-S2-BE-02 | RBAC Roles | Backend | OPEN | 2026-03-02 |
+| P1-S2-BE-02 | RBAC Roles | Backend | IN_PROGRESS | 2026-03-02 |
 | P1-S2-FE-01 | Dashboard — Metrics + Events Feed | Frontend | DONE | 2026-03-02 |
-| P1-S2-FE-02 | Chat UI — Streaming Component | Frontend | OPEN | 2026-03-02 |
+| P1-S2-FE-02 | Chat UI — Streaming Component | Frontend | DONE | 2026-03-02 |
 | P1-S2-FE-03 | Workflow Status View | Frontend | OPEN | 2026-03-02 |
 | P1-S2-AI-01 | Semantic Search in Context Assembly | AI/ML | DONE | 2026-03-02 |
 | P1-S2-QA-01 | Workflow Engine Contract Tests | QA | OPEN | 2026-03-02 |
@@ -62,6 +62,7 @@ PENDING signals that researcher needs to process:
 
 | Date | Author | Note |
 |------|--------|------|
+| 2026-03-02 | FRONTEND-ENGINEER | FE-02 DONE. Chat UI at /chat — ChatPanel (SSE streaming), MessageList (aria-live log), MessageBubble (streaming cursor + error state), ChatInput (Enter/Shift+Enter), BlockContextPicker (SSR pre-fetched blocks). SSE parser extracted to src/lib/chat/parse-sse.ts with 13 unit tests. Nav /chat un-stubbed. Gates 1/2/4/5 passed. DE-01 is now unblocked (OPS-01 ✓ + FE-01 ✓ + FE-02 ✓). FE-03 blocked on BE-01 (REVIEW). |
 | 2026-03-02 | FRONTEND-ENGINEER | FE-01 DONE. Dashboard: 4 metric cards (block counts by type, active workflows, events 24h), recent events feed (20 events, clickable to /blocks/:id), Create Block modal (POST /api/blocks). GET /api/dashboard/summary built. SSR initial data + 30s polling. Gates 1/4/5 passed. Fixed pre-existing S1 lint issue in embeddings.test.ts. AI-01 test failures (7 tests) flagged to AI-ML engineer — pre-existing. FE-02 unblocked. |
 | 2026-03-02 | BACKEND-ENGINEER | BE-01 IN PROGRESS. Migration + engine + onboarding handler + workflow-jobs API + cron endpoint + instrumentation.ts written. 17/17 unit tests pass. 5 contract tests skip (await Supabase). SIGNAL: AI-01 changes broke 7 tests in tests/unit/context-assembly.test.ts + chat.test.ts — AI-01 needs to fix. Contract deviation logged: DB column started_at exposed as claimed_at in GET /api/workflow-jobs (no new column needed). Status values use 'done' per API contract (migration comment erroneously said 'completed'). |
 | 2026-03-02 | ORCHESTRATOR | SPRINT 1 RETRO COMPLETE — 16/16 tasks DONE. 100% completion rate. Gate evidence filed for all tasks. Phase 1 exit conditions: NOT MET (no workflow engine, no production deploy, no design partners). Sprint 2 initiated. |

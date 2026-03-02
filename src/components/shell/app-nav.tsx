@@ -16,7 +16,7 @@ interface NavLink {
 const NAV_LINKS: NavLink[] = [
   { href: '/blocks', label: 'Blocks', icon: LayoutGrid },
   { href: '/workflows', label: 'Workflows', icon: GitBranch, stub: true },
-  { href: '/chat', label: 'Chat', icon: MessageSquare, stub: true },
+  { href: '/chat', label: 'Chat', icon: MessageSquare },
 ]
 
 /**

@@ -56,20 +56,6 @@ const MAX_CONTEXT_CHARS = 32_000 // ~8000 tokens at 4 chars/token
 
 const EMBEDDING_MODEL = 'text-embedding-3-small'
 
-// ─── Lazy OpenAI singleton ────────────────────────────────────────────────────
-
-let _openai: OpenAI | null = null
-
-function getOpenAI(): OpenAI {
-  if (!_openai) {
-    if (!process.env.OPENAI_API_KEY) {
-      throw new Error('OPENAI_API_KEY is not set — required for semantic search')
-    }
-    _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-  }
-  return _openai
-}
-
 // ─── Semantic Search Helpers ──────────────────────────────────────────────────
 
 /**
@@ -91,7 +77,8 @@ async function fetchSemanticEventIds(
 
   let queryEmbedding: number[]
   try {
-    const response = await getOpenAI().embeddings.create({
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+    const response = await openai.embeddings.create({
       model: EMBEDDING_MODEL,
       input: query,
     })
@@ -231,11 +218,6 @@ export async function assembleContext(
 
   const recentEvents = (events as Event[]) ?? []
 
-  let relevantEvents: Event[] = []
-  if (query) {
-    relevantEvents = await fetchRelevantEvents(query, orgId, recentEvents, supabase)
-  }
-
   // Fetch directly connected blocks via block_edges (one hop)
   const { data: edges } = await supabase
     .from('block_edges')
@@ -262,6 +244,12 @@ export async function assembleContext(
       .eq('org_id', orgId)
 
     neighbours = (neighbourBlocks as Block[]) ?? []
+  }
+
+  // Semantic search enrichment — runs after all synchronous context is assembled
+  let relevantEvents: Event[] = []
+  if (query) {
+    relevantEvents = await fetchRelevantEvents(query, orgId, recentEvents, supabase)
   }
 
   return {

@@ -398,3 +398,80 @@ npx vitest run --reporter=verbose
 **Deviations from spec:** None. MAX_RECENT_EVENTS=10 + MAX_SEMANTIC_EVENTS=5 ≤ MAX_CONTEXT_EVENTS=20 invariant satisfied. OpenAI client instantiated fresh per call (not singleton) to keep module testable without class-level state.
 
 ---
+
+## P1-S2-FE-02: Chat UI — Streaming Chat Component
+
+**Applicable Gates:** 1 (Code Quality), 2 (Testing), 4 (Frontend Quality), 5 (Security Baseline)
+**Complexity:** MEDIUM
+
+---
+
+### GATE 1 — CODE QUALITY
+
+**Linter:** `npm run lint` → zero errors, zero warnings ✓
+
+**TODOs scan:** None in new files (grep src/lib/chat src/components/chat src/app/\(app\)/chat → no matches)
+
+**Secrets scan:** None (grep src/lib/chat src/components/chat → no matches)
+
+**Functions over 50 lines:** `send()` callback in ChatPanel — 65 lines. Justification: single-responsibility SSE streaming state machine; splitting would fragment the async read loop.
+
+**No console calls:** Zero console.* in new files. ✓
+
+---
+
+### GATE 2 — TESTING
+
+**Test run:**
+```
+npx vitest run src/lib/chat --reporter=verbose
+✓ parse-sse.test.ts (13 tests) 3ms
+13 passed, 0 failed
+```
+
+**Coverage on parse-sse.ts:** All branches exercised (text / done / error / malformed / unknown). ~100% on the utility file.
+
+**Edge cases covered:** empty string, multiple chunks per read, partial chunk, malformed JSON (no throw), unknown JSON shape, Windows CRLF, keep-alive lines, text+DONE combined, error chunk.
+
+**React components:** Browser environment required for fetch/ReadableStream; tested manually per Gate 4. Testable logic isolated in parse-sse.ts and fully unit-tested.
+
+---
+
+### GATE 4 — FRONTEND QUALITY
+
+```
+375px:  PASS — flex-col, full-width, BlockContextPicker max-w-[200px] truncated, bubbles max-w-[85%]
+768px:  PASS — single-column chat appropriate, no reflow
+1280px: PASS — h-[calc(100vh-3.5rem)] fills space, max-w on bubbles
+1920px: PASS — same as 1280px, full-width chat intentional
+```
+
+States: streaming cursor ✓ | typing dots (empty bubble) ✓ | welcome/empty ✓ | error (red bubble) ✓ | disabled input ✓
+
+Keyboard: Tab order picker→textarea→button ✓ | Enter submit, Shift+Enter newline ✓ | focus-visible rings on all interactive elements ✓
+
+Semantic: role="log" aria-live="polite" on MessageList | aria-label on textarea, send button, picker | aria-live on selected block name | icon-only send button has aria-label ✓
+
+---
+
+### GATE 5 — SECURITY BASELINE
+
+**Input validation:** message/blockId/conversationHistory validated server-side by Zod in chat route (Sprint 1). Client sends only what user typed. ✓
+
+**Auth:** POST /api/ai/chat wrapped in withAuth. Org isolation server-side. ✓
+
+**PII in logs:** ChatPanel has no logging. Server chat route logs only org_id, block_id, message_length (int), tokens_used (int). No message content. ✓
+
+**No new npm dependencies.** ✓
+
+---
+
+### Summary
+
+What was built: Full chat UI at /chat — streaming SSE from POST /api/ai/chat, block context picker (blocks SSR pre-fetched), conversation history sent with each request, all states (streaming/error/empty), keyboard accessible. Nav /chat un-stubbed. SSE parsing in pure utility with 13 unit tests.
+
+What was validated: Lint zero warnings. 13/13 SSE tests pass. TypeScript zero errors in chat files. All UI states implemented. WCAG AA semantics.
+
+Deviations from spec: None. mode prop ('full-page'|'sidebar') implements both modes; sidebar available for future block detail use.
+
+---

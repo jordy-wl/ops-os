@@ -34,7 +34,7 @@ type RouteHandler = (
 export function withAuth(handler: RouteHandler) {
   return async (
     req: NextRequest,
-    context: { params?: Promise<Params> } = {}
+    context: { params: Promise<Params> }
   ): Promise<NextResponse> => {
     const { userId, orgId: clerkOrgId } = await auth()
 
@@ -62,7 +62,7 @@ export function withAuth(handler: RouteHandler) {
       .single()
 
     if (existing) {
-      const params = context.params ? await context.params : {}
+      const params = await context.params
       return handler(req, { userId, clerkOrgId, orgId: existing.id }, params)
     }
 
@@ -82,7 +82,7 @@ export function withAuth(handler: RouteHandler) {
         )
       }
 
-      const params = context.params ? await context.params : {}
+      const params = await context.params
       return handler(req, { userId, clerkOrgId, orgId: newOrg.id }, params)
     }
 
