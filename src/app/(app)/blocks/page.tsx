@@ -1,0 +1,27 @@
+import { auth } from '@clerk/nextjs/server'
+import { redirect } from 'next/navigation'
+import { createServerClient } from '@/lib/supabase/server'
+import { BlockListClient } from '@/components/blocks/block-list-client'
+import type { Block } from '@/lib/context-assembly'
+
+export default async function BlockListPage() {
+  const { userId, orgId } = await auth()
+
+  if (!userId) redirect('/sign-in')
+  if (!orgId) redirect('/org-setup')
+
+  const supabase = createServerClient()
+
+  const { data: blocks } = await supabase
+    .from('blocks')
+    .select('*')
+    .eq('org_id', orgId)
+    .order('updated_at', { ascending: false })
+
+  return (
+    <div className="p-6 lg:p-8">
+      <h1 className="text-2xl font-semibold text-gray-900 mb-6">Blocks</h1>
+      <BlockListClient blocks={(blocks ?? []) as Block[]} />
+    </div>
+  )
+}

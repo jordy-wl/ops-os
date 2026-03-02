@@ -1,0 +1,132 @@
+import Link from 'next/link'
+import { auth } from '@clerk/nextjs/server'
+import { redirect } from 'next/navigation'
+import { createServerClient } from '@/lib/supabase/server'
+import { BlockHeader } from '@/components/blocks/block-header'
+import { BlockDataPanel } from '@/components/blocks/block-data-panel'
+import { EventTimeline } from '@/components/blocks/event-timeline'
+import { ConnectedBlocksPanel } from '@/components/blocks/connected-blocks-panel'
+import type { Block, Event } from '@/lib/context-assembly'
+
+interface Props {
+  params: Promise<{ id: string }>
+}
+
+export default async function BlockDetailPage({ params }: Props) {
+  const { id } = await params
+  const { userId, orgId } = await auth()
+
+  // Auth guard (belt-and-suspenders — layout + middleware already handle this)
+  if (!userId) redirect('/sign-in')
+  if (!orgId) redirect('/org-setup')
+
+  const supabase = createServerClient()
+
+  // Fetch block scoped to this org
+  const { data: block, error: blockError } = await supabase
+    .from('blocks')
+    .select('*')
+    .eq('id', id)
+    .eq('org_id', orgId)
+    .single()
+
+  if (blockError?.code === 'PGRST116' || !block) {
+    // Distinguish 404 vs 403: check if block exists in any org
+    const { data: existsElsewhere } = await supabase
+      .from('blocks')
+      .select('id')
+      .eq('id', id)
+      .maybeSingle()
+
+    if (existsElsewhere) {
+      // Block exists but belongs to a different org → 403
+      return (
+        <div className="flex flex-col items-center justify-center min-h-[60vh] p-6 text-center">
+          <p className="text-4xl font-bold text-gray-200 mb-4" aria-hidden="true">403</p>
+          <h1 className="text-xl font-semibold text-gray-900 mb-2">
+            You don&apos;t have access to this block
+          </h1>
+          <p className="text-sm text-gray-500 mb-6">
+            This block belongs to a different organisation.
+          </p>
+          <Link
+            href="/blocks"
+            className="text-sm font-medium text-gray-900 underline hover:no-underline"
+          >
+            ← Back to blocks
+          </Link>
+        </div>
+      )
+    }
+
+    // Block doesn't exist anywhere → 404
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] p-6 text-center">
+        <p className="text-4xl font-bold text-gray-200 mb-4" aria-hidden="true">404</p>
+        <h1 className="text-xl font-semibold text-gray-900 mb-2">Block not found</h1>
+        <p className="text-sm text-gray-500 mb-6">
+          This block may have been deleted or the link is incorrect.
+        </p>
+        <Link
+          href="/blocks"
+          className="text-sm font-medium text-gray-900 underline hover:no-underline"
+        >
+          ← Back to blocks
+        </Link>
+      </div>
+    )
+  }
+
+  // Fetch events (newest first)
+  const { data: events } = await supabase
+    .from('events')
+    .select('*')
+    .eq('block_id', id)
+    .eq('org_id', orgId)
+    .order('occurred_at', { ascending: false })
+
+  // Fetch connected blocks via block_edges (one hop, both directions)
+  const { data: edges } = await supabase
+    .from('block_edges')
+    .select('from_block_id, to_block_id')
+    .eq('org_id', orgId)
+    .or(`from_block_id.eq.${id},to_block_id.eq.${id}`)
+
+  let neighbours: Block[] = []
+  if (edges && edges.length > 0) {
+    const neighbourIds = [
+      ...new Set(
+        edges
+          .flatMap((e: { from_block_id: string; to_block_id: string }) => [
+            e.from_block_id,
+            e.to_block_id,
+          ])
+          .filter((bid: string) => bid !== id)
+      ),
+    ]
+    const { data: neighbourBlocks } = await supabase
+      .from('blocks')
+      .select('*')
+      .in('id', neighbourIds)
+      .eq('org_id', orgId)
+    neighbours = (neighbourBlocks as Block[]) ?? []
+  }
+
+  return (
+    <div className="p-6 lg:p-8 max-w-4xl">
+      <BlockHeader block={block as Block} />
+
+      {/* Two-column layout on desktop: main content left, connections right */}
+      <div className="mt-6 grid gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2 space-y-6">
+          <BlockDataPanel block={block as Block} />
+          <EventTimeline events={(events ?? []) as Event[]} />
+        </div>
+
+        <div className="rounded-lg border p-4">
+          <ConnectedBlocksPanel neighbours={neighbours} />
+        </div>
+      </div>
+    </div>
+  )
+}

@@ -1,0 +1,7 @@
+-- ============================================================
+-- Ops OS — Seed Data
+-- ============================================================
+-- Sprint 1: empty placeholder.
+-- Full demo scenario (Thornfield Capital Partners) implemented
+-- in DE-01 via scripts/seed.ts (TypeScript, not SQL).
+-- ============================================================

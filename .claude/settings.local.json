@@ -1,0 +1,11 @@
+{
+  "enabledMcpjsonServers": [
+    "github",
+    "linear",
+    "notion",
+    "vercel",
+    "supabase",
+    "browserbase"
+  ],
+  "enableAllProjectMcpServers": true
+}
