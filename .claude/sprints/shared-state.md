@@ -21,9 +21,9 @@
 | Task ID | Title | Role | Status | Last Updated |
 |---------|-------|------|--------|-------------|
 | P1-S2-OPS-01 | Git Init + GitHub Actions CI Pipeline | DevOps | IN_PROGRESS | 2026-03-02 |
-| P1-S2-BE-01 | Workflow Engine — Job Processor | Backend | IN_PROGRESS | 2026-03-02 |
+| P1-S2-BE-01 | Workflow Engine — Job Processor | Backend | REVIEW | 2026-03-02 |
 | P1-S2-BE-02 | RBAC Roles | Backend | OPEN | 2026-03-02 |
-| P1-S2-FE-01 | Dashboard — Metrics + Events Feed | Frontend | IN_PROGRESS | 2026-03-02 |
+| P1-S2-FE-01 | Dashboard — Metrics + Events Feed | Frontend | DONE | 2026-03-02 |
 | P1-S2-FE-02 | Chat UI — Streaming Component | Frontend | OPEN | 2026-03-02 |
 | P1-S2-FE-03 | Workflow Status View | Frontend | OPEN | 2026-03-02 |
 | P1-S2-AI-01 | Semantic Search in Context Assembly | AI/ML | IN_PROGRESS | 2026-03-02 |
@@ -51,6 +51,8 @@ PENDING signals that researcher needs to process:
 
 | Date | Source | Summary | Signal Strength | Logged By |
 |------|--------|---------|----------------|-----------|
+| 2026-03-02 | BE-01 | AI-01 in-progress changes (semantic search) broke 7 unit tests in context-assembly.test.ts and chat.test.ts. Implementation/test mismatch. AI-01 must fix before DONE. | MEDIUM | BACKEND-ENGINEER |
+| 2026-03-02 | BE-01 | workflow_jobs.started_at exposed as claimed_at in API response (no schema change needed). API contract in dependencies.md says claimed_at; DB has started_at. Mapped at API layer. | LOW | BACKEND-ENGINEER |
 
 **How to add a signal:** Run `/log-signal [task-id] [strength]` — writes to `build-learnings.md` and here atomically.
 
@@ -60,6 +62,8 @@ PENDING signals that researcher needs to process:
 
 | Date | Author | Note |
 |------|--------|------|
+| 2026-03-02 | FRONTEND-ENGINEER | FE-01 DONE. Dashboard: 4 metric cards (block counts by type, active workflows, events 24h), recent events feed (20 events, clickable to /blocks/:id), Create Block modal (POST /api/blocks). GET /api/dashboard/summary built. SSR initial data + 30s polling. Gates 1/4/5 passed. Fixed pre-existing S1 lint issue in embeddings.test.ts. AI-01 test failures (7 tests) flagged to AI-ML engineer — pre-existing. FE-02 unblocked. |
+| 2026-03-02 | BACKEND-ENGINEER | BE-01 IN PROGRESS. Migration + engine + onboarding handler + workflow-jobs API + cron endpoint + instrumentation.ts written. 17/17 unit tests pass. 5 contract tests skip (await Supabase). SIGNAL: AI-01 changes broke 7 tests in tests/unit/context-assembly.test.ts + chat.test.ts — AI-01 needs to fix. Contract deviation logged: DB column started_at exposed as claimed_at in GET /api/workflow-jobs (no new column needed). Status values use 'done' per API contract (migration comment erroneously said 'completed'). |
 | 2026-03-02 | ORCHESTRATOR | SPRINT 1 RETRO COMPLETE — 16/16 tasks DONE. 100% completion rate. Gate evidence filed for all tasks. Phase 1 exit conditions: NOT MET (no workflow engine, no production deploy, no design partners). Sprint 2 initiated. |
 | 2026-03-02 | ORCHESTRATOR | **SPRINT 2 KICKOFF**: OPS-01 is FIRST PRIORITY — no git repo means no parallel dev safety. Every other role can start their day-1 tasks but OPS-01 must complete before any code is pushed to GitHub. |
 | 2026-03-02 | ORCHESTRATOR | **CRITICAL PATH**: BE-01 (workflow engine) is HIGH complexity (4 days). FE-03 and QA-01 are blocked on it. Backend: prioritise BE-01 above BE-02. If 2 backend agents running: one on BE-01, one on BE-02. |

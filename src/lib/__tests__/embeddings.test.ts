@@ -30,16 +30,6 @@ const MOCK_EVENT: Event = {
 const MOCK_BLOCK = { type: 'client', name: 'Thornfield Capital Partners' }
 
 // ─── Supabase mock ────────────────────────────────────────────────────────────
-function makeSupabaseMock(blockResult: unknown, insertErr: unknown = null) {
-  return {
-    from: vi.fn().mockReturnThis(),
-    select: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
-    single: vi.fn().mockResolvedValueOnce({ data: blockResult, error: null }),
-    insert: vi.fn().mockReturnThis(),
-    // insert().* resolves to the final insertErr
-  } as unknown as ReturnType<typeof import('@/lib/supabase/server').createServerClient>
-}
 
 // For insert chain: from().insert() resolves directly
 function makeFullSupabaseMock(blockData: unknown, insertError: unknown = null) {
@@ -47,9 +37,6 @@ function makeFullSupabaseMock(blockData: unknown, insertError: unknown = null) {
     select: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
     single: vi.fn().mockResolvedValue({ data: blockData, error: null }),
-  }
-  const insertChain = {
-    then: undefined as unknown,
   }
   // insert() needs to be awaitable
   const insertFn = vi.fn().mockResolvedValue({ error: insertError })
