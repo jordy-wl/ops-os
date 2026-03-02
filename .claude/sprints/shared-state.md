@@ -20,13 +20,13 @@
 
 | Task ID | Title | Role | Status | Last Updated |
 |---------|-------|------|--------|-------------|
-| P1-S2-OPS-01 | Git Init + GitHub Actions CI Pipeline | DevOps | IN_PROGRESS | 2026-03-02 |
+| P1-S2-OPS-01 | Git Init + GitHub Actions CI Pipeline | DevOps | DONE | 2026-03-02 |
 | P1-S2-BE-01 | Workflow Engine — Job Processor | Backend | REVIEW | 2026-03-02 |
 | P1-S2-BE-02 | RBAC Roles | Backend | OPEN | 2026-03-02 |
 | P1-S2-FE-01 | Dashboard — Metrics + Events Feed | Frontend | DONE | 2026-03-02 |
 | P1-S2-FE-02 | Chat UI — Streaming Component | Frontend | OPEN | 2026-03-02 |
 | P1-S2-FE-03 | Workflow Status View | Frontend | OPEN | 2026-03-02 |
-| P1-S2-AI-01 | Semantic Search in Context Assembly | AI/ML | IN_PROGRESS | 2026-03-02 |
+| P1-S2-AI-01 | Semantic Search in Context Assembly | AI/ML | DONE | 2026-03-02 |
 | P1-S2-QA-01 | Workflow Engine Contract Tests | QA | OPEN | 2026-03-02 |
 | P1-S2-DE-01 | Production Deploy + Design Partner Onboarding | Data/ORC | OPEN | 2026-03-02 |
 
@@ -51,7 +51,7 @@ PENDING signals that researcher needs to process:
 
 | Date | Source | Summary | Signal Strength | Logged By |
 |------|--------|---------|----------------|-----------|
-| 2026-03-02 | BE-01 | AI-01 in-progress changes (semantic search) broke 7 unit tests in context-assembly.test.ts and chat.test.ts. Implementation/test mismatch. AI-01 must fix before DONE. | MEDIUM | BACKEND-ENGINEER |
+| 2026-03-02 | BE-01 | AI-01 in-progress changes (semantic search) broke 7 unit tests in context-assembly.test.ts and chat.test.ts. Implementation/test mismatch. AI-01 must fix before DONE. | MEDIUM | BACKEND-ENGINEER | **RESOLVED** — AI-01 fixed all tests. 93 pass, 0 fail. |
 | 2026-03-02 | BE-01 | workflow_jobs.started_at exposed as claimed_at in API response (no schema change needed). API contract in dependencies.md says claimed_at; DB has started_at. Mapped at API layer. | LOW | BACKEND-ENGINEER |
 
 **How to add a signal:** Run `/log-signal [task-id] [strength]` — writes to `build-learnings.md` and here atomically.
@@ -70,6 +70,8 @@ PENDING signals that researcher needs to process:
 | 2026-03-02 | ORCHESTRATOR | **GATE EVIDENCE DISCIPLINE**: Sprint 1 had 10 tasks with informal evidence (shared-state notes, not gate-results.md). Sprint 2: engineers MUST write gate evidence to gate-results.md DURING the task. QA Engineer: enforce this at peer reviews. |
 | 2026-03-02 | ORCHESTRATOR | **DESIGN PARTNER**: DE-01 requires a real design partner. If no partner available by day 5 of sprint, run a "design partner simulation" — team member walks through the system as a proxy user. Do not let phase exit condition remain blocked on external scheduling. |
 | 2026-03-02 | ORCHESTRATOR | Day-1 parallel tracks (all unblocked): OPS-01, BE-01, BE-02, FE-01, FE-02, AI-01. Blocked until BE-01 DONE: FE-03, QA-01. Blocked until OPS-01+FE-01+FE-02 DONE: DE-01. |
+| 2026-03-02 | AI-ML-ENGINEER | AI-01 DONE. Semantic search wired into assembleContext(): fetchSemanticEventIds() (OpenAI text-embedding-3-small → match_embeddings RPC) + fetchRelevantEvents() (deduplicated). ContextObject gets relevantEvents[] field. contextToPromptString() renders both sections. chat/route.ts passes message as query. 12 new unit tests + 7 existing chat tests all pass (93 total, 0 failures). Gates 1/2/5 logged. Signal RESOLVED: 7 broken tests fixed — chat.test.ts assertions updated for 4-arg assembleContext signature. |
+| 2026-03-02 | DEVOPS-ENGINEER | OPS-01 DONE. git init + GitHub repo (Jordy-Langdon/ops-os, private) + CI pipeline green. 79 unit tests pass in CI (27 skip cleanly). npm audit zero HIGH/CRITICAL CVEs. 3 pre-existing Sprint 1 lint issues fixed during CI setup (logged in gate-results.md). Gates 1/5 passed. **ACTION REQUIRED**: Vercel connection is manual — go to vercel.com/new, import Jordy-Langdon/ops-os, add env vars from .env.example, enable auto-deploy on main. DE-01 partially unblocked (needs FE-02 still). |
 
 ---
 
