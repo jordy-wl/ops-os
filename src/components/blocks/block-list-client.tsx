@@ -92,16 +92,14 @@ export function BlockListClient({ blocks }: BlockListClientProps) {
             <>
               <p className="text-lg font-semibold text-gray-900 mb-2">No blocks yet</p>
               <p className="text-sm text-gray-500 mb-6">
-                Blocks are created when you run a workflow.
+                Create your first block from the dashboard.
               </p>
-              {/* CTA stub — workflows not yet built in Sprint 1 */}
-              <button
-                disabled
-                className="px-4 py-2 rounded-md bg-gray-900 text-white text-sm font-medium opacity-40 cursor-not-allowed"
-                title="Workflows coming in Sprint 2"
+              <Link
+                href="/dashboard"
+                className="px-4 py-2 rounded-md bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900"
               >
-                Run a workflow
-              </button>
+                Go to dashboard
+              </Link>
             </>
           ) : (
             <p className="text-sm text-gray-500">
