@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import { createServerClient } from '@/lib/supabase/server'
+import { resolveOrgId } from '@/lib/auth/resolve-org'
 import { ChatPanel } from '@/components/chat/chat-panel'
 import type { Block } from '@/lib/context-assembly'
 
@@ -18,13 +19,15 @@ export default async function ChatPage() {
   if (!userId) redirect('/sign-in')
   if (!orgId) redirect('/org-setup')
 
+  const internalOrgId = await resolveOrgId(orgId)
+
   const supabase = createServerClient()
 
   const { data: blocks } = await supabase
     .from('blocks')
     .select('id, org_id, type, name, state, metadata, created_at, updated_at')
-    .eq('org_id', orgId)
-    .eq('status', 'active')
+    .eq('org_id', internalOrgId ?? '')
+    .eq('state', 'active')
     .order('name', { ascending: true })
     .limit(200)
 
