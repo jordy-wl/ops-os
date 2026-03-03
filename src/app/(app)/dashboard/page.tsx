@@ -20,7 +20,7 @@ export default async function DashboardPage() {
   if (!orgId) redirect('/org-setup')
 
   const internalOrgId = await resolveOrgId(orgId)
-  if (!internalOrgId) redirect('/org-setup')
+  if (!internalOrgId) return <DashboardClient initialData={null} />
 
   const supabase = createServerClient()
   const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()

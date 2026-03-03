@@ -12,7 +12,7 @@ export default async function BlockListPage() {
   if (!orgId) redirect('/org-setup')
 
   const internalOrgId = await resolveOrgId(orgId)
-  if (!internalOrgId) redirect('/org-setup')
+  if (!internalOrgId) return <BlockListClient blocks={[]} />
 
   const supabase = createServerClient()
 

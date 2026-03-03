@@ -22,7 +22,6 @@ export default async function BlockDetailPage({ params }: Props) {
   if (!orgId) redirect('/org-setup')
 
   const internalOrgId = await resolveOrgId(orgId)
-  if (!internalOrgId) redirect('/org-setup')
 
   const supabase = createServerClient()
 

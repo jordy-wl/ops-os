@@ -23,7 +23,6 @@ export default async function WorkflowsPage() {
   if (!orgId) redirect('/org-setup')
 
   const internalOrgId = await resolveOrgId(orgId)
-  if (!internalOrgId) redirect('/org-setup')
 
   const supabase = createServerClient()
 

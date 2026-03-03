@@ -2,21 +2,31 @@ import { createServerClient } from '@/lib/supabase/server'
 
 /**
  * Translates a Clerk organisation ID to the internal Supabase org UUID.
+ * Auto-provisions the Supabase org row on first call if it does not exist,
+ * matching the lazy-init behaviour of withAuth for API routes.
  *
- * Server components must call this before querying any org-scoped table.
- * Those tables store the internal UUID (from the `orgs` row), not the Clerk
- * org ID — the same translation that `withAuth` performs for API routes.
- *
- * Returns null if the org has not yet been provisioned (first API call
- * via `withAuth` auto-provisions it; server components should redirect
- * to /org-setup if null is returned).
+ * Returns null only on an unexpected DB error — callers should treat null
+ * as a transient failure, not a signal to redirect to /org-setup.
+ * Redirect to /org-setup only when Clerk itself has no orgId (handled by
+ * AppLayout, which already guards the entire (app) route group).
  */
 export async function resolveOrgId(clerkOrgId: string): Promise<string | null> {
   const supabase = createServerClient()
-  const { data } = await supabase
+
+  const { data: existing } = await supabase
     .from('orgs')
     .select('id')
     .eq('clerk_org_id', clerkOrgId)
     .single()
-  return data?.id ?? null
+
+  if (existing?.id) return existing.id
+
+  // Org not yet in Supabase — provision it now (same as withAuth does for API routes)
+  const { data: newOrg } = await supabase
+    .from('orgs')
+    .insert({ clerk_org_id: clerkOrgId })
+    .select('id')
+    .single()
+
+  return newOrg?.id ?? null
 }
