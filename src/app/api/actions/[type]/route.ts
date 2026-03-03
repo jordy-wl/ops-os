@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
 import { withAuth } from '@/lib/auth/withAuth'
+import { requireRole } from '@/lib/auth/requireRole'
 import { createServerClient } from '@/lib/supabase/server'
 import { ok, apiError, validationError } from '@/lib/api/responses'
 import { logger } from '@/lib/logger'
@@ -16,7 +17,7 @@ import { REGISTRY } from '@/lib/actions/registry'
  *
  * Add new action types by registering a handler in src/lib/actions/registry.ts.
  */
-export const POST = withAuth(async (req: NextRequest, ctx, params) => {
+export const POST = withAuth(requireRole(['ops-admin', 'ops-user'], async (req: NextRequest, ctx, params) => {
   const type = params.type
 
   const handler = REGISTRY[type]
@@ -54,4 +55,4 @@ export const POST = withAuth(async (req: NextRequest, ctx, params) => {
     })
     return apiError('Action execution failed', 'actions/execution-failed', 500)
   }
-})
+}))

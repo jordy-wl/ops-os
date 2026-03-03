@@ -4,33 +4,17 @@ import { runProcessingCycle } from '@/lib/workflow/engine'
 import { logger } from '@/lib/logger'
 
 /**
- * POST /api/workflow-engine/process
- *
- * Triggers one workflow processing cycle. Called by:
- *   - Vercel Cron (production) — configure schedule in vercel.json (DevOps task)
- *   - Internal polling loop (development) — started via src/instrumentation.ts
- *
- * PRD-03 specifies production cron interval: 60 seconds.
- * Dev polling interval: 5 seconds (see instrumentation.ts).
- *
- * Protected by WORKFLOW_ENGINE_SECRET header when the env var is set.
- * Set WORKFLOW_ENGINE_SECRET in Vercel environment variables before production deploy.
+ * Verifies the x-workflow-engine-secret header (fail-closed).
+ * If WORKFLOW_ENGINE_SECRET is not set, all callers are rejected.
  */
-export async function POST(req: NextRequest): Promise<NextResponse> {
+function isAuthorized(req: NextRequest): boolean {
   const secret = process.env.WORKFLOW_ENGINE_SECRET
-  if (secret) {
-    const provided = req.headers.get('x-workflow-engine-secret')
-    if (provided !== secret) {
-      logger.warn('api-workflow-engine', 'engine.unauthorized_trigger')
-      return NextResponse.json(
-        { data: null, error: { message: 'Unauthorized', code: 'auth/unauthenticated' } },
-        { status: 401 }
-      )
-    }
-  }
+  if (!secret) return false
+  return req.headers.get('x-workflow-engine-secret') === secret
+}
 
+async function handleCycle(): Promise<NextResponse> {
   const supabase = createServerClient()
-
   try {
     const processed = await runProcessingCycle(supabase)
     return NextResponse.json({ data: { processed }, error: null })
@@ -43,4 +27,39 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       { status: 500 }
     )
   }
+}
+
+/**
+ * GET /api/workflow-engine/process
+ *
+ * Called by Vercel Cron (production) — Vercel Cron always sends GET requests.
+ * Schedule configured in vercel.json: every 60 seconds.
+ * Protected by x-workflow-engine-secret header (fail-closed).
+ */
+export async function GET(req: NextRequest): Promise<NextResponse> {
+  if (!isAuthorized(req)) {
+    logger.warn('api-workflow-engine', 'engine.unauthorized_trigger')
+    return NextResponse.json(
+      { data: null, error: { message: 'Unauthorized', code: 'auth/unauthenticated' } },
+      { status: 401 }
+    )
+  }
+  return handleCycle()
+}
+
+/**
+ * POST /api/workflow-engine/process
+ *
+ * Called by the internal polling loop in development (src/instrumentation.ts).
+ * Protected by x-workflow-engine-secret header (fail-closed).
+ */
+export async function POST(req: NextRequest): Promise<NextResponse> {
+  if (!isAuthorized(req)) {
+    logger.warn('api-workflow-engine', 'engine.unauthorized_trigger')
+    return NextResponse.json(
+      { data: null, error: { message: 'Unauthorized', code: 'auth/unauthenticated' } },
+      { status: 401 }
+    )
+  }
+  return handleCycle()
 }

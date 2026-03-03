@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import { createServerClient } from '@/lib/supabase/server'
+import { resolveOrgId } from '@/lib/auth/resolve-org'
 import { BlockHeader } from '@/components/blocks/block-header'
 import { BlockDataPanel } from '@/components/blocks/block-data-panel'
 import { EventTimeline } from '@/components/blocks/event-timeline'
@@ -20,6 +21,9 @@ export default async function BlockDetailPage({ params }: Props) {
   if (!userId) redirect('/sign-in')
   if (!orgId) redirect('/org-setup')
 
+  const internalOrgId = await resolveOrgId(orgId)
+  if (!internalOrgId) redirect('/org-setup')
+
   const supabase = createServerClient()
 
   // Fetch block scoped to this org
@@ -27,7 +31,7 @@ export default async function BlockDetailPage({ params }: Props) {
     .from('blocks')
     .select('*')
     .eq('id', id)
-    .eq('org_id', orgId)
+    .eq('org_id', internalOrgId)
     .single()
 
   if (blockError?.code === 'PGRST116' || !block) {
@@ -82,14 +86,14 @@ export default async function BlockDetailPage({ params }: Props) {
     .from('events')
     .select('*')
     .eq('block_id', id)
-    .eq('org_id', orgId)
+    .eq('org_id', internalOrgId)
     .order('occurred_at', { ascending: false })
 
   // Fetch connected blocks via block_edges (one hop, both directions)
   const { data: edges } = await supabase
     .from('block_edges')
     .select('from_block_id, to_block_id')
-    .eq('org_id', orgId)
+    .eq('org_id', internalOrgId)
     .or(`from_block_id.eq.${id},to_block_id.eq.${id}`)
 
   let neighbours: Block[] = []
@@ -108,7 +112,7 @@ export default async function BlockDetailPage({ params }: Props) {
       .from('blocks')
       .select('*')
       .in('id', neighbourIds)
-      .eq('org_id', orgId)
+      .eq('org_id', internalOrgId)
     neighbours = (neighbourBlocks as Block[]) ?? []
   }
 

@@ -161,4 +161,81 @@ describe.skipIf(!hasSupabase)('Workflow Engine — contract tests (real Supabase
     expect(res.status).toBe(400)
     expect(json.error.code).toBe('validation/invalid-status')
   })
+
+  it('job with unregistered workflow type is immediately marked failed (no retries)', async () => {
+    // Inserts a pending job with a type that has no handler in WORKFLOW_REGISTRY.
+    // Bypasses the actions API (which only creates 'onboarding' type) via service-role
+    // client — legitimate for contract tests that need to probe engine edge cases.
+    const supabase = getTestSupabase()
+
+    const { data: job } = await supabase
+      .from('workflow_jobs')
+      .insert({
+        org_id:       ctx.orgId,
+        type:         'unregistered_test_type',
+        status:       'pending',
+        payload:      {},
+        scheduled_at: new Date().toISOString(),
+      })
+      .select('id')
+      .single()
+
+    expect(job).not.toBeNull()
+    const jobId = job!.id
+
+    await runProcessingCycle(supabase)
+
+    const { data: updated } = await supabase
+      .from('workflow_jobs')
+      .select('status, attempts')
+      .eq('id', jobId)
+      .single()
+
+    // Engine must immediately mark failed — no retry loop for unknown types
+    expect(updated?.status).toBe('failed')
+    expect(updated?.attempts).toBe(1) // markFailed called exactly once
+  })
+
+  it('concurrent engine cycles do not double-process the same job (FOR UPDATE SKIP LOCKED)', async () => {
+    // Enqueue exactly one new job
+    const req = new NextRequest('http://localhost/api/actions/onboarding.start', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ clientName: 'Concurrency Test Client', jurisdiction: 'AU' }),
+    })
+    const actionRes  = await actionsPost(req, { params: Promise.resolve({ type: 'onboarding.start' }) })
+    const actionJson = await actionRes.json()
+    const jobId      = actionJson.data.workflowJobId as string
+
+    const supabase = getTestSupabase()
+
+    // Two concurrent processing cycles — the claim_workflow_job() RPC uses
+    // FOR UPDATE SKIP LOCKED so only one connection can claim the same job
+    await Promise.all([
+      runProcessingCycle(supabase),
+      runProcessingCycle(supabase),
+    ])
+
+    // The job must be done
+    const { data: job } = await supabase
+      .from('workflow_jobs')
+      .select('status')
+      .eq('id', jobId)
+      .single()
+
+    expect(job?.status).toBe('done')
+
+    // The engine emits workflow.completed on success. Double-processing would
+    // produce 2 events for this job_id — verify exactly 1 exists.
+    const { data: completionEvents } = await supabase
+      .from('events')
+      .select('payload')
+      .eq('org_id', ctx.orgId)
+      .eq('type', 'workflow.completed')
+
+    const forThisJob = (completionEvents ?? []).filter(
+      (e) => (e.payload as { job_id?: string }).job_id === jobId
+    )
+    expect(forThisJob).toHaveLength(1)
+  })
 })

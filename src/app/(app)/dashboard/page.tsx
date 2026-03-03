@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import { createServerClient } from '@/lib/supabase/server'
+import { resolveOrgId } from '@/lib/auth/resolve-org'
 import { DashboardClient } from '@/components/dashboard/dashboard-client'
 import { logger } from '@/lib/logger'
 import type { DashboardSummary } from '@/app/api/dashboard/summary/route'
@@ -18,21 +19,24 @@ export default async function DashboardPage() {
   if (!userId) redirect('/sign-in')
   if (!orgId) redirect('/org-setup')
 
+  const internalOrgId = await resolveOrgId(orgId)
+  if (!internalOrgId) redirect('/org-setup')
+
   const supabase = createServerClient()
   const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
 
   const [blocksRes, activeJobsRes, eventsCountRes, recentEventsRes] = await Promise.all([
-    supabase.from('blocks').select('type').eq('org_id', orgId),
+    supabase.from('blocks').select('type').eq('org_id', internalOrgId),
     supabase
       .from('workflow_jobs')
       .select('id')
-      .eq('org_id', orgId)
+      .eq('org_id', internalOrgId)
       .in('status', ['pending', 'running']),
-    supabase.from('events').select('id').eq('org_id', orgId).gte('occurred_at', since24h),
+    supabase.from('events').select('id').eq('org_id', internalOrgId).gte('occurred_at', since24h),
     supabase
       .from('events')
       .select('id, type, actor_type, occurred_at, block_id')
-      .eq('org_id', orgId)
+      .eq('org_id', internalOrgId)
       .order('occurred_at', { ascending: false })
       .limit(20),
   ])
@@ -43,7 +47,7 @@ export default async function DashboardPage() {
   if (queryError) {
     logger.error('dashboard-page', 'db.query_failed', {
       error_code: queryError.code,
-      org_id: orgId,
+      org_id: internalOrgId,
     })
     // Render client with no initial data — it will fetch on mount
     return <DashboardClient initialData={null} />
@@ -80,7 +84,7 @@ export default async function DashboardPage() {
       .from('blocks')
       .select('id, name')
       .in('id', blockIds)
-      .eq('org_id', orgId)
+      .eq('org_id', internalOrgId)
     for (const b of blockNames ?? []) {
       blockNameMap.set(b.id, b.name)
     }

@@ -10,7 +10,7 @@ vi.mock('@/lib/auth/withAuth', () => ({
         const params = await context.params
         return handler(
           req,
-          { userId: 'user_111', clerkOrgId: 'org_abc', orgId: 'uuid-org-1' },
+          { userId: 'user_111', clerkOrgId: 'org_abc', orgId: 'uuid-org-1', role: 'ops-admin' as const },
           params
         )
       }
