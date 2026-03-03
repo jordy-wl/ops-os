@@ -17,7 +17,7 @@ import { withAuth, AuthContext } from '@/lib/auth/withAuth'
 const makeReq = () => new NextRequest('http://localhost/api/test')
 const makeCtx = (params: Record<string, string> = {}) => ({ params: Promise.resolve(params) })
 const makeHandler = () =>
-  vi.fn<[NextRequest, AuthContext, Record<string, string>], Promise<NextResponse>>().mockResolvedValue(
+  vi.fn<(req: NextRequest, ctx: AuthContext, params: Record<string, string>) => Promise<NextResponse>>().mockResolvedValue(
     NextResponse.json({ data: 'ok' }, { status: 200 })
   )
 
@@ -29,7 +29,7 @@ function makeSupabaseMock(result: { data: unknown; error: unknown }) {
     insert: vi.fn().mockReturnThis(),
     single: vi.fn().mockResolvedValue(result),
   }
-  vi.mocked(createServerClient).mockReturnValue(mock as ReturnType<typeof createServerClient>)
+  vi.mocked(createServerClient).mockReturnValue(mock as unknown as ReturnType<typeof createServerClient>)
   return mock
 }
 
@@ -40,7 +40,7 @@ describe('withAuth', () => {
 
   describe('401 — missing or invalid JWT', () => {
     it('returns 401 when userId is null', async () => {
-      vi.mocked(auth).mockResolvedValue({ userId: null, orgId: null } as ReturnType<typeof auth> extends Promise<infer T> ? T : never)
+      vi.mocked(auth).mockResolvedValue({ userId: null, orgId: null } as unknown as (ReturnType<typeof auth> extends Promise<infer T> ? T : never))
 
       const handler = withAuth(makeHandler())
       const res = await handler(makeReq(), makeCtx())
@@ -54,7 +54,7 @@ describe('withAuth', () => {
 
   describe('403 — auth problems', () => {
     it('returns 403 when user has no active org', async () => {
-      vi.mocked(auth).mockResolvedValue({ userId: 'user_111', orgId: null } as ReturnType<typeof auth> extends Promise<infer T> ? T : never)
+      vi.mocked(auth).mockResolvedValue({ userId: 'user_111', orgId: null } as unknown as (ReturnType<typeof auth> extends Promise<infer T> ? T : never))
 
       const handler = withAuth(makeHandler())
       const res = await handler(makeReq(), makeCtx())
@@ -65,7 +65,7 @@ describe('withAuth', () => {
     })
 
     it('returns 403 when org lookup fails with unexpected DB error', async () => {
-      vi.mocked(auth).mockResolvedValue({ userId: 'user_111', orgId: 'org_abc' } as ReturnType<typeof auth> extends Promise<infer T> ? T : never)
+      vi.mocked(auth).mockResolvedValue({ userId: 'user_111', orgId: 'org_abc' } as unknown as (ReturnType<typeof auth> extends Promise<infer T> ? T : never))
       makeSupabaseMock({ data: null, error: { code: 'PGRST500', message: 'DB error' } })
 
       const handler = withAuth(makeHandler())
@@ -79,7 +79,7 @@ describe('withAuth', () => {
 
   describe('200 — valid JWT + known org', () => {
     it('calls handler with correct AuthContext when org exists', async () => {
-      vi.mocked(auth).mockResolvedValue({ userId: 'user_111', orgId: 'org_abc' } as ReturnType<typeof auth> extends Promise<infer T> ? T : never)
+      vi.mocked(auth).mockResolvedValue({ userId: 'user_111', orgId: 'org_abc' } as unknown as (ReturnType<typeof auth> extends Promise<infer T> ? T : never))
       makeSupabaseMock({ data: { id: 'uuid-org-1' }, error: null })
 
       const innerHandler = makeHandler()
@@ -96,7 +96,7 @@ describe('withAuth', () => {
     })
 
     it('passes awaited params to handler for dynamic routes', async () => {
-      vi.mocked(auth).mockResolvedValue({ userId: 'user_111', orgId: 'org_abc' } as ReturnType<typeof auth> extends Promise<infer T> ? T : never)
+      vi.mocked(auth).mockResolvedValue({ userId: 'user_111', orgId: 'org_abc' } as unknown as (ReturnType<typeof auth> extends Promise<infer T> ? T : never))
       makeSupabaseMock({ data: { id: 'uuid-org-1' }, error: null })
 
       const innerHandler = makeHandler()
@@ -114,7 +114,7 @@ describe('withAuth', () => {
 
   describe('org auto-provisioning', () => {
     it('creates org row on first login and calls handler', async () => {
-      vi.mocked(auth).mockResolvedValue({ userId: 'user_new', orgId: 'org_new' } as ReturnType<typeof auth> extends Promise<infer T> ? T : never)
+      vi.mocked(auth).mockResolvedValue({ userId: 'user_new', orgId: 'org_new' } as unknown as (ReturnType<typeof auth> extends Promise<infer T> ? T : never))
 
       const singleSpy = vi.fn()
         // First call: org lookup → not found
@@ -129,7 +129,7 @@ describe('withAuth', () => {
         insert: vi.fn().mockReturnThis(),
         single: singleSpy,
       }
-      vi.mocked(createServerClient).mockReturnValue(mockSupabase as ReturnType<typeof createServerClient>)
+      vi.mocked(createServerClient).mockReturnValue(mockSupabase as unknown as ReturnType<typeof createServerClient>)
 
       const innerHandler = makeHandler()
       const handler = withAuth(innerHandler)
@@ -147,7 +147,7 @@ describe('withAuth', () => {
     })
 
     it('returns 403 when org auto-provision insert fails', async () => {
-      vi.mocked(auth).mockResolvedValue({ userId: 'user_new', orgId: 'org_new' } as ReturnType<typeof auth> extends Promise<infer T> ? T : never)
+      vi.mocked(auth).mockResolvedValue({ userId: 'user_new', orgId: 'org_new' } as unknown as (ReturnType<typeof auth> extends Promise<infer T> ? T : never))
 
       const singleSpy = vi.fn()
         .mockResolvedValueOnce({ data: null, error: { code: 'PGRST116', message: 'not found' } })
@@ -160,7 +160,7 @@ describe('withAuth', () => {
         insert: vi.fn().mockReturnThis(),
         single: singleSpy,
       }
-      vi.mocked(createServerClient).mockReturnValue(mockSupabase as ReturnType<typeof createServerClient>)
+      vi.mocked(createServerClient).mockReturnValue(mockSupabase as unknown as ReturnType<typeof createServerClient>)
 
       const handler = withAuth(makeHandler())
       const res = await handler(makeReq(), makeCtx())

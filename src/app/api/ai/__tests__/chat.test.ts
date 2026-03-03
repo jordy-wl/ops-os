@@ -5,8 +5,8 @@ import type { AuthContext } from '@/lib/auth/withAuth'
 vi.mock('@/lib/auth/withAuth', () => ({
   withAuth: vi.fn(
     (handler: (req: NextRequest, ctx: AuthContext, params: Record<string, string>) => Promise<Response>) =>
-      async (req: NextRequest, context: { params?: Promise<Record<string, string>> } = {}) => {
-        const params = context.params ? await context.params : {}
+      async (req: NextRequest, context: { params: Promise<Record<string, string>> }) => {
+        const params = await context.params
         return handler(
           req,
           { userId: 'user_111', clerkOrgId: 'org_abc', orgId: 'uuid-org-1' },
@@ -60,7 +60,7 @@ describe('POST /api/ai/chat', () => {
   beforeEach(() => vi.clearAllMocks())
 
   it('returns SSE stream with correct Content-Type', async () => {
-    const res = await chatEndpoint(makeReq({ message: 'What is the status?' }))
+    const res = await chatEndpoint(makeReq({ message: 'What is the status?' }), { params: Promise.resolve({}) })
 
     expect(res.status).toBe(200)
     expect(res.headers.get('Content-Type')).toBe('text/event-stream')
@@ -71,7 +71,8 @@ describe('POST /api/ai/chat', () => {
       makeReq({
         message: 'Summarise this block',
         blockId: '00000000-0000-0000-0000-000000000001',
-      })
+      }),
+      { params: Promise.resolve({}) }
     )
 
     expect(assembleContext).toHaveBeenCalledWith(
@@ -83,7 +84,7 @@ describe('POST /api/ai/chat', () => {
   })
 
   it('calls assembleContext with null blockId and message when no blockId provided', async () => {
-    await chatEndpoint(makeReq({ message: 'What happened today?' }))
+    await chatEndpoint(makeReq({ message: 'What happened today?' }), { params: Promise.resolve({}) })
 
     expect(assembleContext).toHaveBeenCalledWith(null, 'uuid-org-1', 'user_111', 'What happened today?')
   })
@@ -96,7 +97,8 @@ describe('POST /api/ai/chat', () => {
           { role: 'user', content: 'Previous question' },
           { role: 'assistant', content: 'Previous answer' },
         ],
-      })
+      }),
+      { params: Promise.resolve({}) }
     )
 
     const anthropicInstance = vi.mocked(Anthropic).mock.results[0].value
@@ -106,7 +108,7 @@ describe('POST /api/ai/chat', () => {
   })
 
   it('uses claude-sonnet-4-6 model with max_tokens 1000', async () => {
-    await chatEndpoint(makeReq({ message: 'Test message' }))
+    await chatEndpoint(makeReq({ message: 'Test message' }), { params: Promise.resolve({}) })
 
     const anthropicInstance = vi.mocked(Anthropic).mock.results[0].value
     const streamCall = anthropicInstance.messages.stream.mock.calls[0][0]
@@ -115,19 +117,19 @@ describe('POST /api/ai/chat', () => {
   })
 
   it('returns 400 when message is missing', async () => {
-    const res = await chatEndpoint(makeReq({ blockId: '00000000-0000-0000-0000-000000000001' }))
+    const res = await chatEndpoint(makeReq({ blockId: '00000000-0000-0000-0000-000000000001' }), { params: Promise.resolve({}) })
     expect(res.status).toBe(400)
     const body = await res.json()
     expect(body.error.code).toBe('validation/invalid-input')
   })
 
   it('returns 400 when blockId is not a valid UUID', async () => {
-    const res = await chatEndpoint(makeReq({ message: 'Test', blockId: 'not-a-uuid' }))
+    const res = await chatEndpoint(makeReq({ message: 'Test', blockId: 'not-a-uuid' }), { params: Promise.resolve({}) })
     expect(res.status).toBe(400)
   })
 
   it('streams text chunks as SSE events', async () => {
-    const res = await chatEndpoint(makeReq({ message: 'Hello' }))
+    const res = await chatEndpoint(makeReq({ message: 'Hello' }), { params: Promise.resolve({}) })
 
     const reader = res.body!.getReader()
     const decoder = new TextDecoder()

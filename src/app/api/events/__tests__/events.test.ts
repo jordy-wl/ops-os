@@ -5,8 +5,8 @@ import type { AuthContext } from '@/lib/auth/withAuth'
 vi.mock('@/lib/auth/withAuth', () => ({
   withAuth: vi.fn(
     (handler: (req: NextRequest, ctx: AuthContext, params: Record<string, string>) => Promise<Response>) =>
-      async (req: NextRequest, context: { params?: Promise<Record<string, string>> } = {}) => {
-        const params = context.params ? await context.params : {}
+      async (req: NextRequest, context: { params: Promise<Record<string, string>> }) => {
+        const params = await context.params
         return handler(
           req,
           { userId: 'user_111', clerkOrgId: 'org_abc', orgId: 'uuid-org-1' },
@@ -41,11 +41,11 @@ function makeDb(...responses: { data: unknown; error: unknown }[]) {
       Promise.resolve(queue[i++] ?? { data: [], error: null }).then(resolve, reject),
   }
 
-  vi.mocked(createServerClient).mockReturnValue(chain as ReturnType<typeof createServerClient>)
+  vi.mocked(createServerClient).mockReturnValue(chain as unknown as ReturnType<typeof createServerClient>)
   return { chain, singleFn }
 }
 
-const makeReq = (url: string, opts?: RequestInit) => new NextRequest(url, opts)
+const makeReq = (url: string, opts?: RequestInit) => new NextRequest(url, opts as ConstructorParameters<typeof NextRequest>[1])
 
 const { GET: listEvents, POST: createEvent } = await import('@/app/api/events/route')
 
@@ -72,7 +72,7 @@ describe('POST /api/events', () => {
         payload: { document: 'passport' },
       }),
     })
-    const res = await createEvent(req)
+    const res = await createEvent(req, { params: Promise.resolve({}) })
 
     expect(res.status).toBe(201)
     const body = await res.json()
@@ -87,7 +87,7 @@ describe('POST /api/events', () => {
       method: 'POST',
       body: JSON.stringify({ block_id: 'not-a-uuid', type: 'some.event' }),
     })
-    const res = await createEvent(req)
+    const res = await createEvent(req, { params: Promise.resolve({}) })
 
     expect(res.status).toBe(400)
     const body = await res.json()
@@ -100,7 +100,7 @@ describe('POST /api/events', () => {
       method: 'POST',
       body: JSON.stringify({ block_id: '00000000-0000-0000-0000-000000000001' }),
     })
-    const res = await createEvent(req)
+    const res = await createEvent(req, { params: Promise.resolve({}) })
     expect(res.status).toBe(400)
   })
 
@@ -111,7 +111,7 @@ describe('POST /api/events', () => {
       method: 'POST',
       body: JSON.stringify({ block_id: '00000000-0000-0000-0000-000000000099', type: 'test.event' }),
     })
-    const res = await createEvent(req)
+    const res = await createEvent(req, { params: Promise.resolve({}) })
 
     expect(res.status).toBe(404)
     const body = await res.json()
@@ -130,7 +130,8 @@ describe('GET /api/events', () => {
     makeDb({ data: events, error: null })
 
     const res = await listEvents(
-      makeReq('http://localhost/api/events?block_id=block-1')
+      makeReq('http://localhost/api/events?block_id=block-1'),
+      { params: Promise.resolve({}) }
     )
 
     expect(res.status).toBe(200)
@@ -150,7 +151,8 @@ describe('GET /api/events', () => {
     makeDb({ data: events, error: null })
 
     const res = await listEvents(
-      makeReq('http://localhost/api/events?block_id=block-1')
+      makeReq('http://localhost/api/events?block_id=block-1'),
+      { params: Promise.resolve({}) }
     )
 
     expect(res.status).toBe(200)
@@ -160,7 +162,7 @@ describe('GET /api/events', () => {
 
   it('returns 400 when no block_id or org_id provided', async () => {
     makeDb()
-    const res = await listEvents(makeReq('http://localhost/api/events'))
+    const res = await listEvents(makeReq('http://localhost/api/events'), { params: Promise.resolve({}) })
     expect(res.status).toBe(400)
     const body = await res.json()
     expect(body.error.code).toBe('validation/missing-param')
@@ -170,11 +172,11 @@ describe('GET /api/events', () => {
     // The org_id is set from ctx.orgId (from JWT), not from request params.
     // Query is scoped to ctx.orgId — verified by checking the eq() call on org_id.
     const { chain } = makeDb({ data: [], error: null })
-    await listEvents(makeReq('http://localhost/api/events?org_id=other-org-uuid'))
+    await listEvents(makeReq('http://localhost/api/events?org_id=other-org-uuid'), { params: Promise.resolve({}) })
 
     // eq() should have been called with ctx.orgId (uuid-org-1), not the param
     const eqCalls = vi.mocked(chain.eq as ReturnType<typeof vi.fn>).mock.calls
-    const orgIdCall = eqCalls.find(([field]: [string]) => field === 'org_id')
+    const orgIdCall = eqCalls.find(([field]: string[]) => field === 'org_id')
     expect(orgIdCall?.[1]).toBe('uuid-org-1') // JWT org, not request param
   })
 })

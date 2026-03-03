@@ -138,7 +138,7 @@ describe.skipIf(!hasSupabase)('Workflow Engine — contract tests (real Supabase
       { method: 'GET' }
     )
 
-    const res  = await workflowJobsGet(req, {})
+    const res  = await workflowJobsGet(req, { params: Promise.resolve({}) })
     const json = await res.json()
 
     expect(res.status).toBe(200)
@@ -155,7 +155,7 @@ describe.skipIf(!hasSupabase)('Workflow Engine — contract tests (real Supabase
       { method: 'GET' }
     )
 
-    const res  = await workflowJobsGet(req, {})
+    const res  = await workflowJobsGet(req, { params: Promise.resolve({}) })
     const json = await res.json()
 
     expect(res.status).toBe(400)

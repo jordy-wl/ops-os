@@ -75,12 +75,15 @@ export const POST = withAuth(async (req: NextRequest, ctx) => {
     .eq('org_id', ctx.orgId)
     .single()
 
-  if (blockError?.code === 'PGRST116' || !block) {
-    return apiError('Block not found', 'events/block-not-found', 404)
-  }
   if (blockError) {
+    if (blockError.code === 'PGRST116') {
+      return apiError('Block not found', 'events/block-not-found', 404)
+    }
     logger.error('api-events', 'db.query_failed', { error_code: blockError.code })
     return apiError('Failed to verify block', 'db/query-failed', 500)
+  }
+  if (!block) {
+    return apiError('Block not found', 'events/block-not-found', 404)
   }
 
   const { data: event, error: eventError } = await supabase

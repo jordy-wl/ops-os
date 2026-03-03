@@ -29,7 +29,7 @@ export type ActionResult = {
  *   3. Register in `src/lib/actions/registry.ts`
  */
 export interface ActionHandler<T> {
-  schema: z.ZodType<T>
+  schema: z.ZodType<T, z.ZodTypeDef, unknown>
   execute: (
     payload: T,
     ctx: AuthContext,

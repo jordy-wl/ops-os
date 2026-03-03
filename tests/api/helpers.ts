@@ -36,7 +36,7 @@ export function getTestSupabase() {
  * Creates a NextRequest for testing API route handlers.
  */
 export function makeRequest(url: string, options?: RequestInit) {
-  return new NextRequest(url, options)
+  return new NextRequest(url, options as ConstructorParameters<typeof NextRequest>[1])
 }
 
 /**

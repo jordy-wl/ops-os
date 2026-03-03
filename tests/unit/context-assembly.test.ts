@@ -109,7 +109,7 @@ describe('assembleContext', () => {
     const { default: OpenAI } = await import('openai')
     vi.mocked(OpenAI).mockImplementation(() => ({
       embeddings: { create: mockEmbeddingsCreate },
-    }))
+    }) as unknown as InstanceType<typeof OpenAI>)
   })
 
   it('calls semantic search and returns both recent + relevant events when query provided', async () => {

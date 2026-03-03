@@ -6,8 +6,8 @@ import type { AuthContext } from '@/lib/auth/withAuth'
 vi.mock('@/lib/auth/withAuth', () => ({
   withAuth: vi.fn(
     (handler: (req: NextRequest, ctx: AuthContext, params: Record<string, string>) => Promise<Response>) =>
-      async (req: NextRequest, context: { params?: Promise<Record<string, string>> } = {}) => {
-        const params = context.params ? await context.params : {}
+      async (req: NextRequest, context: { params: Promise<Record<string, string>> }) => {
+        const params = await context.params
         return handler(
           req,
           { userId: 'user_111', clerkOrgId: 'org_abc', orgId: 'uuid-org-1' },
@@ -50,12 +50,12 @@ function makeDb(...responses: { data: unknown; error: unknown }[]) {
       Promise.resolve(queue[i++] ?? { data: [], error: null }).then(resolve, reject),
   }
 
-  vi.mocked(createServerClient).mockReturnValue(chain as ReturnType<typeof createServerClient>)
+  vi.mocked(createServerClient).mockReturnValue(chain as unknown as ReturnType<typeof createServerClient>)
   return { chain, singleFn }
 }
 
 const makeReq = (url = 'http://localhost/api/blocks', opts?: RequestInit) =>
-  new NextRequest(url, opts)
+  new NextRequest(url, opts as ConstructorParameters<typeof NextRequest>[1])
 
 // ─── Import routes after mocks are set up ──────────────────────────────────────
 const { GET: listBlocks, POST: createBlock } = await import('@/app/api/blocks/route')
@@ -76,7 +76,7 @@ describe('POST /api/blocks', () => {
       method: 'POST',
       body: JSON.stringify({ type: 'client', name: 'Acme Corp' }),
     })
-    const res = await createBlock(req)
+    const res = await createBlock(req, { params: Promise.resolve({}) })
 
     expect(res.status).toBe(201)
     const body = await res.json()
@@ -91,7 +91,7 @@ describe('POST /api/blocks', () => {
       method: 'POST',
       body: JSON.stringify({ name: 'Missing type' }),
     })
-    const res = await createBlock(req)
+    const res = await createBlock(req, { params: Promise.resolve({}) })
 
     expect(res.status).toBe(400)
     const body = await res.json()
@@ -105,7 +105,7 @@ describe('POST /api/blocks', () => {
       method: 'POST',
       body: JSON.stringify({ type: 'widget', name: 'Bad type' }),
     })
-    const res = await createBlock(req)
+    const res = await createBlock(req, { params: Promise.resolve({}) })
     expect(res.status).toBe(400)
   })
 
@@ -115,7 +115,7 @@ describe('POST /api/blocks', () => {
       method: 'POST',
       body: JSON.stringify({ type: 'deal', name: 'New Deal' }),
     })
-    const res = await createBlock(req)
+    const res = await createBlock(req, { params: Promise.resolve({}) })
     expect(res.status).toBe(500)
   })
 })
@@ -130,7 +130,7 @@ describe('GET /api/blocks', () => {
     ]
     makeDb({ data: blocks, error: null })
 
-    const res = await listBlocks(makeReq())
+    const res = await listBlocks(makeReq(), { params: Promise.resolve({}) })
 
     expect(res.status).toBe(200)
     const body = await res.json()

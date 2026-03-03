@@ -34,7 +34,7 @@ function makeDb(...responses: { data: unknown; error: unknown }[]) {
       Promise.resolve(queue[i++] ?? { data: [], error: null }).then(resolve, reject),
   }
 
-  vi.mocked(createServerClient).mockReturnValue(chain as ReturnType<typeof createServerClient>)
+  vi.mocked(createServerClient).mockReturnValue(chain as unknown as ReturnType<typeof createServerClient>)
   return chain
 }
 
@@ -111,6 +111,7 @@ describe('contextToPromptString', () => {
   const baseCtx: ContextObject = {
     block: BLOCK,
     events: EVENTS,
+    relevantEvents: [],
     neighbours: [],
     org: ORG,
     userRole: 'member',
@@ -169,6 +170,7 @@ describe('contextToPromptString', () => {
     const ctxOrgLevel: ContextObject = {
       block: null,
       events: EVENTS,
+      relevantEvents: [],
       neighbours: [],
       org: ORG,
       userRole: 'member',

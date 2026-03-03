@@ -42,7 +42,7 @@ function makeDb(...responses: { data: unknown; error: unknown }[]) {
     single: singleFn,
   }
 
-  vi.mocked(createServerClient).mockReturnValue(chain as ReturnType<typeof createServerClient>)
+  vi.mocked(createServerClient).mockReturnValue(chain as unknown as ReturnType<typeof createServerClient>)
   return chain
 }
 

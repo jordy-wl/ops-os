@@ -16,12 +16,15 @@ export const GET = withAuth(async (_req: NextRequest, ctx, params) => {
     .eq('org_id', ctx.orgId)
     .single()
 
-  if (blockError?.code === 'PGRST116' || !block) {
-    return apiError('Block not found', 'blocks/not-found', 404)
-  }
   if (blockError) {
+    if (blockError.code === 'PGRST116') {
+      return apiError('Block not found', 'blocks/not-found', 404)
+    }
     logger.error('api-blocks', 'db.query_failed', { error_code: blockError.code })
     return apiError('Failed to fetch block', 'db/query-failed', 500)
+  }
+  if (!block) {
+    return apiError('Block not found', 'blocks/not-found', 404)
   }
 
   // Get all edges where this block appears (either direction)
