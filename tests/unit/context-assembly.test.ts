@@ -57,7 +57,7 @@ function makeBuilder(resolveValue: { data: unknown; error?: unknown }) {
   const b: Record<string, unknown> = {}
   // Make it a thenable so `await builder.select(...).eq(...).in(...)` resolves correctly
   b.then = (resolve: (v: unknown) => void) => resolve(resolveValue)
-  for (const method of ['select', 'eq', 'order', 'limit', 'single', 'in', 'or']) {
+  for (const method of ['select', 'eq', 'order', 'limit', 'single', 'in', 'or', 'gte']) {
     b[method] = vi.fn().mockReturnValue(b)
   }
   return b
@@ -208,6 +208,9 @@ describe('assembleContext', () => {
     mockClient.from
       .mockReturnValueOnce(makeBuilder({ data: mockOrg }))          // orgs
       .mockReturnValueOnce(makeBuilder({ data: recentEvents }))      // events (org-level, recent)
+      .mockReturnValueOnce(makeBuilder({ data: [{ type: 'client' }] })) // blocks (type counts)
+      .mockReturnValueOnce(makeBuilder({ data: [] }))               // workflow_jobs (active)
+      .mockReturnValueOnce(makeBuilder({ data: [] }))               // events (24h count)
       .mockReturnValueOnce(makeBuilder({ data: [semanticEvent] }))   // events (semantic fetch)
 
     mockEmbeddingsCreate.mockResolvedValueOnce({
@@ -229,12 +232,64 @@ describe('assembleContext', () => {
     mockClient.from
       .mockReturnValueOnce(makeBuilder({ data: mockOrg }))
       .mockReturnValueOnce(makeBuilder({ data: recentEvents }))
+      .mockReturnValueOnce(makeBuilder({ data: [{ type: 'client' }, { type: 'deal' }] })) // blocks
+      .mockReturnValueOnce(makeBuilder({ data: [{ id: 'j1' }] }))   // workflow_jobs (active)
+      .mockReturnValueOnce(makeBuilder({ data: [{ id: 'e1' }] }))   // events (24h count)
 
     const ctx = await assembleContext(null, ORG_ID, USER_ID)
 
     expect(ctx.block).toBeNull()
     expect(ctx.relevantEvents).toHaveLength(0)
     expect(mockEmbeddingsCreate).not.toHaveBeenCalled()
+    expect(ctx.orgSummary).toContain('2 blocks total')
+    expect(ctx.orgSummary).toContain('1 active workflows')
+    expect(ctx.orgSummary).toContain('1 events in the last 24 hours')
+  })
+
+  it('includes graphContext with direction labels when block has edges', async () => {
+    const edges = [
+      { from_block_id: 'parent-1', to_block_id: BLOCK_ID },
+      { from_block_id: BLOCK_ID, to_block_id: 'child-1' },
+    ]
+    const parentBlock = { id: 'parent-1', org_id: ORG_ID, type: 'client', name: 'ParentCo', state: 'active', metadata: {}, created_at: '', updated_at: '' }
+    const childBlock = { id: 'child-1', org_id: ORG_ID, type: 'contact', name: 'Jane Doe', state: 'active', metadata: {}, created_at: '', updated_at: '' }
+
+    mockClient.from
+      .mockReturnValueOnce(makeBuilder({ data: mockOrg }))       // orgs
+      .mockReturnValueOnce(makeBuilder({ data: mockBlock }))      // blocks (single)
+      .mockReturnValueOnce(makeBuilder({ data: recentEvents }))   // events (recent)
+      .mockReturnValueOnce(makeBuilder({ data: edges }))          // block_edges
+      .mockReturnValueOnce(makeBuilder({ data: [parentBlock, childBlock] })) // neighbour blocks
+
+    const ctx = await assembleContext(BLOCK_ID, ORG_ID, USER_ID)
+
+    expect(ctx.graphContext).toContain('ParentCo (client)')
+    expect(ctx.graphContext).toContain('Jane Doe (contact)')
+    expect(ctx.graphContext).toContain('Block relationships:')
+  })
+
+  it('sets graphContext to "none recorded" when block has no edges', async () => {
+    setupBlockFromMocks(recentEvents, [])
+
+    const ctx = await assembleContext(BLOCK_ID, ORG_ID, USER_ID)
+
+    expect(ctx.graphContext).toBe('Block relationships: none recorded')
+  })
+
+  it('omits orgSummary gracefully when summary queries fail', async () => {
+    // Provide org response, events response, but null for the 3 summary queries
+    mockClient.from
+      .mockReturnValueOnce(makeBuilder({ data: mockOrg }))
+      .mockReturnValueOnce(makeBuilder({ data: recentEvents }))
+      .mockReturnValueOnce(makeBuilder({ data: null }))  // blocks: null
+      .mockReturnValueOnce(makeBuilder({ data: null }))  // workflow_jobs: null
+      .mockReturnValueOnce(makeBuilder({ data: null }))  // events 24h: null
+
+    const ctx = await assembleContext(null, ORG_ID, USER_ID)
+
+    // Should still return a valid context (orgSummary uses ?? to handle null data)
+    expect(ctx.events).toHaveLength(3)
+    expect(ctx.orgSummary).toContain('0 blocks total')
   })
 })
 

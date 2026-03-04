@@ -41,6 +41,8 @@ export type ContextObject = {
   neighbours: Block[]
   org: Org | null
   userRole: string
+  orgSummary?: string      // org-level factual summary (block counts, active workflows, recent events)
+  graphContext?: string     // block-level relationship summary (neighbour names+types with direction)
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -175,15 +177,42 @@ export async function assembleContext(
   const recentLimit = query ? MAX_RECENT_EVENTS : MAX_CONTEXT_EVENTS
 
   if (!blockId) {
-    // Org-level context: recent events across all blocks in org
-    const { data: events } = await supabase
-      .from('events')
-      .select('*')
-      .eq('org_id', orgId)
-      .order('occurred_at', { ascending: false })
-      .limit(recentLimit)
+    // Org-level context: recent events + org summary (parallel)
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
 
-    const recentEvents = (events as Event[]) ?? []
+    const [eventsResult, blocksResult, activeJobsResult, dayEventsResult] = await Promise.all([
+      supabase.from('events').select('*').eq('org_id', orgId)
+        .order('occurred_at', { ascending: false }).limit(recentLimit),
+      supabase.from('blocks').select('type').eq('org_id', orgId),
+      supabase.from('workflow_jobs').select('id').eq('org_id', orgId).in('status', ['pending', 'running']),
+      supabase.from('events').select('id').eq('org_id', orgId).gte('occurred_at', twentyFourHoursAgo),
+    ])
+
+    const recentEvents = (eventsResult.data as Event[]) ?? []
+
+    // Build org summary — graceful on failure
+    let orgSummary: string | undefined
+    try {
+      const blocks = (blocksResult.data as { type: string }[]) ?? []
+      const typeCounts: Record<string, number> = {}
+      for (const b of blocks) {
+        typeCounts[b.type] = (typeCounts[b.type] ?? 0) + 1
+      }
+      const typeBreakdown = Object.entries(typeCounts)
+        .map(([t, c]) => `${c} ${t}`)
+        .join(', ')
+      const activeJobs = activeJobsResult.data?.length ?? 0
+      const dayEvents = dayEventsResult.data?.length ?? 0
+
+      orgSummary = `Organisation summary: ${blocks.length} blocks total`
+        + (typeBreakdown ? ` (${typeBreakdown})` : '')
+        + `, ${activeJobs} active workflows, ${dayEvents} events in the last 24 hours.`
+    } catch (err) {
+      logger.warn('context-assembly', 'semantic.org_summary_failed', {
+        org_id: orgId,
+        error: (err as Error).message?.slice(0, 100),
+      })
+    }
 
     let relevantEvents: Event[] = []
     if (query) {
@@ -196,7 +225,8 @@ export async function assembleContext(
       relevantEvents,
       neighbours: [],
       org: org ?? null,
-      userRole: 'member', // Phase 2: resolve from org membership table
+      userRole: 'member',
+      orgSummary,
     }
   }
 
@@ -246,6 +276,35 @@ export async function assembleContext(
     neighbours = (neighbourBlocks as Block[]) ?? []
   }
 
+  // Build graph context summary with direction labels
+  let graphContext: string | undefined
+  try {
+    if (neighbours.length > 0 && edges) {
+      const neighbourMap = new Map(neighbours.map((n) => [n.id, n]))
+      const parts: string[] = []
+      for (const edge of edges as { from_block_id: string; to_block_id: string }[]) {
+        if (edge.from_block_id === blockId) {
+          const child = neighbourMap.get(edge.to_block_id)
+          if (child) parts.push(`this block → ${child.name} (${child.type})`)
+        } else {
+          const parent = neighbourMap.get(edge.from_block_id)
+          if (parent) parts.push(`${parent.name} (${parent.type}) → this block`)
+        }
+      }
+      graphContext = parts.length > 0
+        ? `Block relationships: ${parts.join('; ')}`
+        : 'Block relationships: none recorded'
+    } else {
+      graphContext = 'Block relationships: none recorded'
+    }
+  } catch (err) {
+    logger.warn('context-assembly', 'semantic.graph_context_failed', {
+      org_id: orgId,
+      block_id: blockId,
+      error: (err as Error).message?.slice(0, 100),
+    })
+  }
+
   // Semantic search enrichment — runs after all synchronous context is assembled
   let relevantEvents: Event[] = []
   if (query) {
@@ -259,6 +318,7 @@ export async function assembleContext(
     neighbours,
     org: (org as Org) ?? null,
     userRole: 'member',
+    graphContext,
   }
 }
 
@@ -279,13 +339,20 @@ export function contextToPromptString(context: ContextObject): string {
 
   lines.push(`Org: ${org?.name ?? 'Unknown Org'}`)
   lines.push(`User role: ${userRole}`)
+
+  if (context.orgSummary) {
+    lines.push(context.orgSummary)
+  }
+
   lines.push('')
 
   if (block) {
     const jurisdiction = block.metadata?.jurisdiction ?? 'unset'
     lines.push(`Block: "${block.name}" (type: ${block.type}, jurisdiction: ${jurisdiction})`)
 
-    if (neighbours.length > 0) {
+    if (context.graphContext) {
+      lines.push(context.graphContext)
+    } else if (neighbours.length > 0) {
       const connected = neighbours.map((n) => `"${n.name}" (${n.type})`).join(', ')
       lines.push(`Connected to: ${connected}`)
     } else {

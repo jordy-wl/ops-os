@@ -27,6 +27,7 @@ function makeDb(...responses: { data: unknown; error: unknown }[]) {
     eq: vi.fn().mockReturnThis(),
     or: vi.fn().mockReturnThis(),
     in: vi.fn().mockReturnThis(),
+    gte: vi.fn().mockReturnThis(),
     order: vi.fn().mockReturnThis(),
     limit: vi.fn().mockReturnThis(),
     single: singleFn,
@@ -90,8 +91,11 @@ describe('assembleContext', () => {
       { id: 'ev-1', block_id: 'block-1', type: 'block.created', actor_id: 'user_111', actor_type: 'human', payload: {}, occurred_at: '2026-03-02T10:00:00Z' },
     ]
     makeDb(
-      { data: ORG, error: null },        // single: org
-      { data: orgEvents, error: null }   // then: org-level events
+      { data: ORG, error: null },                              // single: org
+      { data: orgEvents, error: null },                        // then: org-level events
+      { data: [{ type: 'client' }, { type: 'deal' }], error: null }, // then: blocks (type counts)
+      { data: [], error: null },                               // then: workflow_jobs (active)
+      { data: [{ id: 'e1' }], error: null },                  // then: events (24h count)
     )
 
     const ctx = await assembleContext(null, 'org-uuid', 'user_111')
@@ -100,6 +104,10 @@ describe('assembleContext', () => {
     expect(ctx.neighbours).toEqual([])
     expect(ctx.events).toHaveLength(1)
     expect(ctx.org?.id).toBe('org-uuid')
+    expect(ctx.orgSummary).toContain('2 blocks total')
+    expect(ctx.orgSummary).toContain('1 client')
+    expect(ctx.orgSummary).toContain('0 active workflows')
+    expect(ctx.orgSummary).toContain('1 events in the last 24 hours')
   })
 
   it('exports MAX_CONTEXT_EVENTS = 20', () => {
