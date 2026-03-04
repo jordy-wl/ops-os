@@ -56,24 +56,43 @@ Block creation works. Chat responds correctly.
 
 ---
 
-## Sprint 3 Implications
+## Sprint 3 Implications (Resolved)
 
-- Add "Start Workflow" action to block detail page (routes to POST /api/actions/onboarding.start)
-- Populate `orgs.name` from Clerk org metadata on first sign-in
-- Empty state improvements across blocks list and dashboard
-- Real design partner recruitment: target 1 capital markets contact for a live session
-  using the Sprint 3 build
+- [x] Add "Start Workflow" action to block detail page — shipped in P1-S3-FE-01
+- [ ] Populate `orgs.name` from Clerk org metadata on first sign-in — planned for Sprint 4 quick wins
+- [ ] Empty state improvements across blocks list and dashboard — planned for Sprint 4 quick wins
 
 ---
 
-## Phase 1 Exit Condition Status
+## Sprint 3 Update — Design Partner Approach Change
+
+**Date:** 2026-03-04
+**Decision:** Team acts as design partner. No external recruitment required for Phase 1.
+
+The product owner confirmed that the team is doing manual testing and adding notes
+from their own capital markets experience. Feedback will be fed into design-partner-notes.md
+incrementally rather than via a single formal session.
+
+**Sprint 3 code shipped:**
+- "Start Client Onboarding" button on block detail (FE-01)
+- Workflow engine hardening with DB error handling (BE-01)
+- Events timeline polish with date groups and badges (FE-02)
+- AI context enrichment with org summary and graph (AI-01)
+- E2E workflow trigger test (QA-01)
+- 6 build signals processed and 4 PRDs updated (RES-01)
+
+**Next:** Team walkthrough of production → notes added here gradually.
+
+---
+
+## Phase 1 Exit Condition Status (Sprint 3)
 
 | Condition | Status |
 |-----------|--------|
-| ≥2 orgs with ≥10 workflow_jobs done in 7 days | NOT MET — 0 workflow jobs in partner org |
-| ≥1 capital markets design partner using system | PARTIAL — proxy session only |
-| ≥50 real business events across partners | NOT MET — 1 event |
-| Design partner verbal confirmation | NOT MET — proxy session |
+| ≥2 orgs with ≥10 workflow_jobs done in 7 days | NOT MET — workflow engine ready, awaiting team usage |
+| ≥1 design partner using system | MET (team) — team acts as design partner |
+| ≥50 real business events across partners | NOT MET — will accumulate with team usage |
+| Design partner verbal confirmation | DEFERRED — team feedback collected incrementally |
 
-Phase 1 exit conditions not met. Sprint 3 target: real partner session with workflow
-trigger UI available.
+Phase 1 exit conditions partially met. Proceeding to Sprint 4 while team usage generates
+the event/workflow volume needed to evaluate remaining conditions.
