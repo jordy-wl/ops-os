@@ -1,4 +1,4 @@
-import { auth } from '@clerk/nextjs/server'
+import { auth, clerkClient } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { logger } from '@/lib/logger'
@@ -94,11 +94,26 @@ export function withAuth(handler: RouteHandler) {
     // Look up org by Clerk org ID
     const { data: existing, error: lookupError } = await supabase
       .from('orgs')
-      .select('id')
+      .select('id, name')
       .eq('clerk_org_id', clerkOrgId)
       .single()
 
     if (existing) {
+      // Backfill org name from Clerk if missing
+      if (!existing.name) {
+        try {
+          const client = await clerkClient()
+          const clerkOrg = await client.organizations.getOrganization({ organizationId: clerkOrgId })
+          if (clerkOrg.name) {
+            await supabase
+              .from('orgs')
+              .update({ name: clerkOrg.name, slug: clerkOrg.slug ?? '' })
+              .eq('id', existing.id)
+          }
+        } catch {
+          // Non-blocking — org name sync is best-effort
+        }
+      }
       const role = await resolveRole(supabase, existing.id, userId, 'ops-user')
       const params = await context.params
       return handler(req, { userId, clerkOrgId, orgId: existing.id, role }, params)
@@ -106,9 +121,25 @@ export function withAuth(handler: RouteHandler) {
 
     // PGRST116 = no rows found — auto-provision org on first login
     if (lookupError?.code === 'PGRST116') {
+      // Fetch org name from Clerk for the initial provision
+      let orgName: string | undefined
+      let orgSlug: string | undefined
+      try {
+        const client = await clerkClient()
+        const clerkOrg = await client.organizations.getOrganization({ organizationId: clerkOrgId })
+        orgName = clerkOrg.name
+        orgSlug = clerkOrg.slug ?? undefined
+      } catch {
+        // Non-blocking — provision without name if Clerk call fails
+      }
+
       const { data: newOrg, error: insertError } = await supabase
         .from('orgs')
-        .insert({ clerk_org_id: clerkOrgId })
+        .insert({
+          clerk_org_id: clerkOrgId,
+          ...(orgName ? { name: orgName } : {}),
+          ...(orgSlug ? { slug: orgSlug } : {}),
+        })
         .select('id')
         .single()
 
