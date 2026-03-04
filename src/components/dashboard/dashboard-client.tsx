@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import Link from 'next/link'
 import { MetricCard } from './metric-card'
 import { RecentEventsFeed } from './recent-events-feed'
 import { CreateBlockModal } from './create-block-modal'
@@ -103,6 +104,31 @@ export function DashboardClient({ initialData }: DashboardClientProps) {
         <p role="status" className="mb-4 text-xs text-amber-600">
           {fetchError}
         </p>
+      )}
+
+      {/* Empty state CTA — shown when org has zero blocks */}
+      {block_counts.total === 0 && (
+        <div className="rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 p-8 text-center mb-8">
+          <div className="mx-auto mb-3 text-3xl" aria-hidden="true">
+            +
+          </div>
+          <h2 className="text-lg font-semibold text-gray-900 mb-1">
+            Create your first Block
+          </h2>
+          <p className="text-sm text-gray-500 mb-4 max-w-md mx-auto">
+            Blocks are the core entities in your workspace — clients, deals,
+            projects, and more. Start by creating one.
+          </p>
+          <Link
+            href="/blocks"
+            className={cn(
+              'inline-flex px-5 py-2.5 rounded-md text-sm font-medium bg-gray-900 text-white',
+              'hover:bg-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900'
+            )}
+          >
+            Go to Blocks
+          </Link>
+        </div>
       )}
 
       {/* Metric cards — 2 cols on mobile, 4 on desktop */}
