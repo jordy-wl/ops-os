@@ -11,9 +11,8 @@
  *   3. E2E_CLERK_EMAIL + E2E_CLERK_PASSWORD in .env.local (Clerk test user)
  *   4. P1-S3-FE-01 (trigger button) DONE and P1-S3-BE-01 (cron config) DONE
  *
- * SCAFFOLD STATUS: Written before FE-01 + BE-01 complete.
- * Tests skip cleanly in CI until E2E_CLERK_EMAIL is set.
- * Run locally against dev server once FE-01 + BE-01 are merged.
+ * FE-01 + BE-01 are now DONE. Tests skip cleanly in CI until E2E_CLERK_EMAIL is set.
+ * Run locally against dev server with all Sprint 3 code merged.
  *
  * Cleanup note: event immutability (RLS) prevents cascade deletes after workflow
  * events attach to the block. Test blocks persist in the dev DB by design.
@@ -113,9 +112,10 @@ test.describe('Workflow Trigger — Onboarding to Completion', () => {
 
     expect(createResult.status).toBe(201)
 
-    // Handle both { data: { id } } and { id } response shapes defensively
+    // Response shape: { data: { block: { id, ... }, event: ... }, error: null }
     const bodyData = createResult.body.data as Record<string, unknown> | undefined
-    blockId = (bodyData?.id ?? createResult.body.id) as string
+    const block = bodyData?.block as Record<string, unknown> | undefined
+    blockId = (block?.id ?? bodyData?.id ?? createResult.body.id) as string
     expect(blockId).toBeTruthy()
 
     // ── 3. Navigate to block detail page ──────────────────────────────────────
