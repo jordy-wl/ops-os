@@ -1,6 +1,6 @@
 # PRD Layer 07: AI/ML Specification
 
-> Last updated: 2026-03-02 | Author: AI/ML Engineer | Status: DRAFT
+> Last updated: 2026-03-04 | Author: AI/ML Engineer | Status: DRAFT
 > Cross-references: `prd/03-system-architecture.md` (AI integration), `prd/10-security-compliance.md` (PII in prompts).
 > AI/ML engineer: read this before claiming tasks. All evaluation criteria and cost targets live here.
 
@@ -16,6 +16,10 @@
 | Context Assembly | AI reads the full graph + event timeline before every response | 1 | IN DEV |
 | Confidence Routing | AI assesses confidence × action risk → auto-execute or route to human | 2 | PLANNED |
 | Extraction (Haiku) | Parse emails, extract structured data from documents, generate summaries | 2 | PLANNED |
+| Operational Intelligence | Compare workflow template (design) vs instance events (reality) → surface deviations, bottlenecks, SLA risks | 3 | PLANNED |
+| Agent Queue Processor | AI agent that processes `route_agent` task_queue_items — executes simple tasks autonomously with confidence scoring | 3 | PLANNED |
+| Document Intelligence | AI-powered document generation from block data + template variables; smart field extraction from uploaded docs | 3 | PLANNED |
+| Workflow Suggestion | Given a block type and org's event history, suggest workflow template structure | 3 | PLANNED |
 
 ---
 
@@ -252,7 +256,80 @@ Verdict: PASS / FAIL
 | Embeddings | API (OpenAI) | pgvector + OpenAI is the simplest path; Claude has no embedding endpoint |
 | Prompt management | Build (file-based) | Simple, version-controllable, no vendor dependency |
 | Eval suite | Build (custom) | Specific to Ops OS action types; no off-the-shelf eval framework fits |
-| No-code canvas AI assistance | Deferred Phase 2+ | Canvas itself is Phase 2+ |
+| Workflow suggestion AI | Build (Phase 3) | Suggests workflow templates from event patterns; specific to Ops OS data model |
+| Agent task processor | Build (Phase 3) | Route_agent tasks processed by Claude with confidence scoring; specific to Ops OS action types |
+| Operational intelligence | Build (Phase 3) | Template vs instance comparison; specific to workflow-as-block pattern |
+| Visual canvas AI assistance | Deferred Phase 3+ | Canvas itself is Phase 3 |
+
+---
+
+## Phase 3 AI Feature Specifications
+
+### Feature 5: Operational Intelligence (Design vs Reality)
+
+**What it does:** Compares what a workflow template says _should_ happen (the design) with what the workflow instance's event timeline shows _actually_ happened (the reality). Surfaces deviations, bottlenecks, SLA risks, and patterns.
+
+**Model:** `claude-sonnet-4-6` (or `claude-opus-4-6` for complex multi-workflow analysis)
+
+**How it works:**
+1. For each completed workflow instance: collect template definition + instance events
+2. Build comparison prompt: "Here is the template. Here is what happened. What deviated?"
+3. AI identifies: steps that took longer than expected, steps that were skipped, steps that failed and were retried, steps where human intervention was needed but shouldn't have been
+4. Aggregate across instances: "This step fails 30% of the time — investigate"
+
+**Eval criteria:**
+
+| Case Type | Count | Acceptance Threshold |
+|-----------|-------|---------------------|
+| Correctly identifies deviation from template | 20 cases | > 90% detection rate |
+| Correctly identifies bottleneck step | 10 cases | > 85% accuracy |
+| Does not flag false positives on normal variation | 10 cases | < 10% false positive rate |
+| SLA risk prediction (step likely to miss deadline) | 10 cases | > 80% accuracy |
+
+---
+
+### Feature 6: Agent Queue Processor
+
+**What it does:** Processes `route_agent` task_queue_items autonomously. For tasks the AI can handle (data lookups, simple updates, notifications), it executes them with confidence scoring and logs the decision.
+
+**Model:** `claude-sonnet-4-6`
+
+**Constraints:**
+- Same confidence × risk routing as human actions
+- Agent-processed tasks are always logged with `actor_type: "ai"` events
+- Risk score 4–5 tasks NEVER auto-processed by agent, regardless of confidence
+- Agent processing rate starts at 0% and increases with calibration data
+
+**Eval criteria:**
+
+| Case Type | Count | Acceptance Threshold |
+|-----------|-------|---------------------|
+| Correctly executes simple tasks (data lookup, notification) | 20 cases | > 95% correct execution |
+| Correctly escalates complex tasks to human | 10 cases | 100% escalation rate for ambiguous tasks |
+| No PII leakage in agent actions | 5 cases | 100% — zero leakage |
+
+---
+
+### Feature 7: Document Intelligence
+
+**What it does:** Two capabilities: (1) AI-powered document generation from block data + template variables with smart formatting, and (2) field extraction from uploaded documents (parse a PDF → extract structured data into block fields).
+
+**Model:** `claude-haiku-4-5-20251001` for extraction; `claude-sonnet-4-6` for generation requiring reasoning
+
+---
+
+### Feature 8: Workflow Suggestion
+
+**What it does:** Given a block type and the org's historical event patterns, suggests a workflow template structure. "You frequently do these 5 steps when onboarding a client in Australia — want me to create a template?"
+
+**Model:** `claude-sonnet-4-6`
+
+**Eval criteria:**
+
+| Case Type | Count | Acceptance Threshold |
+|-----------|-------|---------------------|
+| Suggested workflow matches actual user patterns | 10 cases | > 70% step overlap |
+| User accepts suggestion (human eval) | 10 cases | > 50% acceptance rate |
 
 ---
 

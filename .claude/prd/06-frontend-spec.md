@@ -1,6 +1,6 @@
 # PRD Layer 06: Frontend Specification
 
-> Last updated: 2026-03-02 | Author: Frontend Engineer | Status: DRAFT
+> Last updated: 2026-03-04 | Author: Frontend Engineer | Status: DRAFT
 > Cross-references: `prd/05-api-contracts.md` (data source), `prd/02-user-research.md` (user journeys).
 > Frontend engineer: read this before claiming tasks.
 
@@ -53,10 +53,11 @@ Purpose: Full view of one business entity: its data, graph connections, event ti
 Key elements:
   - Block header: name, type badge, status badge, jurisdiction
   - Tabs: Overview | Timeline | Graph | Workflow
-  - Overview tab: block data fields (from JSONB), related blocks (graph edges)
+  - Overview tab: block data fields (rendered dynamically from block_type_definitions.field_schema in Phase 2; hardcoded per type in Phase 1), related blocks (graph edges)
   - Timeline tab: chronological event log — event type, actor, payload summary, timestamp
-  - Graph tab: visual list of connected blocks (text-based in Phase 1; canvas in Phase 2+)
-  - Workflow tab: current workflow step, step history, approve/reject controls
+  - Graph tab: visual list of connected blocks (text-based in Phase 1; canvas in Phase 3)
+  - Workflow tab: current workflow instance status, step history, task queue items, approve/reject controls
+  - Tasks tab (Phase 2): pending task_queue_items for this block's active workflow instances
 Actions:
   - "Edit block" → inline form for block.update action
   - "Approve step" → triggers workflow.step.approve action → toast confirmation
@@ -96,10 +97,10 @@ State requirements:
 Screen: Slide-over sheet triggered from Dashboard "New Block" button
 Purpose: Create a new business entity
 Key elements:
-  - Block type selector: client | deal | project | contract | contact
+  - Block type selector: system types + org custom types (fetched from GET /api/block-types in Phase 2)
   - Name field (required)
   - Jurisdiction selector (GB | US | SG | AU | Other)
-  - Dynamic data fields: rendered based on selected type
+  - Dynamic data fields: Phase 1 = hardcoded per type; Phase 2 = rendered from block_type_definitions.field_schema (JSON Schema → form fields via react-jsonschema-form or equivalent)
   - "Create Block" submit button
 Actions:
   - Submit → POST /api/actions/block.create → close sheet → navigate to new block
@@ -131,6 +132,97 @@ Actions:
 
 ---
 
+### Flow 6: Block Type Configuration (Phase 2)
+
+```
+Screen: Block Type Manager (route: /settings/block-types)
+Purpose: Create and manage custom block types with field schemas
+Key elements:
+  - List of all block types (system + custom) with icon, name, field count
+  - System types shown as read-only with lock icon
+  - "New Block Type" button → opens configuration sheet
+  - Configuration sheet:
+    - Type key (machine name, validated: lowercase, underscores only)
+    - Display name
+    - Icon selector (from icon library)
+    - Colour picker
+    - Field schema builder: add fields (text, number, date, enum, boolean), set required, set defaults
+  - Preview: shows what a Create Block form would look like with this schema
+Actions:
+  - Create type → POST /api/block-types → records block_type.created event
+  - Edit type → PUT /api/block-types/:id → records block_type.updated event
+  - Cannot delete system types; can archive custom types
+```
+
+---
+
+### Flow 7: Task Queue (Phase 2)
+
+```
+Screen: My Tasks (route: /tasks)
+Purpose: View and manage task_queue_items assigned to the current user
+Key elements:
+  - Task list: name, workflow instance, entity block, priority, due date, status
+  - Filters: status (pending/claimed/completed), priority, workflow type
+  - Sort: by due date (default), priority, created date
+  - Task detail panel (slide-over):
+    - Task context: which workflow step, which entity block, step instructions
+    - Action buttons: "Claim" (if pending), "Complete" (if claimed), "Reassign"
+    - Outcome form: approval/rejection with notes field
+    - Related block link → navigate to Block Detail
+  - Badge count in sidebar nav showing pending task count
+Actions:
+  - Claim task → POST /api/tasks/:id/claim → toast confirmation
+  - Complete task → POST /api/tasks/:id/complete → advances workflow instance
+  - Reassign → POST /api/tasks/:id/reassign → select user/role
+```
+
+---
+
+### Flow 8: Visual Workflow Builder (Phase 3)
+
+```
+Screen: Workflow Builder (route: /workflows/[id]/edit)
+Purpose: Visual canvas for composing workflow templates using drag-and-drop
+Key elements:
+  - React Flow canvas with node types: trigger, action step, condition, branching
+  - Left sidebar: composable menu with categories:
+    - Triggers (6 types): manual, event, schedule, webhook, api_signal, workflow_completion
+    - Actions (10 types): create_block, update_block, create_edge, route_human, route_agent, generate_doc, send_notify, call_api, start_workflow, wait
+    - Conditions (5 types): field_condition, status_condition, time_condition, role_condition, graph_condition
+    - Branching (5 types): if_else, switch, parallel, loop, approval_gate
+  - Node configuration panel (right sidebar): opens when a node is selected; form for step config
+  - Template variable autocomplete: {{block.*}}, {{context.*}}, {{now}}, {{org.*}}, {{trigger.*}}
+  - Top bar: template name, "Save Draft" button, "Publish" button, "Test Run" button
+  - Mini-map for large workflows
+Actions:
+  - Drag node from sidebar → drop on canvas → creates step/trigger/condition
+  - Connect nodes → draw edge between them
+  - Click node → open config panel
+  - Save → PUT /api/workflow-templates/:id
+  - Publish → POST /api/actions/workflow.template.publish
+  - Test Run → spawns a workflow instance in test mode
+```
+
+---
+
+### Flow 9: Document Generation (Phase 3)
+
+```
+Screen: Document Templates (route: /settings/documents)
+Purpose: Create and manage document templates that workflow steps can generate
+Key elements:
+  - Template list: name, type (PDF/email/letter), associated block types
+  - Template editor: rich text with template variable insertion ({{block.name}}, etc.)
+  - Preview: render with sample block data
+Actions:
+  - Create template → stores in document_templates table
+  - Edit template → updates template content
+  - Generate from workflow → generate_doc step type creates document as attachment
+```
+
+---
+
 ## Component Inventory
 
 | Component | Purpose | Used On | shadcn/ui Base |
@@ -148,6 +240,22 @@ Actions:
 | `CreateBlockSheet` | Slide-over for creating a block | Dashboard | Sheet + Form |
 | `AddEdgeSheet` | Slide-over for creating a block connection | Block Detail | Sheet + Form |
 | `WorkflowSelector` | Choose workflow template to trigger | Block Detail | Dialog + Select |
+| **Phase 2 Components** | | | |
+| `BlockTypeManager` | List and manage custom block types | Settings | Table + Sheet |
+| `FieldSchemaBuilder` | Visual field schema editor for block types | Block Type config | Custom (form builder) |
+| `DynamicBlockForm` | Renders form fields from block_type_definitions.field_schema | Create Block, Block Detail | react-jsonschema-form or custom |
+| `TaskQueueList` | Paginated list of task_queue_items with filters | My Tasks page | Table + Filters |
+| `TaskDetailPanel` | Task context, claim/complete/reassign controls | My Tasks (slide-over) | Sheet + Form |
+| `TaskBadge` | Pending task count badge in sidebar | Sidebar nav | Badge |
+| `WorkflowInstanceCard` | Instance status, current step, progress | Block Detail (Workflow tab) | Card |
+| `WorkflowInstanceTimeline` | Step-by-step execution history for an instance | Block Detail (Workflow tab) | Timeline |
+| `IntegrationConnectorCard` | Connector status, last sync, test button | Settings | Card + Button |
+| **Phase 3 Components** | | | |
+| `WorkflowCanvas` | React Flow canvas for workflow composition | Workflow Builder | React Flow |
+| `WorkflowNodePalette` | Sidebar with draggable node types | Workflow Builder | Custom |
+| `WorkflowNodeConfig` | Right-panel config form for selected node | Workflow Builder | Form |
+| `TemplateVariableAutocomplete` | Autocomplete for {{block.*}} etc. in config fields | Workflow Builder, Document Templates | Custom |
+| `DocumentTemplateEditor` | Rich text editor with variable insertion | Document Templates | Custom |
 
 ---
 
@@ -161,6 +269,12 @@ Actions:
 | Events | `/events` | YES | Org-wide event log |
 | Chat | `/chat` | YES | Full-page chat (also available as sidebar) |
 | Settings | `/settings` | YES | Org settings, user management (Phase 2) |
+| Block Type Manager | `/settings/block-types` | YES | Custom block type CRUD (Phase 2) |
+| My Tasks | `/tasks` | YES | Task queue for current user (Phase 2) |
+| Workflow Builder | `/workflows/[id]/edit` | YES | Visual workflow canvas (Phase 3) |
+| Workflow Templates | `/workflows` | YES | List workflow templates (Phase 2) |
+| Integrations | `/settings/integrations` | YES | Integration connector management (Phase 2) |
+| Document Templates | `/settings/documents` | YES | Document template management (Phase 3) |
 
 ---
 

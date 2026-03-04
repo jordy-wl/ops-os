@@ -15,8 +15,8 @@
 | GitHub | Official | Create PRs, read issues, check CI, manage branches | All (PRs), Orchestrator (branches), QA (CI) | /mcp-connect github [action] | **active** | 2026-03-02 |
 | Linear | Official | Create/update issues, sync sprint status | Orchestrator, all engineers | /mcp-connect linear [action] | **inactive** | — |
 | Notion | Official | Publish interpret/ docs to Notion pages | Researcher, PM | /mcp-connect notion [action] | **inactive** | — |
-| Vercel | Official | Trigger deployments, check status, preview URLs | DevOps, all (preview URLs) | /mcp-connect vercel [action] | **inactive** | — |
-| Supabase | Official | Run queries, manage migrations, check schema | Data Engineer, Backend | /mcp-connect supabase [action] | **inactive** | — |
+| Vercel | Official | Trigger deployments, check status, preview URLs | DevOps, all (preview URLs) | /mcp-connect vercel [action] | **active** | 2026-03-03 |
+| Supabase | Official | Run queries, manage migrations, check schema | Data Engineer, Backend | /mcp-connect supabase [action] | **active** | 2026-03-03 |
 | Browserbase | Official | E2E browser automation, visual regression, research scraping | QA, Researcher, Frontend | /mcp-connect browserbase [action] | **inactive** | — |
 
 ---

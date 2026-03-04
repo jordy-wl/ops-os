@@ -10,10 +10,10 @@
 
 | Phase | Name | Status | Sprint | Exit Conditions Met |
 |-------|------|--------|--------|---------------------|
-| 1 | Foundation & Primitive Validation | ACTIVE | Sprint 2 | NO — workflow engine + design partners needed |
-| 2 | AI Layer & Workflow Configurability | FUTURE | — | — |
-| 3 | Integration Layer & Revenue | FUTURE | — | — |
-| 4 | Scale & Production Hardening | FUTURE | — | — |
+| 1 | Foundation & Primitive Validation | ACTIVE | Sprint 3 | NO — workflow engine + design partners needed |
+| 2 | Composable Blocks & Workflow Engine | FUTURE | — | — |
+| 3 | Visual Builder & Integrations | FUTURE | — | — |
+| 4 | Scale, Revenue & Compliance | FUTURE | — | — |
 
 ---
 
@@ -64,87 +64,107 @@ If exit condition is NOT met after 12 weeks:
 3. If technical blockers (workflow engine failures, auth issues): evaluate Temporal adoption earlier than planned
 
 **Sprints in This Phase:**
-- Sprint 1: Infrastructure scaffold + core schema + walking skeleton
-- Sprint 2: Workflow engine + Actions API + basic dashboard (generated at Sprint 1 retro)
-- Sprint 3: AI chat + design partner demo polish + first live workflow (generated at Sprint 2 retro)
+- Sprint 1: Infrastructure scaffold + core schema + walking skeleton — **COMPLETE** (16/16 DONE)
+- Sprint 2: Workflow engine + production deploy + chat UI + RBAC — **COMPLETE** (9/9 DONE, 2026-03-03)
+- Sprint 3: Workflow trigger UI + cron hardening + real design partner + AI context enrichment — **ACTIVE** (generated at Sprint 2 retro, 2026-03-03)
 
 ---
 
-## Phase 2: AI Layer & Workflow Configurability
+## Phase 2: Composable Blocks & Workflow Engine
 
 **Status:** FUTURE
-**Target:** Q3 2026 (approximately 8–10 weeks)
-**Active Roles:** AI/ML Engineer, Backend Engineer, Frontend Engineer, PM, Researcher
+**Target:** Q3 2026 (approximately 8–10 weeks, Sprints 4–7)
+**Active Roles:** Backend Engineer, Frontend Engineer, AI/ML Engineer, PM, Researcher
 
-**Hypothesis:** If we add the AI confidence-routing layer (context assembly + risk policy + human approval queue) and allow ops users to configure workflow templates per jurisdiction — at least 30% of routine workflow actions will route through AI for human approval rather than being triggered manually, and at least 1 design partner will report a measurable reduction in coordination overhead.
+**Hypothesis:** If we add custom block type definitions, the workflow-as-block pattern (templates that spawn instances), human/agent task routing, event subscriptions, webhook triggers, and integration connectors — at least 1 design partner will create a custom workflow using the composable builder, and at least 1 LOI at ≥£500/month will be signed.
 
 **What we're building:**
-- Full context assembly service: Blocks graph + event timeline + workflow state + user role
-- AI confidence scoring: Claude's stated confidence + action risk policy → route to human or proceed
-- Human approval queue: UI for reviewing AI-proposed actions
-- Workflow template configurability: pre-built templates with jurisdiction-aware parameter overrides
-- Action audit trail: every AI-proposed and human-approved action recorded as an event
-- Dashboard improvements: workflow status views, team assignment, jurisdiction filters
-- Chat control plane: "run onboarding for XYZ Capital" → Claude interprets → routes to workflow
+- `block_type_definitions` table + API: custom block types with JSON Schema field validation
+- Workflow-as-block: `workflow_template` Blocks store full definitions (triggers, steps, conditions, edges in data JSONB); `workflow_instance` Blocks track runtime state; `task_queue_item` Blocks for human/agent routing
+- Workflow runtime: trigger evaluation engine, step executor, condition evaluator, branching logic
+- Task queue: claim/complete/reassign API + "My Tasks" UI
+- Integration connector framework: `integration_connectors` table, inbound webhook processing, trigger evaluation
+- Event subscriptions: workflow templates triggered by event patterns
+- Block Type Configuration UI (form-based, no canvas)
+- AI confidence routing: full context assembly + risk policy + human approval queue
+- Dashboard improvements: workflow instance views, task queue badge, dynamic block forms
 
-**Dependencies on Phase 1:** Core Blocks/Events/Actions schema stable; at least 1 design partner actively using Phase 1 primitives; workflow engine has processed ≥100 jobs without silent failures.
+**Sprint planning guidance:**
+- Sprint 4: `block_type_definitions` table + API, workflow_template Block schema + CRUD API, seed system types
+- Sprint 5: Workflow runtime (instance spawning, step execution, manual + event triggers), task queue API
+- Sprint 6: Integration connectors, inbound webhooks, trigger evaluation engine, task routing UI
+- Sprint 7: AI confidence routing, condition/branching logic, Block Type Configuration UI, polish + LOI outreach
 
-**Exit Condition:** TRUE when ≥30% of workflow action events have `actor_type = 'ai'` (AI-proposed + human-approved), AND at least 1 design partner states measurable coordination time reduction.
+**Dependencies on Phase 1:** Core Blocks/Events/Actions schema stable; at least 1 design partner actively using Phase 1 primitives; workflow engine has processed ≥100 jobs without silent failures; production deployed and stable.
+
+**Exit Condition:** TRUE when ≥1 design partner has created a custom workflow template (with ≥1 condition or branching node), AND ≥1 signed LOI at ≥£500/month referencing workflow capabilities.
 
 **Evidence Required:**
-- Supabase query: 30%+ of last 200 events have `actor_type = 'ai'`
-- Design partner qualitative feedback: specific workflow now takes X hours instead of Y
-- Zero AI-executed actions with `confidence < 1.0` (threshold enforcement verified)
+- Supabase: ≥1 org with a workflow_template Block containing conditions/branching
+- Signed LOI document at ≥£500/month
+- ≥3 custom block types created by partners (not seeded)
+- ≥10 task_queue_items completed by human routing
 
-**Failure Path:** Review confidence calibration data. Lower threshold only with PM + AI/ML Engineer sign-off. Do not relax routing policy based on user pressure alone.
+**Failure Path:** If custom workflows not created → simplify builder UX. If no LOI → pricing interviews. If task routing underused → reduce friction on route_human.
 
-**Sprints in This Phase:** Generated at Sprint 3 retro.
+**Sprints in This Phase:** Generated at Phase 1 exit retro.
 
 ---
 
-## Phase 3: Integration Layer & Revenue
+## Phase 3: Visual Builder & Integrations
 
 **Status:** FUTURE
-**Target:** Q4 2026 (approximately 8–10 weeks)
-**Active Roles:** Backend Engineer, Frontend Engineer, DevOps Engineer, PM
+**Target:** Q4 2026 (approximately 8–10 weeks, Sprints 8–11)
+**Active Roles:** Frontend Engineer, Backend Engineer, AI/ML Engineer, DevOps Engineer, PM
 
-**Hypothesis:** If we connect Ops OS to the existing tools design partners use (Salesforce, Xero, email/calendar) and deliver compliance audit export — at least 1 design partner will convert to a paying customer at ≥£2k/month.
+**Hypothesis:** If we add a React Flow visual canvas for workflow composition, Salesforce/Xero integration connectors, document generation, agent AI processing, and operational intelligence (design vs reality analysis) — at least 2 customers will convert to paying at ≥£2k/month.
 
 **What we're building:**
-- Integration layer: Salesforce (read client/deal data), Xero (read invoices), email webhooks (inbound triggers)
-- Audit trail export: PDF/JSON export of complete event history for regulatory requests
-- Advanced reporting: materialized views for ops dashboards, SLA tracking
-- SOC 2 readiness assessment and gap analysis
-- Billing integration (Stripe) for first paying customers
+- Visual Workflow Builder: React Flow canvas, node palette (triggers/actions/conditions/branching), config panel, template variable autocomplete
+- Salesforce connector: read client/deal data, bidirectional sync
+- Xero connector: read invoices, outbound payment notifications
+- Document generation: template-based PDF/email generation from block data, `generate_doc` workflow step
+- Agent Queue Processor: AI processes `route_agent` task_queue_items with confidence scoring
+- Operational Intelligence: compare workflow template (design) vs instance events (reality), surface deviations and bottlenecks
+- Workflow suggestion: AI suggests template structure from historical event patterns
+- Billing integration (Stripe) for paying customers
+- Audit trail export: PDF/JSON for regulatory requests
 
-**Dependencies on Phase 2:** AI routing working and trusted; at least 2 design partners using AI-routed workflows.
+**Dependencies on Phase 2:** Workflow-as-block pattern working; ≥1 LOI signed; ≥1 custom workflow template created by a partner; task routing proven.
 
-**Exit Condition:** TRUE when ≥1 paying customer has signed a contract at ≥£2k/month AND is processing ≥50 workflow jobs/week.
+**Exit Condition:** TRUE when ≥2 paying customers at ≥£2k/month, each processing ≥50 workflow instances/week.
 
-**Failure Path:** Investigate pricing model. Run pricing interviews. Consider simpler first integration (email webhooks only vs. Salesforce complexity).
+**Evidence Required:**
+- Stripe: 2 active subscriptions at ≥£2k/month
+- Supabase: ≥50 workflow_instance Blocks completed/week per paying org
+- ≥1 paying customer using a Salesforce or Xero connector
+- Operational intelligence accessed ≥1x/week per paying org
+
+**Failure Path:** If no conversion → re-evaluate pricing and value proposition. If integrations unused → webhooks sufficient. If agent AI error rate too high → keep human-only.
 
 **Sprints in This Phase:** Generated at Phase 2 exit retro.
 
 ---
 
-## Phase 4: Scale & Production Hardening
+## Phase 4: Scale, Revenue & Compliance
 
 **Status:** FUTURE
 **Target:** Q1–Q2 2027
 **Active Roles:** DevOps Engineer, Backend Engineer, AI/ML Engineer, PM
 
-**Hypothesis:** If we migrate to production-grade infrastructure (Temporal, Neon Postgres, separate services) and begin SOC 2 Type II — 5+ paying customers can use production data without infrastructure risk.
+**Hypothesis:** If we migrate to Temporal for durable workflow execution, start SOC 2 Type II, add multi-region data residency, and build a marketplace for workflow templates and connectors — 5+ paying customers can use production data at enterprise scale.
 
 **What we're building:**
-- Temporal workflow engine (replaces Postgres queue)
+- Temporal workflow engine (replaces workflow-as-block runtime for exactly-once semantics)
 - Production infrastructure: Railway or AWS ECS + Terraform IaC
 - Neon Postgres + Redis for hot cache
 - OpenTelemetry + Datadog/Axiom observability
 - SOC 2 Type II audit process (6–12 month engagement)
 - Multi-region Postgres for FCA/MAS/ASIC data residency
-- No-code canvas first iteration (React Flow)
+- Marketplace: third-party workflow templates, integration connectors, block type definitions
+- Advanced RBAC: field-level permissions, approval chains
 
-**Dependencies on Phase 3:** ≥1 paying customer; revenue to justify infrastructure investment.
+**Dependencies on Phase 3:** ≥2 paying customers; revenue to justify infrastructure investment; agent AI proven; operational intelligence validated.
 
 **Exit Condition:** TRUE when ≥5 paying customers, Temporal deployed, SOC 2 audit in progress.
 
@@ -158,3 +178,21 @@ If exit condition is NOT met after 12 weeks:
 - Exit conditions are binary true/false — evaluated with real evidence at sprint retros
 - Future phase details are intentionally lighter — refined when the previous phase nears completion
 - Orchestrator updates this file during /plan-prd, /sprint-retro, and /adjust-roadmap
+
+---
+
+## Archived
+
+> Superseded phase definitions moved here. Never deleted.
+
+### [2026-03-04] Original Phase 2: AI Layer & Workflow Configurability
+
+Replaced by "Composable Blocks & Workflow Engine". Original hypothesis focused on AI confidence routing (≥30% AI-routed actions) and jurisdiction-aware workflow config. Reason: whiteboard session validated composable workflows as the primary purchase driver; AI autonomy premature without workflow infrastructure.
+
+### [2026-03-04] Original Phase 3: Integration Layer & Revenue
+
+Replaced by "Visual Builder & Integrations". Original hypothesis focused on Salesforce/Xero/email integrations + audit export → ≥1 paying at ≥£2k/mo. Reason: canvas moved here from Phase 4; integrations split across Phase 2 (framework + webhooks) and Phase 3 (specific connectors); bar raised to ≥2 paying.
+
+### [2026-03-04] Original Phase 4: Scale & Production Hardening
+
+Replaced by "Scale, Revenue & Compliance". Original scope included Temporal (moved from Phase 2), production infra, SOC 2, multi-region, and React Flow canvas (moved to Phase 3). Reason: canvas now Phase 3; marketplace added; compliance consolidated here.

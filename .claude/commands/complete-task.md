@@ -80,6 +80,26 @@ Write gate evidence to `sprints/[phase]/[sprint]/gate-results.md`:
 [List any SIGNAL entries written to build-learnings.md, or "none"]
 ```
 
+### Step 5b — Deploy Check (before marking DONE)
+After gate evidence is logged, verify the feature in the staging environment:
+
+1. Push the feature branch to GitHub (if not already pushed):
+   ```bash
+   git push origin feature/P1-SX-XX-XX-short-slug
+   ```
+2. Wait ~60s for Vercel to build the preview URL (check Vercel dashboard → Deployments)
+3. Log in to the preview URL and verify the specific feature works end-to-end
+4. Open a PR using the GitHub CLI:
+   ```bash
+   gh pr create --base main --title "feat(scope): description" --body "..."
+   ```
+5. Paste the PR URL into the shared-state.md notes column for this task
+6. Human merges the PR in the GitHub UI — do NOT merge via MCP
+7. Confirm Vercel prod deployment completes (watch Vercel dashboard)
+
+**Exception:** Tasks that produce no deployable code (orchestrator tasks, signal logging,
+documentation) may skip the deploy check. Note the exception in gate evidence.
+
 ### Step 6 — Update shared-state.md
 Move task from `IN_PROGRESS` to `DONE` in the active work table.
 Check if any BLOCKED tasks become unblocked — update those to OPEN.

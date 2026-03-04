@@ -1,6 +1,6 @@
 # PRD Layer 09: Data Pipeline
 
-> Last updated: 2026-03-02 | Author: Data Engineer | Status: DRAFT
+> Last updated: 2026-03-04 | Author: Data Engineer | Status: DRAFT
 > Cross-references: `prd/04-data-models.md` (entity schema), `prd/07-ai-ml-spec.md` (AI data needs).
 > Data engineer: read this before claiming pipeline tasks.
 
@@ -33,12 +33,14 @@ Phase 2 data sources (not in scope for Phase 1):
 
 ## Pipeline Architecture
 
-| Pipeline | Approach | Rationale |
-|---------|---------|-----------|
-| Event ingestion | Synchronous — every action writes an event atomically | Events must be consistent with actions; no eventual consistency for the audit trail |
-| Embedding generation | Async, fire-and-forget — triggered after event creation | Embeddings are for search; slight delay is acceptable; don't block the action response |
-| Workflow step execution | Async, Vercel Cron polling (every 60s) | Background processing; not on the critical path for user actions |
-| Analytics aggregation | Synchronous SQL queries on events table | Phase 1 volumes are small enough that live queries are acceptable |
+| Pipeline | Approach | Rationale | Phase |
+|---------|---------|-----------|-------|
+| Event ingestion | Synchronous — every action writes an event atomically | Events must be consistent with actions; no eventual consistency for the audit trail | 1 |
+| Embedding generation | Async, fire-and-forget — triggered after event creation | Embeddings are for search; slight delay is acceptable; don't block the action response | 1 |
+| Workflow step execution | Async, Vercel Cron polling (every 60s) | Background processing; not on the critical path for user actions | 1 |
+| Analytics aggregation | Synchronous SQL queries on events table | Phase 1 volumes are small enough that live queries are acceptable | 1 |
+| Integration signal (inbound) | Async webhook → event → trigger evaluation → workflow spawn | External events must be processed reliably; webhook retry semantics | 2 |
+| Outbound action | Async HTTP call with retry — triggered by call_api workflow steps | External APIs may be slow; retries needed; don't block workflow execution | 2 |
 
 ---
 
@@ -125,6 +127,69 @@ Side effects:
 
 ---
 
+### Pipeline 4: Integration Signal Pipeline (Phase 2)
+
+```
+Source: Inbound webhooks via integration connectors (POST /api/webhooks/integration/:connector_id)
+  ↓
+Validate:
+  - Verify connector exists and is active for this org
+  - Validate webhook signature if configured
+  - Rate limit per connector (100 req/min)
+  ↓
+Transform:
+  - Map external event to Ops OS event type (using connector.config.event_type_mapping)
+  - Build event record: { event_type: "integration.webhook.received", payload: { provider, raw_data, mapped_type } }
+  - Record event in events table
+  ↓
+Trigger Evaluation:
+  - Query workflow templates where trigger.type = 'webhook' AND trigger.config.connector_id = this connector
+  - For each matching template: evaluate trigger conditions (field matching, block type matching)
+  - If conditions met: spawn workflow_instance Block linked to template and target entity
+  ↓
+Side effects:
+  - Records workflow.instance.spawned event for each triggered workflow
+  - Updates integration_connectors.last_sync_at
+  - Embedding queued for the webhook event
+```
+
+**Error handling:** If webhook processing fails, return 500 to the sender (allows retry). Log error event. Do not spawn partial workflow instances — spawn is atomic.
+
+**Idempotency:** Each webhook includes a provider-specific idempotency key (e.g. Salesforce record ID). Duplicate webhooks with the same key within 1 hour are silently accepted (return 200) without re-processing.
+
+**SLA:** Webhook processing < 2s (p95). Workflow instance spawn < 5s after webhook accepted.
+
+---
+
+### Pipeline 5: Outbound Action Pipeline (Phase 2)
+
+```
+Source: Workflow step execution where step.type = 'call_api'
+  ↓
+Resolve:
+  - Look up integration_connector by step.config.connector_id
+  - Verify connector is active and org matches
+  - Build request: base_url + endpoint from step.config + block data interpolation
+  ↓
+Execute:
+  - Make HTTP request to external system (POST/PUT/GET as configured)
+  - Timeout: 30s per request
+  - Retry: up to 3 attempts with exponential backoff (1s, 5s, 25s)
+  ↓
+Record:
+  - On success: record integration.api_call.completed event with response summary (no raw response body — may contain PII)
+  - On failure: record integration.api_call.failed event with error code and message
+  - Advance workflow instance to next step (success) or mark step as failed (failure after retries)
+```
+
+**Error handling:** Failed outbound calls after 3 retries move the workflow step to `failed` status. The workflow instance logs a `workflow.step.failed` event. Ops lead sees this in the task queue and can manually retry or skip.
+
+**Security:** Outbound requests use credentials from the secrets manager (referenced by integration_connectors.credentials_ref). Never log request bodies that may contain authentication headers or PII.
+
+**SLA:** Outbound calls complete within 30s per attempt. Total pipeline (including retries) < 2 minutes.
+
+---
+
 ## Storage Destinations
 
 | Destination | Format | Purpose | Owner |
@@ -134,7 +199,12 @@ Side effects:
 | `embeddings` table | Postgres + pgvector (1536-dim) | Semantic search index | Data Engineer / AI-ML |
 | `workflow_jobs` table | Postgres rows | Execution queue (prototype only) | Data Engineer / Backend |
 
-Phase 2 additions (not in scope):
+**Phase 2 additions:**
+- `block_type_definitions` table — custom block type schemas and display properties
+- `integration_connectors` table — external system connection configs
+- `workflow_template` Blocks in `blocks` table — workflow definitions as Blocks
+- `workflow_instance` Blocks in `blocks` table — runtime workflow state
+- `task_queue_item` Blocks in `blocks` table — pending human/agent tasks
 - Materialized views for analytics aggregation
 - Possibly a read replica for heavy analytics queries
 

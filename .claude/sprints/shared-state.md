@@ -9,9 +9,9 @@
 ## Current Phase and Sprint
 
 **Phase:** 1 — Foundation & Primitive Validation
-**Sprint:** 2
-**Sprint Goal:** Make Ops OS demo-ready and operationally viable — working workflow engine, production deploy, chat UI, and at least 1 capital markets design partner onboarded to a real (not local) environment.
-**Sprint Started:** [SET AT KICK-OFF]
+**Sprint:** 3
+**Sprint Goal:** Make workflows triggerable from the UI, harden production cron, enrich AI context for demo quality, and onboard ≥1 real external capital markets design partner to a live workflow session.
+**Sprint Started:** 2026-03-03
 **Sprint Target End:** [SET AT KICK-OFF — 2 weeks]
 
 ---
@@ -20,15 +20,13 @@
 
 | Task ID | Title | Role | Status | Last Updated |
 |---------|-------|------|--------|-------------|
-| P1-S2-OPS-01 | Git Init + GitHub Actions CI Pipeline | DevOps | DONE | 2026-03-02 |
-| P1-S2-BE-01 | Workflow Engine — Job Processor | Backend | REVIEW | 2026-03-02 |
-| P1-S2-BE-02 | RBAC Roles | Backend | IN_PROGRESS | 2026-03-02 |
-| P1-S2-FE-01 | Dashboard — Metrics + Events Feed | Frontend | DONE | 2026-03-02 |
-| P1-S2-FE-02 | Chat UI — Streaming Component | Frontend | DONE | 2026-03-02 |
-| P1-S2-FE-03 | Workflow Status View | Frontend | OPEN | 2026-03-02 |
-| P1-S2-AI-01 | Semantic Search in Context Assembly | AI/ML | DONE | 2026-03-02 |
-| P1-S2-QA-01 | Workflow Engine Contract Tests | QA | OPEN | 2026-03-02 |
-| P1-S2-DE-01 | Production Deploy + Design Partner Onboarding | Data/ORC | OPEN | 2026-03-02 |
+| P1-S3-FE-01 | Workflow Trigger — Block Detail Button | Frontend | IN_PROGRESS | 2026-03-03 |
+| P1-S3-FE-02 | Block Detail — Events Timeline Polish | Frontend | OPEN | 2026-03-03 |
+| P1-S3-BE-01 | Cron Config + Engine Hardening | Backend | IN_PROGRESS | 2026-03-03 |
+| P1-S3-AI-01 | Context Assembly — Org Summary + Graph | AI/ML | IN_PROGRESS | 2026-03-04 |
+| P1-S3-QA-01 | E2E Test — Workflow Trigger to Completion | QA | OPEN | 2026-03-03 |
+| P1-S3-DE-01 | Real Design Partner Onboarding | ORC/Data | IN_PROGRESS | 2026-03-03 |
+| P1-S3-RES-01 | Process Sprint 2 Signals — PRD Updates | Research | OPEN | 2026-03-03 |
 
 **How to update:** Status → IN_PROGRESS when claiming, DONE when finished, BLOCKED when stuck.
 **Sprint metrics:** run `/sync-sprint-metrics` to recalculate. Full history: `shared-state-history.md`.
@@ -47,12 +45,15 @@ When unblocked: update status back to OPEN and add a handoff note below.
 
 ## Signals Queue
 
-PENDING signals that researcher needs to process:
+PENDING signals that researcher needs to process (P1-S3-RES-01):
 
 | Date | Source | Summary | Signal Strength | Logged By |
 |------|--------|---------|----------------|-----------|
-| 2026-03-02 | BE-01 | AI-01 in-progress changes (semantic search) broke 7 unit tests in context-assembly.test.ts and chat.test.ts. Implementation/test mismatch. AI-01 must fix before DONE. | MEDIUM | BACKEND-ENGINEER | **RESOLVED** — AI-01 fixed all tests. 93 pass, 0 fail. |
-| 2026-03-02 | BE-01 | workflow_jobs.started_at exposed as claimed_at in API response (no schema change needed). API contract in dependencies.md says claimed_at; DB has started_at. Mapped at API layer. | LOW | BACKEND-ENGINEER |
+| 2026-03-02 | BE-01 | workflow_jobs.started_at exposed as claimed_at in API. Mapped at API layer; DB column unchanged. PRD-04 schema needs both names documented. | LOW | BACKEND-ENGINEER |
+| 2026-03-02 | BE-01 | Sprint 1 migration comment says status='completed'; Sprint 2 spec/contract says 'done'. PRD-04 status enum must be corrected. **STRONG (with above — same PRD section).** | LOW | BACKEND-ENGINEER |
+| 2026-03-02 | BE-01 | vercel.json cron config and WORKFLOW_ENGINE_SECRET not in any task scope. Required for production workflow engine. PRD-03 and PRD-08 missing these deploy artifacts. | MODERATE | BACKEND-ENGINEER |
+| 2026-03-03 | DE-01 | Australia/ASIC confirmed as primary market. PRD-08 specifies eu-west-1 (FCA) as default region — incorrect. Must update to ap-southeast-2 (Sydney). | MODERATE | ORCHESTRATOR |
+| 2026-03-03 | DE-01 | Design partner walkthrough assumed workflow trigger UI. No trigger in Sprint 2. PRD-06 must add trigger UI as pre-condition for partner sessions. | MODERATE | DATA-ENGINEER |
 
 **How to add a signal:** Run `/log-signal [task-id] [strength]` — writes to `build-learnings.md` and here atomically.
 
@@ -62,17 +63,15 @@ PENDING signals that researcher needs to process:
 
 | Date | Author | Note |
 |------|--------|------|
-| 2026-03-02 | FRONTEND-ENGINEER | FE-02 DONE. Chat UI at /chat — ChatPanel (SSE streaming), MessageList (aria-live log), MessageBubble (streaming cursor + error state), ChatInput (Enter/Shift+Enter), BlockContextPicker (SSR pre-fetched blocks). SSE parser extracted to src/lib/chat/parse-sse.ts with 13 unit tests. Nav /chat un-stubbed. Gates 1/2/4/5 passed. DE-01 is now unblocked (OPS-01 ✓ + FE-01 ✓ + FE-02 ✓). FE-03 blocked on BE-01 (REVIEW). |
-| 2026-03-02 | FRONTEND-ENGINEER | FE-01 DONE. Dashboard: 4 metric cards (block counts by type, active workflows, events 24h), recent events feed (20 events, clickable to /blocks/:id), Create Block modal (POST /api/blocks). GET /api/dashboard/summary built. SSR initial data + 30s polling. Gates 1/4/5 passed. Fixed pre-existing S1 lint issue in embeddings.test.ts. AI-01 test failures (7 tests) flagged to AI-ML engineer — pre-existing. FE-02 unblocked. |
-| 2026-03-02 | BACKEND-ENGINEER | BE-01 IN PROGRESS. Migration + engine + onboarding handler + workflow-jobs API + cron endpoint + instrumentation.ts written. 17/17 unit tests pass. 5 contract tests skip (await Supabase). SIGNAL: AI-01 changes broke 7 tests in tests/unit/context-assembly.test.ts + chat.test.ts — AI-01 needs to fix. Contract deviation logged: DB column started_at exposed as claimed_at in GET /api/workflow-jobs (no new column needed). Status values use 'done' per API contract (migration comment erroneously said 'completed'). |
-| 2026-03-02 | ORCHESTRATOR | SPRINT 1 RETRO COMPLETE — 16/16 tasks DONE. 100% completion rate. Gate evidence filed for all tasks. Phase 1 exit conditions: NOT MET (no workflow engine, no production deploy, no design partners). Sprint 2 initiated. |
-| 2026-03-02 | ORCHESTRATOR | **SPRINT 2 KICKOFF**: OPS-01 is FIRST PRIORITY — no git repo means no parallel dev safety. Every other role can start their day-1 tasks but OPS-01 must complete before any code is pushed to GitHub. |
-| 2026-03-02 | ORCHESTRATOR | **CRITICAL PATH**: BE-01 (workflow engine) is HIGH complexity (4 days). FE-03 and QA-01 are blocked on it. Backend: prioritise BE-01 above BE-02. If 2 backend agents running: one on BE-01, one on BE-02. |
-| 2026-03-02 | ORCHESTRATOR | **GATE EVIDENCE DISCIPLINE**: Sprint 1 had 10 tasks with informal evidence (shared-state notes, not gate-results.md). Sprint 2: engineers MUST write gate evidence to gate-results.md DURING the task. QA Engineer: enforce this at peer reviews. |
-| 2026-03-02 | ORCHESTRATOR | **DESIGN PARTNER**: DE-01 requires a real design partner. If no partner available by day 5 of sprint, run a "design partner simulation" — team member walks through the system as a proxy user. Do not let phase exit condition remain blocked on external scheduling. |
-| 2026-03-02 | ORCHESTRATOR | Day-1 parallel tracks (all unblocked): OPS-01, BE-01, BE-02, FE-01, FE-02, AI-01. Blocked until BE-01 DONE: FE-03, QA-01. Blocked until OPS-01+FE-01+FE-02 DONE: DE-01. |
-| 2026-03-02 | AI-ML-ENGINEER | AI-01 DONE. Semantic search wired into assembleContext(): fetchSemanticEventIds() (OpenAI text-embedding-3-small → match_embeddings RPC) + fetchRelevantEvents() (deduplicated). ContextObject gets relevantEvents[] field. contextToPromptString() renders both sections. chat/route.ts passes message as query. 12 new unit tests + 7 existing chat tests all pass (93 total, 0 failures). Gates 1/2/5 logged. Signal RESOLVED: 7 broken tests fixed — chat.test.ts assertions updated for 4-arg assembleContext signature. |
-| 2026-03-02 | DEVOPS-ENGINEER | OPS-01 DONE. git init + GitHub repo (Jordy-Langdon/ops-os, private) + CI pipeline green. 79 unit tests pass in CI (27 skip cleanly). npm audit zero HIGH/CRITICAL CVEs. 3 pre-existing Sprint 1 lint issues fixed during CI setup (logged in gate-results.md). Gates 1/5 passed. **ACTION REQUIRED**: Vercel connection is manual — go to vercel.com/new, import Jordy-Langdon/ops-os, add env vars from .env.example, enable auto-deploy on main. DE-01 partially unblocked (needs FE-02 still). |
+| 2026-03-03 | ORCHESTRATOR | **SPRINT 2 RETRO COMPLETE** — 9/9 DONE (100%). DE-01 status corrected to DONE (gate evidence was filed; shared-state had it as IN_PROGRESS). Phase 1 exit: NOT MET (0/4 conditions). Sprint 3 initiated. Full retro in `sprint-2/retro-notes.md`. |
+| 2026-03-03 | ORCHESTRATOR | **SPRINT 3 CRITICAL PATH**: FE-01 (trigger UI) + BE-01 (cron) are Day-1 unblocked and MUST be deployed to production before DE-01 (partner onboarding) starts. Orchestrator confirms production readiness before scheduling any partner session. |
+| 2026-03-03 | ORCHESTRATOR | **STRONG SIGNAL — PRD-04**: Two Sprint 2 signals both challenge prd/04-data-models.md (schema naming). This meets the two-signal strong threshold. RES-01 must process this section first. |
+| 2026-03-03 | ORCHESTRATOR | **GATE 6 — DE-01**: Partner onboarding is HIGH complexity. QA-ENGINEER reviews design-partner-notes.md for completeness before DE-01 can be marked DONE. Gate 6 template in sprint-3/gate-results.md. |
+| 2026-03-03 | ORCHESTRATOR | **PARTNER BLOCKER PROTOCOL**: If no real external partner confirmed by Day 8, log a blocker immediately. Do NOT run another proxy session without PM approval. |
+| 2026-03-03 | ORCHESTRATOR | **ENGINE HARDENING**: BE-01 Gate 6 found fail-open cron secret (route.ts:20) and unhandled markDone/markFailed DB errors. Both in P1-S3-BE-01 scope. Must land before external partner traffic. |
+| 2026-03-03 | DATA-ENGINEER | Sprint 2 DE-01 DONE. Proxy partner session ran successfully. 1 real event (block.created) in production org_3AQGS4rMy4Zc4YQyTstKUrJECjN. Trigger UI gap logged as signal. Sprint 3 must get a real external partner with revised walkthrough. |
+| 2026-03-04 | QA-ENGINEER | **P1-S3-QA-01 SCAFFOLD READY** — tests/e2e/workflow-trigger.spec.ts written. 10-step flow: sign-in → create block via API → click trigger button → assert toast → poll /workflows 30s for 'done' → assert 3 events on block detail. Lint zero errors, TypeScript zero errors, Vitest suite unaffected (115 pass). Waiting on FE-01 (OPEN) + BE-01 (IN_PROGRESS) before claiming task DONE. |
+| 2026-03-04 | ORCHESTRATOR | **ROADMAP RESTRUCTURING COMPLETE** — Whiteboard session with product owner validated composable workflow vision. 15 files updated across PRDs, roadmap, and sprint planning. Key changes: Phase 2 → "Composable Blocks & Workflow Engine" (custom block types, workflow-as-block, task routing, integration connectors); Phase 3 → "Visual Builder & Integrations" (React Flow canvas, Salesforce/Xero, document generation, operational intelligence); Phase 4 → "Scale, Revenue & Compliance" (Temporal, SOC 2, marketplace). Core new concept: workflow definitions are Blocks in the business graph. **Sprint 3 tasks UNAFFECTED — continue as planned.** Phase 1 scope unchanged. All changes logged in prd/CHANGELOG.md and roadmap/changelog.md. |
 
 ---
 
@@ -83,7 +82,22 @@ PENDING signals that researcher needs to process:
 
 ---
 
-## Recently Completed — Sprint 1 Archive
+## Recently Completed — Sprint 2 Archive
+
+Sprint 2 (2026-03-03): 9/9 tasks DONE. Retro in `sprint-2/retro-notes.md`.
+Production: https://ops-os-gamma.vercel.app live. 115 unit + 29 contract/E2E tests. 1 proxy partner session.
+
+| Task ID | Title | Role | Status |
+|---------|-------|------|--------|
+| P1-S2-OPS-01 | Git Init + GitHub Actions CI Pipeline | DevOps | DONE |
+| P1-S2-BE-01 | Workflow Engine — Job Processor | Backend | DONE |
+| P1-S2-BE-02 | RBAC Roles | Backend | DONE |
+| P1-S2-FE-01 | Dashboard — Metrics + Events Feed | Frontend | DONE |
+| P1-S2-FE-02 | Chat UI — Streaming Component | Frontend | DONE |
+| P1-S2-FE-03 | Workflow Status View | Frontend | DONE |
+| P1-S2-AI-01 | Semantic Search in Context Assembly | AI/ML | DONE |
+| P1-S2-QA-01 | Workflow Engine Contract Tests | QA | DONE |
+| P1-S2-DE-01 | Production Deploy + Design Partner Onboarding | Data/ORC | DONE |
 
 Sprint 1 (2026-03-02): 16/16 tasks DONE in 1 session. Full details in `shared-state-history.md`.
 

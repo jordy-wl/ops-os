@@ -20,6 +20,16 @@ If no task files exist yet: run `/plan-prd` (orchestrator) or ask orchestrator t
 - Never work on a task already marked `IN_PROGRESS` by another role
 - If all tasks are claimed: output sprint status and suggest `/sprint-retro`
 
+---
+
+## Branching Rules
+- Every task gets its own branch: `feature/P1-S2-BE-02-rbac-roles` (task ID + short slug)
+- Never commit feature work directly to `main` — `main` is always deployable
+- Push branch to GitHub → Vercel auto-creates a preview URL (per-branch staging environment)
+- After all gates pass: verify the feature on the preview URL, then open a PR to `main`
+- DO NOT merge PRs via MCP — human-merges only in the GitHub UI
+- Merging to `main` = production deploy (Vercel auto-deploys on push to main)
+
 ## Task ID Format
 `P{phase}-S{sprint}-{ROLE}-{NUM}`
 - Example: `P1-S2-BE-04` = Phase 1, Sprint 2, Backend Engineer, Task 04

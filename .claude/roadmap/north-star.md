@@ -13,7 +13,9 @@
 For a BOS targeting regulated operations, engagement is measured in workflow throughput, not page views. A capital markets firm "using" Ops OS means real client onboarding steps, compliance checks, and approval workflows passing through the system — not just logins. This metric grows only when Ops OS is genuinely embedded in daily operations. It predicts retention (workflows that run weekly become load-bearing) and expansion (more workflows = more teams using it = more seats).
 
 **How to measure it:**
-Count distinct `workflow_job` rows with status `done` or `running` in the last 7 days, grouped by `org_id`. Sum across all orgs. Tracked via Supabase query and surfaced on an internal metrics dashboard. Requires the `workflow_jobs` table and basic instrumentation in the workflow engine.
+- **Phase 1:** Count distinct `workflow_job` rows with status `done` or `running` in the last 7 days, grouped by `org_id`.
+- **Phase 2+:** Count distinct `workflow_instance` Blocks with status `active` or `completed` in the last 7 days (these are Blocks in the `blocks` table with `type = 'workflow_instance'`).
+Sum across all orgs. Tracked via Supabase query and surfaced on an internal metrics dashboard.
 
 ---
 
@@ -31,13 +33,20 @@ A good north star metric:
 
 These metrics predict north star movement. Monitor weekly.
 
-| Indicator | What it measures | Target | Owner |
-|-----------|-----------------|--------|-------|
-| Events created per org per week | Whether design partners are recording real business activity | ≥50 events/org/week by end of Phase 1 | Backend Engineer |
-| Workflow completion rate | % of triggered workflow_jobs that reach `done` (not `failed`) | ≥90% completion rate | Backend Engineer |
-| AI routing queue size | How many actions are pending human review — high = under-staffed or misconfigured | <10 pending per org at any time | AI/ML Engineer |
-| Active design partner count | How many orgs processed ≥1 workflow this week | ≥2 by Phase 1 exit, ≥5 by Phase 2 exit | PM |
-| Time-to-first-workflow | Days from org creation to first completed workflow | <7 days for design partners | Frontend Engineer |
+| Indicator | What it measures | Target | Owner | Phase |
+|-----------|-----------------|--------|-------|-------|
+| Events created per org per week | Whether design partners are recording real business activity | ≥50 events/org/week by end of Phase 1 | Backend Engineer | 1 |
+| Workflow completion rate | % of triggered workflows that reach completion (not `failed`) | ≥90% completion rate | Backend Engineer | 1 |
+| AI routing queue size | How many actions are pending human review — high = under-staffed or misconfigured | <10 pending per org at any time | AI/ML Engineer | 1 |
+| Active design partner count | How many orgs processed ≥1 workflow this week | ≥2 by Phase 1 exit, ≥5 by Phase 3 exit | PM | 1 |
+| Time-to-first-workflow | Days from org creation to first completed workflow | <7 days for design partners | Frontend Engineer | 1 |
+| Workflow templates created per org | Whether partners are composing custom workflows (not just using system templates) | ≥2 custom templates per partner by Phase 2 exit | Backend Engineer | 2 |
+| Workflow instance completion rate | % of spawned workflow_instance Blocks that reach completed status | ≥85% completion rate | Backend Engineer | 2 |
+| SLA compliance rate | % of task_queue_items completed before due_at | ≥80% on-time completion | Backend Engineer | 2 |
+| Integration connector count per org | How many external connections are active | ≥1 active connector per paying org by Phase 3 | Backend Engineer | 2 |
+| Agent automation rate | % of route_agent tasks processed without human escalation | ≥30% by Phase 3 exit | AI/ML Engineer | 3 |
+| Custom block types per org | Whether orgs are defining their own entity types | ≥3 custom types per active org by Phase 2 exit | Backend Engineer | 2 |
+| Operational intelligence usage | Frequency of design-vs-reality analysis views per org per week | ≥1x/week per paying org by Phase 3 exit | AI/ML Engineer | 3 |
 
 ---
 
@@ -46,9 +55,9 @@ These metrics predict north star movement. Monitor weekly.
 | Phase | Target North Star Value | What This Proves |
 |-------|------------------------|-----------------|
 | Phase 1 | ≥2 orgs each running ≥10 active workflows/week | Core primitives work in production with real design partners |
-| Phase 2 | ≥30% of workflow actions routed through AI (not manual) | AI layer adds measurable value to workflow throughput |
-| Phase 3 | ≥1 paying customer at ≥£2k/month with ≥50 workflows/week | Design partner → paying customer conversion is viable |
-| Phase 4 | ≥5 paying customers, north star growing MoM | Repeatable GTM and stable product |
+| Phase 2 | ≥1 custom workflow template per partner + ≥1 LOI ≥£500/mo | Composable operations are a purchase driver |
+| Phase 3 | ≥2 paying customers at ≥£2k/month each processing ≥50 workflow instances/week | Visual builder + integrations drive paying conversion |
+| Phase 4 | ≥5 paying customers, north star growing MoM, SOC 2 in progress | Repeatable GTM, production-grade infrastructure |
 
 ---
 

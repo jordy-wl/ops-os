@@ -1,6 +1,6 @@
 # PRD Layer 05: API Contracts
 
-> Last updated: 2026-03-02 | Author: Backend Engineer | Status: DRAFT
+> Last updated: 2026-03-04 | Author: Backend Engineer | Status: DRAFT
 > LIVING DOCUMENT — update this file when implementation diverges from spec. Log a signal in build-learnings.md.
 > Cross-references: `prd/03-system-architecture.md` (auth scheme), `prd/04-data-models.md` (response shapes).
 
@@ -159,6 +159,18 @@ The only way to mutate system state. Records an event atomically. All actions go
 - `workflow.step.approve` — approve the next pending workflow step
 - `workflow.step.reject` — reject and halt a workflow step
 
+**Action types added in Phase 2:**
+- `block_type.create` — define a new custom block type for the org
+- `block_type.update` — update a custom block type's field schema or display properties
+- `workflow.template.create` — create a new workflow template (creates a workflow_template Block)
+- `workflow.template.update` — update a workflow template definition
+- `workflow.template.publish` — mark a workflow template as ready to trigger
+- `workflow.instance.spawn` — manually spawn a workflow instance from a template (system also spawns automatically on trigger match)
+- `task.claim` — claim a task_queue_item Block
+- `task.complete` — mark a task_queue_item Block as done
+- `task.reassign` — reassign a task_queue_item to a different person/agent
+- `integration.connector.create` — register a new integration connector
+
 **Request body:**
 ```json
 {
@@ -288,6 +300,268 @@ Semantic search across blocks and events using pgvector cosine similarity.
 
 ---
 
+### Block Types — `GET /api/block-types` (Phase 2)
+
+List available block types for the authenticated org (system types + org custom types).
+
+**Response 200:**
+```json
+{
+  "block_types": [
+    {
+      "id": "uuid",
+      "type_key": "client",
+      "display_name": "Client",
+      "icon": "building",
+      "color": "#3B82F6",
+      "field_schema": { "type": "object", "properties": { "industry": { "type": "string" } } },
+      "is_system": true
+    }
+  ]
+}
+```
+
+---
+
+### Block Types — `POST /api/block-types` (Phase 2)
+
+Create a custom block type for the org. Requires ops-admin role.
+
+**Request body:**
+```json
+{
+  "type_key": "invoice",
+  "display_name": "Invoice",
+  "icon": "file-text",
+  "color": "#10B981",
+  "field_schema": {
+    "type": "object",
+    "properties": {
+      "amount": { "type": "number" },
+      "currency": { "type": "string", "enum": ["GBP", "USD", "AUD", "SGD"] },
+      "due_date": { "type": "string", "format": "date" }
+    },
+    "required": ["amount", "currency"]
+  }
+}
+```
+
+**Response 201:** Returns the created block type. Records `block_type.created` event.
+
+---
+
+### Workflow Templates — `GET /api/workflow-templates` (Phase 2)
+
+List workflow templates for the org. Returns workflow_template Blocks.
+
+**Query params:** `applies_to_type`, `status` (draft/published), `limit`, `offset`
+
+**Response 200:**
+```json
+{
+  "templates": [
+    {
+      "id": "uuid",
+      "name": "Client Onboarding — London (FCA)",
+      "status": "published",
+      "data": {
+        "version": 1,
+        "applies_to_type": "client",
+        "triggers": [{ "id": "t1", "type": "manual", "config": {} }],
+        "steps": [{ "id": "s1", "type": "route_human", "name": "KYC Review", "config": {} }],
+        "edges": [{ "from": "t1", "to": "s1" }]
+      },
+      "created_at": "2026-03-04T10:00:00Z"
+    }
+  ],
+  "total": 5
+}
+```
+
+---
+
+### Workflow Templates — `POST /api/workflow-templates` (Phase 2)
+
+Create a new workflow template (creates a workflow_template Block). Validates the definition schema.
+
+**Request body:**
+```json
+{
+  "name": "Client Onboarding — Australia (ASIC)",
+  "data": {
+    "version": 1,
+    "applies_to_type": "client",
+    "triggers": [{ "id": "t1", "type": "manual", "config": {} }],
+    "steps": [
+      { "id": "s1", "type": "route_human", "name": "KYC Review", "config": { "role": "compliance-approver" } },
+      { "id": "s2", "type": "call_api", "name": "AML Check", "config": { "connector_id": "uuid" } }
+    ],
+    "edges": [
+      { "from": "t1", "to": "s1" },
+      { "from": "s1", "to": "s2" }
+    ]
+  }
+}
+```
+
+**Response 201:** Returns the created workflow_template Block. Records `workflow.template.published` event if status is published.
+
+---
+
+### Workflow Instances — `GET /api/workflow-instances` (Phase 2)
+
+List workflow instances. Returns workflow_instance Blocks with runtime state.
+
+**Query params:** `template_id`, `entity_block_id`, `status` (running/completed/failed), `limit`, `offset`
+
+**Response 200:**
+```json
+{
+  "instances": [
+    {
+      "id": "uuid",
+      "template_id": "uuid",
+      "template_name": "Client Onboarding — London (FCA)",
+      "entity_block_id": "uuid",
+      "entity_block_name": "Thornfield Capital",
+      "status": "running",
+      "current_step": "aml_check",
+      "data": { "started_at": "...", "variables": {} },
+      "created_at": "2026-03-04T10:00:00Z"
+    }
+  ],
+  "total": 12
+}
+```
+
+---
+
+### Task Queue — `GET /api/tasks` (Phase 2)
+
+List task_queue_item Blocks assigned to the current user or their role.
+
+**Query params:** `assignee_type` (human/agent), `status` (pending/claimed/completed), `priority`, `limit`, `offset`
+
+**Response 200:**
+```json
+{
+  "tasks": [
+    {
+      "id": "uuid",
+      "name": "KYC Review — Thornfield Capital",
+      "workflow_instance_id": "uuid",
+      "assignee_type": "human",
+      "assignee_id": "user_clerk_abc",
+      "priority": "high",
+      "due_at": "2026-03-06T17:00:00Z",
+      "status": "pending",
+      "data": { "step_config": {} }
+    }
+  ],
+  "total": 3
+}
+```
+
+---
+
+### Task Queue — `POST /api/tasks/:id/claim` (Phase 2)
+
+Claim a pending task. Records `task.claimed` event.
+
+**Response 200:**
+```json
+{
+  "task": { "id": "uuid", "status": "claimed", "claimed_at": "..." },
+  "event": { "id": "uuid", "event_type": "task.claimed" }
+}
+```
+
+---
+
+### Task Queue — `POST /api/tasks/:id/complete` (Phase 2)
+
+Complete a claimed task. Records `task.completed` event. Advances the workflow instance to the next step.
+
+**Request body:**
+```json
+{
+  "outcome": "approved",
+  "notes": "KYC documentation verified — all clear"
+}
+```
+
+**Response 200:**
+```json
+{
+  "task": { "id": "uuid", "status": "completed", "completed_at": "..." },
+  "event": { "id": "uuid", "event_type": "task.completed" },
+  "next_step": { "step_id": "s2", "step_name": "AML Check" }
+}
+```
+
+---
+
+### Integration Connectors — `GET /api/integrations` (Phase 2)
+
+List integration connectors for the org.
+
+**Response 200:**
+```json
+{
+  "connectors": [
+    {
+      "id": "uuid",
+      "name": "Inbound Webhook — CRM",
+      "provider": "webhook",
+      "direction": "inbound",
+      "status": "active",
+      "last_sync_at": "2026-03-04T09:00:00Z"
+    }
+  ]
+}
+```
+
+---
+
+### Integration Connectors — `POST /api/integrations` (Phase 2)
+
+Create a new integration connector. Returns a webhook URL for inbound connectors.
+
+**Request body:**
+```json
+{
+  "name": "Inbound Webhook — CRM",
+  "provider": "webhook",
+  "direction": "inbound",
+  "config": { "event_type_mapping": { "new_lead": "block.created" } }
+}
+```
+
+**Response 201:**
+```json
+{
+  "connector": { "id": "uuid", "status": "active" },
+  "webhook_url": "https://[domain]/api/webhooks/integration/[connector_id]"
+}
+```
+
+---
+
+### Inbound Webhooks — `POST /api/webhooks/integration/:connector_id` (Phase 2)
+
+Receive webhooks from external systems via integration connectors. Validates connector exists and is active. Records `integration.webhook.received` event. Triggers workflow evaluation if any workflow template has a matching webhook trigger.
+
+**Response 200:**
+```json
+{
+  "received": true,
+  "event_id": "uuid",
+  "workflows_triggered": 1
+}
+```
+
+---
+
 ### Webhooks — `POST /api/webhooks/clerk`
 
 Inbound Clerk webhook for user/org lifecycle events (user created, org created, membership changed).
@@ -320,3 +594,12 @@ When implementation diverges from this spec:
 ## Archived
 
 > Superseded contracts moved here with date and reason. Never deleted.
+
+### [2026-03-04] Phase 1 Workflow Endpoints — superseded by workflow-as-block endpoints
+
+The `GET /api/workflows` (template list) and `GET /api/workflows/jobs/:id` (job status) endpoints above remain active in Phase 1. In Phase 2, they are replaced by:
+- `GET /api/workflow-templates` — lists workflow_template Blocks (richer schema, composable definition)
+- `GET /api/workflow-instances` — lists workflow_instance Blocks (replaces job status)
+- `POST /api/tasks/:id/claim` and `POST /api/tasks/:id/complete` — replace workflow step approve/reject
+
+The Phase 1 endpoints will be deprecated (not removed) when Phase 2 endpoints are production-ready. Clients should migrate to Phase 2 endpoints.
