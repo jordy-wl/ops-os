@@ -84,7 +84,7 @@ Workflow execution in Phase 1 uses a Postgres job queue — simple, controllable
 | API routes | Supabase | Supabase JS client | Sync | Connection pooling via Supabase |
 | API routes | Claude API | HTTPS (Anthropic SDK) | Sync (streaming for chat) | Streaming SSE for chat endpoint |
 | API routes | OpenAI | HTTPS | Sync | Embeddings only — no user PII |
-| Vercel Cron | workflow_jobs table | Poll + UPDATE | Async | Polls for pending jobs every 60s |
+| Vercel Cron | workflow_jobs table | Poll + UPDATE | Async | Polls for pending jobs every 60s; authenticated via `CRON_SECRET` (GET) and `WORKFLOW_ENGINE_SECRET` (POST) — fail-closed: requests without valid secret are rejected 401 |
 | Supabase Realtime | Browser | WebSocket | Async | Event updates pushed to dashboard |
 
 ---

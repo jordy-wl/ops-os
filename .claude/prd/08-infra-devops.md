@@ -11,10 +11,10 @@
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
 | Primary hosting | Vercel | Auto-deploy from GitHub; serverless functions; zero DevOps overhead at prototype |
-| Primary database | Supabase | EU region (Ireland) by default; pgvector + Realtime built in; free tier |
-| Primary region | EU West (Ireland) | FCA data residency for UK design partners; default Supabase EU region |
-| Multi-region | NO (Phase 1) | Phase 2 concern; APAC data residency (MAS/ASIC) requires Singapore region — verify Supabase support before signing APAC design partners |
-| APAC region (Phase 2) | Supabase Singapore if available; else Neon | MAS requires Singapore data residency |
+| Primary database | Supabase | ap-south-1 (Mumbai); pgvector + Realtime built in; free tier |
+| Primary region | APAC (ap-south-1) | ASIC data residency for Australia design partners; closest Supabase region to ASIC jurisdiction |
+| Multi-region | NO (Phase 1) | Phase 4 concern; FCA (EU-West) and MAS (Singapore) regions added when multi-jurisdiction is required |
+| EU region (Phase 4) | Supabase EU West (Ireland) | FCA data residency for UK clients |
 
 ---
 
@@ -154,6 +154,10 @@ CLERK_WEBHOOK_SECRET=
 # AI
 ANTHROPIC_API_KEY=
 OPENAI_API_KEY=
+
+# Workflow Engine
+CRON_SECRET=                   # Vercel-injected secret for cron GET requests
+WORKFLOW_ENGINE_SECRET=        # Secret for authenticating POST requests to workflow engine endpoint
 
 # Email
 RESEND_API_KEY=

@@ -206,15 +206,15 @@ The Postgres-based workflow execution queue. **Phase 1 only.** In Phase 2, workf
 | id | UUID | NO | Primary identifier |
 | workflow_type | TEXT | NO | e.g. `client_onboarding_london` |
 | step_name | TEXT | NO | e.g. `send_kyc_request` |
-| status | TEXT | NO | `pending`, `running`, `done`, `failed` |
+| status | TEXT | NO | `pending`, `running`, `done`, `failed` (implementation uses `done`, not `completed`) |
 | payload | JSONB | NO | Step-specific data |
 | block_id | UUID | YES | Related block (FK → blocks.id) |
 | org_id | UUID | NO | Org isolation key |
 | scheduled_at | TIMESTAMPTZ | NO | When to execute (default: NOW()) |
-| started_at | TIMESTAMPTZ | YES | When worker claimed the job |
+| claimed_at | TIMESTAMPTZ | YES | When worker claimed the job (was `started_at` in early drafts; `claimed_at` aligns with API contract) |
 | completed_at | TIMESTAMPTZ | YES | When job completed or failed |
 | error | TEXT | YES | Error message if failed |
-| retry_count | INTEGER | NO | Number of retries attempted (default: 0) |
+| attempts | INTEGER | NO | Number of attempts so far (default: 0; implementation uses `attempts`, not `retry_count`) |
 | max_retries | INTEGER | NO | Maximum allowed retries (default: 3) |
 
 **Indexes:** `(status, scheduled_at)` WHERE status = 'pending' — partial index for efficient polling

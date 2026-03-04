@@ -62,7 +62,8 @@ Actions:
   - "Edit block" → inline form for block.update action
   - "Approve step" → triggers workflow.step.approve action → toast confirmation
   - "Add connection" → block.edge.create sheet
-  - "Trigger workflow" → workflow selection sheet → workflow.trigger action
+  - "Start Onboarding" button (Phase 1, client blocks only) → POST /api/actions/onboarding.start → toast + redirect to /workflows. This is the primary workflow trigger path in Phase 1 — no separate workflow discovery screen exists until Phase 2.
+  - "Trigger workflow" → workflow selection sheet → workflow.trigger action (Phase 2+)
 ```
 
 ---
