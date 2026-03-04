@@ -1,14 +1,15 @@
 import { createServerClient } from '@/lib/supabase/server'
+import { seedSystemBlockTypes } from '@/lib/block-types/seed-system-types'
 
 /**
  * Translates a Clerk organisation ID to the internal Supabase org UUID.
  * Auto-provisions the Supabase org row on first call if it does not exist,
  * matching the lazy-init behaviour of withAuth for API routes.
  *
+ * On new org provision, seeds the 5 system block types automatically.
+ *
  * Returns null only on an unexpected DB error — callers should treat null
  * as a transient failure, not a signal to redirect to /org-setup.
- * Redirect to /org-setup only when Clerk itself has no orgId (handled by
- * AppLayout, which already guards the entire (app) route group).
  */
 export async function resolveOrgId(clerkOrgId: string): Promise<string | null> {
   const supabase = createServerClient()
@@ -27,6 +28,11 @@ export async function resolveOrgId(clerkOrgId: string): Promise<string | null> {
     .insert({ clerk_org_id: clerkOrgId })
     .select('id')
     .single()
+
+  if (newOrg?.id) {
+    // Seed system block types for the new org (non-blocking)
+    await seedSystemBlockTypes(newOrg.id)
+  }
 
   return newOrg?.id ?? null
 }
