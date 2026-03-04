@@ -110,7 +110,7 @@ export function startPollingLoop(
 // ─── Private helpers ──────────────────────────────────────────────────────────
 
 async function markDone(supabase: SupabaseClient, job: WorkflowJob): Promise<void> {
-  await supabase
+  const { error: updateError } = await supabase
     .from('workflow_jobs')
     .update({
       status:       'done',
@@ -118,6 +118,16 @@ async function markDone(supabase: SupabaseClient, job: WorkflowJob): Promise<voi
       updated_at:   new Date().toISOString(),
     })
     .eq('id', job.id)
+
+  if (updateError) {
+    logger.error('workflow-engine', 'engine.db_update_failed', {
+      job_id:       job.id,
+      workflow_type: job.type,
+      operation:    'markDone',
+      error_code:   updateError.code,
+    })
+    return
+  }
 
   // Emit workflow.completed event when a block is attached to the job
   if (job.block_id) {
@@ -142,7 +152,7 @@ async function markFailed(
   job: WorkflowJob,
   reason: string
 ): Promise<void> {
-  await supabase
+  const { error: updateError } = await supabase
     .from('workflow_jobs')
     .update({
       status:     'failed',
@@ -150,6 +160,16 @@ async function markFailed(
       updated_at: new Date().toISOString(),
     })
     .eq('id', job.id)
+
+  if (updateError) {
+    logger.error('workflow-engine', 'engine.db_update_failed', {
+      job_id:       job.id,
+      workflow_type: job.type,
+      operation:    'markFailed',
+      error_code:   updateError.code,
+    })
+    return
+  }
 
   if (job.block_id) {
     await supabase.from('events').insert({
