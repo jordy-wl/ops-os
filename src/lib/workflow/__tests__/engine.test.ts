@@ -212,4 +212,36 @@ describe('processNextJob', () => {
     expect(supabase._update).toHaveBeenCalledWith(expect.objectContaining({ status: 'failed' }))
     expect(supabase._insert).not.toHaveBeenCalled()
   })
+
+  // ── DB error handling (markDone / markFailed) ──────────────────────────────
+
+  it('skips event emission when markDone DB update fails', async () => {
+    const job = makeJob({ type: 'success_workflow', block_id: 'block-uuid-1' })
+    const supabase = makeSupabase({
+      rpcData: [job],
+      updateError: { code: 'PGRST500', message: 'DB unavailable' },
+    }) as ReturnType<typeof makeSupabase>
+
+    await processNextJob(supabase)
+
+    // update was attempted
+    expect(supabase._update).toHaveBeenCalledWith(expect.objectContaining({ status: 'done' }))
+    // event insert must NOT happen because DB update failed
+    expect(supabase._insert).not.toHaveBeenCalled()
+  })
+
+  it('skips event emission when markFailed DB update fails', async () => {
+    const job = makeJob({ type: 'failing_workflow', attempts: 2, block_id: 'block-uuid-1' })
+    const supabase = makeSupabase({
+      rpcData: [job],
+      updateError: { code: 'PGRST500', message: 'DB unavailable' },
+    }) as ReturnType<typeof makeSupabase>
+
+    await processNextJob(supabase)
+
+    // update was attempted
+    expect(supabase._update).toHaveBeenCalledWith(expect.objectContaining({ status: 'failed' }))
+    // event insert must NOT happen because DB update failed
+    expect(supabase._insert).not.toHaveBeenCalled()
+  })
 })
