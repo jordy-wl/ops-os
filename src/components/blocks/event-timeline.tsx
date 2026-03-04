@@ -1,109 +1,168 @@
-'use client'
-
+import { cn } from '@/lib/utils'
 import type { Event } from '@/lib/context-assembly'
 
 interface EventTimelineProps {
   events: Event[]
 }
 
-/** Maps actor_type to a simple display label */
-const ACTOR_LABELS: Record<string, string> = {
-  human:  'User',
-  ai:     'AI',
-  system: 'System',
+// ─── Badge colours by event category ────────────────────────────────────────
+
+const BADGE_STYLES: Record<string, string> = {
+  workflow: 'bg-blue-100 text-blue-800',
+  onboarding: 'bg-blue-100 text-blue-800',
+  action: 'bg-green-100 text-green-800',
+  block: 'bg-green-100 text-green-800',
+  ai: 'bg-purple-100 text-purple-800',
+  system: 'bg-gray-100 text-gray-700',
 }
 
-/** Maps event type prefix to a short category label for display */
-function eventCategory(type: string): string {
-  if (type.startsWith('block.')) return type.replace('block.', '')
-  return type
+function getBadgeStyle(event: Event): string {
+  if (event.actor_type === 'ai') return BADGE_STYLES.ai
+  const prefix = event.type.split('.')[0]
+  return BADGE_STYLES[prefix] ?? BADGE_STYLES.system
 }
 
-/**
- * Formats an ISO timestamp as a human-readable relative string ("2h ago").
- * Shown as the visible label; full ISO date shown on hover via title attribute.
- */
-function formatRelativeTime(isoDate: string): string {
+// ─── Actor icons ────────────────────────────────────────────────────────────
+
+const ACTOR_ICONS: Record<string, { icon: string; label: string }> = {
+  human:  { icon: '\u{1F464}', label: 'User action' },
+  ai:     { icon: '\u2726',    label: 'AI action' },
+  system: { icon: '\u2699\uFE0F',    label: 'System action' },
+}
+
+// ─── Date grouping helpers ──────────────────────────────────────────────────
+
+function dateLabel(isoDate: string): string {
   const date = new Date(isoDate)
   const now = new Date()
-  const diffMs = now.getTime() - date.getTime()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const yesterday = new Date(today.getTime() - 86400000)
+  const eventDay = new Date(date.getFullYear(), date.getMonth(), date.getDate())
 
-  const diffSecs = Math.floor(diffMs / 1000)
-  const diffMins = Math.floor(diffSecs / 60)
-  const diffHours = Math.floor(diffMins / 60)
-  const diffDays = Math.floor(diffHours / 24)
-
-  if (diffMs < 0) return 'just now' // clock skew guard
-  if (diffDays >= 30) return date.toLocaleDateString()
-  if (diffDays >= 1) return `${diffDays}d ago`
-  if (diffHours >= 1) return `${diffHours}h ago`
-  if (diffMins >= 1) return `${diffMins}m ago`
-  return 'just now'
+  if (eventDay.getTime() === today.getTime()) return 'Today'
+  if (eventDay.getTime() === yesterday.getTime()) return 'Yesterday'
+  return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
-/**
- * EventTimeline — shows the block's immutable event log, newest first.
- * Each event displays: type, actor, relative timestamp (with ISO date on hover),
- * and a short payload summary.
- *
- * @param events - Sorted array of events (newest first) to display
- */
+function formatTime(isoDate: string): string {
+  return new Date(isoDate).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+}
+
+function groupByDate(events: Event[]): Map<string, Event[]> {
+  const groups = new Map<string, Event[]>()
+  for (const event of events) {
+    const label = dateLabel(event.occurred_at)
+    const existing = groups.get(label)
+    if (existing) {
+      existing.push(event)
+    } else {
+      groups.set(label, [event])
+    }
+  }
+  return groups
+}
+
+function payloadOneLiner(payload: Record<string, unknown>): string {
+  const entries = Object.entries(payload)
+  if (entries.length === 0) return ''
+  const parts = entries
+    .filter(([, v]) => v !== null && v !== undefined)
+    .map(([k, v]) => `${k}: ${typeof v === 'object' ? JSON.stringify(v) : String(v)}`)
+    .join(', ')
+  return parts.length > 80 ? parts.slice(0, 77) + '...' : parts
+}
+
+// ─── Component ──────────────────────────────────────────────────────────────
+
 export function EventTimeline({ events }: EventTimelineProps) {
+  // Empty state
+  if (!events || events.length === 0) {
+    return (
+      <section aria-label="Event timeline">
+        <h2 className="text-sm font-semibold text-gray-700 mb-3">Event Timeline</h2>
+        <p className="text-sm text-gray-400 italic py-4 text-center">
+          No events recorded yet.
+        </p>
+      </section>
+    )
+  }
+
+  const groups = groupByDate(events)
+
   return (
     <section aria-label="Event timeline">
       <h2 className="text-sm font-semibold text-gray-700 mb-3">Event Timeline</h2>
 
-      {events.length === 0 ? (
-        <p className="text-sm text-gray-400 italic py-4 text-center">
-          No events recorded yet.
-        </p>
-      ) : (
-        <ol className="relative border-l border-gray-200 ml-3 space-y-4">
-          {events.map((event) => {
-            const payloadSummary = JSON.stringify(event.payload).slice(0, 80)
-            const actor = ACTOR_LABELS[event.actor_type] ?? event.actor_type
-            const relative = formatRelativeTime(event.occurred_at)
+      <div className="space-y-4">
+        {[...groups.entries()].map(([label, groupEvents]) => (
+          <div key={label}>
+            {/* Date divider */}
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-xs font-medium text-gray-500">{label}</span>
+              <div className="flex-1 h-px bg-gray-200" />
+            </div>
 
-            return (
-              <li key={event.id} className="ml-4 pl-4">
-                {/* Timeline dot */}
-                <span
-                  className="absolute -left-1.5 mt-1.5 h-3 w-3 rounded-full border border-white bg-gray-300"
-                  aria-hidden="true"
-                />
+            <ol className="relative border-l border-gray-200 ml-3 space-y-3">
+              {groupEvents.map((event) => {
+                const summary = payloadOneLiner(event.payload)
+                const badgeStyle = getBadgeStyle(event)
+                const actorInfo = ACTOR_ICONS[event.actor_type] ?? ACTOR_ICONS.system
 
-                <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-0.5">
-                  {/* Event type */}
-                  <span className="text-sm font-medium text-gray-900">
-                    {eventCategory(event.type)}
-                  </span>
+                return (
+                  <li key={event.id} className="ml-4 pl-4">
+                    {/* Timeline dot — coloured by category */}
+                    <span
+                      className={cn(
+                        'absolute -left-1.5 mt-1.5 h-3 w-3 rounded-full border-2 border-white',
+                        event.actor_type === 'ai' ? 'bg-purple-400' :
+                        event.type.startsWith('workflow') || event.type.startsWith('onboarding') ? 'bg-blue-400' :
+                        event.type.startsWith('block') || event.type.startsWith('action') ? 'bg-green-400' :
+                        'bg-gray-300'
+                      )}
+                      aria-hidden="true"
+                    />
 
-                  {/* Relative timestamp — full ISO date on hover */}
-                  <time
-                    dateTime={event.occurred_at}
-                    title={event.occurred_at}
-                    className="text-xs text-gray-400 shrink-0 cursor-default"
-                  >
-                    {relative}
-                  </time>
-                </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {/* Type badge */}
+                      <span className={cn(
+                        'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium',
+                        badgeStyle
+                      )}>
+                        {event.type}
+                      </span>
 
-                {/* Actor */}
-                <p className="text-xs text-gray-500 mt-0.5">
-                  by {actor} · {event.actor_id}
-                </p>
+                      {/* Actor icon */}
+                      <span
+                        className="text-xs"
+                        title={actorInfo.label}
+                        aria-label={actorInfo.label}
+                      >
+                        {actorInfo.icon}
+                      </span>
 
-                {/* Payload summary */}
-                {payloadSummary && payloadSummary !== '{}' && (
-                  <p className="mt-1 text-xs text-gray-400 font-mono truncate">
-                    {payloadSummary}
-                  </p>
-                )}
-              </li>
-            )
-          })}
-        </ol>
-      )}
+                      {/* Timestamp */}
+                      <time
+                        dateTime={event.occurred_at}
+                        title={event.occurred_at}
+                        className="ml-auto text-xs text-gray-400 shrink-0"
+                      >
+                        {formatTime(event.occurred_at)}
+                      </time>
+                    </div>
+
+                    {/* Payload summary */}
+                    {summary && (
+                      <p className="mt-1 text-xs text-gray-500 truncate">
+                        {summary}
+                      </p>
+                    )}
+                  </li>
+                )
+              })}
+            </ol>
+          </div>
+        ))}
+      </div>
     </section>
   )
 }
