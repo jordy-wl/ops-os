@@ -20,13 +20,13 @@
 
 | Task ID | Title | Role | Status | Last Updated |
 |---------|-------|------|--------|-------------|
-| P1-S3-FE-01 | Workflow Trigger — Block Detail Button | Frontend | IN_PROGRESS | 2026-03-03 |
-| P1-S3-FE-02 | Block Detail — Events Timeline Polish | Frontend | OPEN | 2026-03-03 |
-| P1-S3-BE-01 | Cron Config + Engine Hardening | Backend | IN_PROGRESS | 2026-03-03 |
-| P1-S3-AI-01 | Context Assembly — Org Summary + Graph | AI/ML | IN_PROGRESS | 2026-03-04 |
-| P1-S3-QA-01 | E2E Test — Workflow Trigger to Completion | QA | OPEN | 2026-03-03 |
-| P1-S3-DE-01 | Real Design Partner Onboarding | ORC/Data | IN_PROGRESS | 2026-03-03 |
-| P1-S3-RES-01 | Process Sprint 2 Signals — PRD Updates | Research | OPEN | 2026-03-03 |
+| P1-S3-BE-01 | Cron Config + Engine Hardening | Backend | DONE | 2026-03-04 |
+| P1-S3-FE-01 | Workflow Trigger — Block Detail Button | Frontend | DONE | 2026-03-04 |
+| P1-S3-AI-01 | Context Assembly — Org Summary + Graph | AI/ML | DONE | 2026-03-04 |
+| P1-S3-FE-02 | Block Detail — Events Timeline Polish | Frontend | DONE | 2026-03-04 |
+| P1-S3-RES-01 | Process Sprint 2 Signals — PRD Updates | Research | DONE | 2026-03-04 |
+| P1-S3-QA-01 | E2E Test — Workflow Trigger to Completion | QA | DONE | 2026-03-04 |
+| P1-S3-DE-01 | Real Design Partner Onboarding | ORC/Data | IN_PROGRESS | 2026-03-04 |
 
 **How to update:** Status → IN_PROGRESS when claiming, DONE when finished, BLOCKED when stuck.
 **Sprint metrics:** run `/sync-sprint-metrics` to recalculate. Full history: `shared-state-history.md`.
@@ -45,15 +45,9 @@ When unblocked: update status back to OPEN and add a handoff note below.
 
 ## Signals Queue
 
-PENDING signals that researcher needs to process (P1-S3-RES-01):
+All 6 signals PROCESSED on 2026-03-04 (P1-S3-RES-01). See `research/signals/build-learnings.md` for details.
 
-| Date | Source | Summary | Signal Strength | Logged By |
-|------|--------|---------|----------------|-----------|
-| 2026-03-02 | BE-01 | workflow_jobs.started_at exposed as claimed_at in API. Mapped at API layer; DB column unchanged. PRD-04 schema needs both names documented. | LOW | BACKEND-ENGINEER |
-| 2026-03-02 | BE-01 | Sprint 1 migration comment says status='completed'; Sprint 2 spec/contract says 'done'. PRD-04 status enum must be corrected. **STRONG (with above — same PRD section).** | LOW | BACKEND-ENGINEER |
-| 2026-03-02 | BE-01 | vercel.json cron config and WORKFLOW_ENGINE_SECRET not in any task scope. Required for production workflow engine. PRD-03 and PRD-08 missing these deploy artifacts. | MODERATE | BACKEND-ENGINEER |
-| 2026-03-03 | DE-01 | Australia/ASIC confirmed as primary market. PRD-08 specifies eu-west-1 (FCA) as default region — incorrect. Must update to ap-southeast-2 (Sydney). | MODERATE | ORCHESTRATOR |
-| 2026-03-03 | DE-01 | Design partner walkthrough assumed workflow trigger UI. No trigger in Sprint 2. PRD-06 must add trigger UI as pre-condition for partner sessions. | MODERATE | DATA-ENGINEER |
+No PENDING signals at this time.
 
 **How to add a signal:** Run `/log-signal [task-id] [strength]` — writes to `build-learnings.md` and here atomically.
 
@@ -71,6 +65,8 @@ PENDING signals that researcher needs to process (P1-S3-RES-01):
 | 2026-03-03 | ORCHESTRATOR | **ENGINE HARDENING**: BE-01 Gate 6 found fail-open cron secret (route.ts:20) and unhandled markDone/markFailed DB errors. Both in P1-S3-BE-01 scope. Must land before external partner traffic. |
 | 2026-03-03 | DATA-ENGINEER | Sprint 2 DE-01 DONE. Proxy partner session ran successfully. 1 real event (block.created) in production org_3AQGS4rMy4Zc4YQyTstKUrJECjN. Trigger UI gap logged as signal. Sprint 3 must get a real external partner with revised walkthrough. |
 | 2026-03-04 | QA-ENGINEER | **P1-S3-QA-01 SCAFFOLD READY** — tests/e2e/workflow-trigger.spec.ts written. 10-step flow: sign-in → create block via API → click trigger button → assert toast → poll /workflows 30s for 'done' → assert 3 events on block detail. Lint zero errors, TypeScript zero errors, Vitest suite unaffected (115 pass). Waiting on FE-01 (OPEN) + BE-01 (IN_PROGRESS) before claiming task DONE. |
+| 2026-03-04 | ORCHESTRATOR | **SPRINT 3 CODE COMPLETE (6/7 tasks DONE)** — BE-01 (PR#1), FE-01 (PR#2), AI-01 (PR#3), FE-02 (PR#4), QA-01 (PR#5) all pushed with PRs. RES-01 committed direct to main (docs only). Only DE-01 (partner session) remains — requires merging PRs + real partner contact. Production health confirmed: GET /api/health → 200. Cron configured. 115 unit tests passing, lint clean. |
+| 2026-03-04 | ORCHESTRATOR | **DE-01 PRE-SESSION CHECKLIST**: Production health: OK. vercel.json cron: configured. Walkthrough script: in `.claude/sprints/phase-1/sprint-3/data-tasks.md`. Next steps: (1) Merge 5 PRs to main for production deploy, (2) Verify trigger button visible on production, (3) Recruit real capital markets contact, (4) Schedule 30-45 min session. Day 8 deadline: 2026-03-11. |
 | 2026-03-04 | ORCHESTRATOR | **ROADMAP RESTRUCTURING COMPLETE** — Whiteboard session with product owner validated composable workflow vision. 15 files updated across PRDs, roadmap, and sprint planning. Key changes: Phase 2 → "Composable Blocks & Workflow Engine" (custom block types, workflow-as-block, task routing, integration connectors); Phase 3 → "Visual Builder & Integrations" (React Flow canvas, Salesforce/Xero, document generation, operational intelligence); Phase 4 → "Scale, Revenue & Compliance" (Temporal, SOC 2, marketplace). Core new concept: workflow definitions are Blocks in the business graph. **Sprint 3 tasks UNAFFECTED — continue as planned.** Phase 1 scope unchanged. All changes logged in prd/CHANGELOG.md and roadmap/changelog.md. |
 
 ---
