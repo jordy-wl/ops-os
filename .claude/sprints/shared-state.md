@@ -20,9 +20,9 @@
 
 | Task ID | Title | Role | Status | Last Updated |
 |---------|-------|------|--------|-------------|
-| P1-S4-BE-01 | Sync Org Name from Clerk | Backend | OPEN | 2026-03-04 |
-| P1-S4-FE-01 | Dashboard Empty State CTA | Frontend | OPEN | 2026-03-04 |
-| P2-S4-BE-02 | block_type_definitions Table + CRUD API | Backend | OPEN | 2026-03-04 |
+| P1-S4-BE-01 | Sync Org Name from Clerk | Backend | DONE | 2026-03-04 |
+| P1-S4-FE-01 | Dashboard Empty State CTA | Frontend | DONE | 2026-03-04 |
+| P2-S4-BE-02 | block_type_definitions Table + CRUD API | Backend | IN_PROGRESS | 2026-03-04 |
 | P2-S4-DE-01 | Seed System Block Types | Data | OPEN | 2026-03-04 |
 | P2-S4-FE-02 | Dynamic Block Forms from field_schema | Frontend | OPEN | 2026-03-04 |
 | P2-S4-QA-01 | Block Type Definitions — Unit + Contract Tests | QA | OPEN | 2026-03-04 |
