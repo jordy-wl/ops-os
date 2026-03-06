@@ -5,6 +5,7 @@ import { createServerClient } from '@/lib/supabase/server'
 import { ok, apiError, validationError } from '@/lib/api/responses'
 import { logger } from '@/lib/logger'
 import { embedEvent } from '@/lib/embeddings'
+import { evaluateEventTriggers } from '@/lib/workflow/trigger-evaluation'
 import type { Event } from '@/lib/context-assembly'
 
 // actor_id: always from JWT — not accepted from request body
@@ -67,10 +68,10 @@ export const POST = withAuth(async (req: NextRequest, ctx) => {
 
   const supabase = createServerClient()
 
-  // Verify block belongs to this org
+  // Verify block belongs to this org (include type for trigger evaluation)
   const { data: block, error: blockError } = await supabase
     .from('blocks')
-    .select('id')
+    .select('id, type')
     .eq('id', parsed.data.block_id)
     .eq('org_id', ctx.orgId)
     .single()
@@ -109,6 +110,18 @@ export const POST = withAuth(async (req: NextRequest, ctx) => {
   // Failures are caught internally and logged — they must never fail event creation.
   embedEvent(event as Event, supabase).catch((err: Error) =>
     logger.error('api-events', 'embed.unhandled', { event_id: event.id, error: err.message?.slice(0, 100) })
+  )
+
+  // Fire-and-forget: evaluate event triggers to auto-spawn workflow instances.
+  // Anti-loop: evaluateEventTriggers skips workflow/system actor types internally.
+  evaluateEventTriggers(
+    ctx.orgId,
+    parsed.data.block_id,
+    block.type,
+    parsed.data.type,
+    parsed.data.actor_type
+  ).catch((err: Error) =>
+    logger.error('api-events', 'trigger.unhandled', { event_id: event.id, error: err.message?.slice(0, 100) })
   )
 
   return ok(event, 201)

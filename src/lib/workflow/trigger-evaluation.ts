@@ -1,0 +1,117 @@
+import { createServerClient } from '@/lib/supabase/server'
+import { logger } from '@/lib/logger'
+import type { WorkflowTemplate } from './template-schema'
+
+/**
+ * Evaluate event triggers — check if any workflow_template has an event trigger
+ * matching the given event type for the given block type. If found, spawn a
+ * workflow instance automatically.
+ *
+ * Called after event insertion (fire-and-forget). Failures are logged, not thrown.
+ *
+ * Anti-loop: skips events emitted by workflows (actor_type = 'workflow' or 'system').
+ */
+export async function evaluateEventTriggers(
+  orgId: string,
+  blockId: string,
+  blockType: string,
+  eventType: string,
+  actorType: string
+): Promise<void> {
+  // Prevent infinite loops: skip events emitted by workflow steps or system
+  if (actorType === 'workflow' || actorType === 'system') {
+    return
+  }
+
+  const supabase = createServerClient()
+
+  // Find all workflow_template blocks for this org that apply to this block type
+  const { data: templates, error: queryError } = await supabase
+    .from('blocks')
+    .select('id, metadata')
+    .eq('org_id', orgId)
+    .eq('type', 'workflow_template')
+
+  if (queryError || !templates) {
+    logger.error('trigger-eval', 'trigger.query_failed', { error_code: queryError?.code })
+    return
+  }
+
+  for (const tmpl of templates) {
+    const meta = tmpl.metadata as WorkflowTemplate
+    if (!meta || !meta.trigger || !meta.applies_to_type || !meta.steps) continue
+
+    // Check: applies to this block type?
+    if (meta.applies_to_type !== blockType) continue
+
+    // Check: event trigger with matching pattern?
+    if (meta.trigger.type !== 'event') continue
+    if (meta.trigger.event_pattern !== eventType) continue
+
+    // Match found — spawn a workflow instance
+    try {
+      const now = new Date().toISOString()
+      const instanceName = `Auto: ${tmpl.metadata?.description || 'Workflow'} — ${eventType}`
+
+      const { data: instance, error: insertError } = await supabase
+        .from('blocks')
+        .insert({
+          org_id: orgId,
+          type: 'workflow_instance',
+          name: instanceName.slice(0, 255),
+          metadata: {
+            template_id: tmpl.id,
+            source_block_id: blockId,
+            applies_to_type: blockType,
+            status: 'pending',
+            current_step_index: 0,
+            step_results: [],
+            started_at: null,
+            completed_at: null,
+          },
+        })
+        .select('id')
+        .single()
+
+      if (insertError || !instance) {
+        logger.error('trigger-eval', 'trigger.spawn_failed', {
+          template_id: tmpl.id,
+          error_code: insertError?.code,
+        })
+        continue
+      }
+
+      // Create block edges: instance_of + processing
+      await supabase.from('block_edges').insert([
+        { org_id: orgId, from_block_id: instance.id, to_block_id: tmpl.id, type: 'instance_of' },
+        { org_id: orgId, from_block_id: instance.id, to_block_id: blockId, type: 'processing' },
+      ])
+
+      // Emit spawned event
+      await supabase.from('events').insert({
+        org_id: orgId,
+        block_id: instance.id,
+        type: 'workflow.instance.spawned',
+        actor_type: 'system',
+        payload: {
+          template_id: tmpl.id,
+          source_block_id: blockId,
+          trigger_type: 'event',
+          trigger_event: eventType,
+          spawned_at: now,
+        },
+      })
+
+      logger.info('trigger-eval', 'trigger.auto_spawned', {
+        template_id: tmpl.id,
+        instance_id: instance.id,
+        event_type: eventType,
+      })
+    } catch (err) {
+      logger.error('trigger-eval', 'trigger.spawn_error', {
+        template_id: tmpl.id,
+        error: err instanceof Error ? err.message : 'Unknown',
+      })
+    }
+  }
+}
