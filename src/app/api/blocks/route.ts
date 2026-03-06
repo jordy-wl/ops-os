@@ -5,8 +5,9 @@ import { requireRole } from '@/lib/auth/requireRole'
 import { createServerClient } from '@/lib/supabase/server'
 import { ok, apiError, validationError } from '@/lib/api/responses'
 import { logger } from '@/lib/logger'
+import { WorkflowTemplateSchema } from '@/lib/workflow/template-schema'
 
-const BLOCK_TYPES = ['client', 'deal', 'project', 'contact', 'contract'] as const
+const BLOCK_TYPES = ['client', 'deal', 'project', 'contact', 'contract', 'workflow_template'] as const
 
 const CreateBlockSchema = z.object({
   type: z.enum(BLOCK_TYPES),
@@ -47,6 +48,12 @@ export const POST = withAuth(requireRole(['ops-admin', 'ops-user'], async (req: 
 
   const parsed = CreateBlockSchema.safeParse(body)
   if (!parsed.success) return validationError(parsed.error.issues)
+
+  // Validate workflow template metadata shape
+  if (parsed.data.type === 'workflow_template') {
+    const templateParsed = WorkflowTemplateSchema.safeParse(parsed.data.metadata)
+    if (!templateParsed.success) return validationError(templateParsed.error.issues)
+  }
 
   const supabase = createServerClient()
 

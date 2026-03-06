@@ -30,6 +30,7 @@
     "@radix-ui/react-tooltip": "^1.1.0",
     "@supabase/supabase-js": "^2.49.0",
     "ai": "^6.0.0",
+    "ajv": "^8.18.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
     "lucide-react": "^0.469.0",

@@ -7,6 +7,7 @@ import { BlockHeader } from '@/components/blocks/block-header'
 import { BlockDataPanel } from '@/components/blocks/block-data-panel'
 import { EventTimeline } from '@/components/blocks/event-timeline'
 import { ConnectedBlocksPanel } from '@/components/blocks/connected-blocks-panel'
+import { StartOnboardingButton } from '@/components/blocks/start-onboarding-button'
 import type { Block, Event } from '@/lib/context-assembly'
 
 interface Props {
@@ -82,6 +83,14 @@ export default async function BlockDetailPage({ params }: Props) {
     )
   }
 
+  // Fetch block type definition for structured display
+  const { data: typeDef } = await supabase
+    .from('block_type_definitions')
+    .select('field_schema')
+    .eq('org_id', internalOrgId)
+    .eq('type_name', block.type)
+    .maybeSingle()
+
   // Fetch events (newest first)
   const { data: events } = await supabase
     .from('events')
@@ -121,10 +130,22 @@ export default async function BlockDetailPage({ params }: Props) {
     <div className="p-6 lg:p-8 max-w-4xl">
       <BlockHeader block={block as Block} />
 
+      {block.type === 'client' && (
+        <div className="mt-4">
+          <StartOnboardingButton
+            clientName={block.name}
+            jurisdiction={block.metadata?.jurisdiction as string | null}
+          />
+        </div>
+      )}
+
       {/* Two-column layout on desktop: main content left, connections right */}
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">
-          <BlockDataPanel block={block as Block} />
+          <BlockDataPanel
+            block={block as Block}
+            fieldSchema={typeDef?.field_schema as Record<string, unknown> | undefined}
+          />
           <EventTimeline events={(events ?? []) as Event[]} />
         </div>
 

@@ -1,6 +1,7 @@
 import { clerkClient } from '@clerk/nextjs/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { logger } from '@/lib/logger'
+import { seedSystemBlockTypes } from '@/lib/block-types/seed-system-types'
 
 /**
  * Fetches the org name from Clerk by org ID.
@@ -23,7 +24,8 @@ async function fetchClerkOrgName(clerkOrgId: string): Promise<{ name: string; sl
  * matching the lazy-init behaviour of withAuth for API routes.
  *
  * Also syncs org name/slug from Clerk on first provision and backfills
- * existing orgs where name is null.
+ * existing orgs where name is null. On new org provision, seeds the
+ * 5 system block types automatically.
  *
  * Returns null only on an unexpected DB error — callers should treat null
  * as a transient failure, not a signal to redirect to /org-setup.
@@ -61,6 +63,10 @@ export async function resolveOrgId(clerkOrgId: string): Promise<string | null> {
     })
     .select('id')
     .single()
+
+  if (newOrg?.id) {
+    await seedSystemBlockTypes(newOrg.id)
+  }
 
   return newOrg?.id ?? null
 }
