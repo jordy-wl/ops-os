@@ -10,8 +10,8 @@
 
 | Phase | Name | Status | Sprint | Exit Conditions Met |
 |-------|------|--------|--------|---------------------|
-| 1 | Foundation & Primitive Validation | ACTIVE | Sprint 3 | NO — workflow engine + design partners needed |
-| 2 | Composable Blocks & Workflow Engine | FUTURE | — | — |
+| 1 | Foundation & Primitive Validation | ACTIVE (code complete) | Sprint 4 | NO — code done, usage metrics pending (PRs not merged) |
+| 2 | Composable Blocks & Workflow Engine | ACTIVE | Sprint 5 | NO — workflow runtime in progress |
 | 3 | Visual Builder & Integrations | FUTURE | — | — |
 | 4 | Scale, Revenue & Compliance | FUTURE | — | — |
 
@@ -67,7 +67,7 @@ If exit condition is NOT met after 12 weeks:
 - Sprint 1: Infrastructure scaffold + core schema + walking skeleton — **COMPLETE** (16/16 DONE)
 - Sprint 2: Workflow engine + production deploy + chat UI + RBAC — **COMPLETE** (9/9 DONE, 2026-03-03)
 - Sprint 3: Workflow trigger UI + cron hardening + design partner prep + AI context enrichment — **COMPLETE** (7/7 DONE, 2026-03-04)
-- Sprint 4: Quick wins + Phase 2 exploration (block type definitions, workflow-as-block) — **ACTIVE** (generated at Sprint 3 retro, 2026-03-04)
+- Sprint 4: Quick wins + Phase 2 exploration (block type definitions, workflow-as-block) — **COMPLETE** (7/7 DONE, 2026-03-06. PRs #6-#12 awaiting merge.)
 
 ---
 
@@ -108,7 +108,8 @@ If exit condition is NOT met after 12 weeks:
 
 **Failure Path:** If custom workflows not created → simplify builder UX. If no LOI → pricing interviews. If task routing underused → reduce friction on route_human.
 
-**Sprints in This Phase:** Generated at Phase 1 exit retro.
+**Sprints in This Phase:**
+- Sprint 5: Workflow runtime (instance spawning, step execution, triggers, task queue) — **ACTIVE** (generated at Sprint 4 retro, 2026-03-06)
 
 ---
 
