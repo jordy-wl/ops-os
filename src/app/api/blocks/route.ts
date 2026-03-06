@@ -7,7 +7,7 @@ import { ok, apiError, validationError } from '@/lib/api/responses'
 import { logger } from '@/lib/logger'
 import { WorkflowTemplateSchema } from '@/lib/workflow/template-schema'
 
-const BLOCK_TYPES = ['client', 'deal', 'project', 'contact', 'contract', 'workflow_template'] as const
+const BLOCK_TYPES = ['client', 'deal', 'project', 'contact', 'contract', 'workflow_template', 'workflow_instance', 'task_queue_item'] as const
 
 const CreateBlockSchema = z.object({
   type: z.enum(BLOCK_TYPES),
