@@ -123,18 +123,16 @@ export const POST = withAuth(requireRole(['ops-admin', 'ops-user'], async (req: 
   // 4. Create block edges: instance_of (instance → template) and processing (instance → source)
   await supabase.from('block_edges').insert([
     {
+      org_id: ctx.orgId,
       from_block_id: instance.id,
       to_block_id: template.id,
-      relationship: 'instance_of',
-      org_id: ctx.orgId,
-      created_by: ctx.userId,
+      edge_type: 'instance_of',
     },
     {
+      org_id: ctx.orgId,
       from_block_id: instance.id,
       to_block_id: sourceBlock.id,
-      relationship: 'processing',
-      org_id: ctx.orgId,
-      created_by: ctx.userId,
+      edge_type: 'processing',
     },
   ])
 
