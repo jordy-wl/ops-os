@@ -83,8 +83,8 @@ export async function evaluateEventTriggers(
 
       // Create block edges: instance_of + processing
       await supabase.from('block_edges').insert([
-        { org_id: orgId, from_block_id: instance.id, to_block_id: tmpl.id, type: 'instance_of' },
-        { org_id: orgId, from_block_id: instance.id, to_block_id: blockId, type: 'processing' },
+        { org_id: orgId, from_block_id: instance.id, to_block_id: tmpl.id, edge_type: 'instance_of' },
+        { org_id: orgId, from_block_id: instance.id, to_block_id: blockId, edge_type: 'processing' },
       ])
 
       // Emit spawned event
@@ -92,6 +92,7 @@ export async function evaluateEventTriggers(
         org_id: orgId,
         block_id: instance.id,
         type: 'workflow.instance.spawned',
+        actor_id: 'trigger-evaluator',
         actor_type: 'system',
         payload: {
           template_id: tmpl.id,
