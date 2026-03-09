@@ -60,3 +60,12 @@ export function makePatch(url: string, body: unknown) {
     body: JSON.stringify(body),
   })
 }
+
+/**
+ * Creates a DELETE NextRequest.
+ */
+export function makeDelete(url: string) {
+  return new NextRequest(url, {
+    method: 'DELETE',
+  })
+}
