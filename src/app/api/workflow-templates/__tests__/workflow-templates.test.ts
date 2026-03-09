@@ -30,6 +30,8 @@ function makeDb(...responses: { data: unknown; error: unknown }[]) {
 
   const singleFn = vi.fn().mockImplementation(() => Promise.resolve(queue[i++] ?? { data: null, error: null }))
 
+  const rpcFn = vi.fn().mockImplementation(() => Promise.resolve(queue[i++] ?? { data: null, error: null }))
+
   const chain: Record<string, unknown> = {
     from: vi.fn().mockReturnThis(),
     select: vi.fn().mockReturnThis(),
@@ -43,6 +45,7 @@ function makeDb(...responses: { data: unknown; error: unknown }[]) {
     update: vi.fn().mockReturnThis(),
     lt: vi.fn().mockReturnThis(),
     single: singleFn,
+    rpc: rpcFn,
     then: (resolve: (v: unknown) => void, reject: (r: unknown) => void) =>
       Promise.resolve(queue[i++] ?? { data: [], error: null }).then(resolve, reject),
   }
@@ -116,7 +119,7 @@ describe('POST /api/blocks — workflow_template validation', () => {
   it('creates workflow_template with valid metadata — returns 201', async () => {
     const block = { id: 'tmpl-1', org_id: 'uuid-org-1', type: 'workflow_template', name: 'Client Onboarding', metadata: VALID_TEMPLATE }
     const event = { id: 'ev-1', type: 'block.created' }
-    makeDb({ data: block, error: null }, { data: event, error: null })
+    makeDb({ data: { block, event }, error: null })
 
     const req = makeReq('http://localhost/api/blocks', {
       method: 'POST',
@@ -194,7 +197,7 @@ describe('POST /api/blocks — workflow_template validation', () => {
   it('allows non-template blocks without template validation', async () => {
     const block = { id: 'block-1', type: 'client', name: 'Acme Corp', metadata: {} }
     const event = { id: 'ev-1', type: 'block.created' }
-    makeDb({ data: block, error: null }, { data: event, error: null })
+    makeDb({ data: { block, event }, error: null })
 
     const req = makeReq('http://localhost/api/blocks', {
       method: 'POST',

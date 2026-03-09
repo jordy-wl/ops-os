@@ -57,39 +57,20 @@ export const POST = withAuth(requireRole(['ops-admin', 'ops-user'], async (req: 
 
   const supabase = createServerClient()
 
-  const { data: block, error: blockError } = await supabase
-    .from('blocks')
-    .insert({
-      org_id: ctx.orgId,
-      type: parsed.data.type,
-      name: parsed.data.name,
-      metadata: parsed.data.metadata,
-    })
-    .select()
-    .single()
+  // Atomic: block + audit event in a single transaction via Postgres function
+  const { data: result, error: rpcError } = await supabase.rpc('create_block_with_event', {
+    p_org_id: ctx.orgId,
+    p_type: parsed.data.type,
+    p_name: parsed.data.name,
+    p_metadata: parsed.data.metadata,
+    p_actor_id: ctx.userId,
+    p_actor_type: 'human',
+  })
 
-  if (blockError || !block) {
-    logger.error('api-blocks', 'db.insert_failed', { error_code: blockError?.code })
+  if (rpcError || !result) {
+    logger.error('api-blocks', 'db.insert_failed', { error_code: rpcError?.code })
     return apiError('Failed to create block', 'db/insert-failed', 500)
   }
 
-  const { data: event, error: eventError } = await supabase
-    .from('events')
-    .insert({
-      org_id: ctx.orgId,
-      block_id: block.id,
-      type: 'block.created',
-      actor_id: ctx.userId,
-      actor_type: 'human',
-      payload: { block_type: block.type, name: block.name },
-    })
-    .select()
-    .single()
-
-  if (eventError) {
-    // Block was created; event is required for audit trail — critical error
-    logger.error('api-blocks', 'db.event_insert_failed', { error_code: eventError.code, critical: true })
-  }
-
-  return ok({ block, event: event ?? null }, 201)
+  return ok({ block: result.block, event: result.event }, 201)
 }))
