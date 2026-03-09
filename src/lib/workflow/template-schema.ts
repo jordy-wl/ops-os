@@ -18,11 +18,18 @@ const TriggerSchema = z.discriminatedUnion('type', [
 
 const StepSchema = z.object({
   name: z.string().min(1).max(100).regex(/^[a-z][a-z0-9_]*$/, 'Step name must be lowercase snake_case'),
-  type: z.enum(['emit_event', 'run_action', 'wait', 'condition']),
+  type: z.enum(['emit_event', 'run_action', 'wait', 'condition', 'call_api']),
   event_type: z.string().min(1).max(100).optional(),
   action_type: z.string().min(1).max(100).optional(),
   wait_seconds: z.number().int().positive().optional(),
   condition: z.string().max(500).optional(),
+  // call_api step fields
+  connector_id: z.string().uuid().optional(),
+  method: z.enum(['GET', 'POST', 'PUT', 'PATCH', 'DELETE']).optional(),
+  path: z.string().max(500).optional(),
+  body_template: z.string().max(5000).optional(),
+  timeout_ms: z.number().int().min(100).max(30000).optional(),
+  max_retries: z.number().int().min(0).max(5).optional(),
 })
 
 export const WorkflowTemplateSchema = z.object({

@@ -5,11 +5,11 @@ vi.mock('@/lib/supabase/server', () => ({
 }))
 
 vi.mock('@/lib/logger', () => ({
-  logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
+  logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }))
 
 import { createServerClient } from '@/lib/supabase/server'
-import { advanceWorkflowInstance } from '@/lib/workflow/step-engine'
+import { advanceWorkflowInstance, interpolateTemplate } from '@/lib/workflow/step-engine'
 
 // ─── Mock DB helper ──────────────────────────────────────────────────────────
 function makeDb(...responses: { data: unknown; error: unknown }[]) {
@@ -352,5 +352,311 @@ describe('advanceWorkflowInstance', () => {
       expect(result.status).toBe('failed')
       expect(result.step_result.error).toContain('Unknown step type')
     })
+  })
+
+  describe('call_api step', () => {
+    const CONNECTOR_ID = 'uuid-connector-1'
+
+    const callApiStep = {
+      name: 'call_crm',
+      type: 'call_api',
+      connector_id: CONNECTOR_ID,
+      method: 'POST',
+      path: '/api/v1/leads',
+      body_template: '{"name": "{{block.name}}"}',
+      timeout_ms: 5000,
+    }
+
+    const connectorRow = {
+      id: CONNECTOR_ID,
+      config: { base_url: 'https://crm.example.com' },
+      credentials_ref: null,
+      status: 'active',
+    }
+
+    const sourceBlockRow = {
+      id: SOURCE_BLOCK_ID,
+      name: 'Acme Corp',
+      type: 'client',
+      metadata: { industry: 'finance' },
+    }
+
+    beforeEach(() => {
+      // Mock global fetch
+      vi.stubGlobal('fetch', vi.fn())
+    })
+
+    it('completes on successful API call', async () => {
+      const instance = makeInstance()
+      const template = makeTemplate([callApiStep])
+      vi.mocked(fetch).mockResolvedValue({
+        ok: true,
+        status: 200,
+        text: () => Promise.resolve('{"id": "lead-1"}'),
+      } as Response)
+
+      makeDb(
+        { data: instance, error: null },      // instance lookup
+        { data: template, error: null },       // template lookup
+        { data: null, error: null },           // pending → running
+        { data: connectorRow, error: null },   // connector lookup
+        { data: sourceBlockRow, error: null }, // source block lookup
+        { data: null, error: null },           // update metadata
+        { data: null, error: null },           // completion event
+        { data: null, error: null },           // step event
+      )
+
+      const result = await advanceWorkflowInstance(INSTANCE_ID, ORG_ID)
+
+      expect(result.status).toBe('completed')
+      expect(result.step_result.status).toBe('completed')
+      expect(result.step_result.output).toMatchObject({ status: 200 })
+
+      // Verify fetch was called with interpolated body
+      expect(fetch).toHaveBeenCalledWith(
+        'https://crm.example.com/api/v1/leads',
+        expect.objectContaining({
+          method: 'POST',
+          body: '{"name": "Acme Corp"}',
+        })
+      )
+    })
+
+    it('fails when connector_id is missing', async () => {
+      const instance = makeInstance()
+      const template = makeTemplate([
+        { name: 'bad_call', type: 'call_api', method: 'GET', path: '/test' },
+      ])
+      makeDb(
+        { data: instance, error: null },
+        { data: template, error: null },
+        { data: null, error: null },
+        { data: null, error: null },
+        { data: null, error: null },
+      )
+
+      const result = await advanceWorkflowInstance(INSTANCE_ID, ORG_ID)
+
+      expect(result.status).toBe('failed')
+      expect(result.step_result.error).toBe('Missing connector_id')
+    })
+
+    it('fails when method is missing', async () => {
+      const instance = makeInstance()
+      const template = makeTemplate([
+        { name: 'bad_call', type: 'call_api', connector_id: CONNECTOR_ID, path: '/test' },
+      ])
+      makeDb(
+        { data: instance, error: null },
+        { data: template, error: null },
+        { data: null, error: null },
+        { data: null, error: null },
+        { data: null, error: null },
+      )
+
+      const result = await advanceWorkflowInstance(INSTANCE_ID, ORG_ID)
+
+      expect(result.status).toBe('failed')
+      expect(result.step_result.error).toBe('Missing method')
+    })
+
+    it('fails when connector is not found', async () => {
+      const instance = makeInstance()
+      const template = makeTemplate([callApiStep])
+      makeDb(
+        { data: instance, error: null },
+        { data: template, error: null },
+        { data: null, error: null },           // pending → running
+        { data: null, error: { code: 'PGRST116' } }, // connector not found
+        { data: null, error: null },
+        { data: null, error: null },
+      )
+
+      const result = await advanceWorkflowInstance(INSTANCE_ID, ORG_ID)
+
+      expect(result.status).toBe('failed')
+      expect(result.step_result.error).toContain('Connector not found')
+    })
+
+    it('fails when connector is inactive', async () => {
+      const instance = makeInstance()
+      const template = makeTemplate([callApiStep])
+      makeDb(
+        { data: instance, error: null },
+        { data: template, error: null },
+        { data: null, error: null },
+        { data: { ...connectorRow, status: 'paused' }, error: null },
+        { data: null, error: null },
+        { data: null, error: null },
+      )
+
+      const result = await advanceWorkflowInstance(INSTANCE_ID, ORG_ID)
+
+      expect(result.status).toBe('failed')
+      expect(result.step_result.error).toBe('Connector is paused')
+    })
+
+    it('fails when connector has no base_url', async () => {
+      const instance = makeInstance()
+      const template = makeTemplate([callApiStep])
+      makeDb(
+        { data: instance, error: null },
+        { data: template, error: null },
+        { data: null, error: null },
+        { data: { ...connectorRow, config: {} }, error: null },
+        { data: null, error: null },
+        { data: null, error: null },
+      )
+
+      const result = await advanceWorkflowInstance(INSTANCE_ID, ORG_ID)
+
+      expect(result.status).toBe('failed')
+      expect(result.step_result.error).toBe('Connector has no base_url in config')
+    })
+
+    it('fails on HTTP error after retries exhausted', async () => {
+      const instance = makeInstance()
+      const template = makeTemplate([{
+        ...callApiStep,
+        max_retries: 1,
+      }])
+      vi.mocked(fetch).mockResolvedValue({
+        ok: false,
+        status: 500,
+        text: () => Promise.resolve('Internal Server Error'),
+      } as Response)
+
+      makeDb(
+        { data: instance, error: null },
+        { data: template, error: null },
+        { data: null, error: null },
+        { data: connectorRow, error: null },
+        { data: sourceBlockRow, error: null },
+        { data: null, error: null },
+        { data: null, error: null },
+      )
+
+      const result = await advanceWorkflowInstance(INSTANCE_ID, ORG_ID)
+
+      expect(result.status).toBe('failed')
+      expect(result.step_result.error).toBe('HTTP 500')
+      expect(result.step_result.output).toMatchObject({ attempts: 2 })
+      // Called twice: initial + 1 retry
+      expect(fetch).toHaveBeenCalledTimes(2)
+    })
+
+    it('retries on fetch error and succeeds', async () => {
+      const instance = makeInstance()
+      const template = makeTemplate([{
+        ...callApiStep,
+        max_retries: 2,
+      }])
+      vi.mocked(fetch)
+        .mockRejectedValueOnce(new Error('ECONNREFUSED'))
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          text: () => Promise.resolve('{}'),
+        } as Response)
+
+      makeDb(
+        { data: instance, error: null },
+        { data: template, error: null },
+        { data: null, error: null },
+        { data: connectorRow, error: null },
+        { data: sourceBlockRow, error: null },
+        { data: null, error: null },
+        { data: null, error: null },
+        { data: null, error: null },
+      )
+
+      const result = await advanceWorkflowInstance(INSTANCE_ID, ORG_ID)
+
+      expect(result.status).toBe('completed')
+      expect(result.step_result.output).toMatchObject({ status: 200, attempt: 1 })
+    })
+
+    it('uses credentials_ref from env for Authorization header', async () => {
+      const instance = makeInstance()
+      const template = makeTemplate([callApiStep])
+      process.env.CRM_API_KEY = 'test-secret-key'
+      vi.mocked(fetch).mockResolvedValue({
+        ok: true,
+        status: 200,
+        text: () => Promise.resolve('{}'),
+      } as Response)
+
+      makeDb(
+        { data: instance, error: null },
+        { data: template, error: null },
+        { data: null, error: null },
+        { data: { ...connectorRow, credentials_ref: 'CRM_API_KEY' }, error: null },
+        { data: sourceBlockRow, error: null },
+        { data: null, error: null },
+        { data: null, error: null },
+        { data: null, error: null },
+      )
+
+      const result = await advanceWorkflowInstance(INSTANCE_ID, ORG_ID)
+
+      expect(result.status).toBe('completed')
+      expect(fetch).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            Authorization: 'Bearer test-secret-key',
+          }),
+        })
+      )
+
+      delete process.env.CRM_API_KEY
+    })
+  })
+})
+
+// ─── interpolateTemplate unit tests ─────────────────────────────────────────
+
+describe('interpolateTemplate', () => {
+  it('replaces block and context variables', () => {
+    const result = interpolateTemplate(
+      '{"name": "{{block.name}}", "type": "{{context.applies_to_type}}"}',
+      {
+        block: { name: 'Acme Corp', id: 'b-1' },
+        context: { applies_to_type: 'client' },
+      }
+    )
+    expect(result).toBe('{"name": "Acme Corp", "type": "client"}')
+  })
+
+  it('replaces missing variables with empty string', () => {
+    const result = interpolateTemplate(
+      '{{block.name}} / {{block.missing}}',
+      { block: { name: 'Test' } }
+    )
+    expect(result).toBe('Test / ')
+  })
+
+  it('replaces unknown namespace with empty string', () => {
+    const result = interpolateTemplate(
+      '{{unknown.field}}',
+      { block: { name: 'Test' } }
+    )
+    expect(result).toBe('')
+  })
+
+  it('stringifies object values as JSON', () => {
+    const result = interpolateTemplate(
+      '{{block.metadata}}',
+      { block: { metadata: { key: 'val' } } }
+    )
+    expect(result).toBe('{"key":"val"}')
+  })
+
+  it('handles null and undefined values', () => {
+    const result = interpolateTemplate(
+      '{{block.a}} / {{block.b}}',
+      { block: { a: null, b: undefined } }
+    )
+    expect(result).toBe(' / ')
   })
 })

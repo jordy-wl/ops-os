@@ -2,6 +2,11 @@ import { createServerClient } from '@/lib/supabase/server'
 import { logger } from '@/lib/logger'
 import type { WorkflowTemplate } from './template-schema'
 
+interface WebhookTriggerConfig {
+  connector_id: string
+  event_type_mapping?: Record<string, string>  // external_type -> internal_type
+}
+
 /**
  * Evaluate event triggers — check if any workflow_template has an event trigger
  * matching the given event type for the given block type. If found, spawn a
@@ -115,4 +120,140 @@ export async function evaluateEventTriggers(
       })
     }
   }
+}
+
+/**
+ * Evaluate webhook triggers — check if any workflow_template has a webhook trigger
+ * matching the given connector_id. If found, spawn workflow instances.
+ *
+ * Called after webhook receipt (fire-and-forget). Failures are logged, not thrown.
+ *
+ * Anti-loop: webhook-spawned workflows use actor_type='system' which is filtered
+ * by evaluateEventTriggers, preventing cascade.
+ *
+ * @returns number of workflow instances spawned
+ */
+export async function evaluateWebhookTriggers(
+  connectorId: string,
+  webhookPayload: Record<string, unknown>,
+  orgId: string
+): Promise<number> {
+  const supabase = createServerClient()
+  let spawned = 0
+
+  // Find all workflow_template blocks for this org
+  const { data: templates, error: queryError } = await supabase
+    .from('blocks')
+    .select('id, metadata')
+    .eq('org_id', orgId)
+    .eq('type', 'workflow_template')
+
+  if (queryError || !templates) {
+    logger.error('webhook-trigger', 'trigger.query_failed', { error_code: queryError?.code })
+    return 0
+  }
+
+  for (const tmpl of templates) {
+    const meta = tmpl.metadata as WorkflowTemplate & { trigger: { type: string; config?: WebhookTriggerConfig } }
+    if (!meta || !meta.trigger || !meta.steps) continue
+
+    // Check: webhook trigger type?
+    if (meta.trigger.type !== 'webhook') continue
+
+    // Check: connector_id matches?
+    const triggerConfig = meta.trigger.config as WebhookTriggerConfig | undefined
+    if (!triggerConfig?.connector_id || triggerConfig.connector_id !== connectorId) continue
+
+    // Match found — resolve event type via mapping
+    const externalType = (webhookPayload.type ?? webhookPayload.event ?? webhookPayload.action ?? 'webhook.received') as string
+    const mapping = triggerConfig.event_type_mapping ?? {}
+    const internalType = mapping[externalType] ?? externalType
+
+    // Resolve block_id from payload or skip if none
+    const blockId = webhookPayload.block_id as string | undefined
+    if (!blockId) {
+      logger.debug('webhook-trigger', 'trigger.no_block_id', {
+        template_id: tmpl.id,
+        connector_id: connectorId,
+      })
+      continue
+    }
+
+    try {
+      const now = new Date().toISOString()
+      const instanceName = `Webhook: ${internalType} — ${connectorId.slice(0, 8)}`
+
+      const { data: instance, error: insertError } = await supabase
+        .from('blocks')
+        .insert({
+          org_id: orgId,
+          type: 'workflow_instance',
+          name: instanceName.slice(0, 255),
+          metadata: {
+            template_id: tmpl.id,
+            source_block_id: blockId,
+            applies_to_type: meta.applies_to_type,
+            status: 'pending',
+            current_step_index: 0,
+            step_results: [],
+            started_at: null,
+            completed_at: null,
+            trigger_context: {
+              type: 'webhook',
+              connector_id: connectorId,
+              external_event: externalType,
+              mapped_event: internalType,
+            },
+          },
+        })
+        .select('id')
+        .single()
+
+      if (insertError || !instance) {
+        logger.error('webhook-trigger', 'trigger.spawn_failed', {
+          template_id: tmpl.id,
+          error_code: insertError?.code,
+        })
+        continue
+      }
+
+      // Create block edges
+      await supabase.from('block_edges').insert([
+        { org_id: orgId, from_block_id: instance.id, to_block_id: tmpl.id, edge_type: 'instance_of' },
+        { org_id: orgId, from_block_id: instance.id, to_block_id: blockId, edge_type: 'processing' },
+      ])
+
+      // Emit spawned event
+      await supabase.from('events').insert({
+        org_id: orgId,
+        block_id: instance.id,
+        type: 'workflow.instance.spawned',
+        actor_id: 'webhook-trigger-evaluator',
+        actor_type: 'system',
+        payload: {
+          template_id: tmpl.id,
+          source_block_id: blockId,
+          trigger_type: 'webhook',
+          connector_id: connectorId,
+          external_event: externalType,
+          mapped_event: internalType,
+          spawned_at: now,
+        },
+      })
+
+      logger.info('webhook-trigger', 'trigger.auto_spawned', {
+        template_id: tmpl.id,
+        instance_id: instance.id,
+        connector_id: connectorId,
+      })
+      spawned++
+    } catch (err) {
+      logger.error('webhook-trigger', 'trigger.spawn_error', {
+        template_id: tmpl.id,
+        error: err instanceof Error ? err.message : 'Unknown',
+      })
+    }
+  }
+
+  return spawned
 }
