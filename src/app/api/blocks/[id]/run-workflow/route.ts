@@ -104,8 +104,8 @@ export const POST = withAuth(requireRole(['ops-admin', 'ops-user'], async (req: 
 
   // 6. Create block edges: instance_of + processing
   await supabase.from('block_edges').insert([
-    { org_id: ctx.orgId, from_block_id: instance.id, to_block_id: template.id, type: 'instance_of' },
-    { org_id: ctx.orgId, from_block_id: instance.id, to_block_id: blockId, type: 'processing' },
+    { org_id: ctx.orgId, from_block_id: instance.id, to_block_id: template.id, edge_type: 'instance_of' },
+    { org_id: ctx.orgId, from_block_id: instance.id, to_block_id: blockId, edge_type: 'processing' },
   ])
 
   // 7. Emit spawned event
