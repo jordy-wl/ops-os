@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { OrganizationSwitcher, UserButton, ClerkLoading, ClerkLoaded } from '@clerk/nextjs'
-import { LayoutGrid, GitBranch, MessageSquare } from 'lucide-react'
+import { LayoutGrid, GitBranch, MessageSquare, ClipboardList } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface NavLink {
@@ -16,6 +16,7 @@ interface NavLink {
 const NAV_LINKS: NavLink[] = [
   { href: '/blocks', label: 'Blocks', icon: LayoutGrid },
   { href: '/workflows', label: 'Workflows', icon: GitBranch },
+  { href: '/tasks', label: 'Tasks', icon: ClipboardList },
   { href: '/chat', label: 'Chat', icon: MessageSquare },
 ]
 
