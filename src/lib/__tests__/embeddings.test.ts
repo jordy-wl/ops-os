@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { buildEmbeddingContent, embedEvent } from '@/lib/embeddings'
+import { buildEmbeddingContent, embedEvent, sanitizePayload } from '@/lib/embeddings'
 import type { Event } from '@/lib/context-assembly'
 
 // ─── Mock OpenAI ─────────────────────────────────────────────────────────────
@@ -66,6 +66,38 @@ describe('buildEmbeddingContent', () => {
     const result = buildEmbeddingContent(event, MOCK_BLOCK)
     const payloadPart = result.split(': ')[1]
     expect(payloadPart.length).toBeLessThanOrEqual(200)
+  })
+})
+
+describe('sanitizePayload', () => {
+  it('strips PII keys from payload', () => {
+    const payload = {
+      email: 'john@example.com',
+      phone: '+61400000000',
+      block_type: 'client',
+      name_change: 'legal update',
+    }
+    const result = sanitizePayload(payload)
+    expect(result).toEqual({ block_type: 'client', name_change: 'legal update' })
+    expect(result).not.toHaveProperty('email')
+    expect(result).not.toHaveProperty('phone')
+  })
+
+  it('strips case-insensitively', () => {
+    const payload = { Email: 'test@test.com', action: 'create' }
+    const result = sanitizePayload(payload)
+    expect(result).not.toHaveProperty('Email')
+    expect(result).toHaveProperty('action')
+  })
+
+  it('returns empty object for null/undefined payload', () => {
+    expect(sanitizePayload(null)).toEqual({})
+    expect(sanitizePayload(undefined)).toEqual({})
+  })
+
+  it('preserves safe operational fields', () => {
+    const payload = { block_type: 'deal', status: 'active', reason: 'PEP check' }
+    expect(sanitizePayload(payload)).toEqual(payload)
   })
 })
 

@@ -32,6 +32,8 @@ function makeDb(...responses: { data: unknown; error: unknown }[]) {
 
   const singleFn = vi.fn().mockImplementation(() => Promise.resolve(queue[i++] ?? { data: null, error: null }))
 
+  const rpcFn = vi.fn().mockImplementation(() => Promise.resolve(queue[i++] ?? { data: null, error: null }))
+
   const chain: Record<string, unknown> = {
     from: vi.fn().mockReturnThis(),
     select: vi.fn().mockReturnThis(),
@@ -45,6 +47,7 @@ function makeDb(...responses: { data: unknown; error: unknown }[]) {
     update: vi.fn().mockReturnThis(),
     lt: vi.fn().mockReturnThis(),
     single: singleFn,
+    rpc: rpcFn,
     // Thenable for array-returning queries (awaited without .single())
     then: (resolve: (v: unknown) => void, reject: (r: unknown) => void) =>
       Promise.resolve(queue[i++] ?? { data: [], error: null }).then(resolve, reject),
@@ -67,10 +70,10 @@ const { GET: getNeighbours } = await import('@/app/api/blocks/[id]/neighbours/ro
 describe('POST /api/blocks', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  it('creates block and event — returns 201', async () => {
+  it('creates block and event atomically — returns 201', async () => {
     const block = { id: 'block-1', org_id: 'uuid-org-1', type: 'client', name: 'Acme Corp', state: 'active', metadata: {} }
     const event = { id: 'event-1', type: 'block.created', actor_id: 'user_111' }
-    makeDb({ data: block, error: null }, { data: event, error: null })
+    makeDb({ data: { block, event }, error: null })
 
     const req = makeReq('http://localhost/api/blocks', {
       method: 'POST',

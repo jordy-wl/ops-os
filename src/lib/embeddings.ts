@@ -30,15 +30,35 @@ function getOpenAI(): OpenAI {
   return _openai
 }
 
+/** Keys that may contain PII — stripped from payloads before embedding. */
+const PII_KEYS = new Set([
+  'email', 'phone', 'mobile', 'address', 'ssn', 'tax_id',
+  'date_of_birth', 'dob', 'first_name', 'last_name', 'full_name',
+  'password', 'secret', 'token', 'credit_card', 'bank_account',
+])
+
+/** Removes keys that may contain PII from an event payload. */
+export function sanitizePayload(payload: unknown): Record<string, unknown> {
+  if (!payload || typeof payload !== 'object') return {}
+  const clean: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(payload as Record<string, unknown>)) {
+    if (PII_KEYS.has(key.toLowerCase())) continue
+    clean[key] = value
+  }
+  return clean
+}
+
 /**
  * Builds the plain-text content string that gets embedded.
  * Format: "[event_type] on [block.type] '[block.name]': [payload summary]"
+ * PII keys are stripped from the payload before embedding.
  */
 export function buildEmbeddingContent(
   event: Pick<Event, 'type' | 'payload'>,
   block: { type: string; name: string }
 ): string {
-  const payloadStr = JSON.stringify(event.payload).slice(0, 200)
+  const sanitized = sanitizePayload(event.payload)
+  const payloadStr = JSON.stringify(sanitized).slice(0, 200)
   return `${event.type} on ${block.type} '${block.name}': ${payloadStr}`
 }
 
