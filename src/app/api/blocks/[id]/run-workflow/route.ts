@@ -35,13 +35,12 @@ export const POST = withAuth(requireRole(['ops-admin', 'ops-user'], async (req: 
     .eq('org_id', ctx.orgId)
     .single()
 
-  if (blockError?.code === 'PGRST116' || !block) {
-    return apiError('Block not found', 'blocks/not-found', 404)
-  }
   if (blockError) {
+    if (blockError.code === 'PGRST116') return apiError('Block not found', 'blocks/not-found', 404)
     logger.error('api-run-workflow', 'db.block_query_failed', { error_code: blockError.code })
     return apiError('Failed to fetch block', 'db/query-failed', 500)
   }
+  if (!block) return apiError('Block not found', 'blocks/not-found', 404)
 
   // 2. Verify the template exists and is a workflow_template
   const { data: template, error: templateError } = await supabase
@@ -51,13 +50,12 @@ export const POST = withAuth(requireRole(['ops-admin', 'ops-user'], async (req: 
     .eq('type', 'workflow_template')
     .single()
 
-  if (templateError?.code === 'PGRST116' || !template) {
-    return apiError('Workflow template not found', 'workflow/template-not-found', 404)
-  }
   if (templateError) {
+    if (templateError.code === 'PGRST116') return apiError('Workflow template not found', 'workflow/template-not-found', 404)
     logger.error('api-run-workflow', 'db.template_query_failed', { error_code: templateError.code })
     return apiError('Failed to fetch template', 'db/query-failed', 500)
   }
+  if (!template) return apiError('Workflow template not found', 'workflow/template-not-found', 404)
 
   // 3. Check template applies to this block type
   const tmplMeta = template.metadata as WorkflowTemplate

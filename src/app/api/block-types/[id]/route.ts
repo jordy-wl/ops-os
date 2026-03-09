@@ -51,13 +51,12 @@ export const PATCH = withAuth(
       .eq('org_id', ctx.orgId)
       .single()
 
-    if (fetchError?.code === 'PGRST116' || !existing) {
-      return apiError('Block type not found', 'block-types/not-found', 404)
-    }
     if (fetchError) {
+      if (fetchError.code === 'PGRST116') return apiError('Block type not found', 'block-types/not-found', 404)
       logger.error('api-block-types', 'db.query_failed', { error_code: fetchError.code })
       return apiError('Failed to fetch block type', 'db/query-failed', 500)
     }
+    if (!existing) return apiError('Block type not found', 'block-types/not-found', 404)
 
     const { data: updated, error: updateError } = await supabase
       .from('block_type_definitions')
@@ -90,13 +89,12 @@ export const DELETE = withAuth(
       .eq('org_id', ctx.orgId)
       .single()
 
-    if (fetchError?.code === 'PGRST116' || !typeDef) {
-      return apiError('Block type not found', 'block-types/not-found', 404)
-    }
     if (fetchError) {
+      if (fetchError.code === 'PGRST116') return apiError('Block type not found', 'block-types/not-found', 404)
       logger.error('api-block-types', 'db.query_failed', { error_code: fetchError.code })
       return apiError('Failed to fetch block type', 'db/query-failed', 500)
     }
+    if (!typeDef) return apiError('Block type not found', 'block-types/not-found', 404)
 
     // Prevent deletion of system types
     if (typeDef.is_system) {

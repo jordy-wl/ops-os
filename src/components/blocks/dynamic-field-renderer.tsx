@@ -70,7 +70,7 @@ export function DynamicFieldRenderer({
           def={def}
           value={values[name]}
           required={required.has(name)}
-          onChange={(v) => onChange(name, v)}
+          onChange={(v) => onChange?.(name, v)}
         />
       ))}
     </div>

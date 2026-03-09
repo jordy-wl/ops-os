@@ -34,13 +34,12 @@ export const POST = withAuth(async (_req: NextRequest, ctx, params) => {
     .eq('type', 'task_queue_item')
     .single()
 
-  if (fetchError?.code === 'PGRST116' || !task) {
-    return apiError('Task not found', 'tasks/not-found', 404)
-  }
   if (fetchError) {
+    if (fetchError.code === 'PGRST116') return apiError('Task not found', 'tasks/not-found', 404)
     logger.error('api-tasks', 'db.query_failed', { error_code: fetchError.code })
     return apiError('Failed to fetch task', 'db/query-failed', 500)
   }
+  if (!task) return apiError('Task not found', 'tasks/not-found', 404)
 
   const meta = task.metadata as TaskMetadata
 

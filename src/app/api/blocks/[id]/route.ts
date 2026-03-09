@@ -39,13 +39,12 @@ export const GET = withAuth(async (_req: NextRequest, ctx, params) => {
     .eq('org_id', ctx.orgId)
     .single()
 
-  if (blockError?.code === 'PGRST116' || !block) {
-    return apiError('Block not found', 'blocks/not-found', 404)
-  }
   if (blockError) {
+    if (blockError.code === 'PGRST116') return apiError('Block not found', 'blocks/not-found', 404)
     logger.error('api-blocks', 'db.query_failed', { error_code: blockError.code })
     return apiError('Failed to fetch block', 'db/query-failed', 500)
   }
+  if (!block) return apiError('Block not found', 'blocks/not-found', 404)
 
   const { data: events, error: eventsError } = await supabase
     .from('events')
@@ -79,13 +78,12 @@ export const PATCH = withAuth(async (req: NextRequest, ctx, params) => {
     .eq('org_id', ctx.orgId)
     .single()
 
-  if (fetchError?.code === 'PGRST116' || !current) {
-    return apiError('Block not found', 'blocks/not-found', 404)
-  }
   if (fetchError) {
+    if (fetchError.code === 'PGRST116') return apiError('Block not found', 'blocks/not-found', 404)
     logger.error('api-blocks', 'db.query_failed', { error_code: fetchError.code })
     return apiError('Failed to fetch block', 'db/query-failed', 500)
   }
+  if (!current) return apiError('Block not found', 'blocks/not-found', 404)
 
   const { data: updated, error: updateError } = await supabase
     .from('blocks')
