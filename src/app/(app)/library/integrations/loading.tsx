@@ -1,4 +1,5 @@
 import { Skeleton } from '@/components/ui/skeleton'
+import { PageContainer } from '@/components/shell/page-container'
 
 /**
  * Integration Library loading skeleton.
@@ -7,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton'
  */
 export default function IntegrationLibraryLoading() {
   return (
-    <div className="p-6 lg:p-8" aria-label="Loading integration library" role="status">
+    <PageContainer aria-label="Loading integration library" role="status">
       {/* Page header skeleton */}
       <Skeleton className="h-8 w-48 mb-1" />
       <Skeleton className="h-4 w-72 mb-6" />
@@ -31,6 +32,6 @@ export default function IntegrationLibraryLoading() {
           </div>
         ))}
       </div>
-    </div>
+    </PageContainer>
   )
 }

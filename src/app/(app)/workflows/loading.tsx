@@ -1,10 +1,12 @@
+import { PageContainer } from '@/components/shell/page-container'
+
 /**
  * Loading skeleton for the Workflows page.
  * Automatically shown by Next.js while page.tsx fetches from Supabase.
  */
 export default function WorkflowsLoading() {
   return (
-    <div className="p-6 lg:p-8 animate-pulse" aria-label="Loading workflows" role="status">
+    <PageContainer className="animate-pulse" aria-label="Loading workflows" role="status">
       {/* Page heading */}
       <div className="h-8 w-36 rounded bg-gray-200 mb-6" />
 
@@ -38,6 +40,6 @@ export default function WorkflowsLoading() {
           </div>
         ))}
       </div>
-    </div>
+    </PageContainer>
   )
 }
