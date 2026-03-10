@@ -8,6 +8,7 @@ import { BlockDataPanel } from '@/components/blocks/block-data-panel'
 import { EventTimeline } from '@/components/blocks/event-timeline'
 import { ConnectedBlocksPanel } from '@/components/blocks/connected-blocks-panel'
 import { StartOnboardingButton } from '@/components/blocks/start-onboarding-button'
+import { ActionMenu } from '@/components/actions/action-menu'
 import type { Block, Event } from '@/lib/context-assembly'
 
 interface Props {
@@ -106,6 +107,15 @@ export default async function BlockDetailPage({ params }: Props) {
     .eq('org_id', internalOrgId)
     .or(`from_block_id.eq.${id},to_block_id.eq.${id}`)
 
+  // Fetch Google connector for action menu
+  const { data: googleConnector } = await supabase
+    .from('integration_connectors')
+    .select('id')
+    .eq('org_id', internalOrgId)
+    .eq('provider', 'google')
+    .eq('status', 'active')
+    .maybeSingle()
+
   let neighbours: Block[] = []
   if (edges && edges.length > 0) {
     const neighbourIds = [
@@ -128,7 +138,15 @@ export default async function BlockDetailPage({ params }: Props) {
 
   return (
     <div className="p-6 lg:p-8 max-w-4xl">
-      <BlockHeader block={block as Block} />
+      <div className="flex items-start justify-between gap-4">
+        <BlockHeader block={block as Block} />
+        <ActionMenu
+          blockId={block.id}
+          blockName={block.name}
+          blockType={block.type}
+          googleConnectorId={googleConnector?.id ?? null}
+        />
+      </div>
 
       {block.type === 'client' && (
         <div className="mt-4">

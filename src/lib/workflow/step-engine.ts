@@ -265,6 +265,59 @@ async function executeStep(
       return await executeCallApi(step, meta, orgId, supabase)
     }
 
+    case 'send_email': {
+      if (!step.connector_id) {
+        return { step_name: step.name, step_type: step.type, status: 'failed', error: 'Missing connector_id', executed_at: now }
+      }
+      const { REGISTRY } = await import('@/lib/actions/registry')
+      const handler = REGISTRY['email.send']
+      if (!handler) {
+        return { step_name: step.name, step_type: step.type, status: 'failed', error: 'email.send handler not registered', executed_at: now }
+      }
+      const emailPayload = {
+        connector_id: step.connector_id,
+        to: (step as Record<string, unknown>).to as string ?? '',
+        subject: (step as Record<string, unknown>).subject as string ?? step.name,
+        body: (step as Record<string, unknown>).body as string ?? '',
+        block_id: meta.source_block_id,
+      }
+      const emailResult = await handler.execute(emailPayload, { orgId, userId: 'system', clerkOrgId: '', role: 'ops-admin' as const }, supabase)
+      return {
+        step_name: step.name,
+        step_type: step.type,
+        status: emailResult.status === 'completed' ? 'completed' : 'failed',
+        output: { action_id: emailResult.actionId, event_id: emailResult.eventId },
+        executed_at: now,
+      }
+    }
+
+    case 'book_meeting': {
+      if (!step.connector_id) {
+        return { step_name: step.name, step_type: step.type, status: 'failed', error: 'Missing connector_id', executed_at: now }
+      }
+      const { REGISTRY } = await import('@/lib/actions/registry')
+      const handler = REGISTRY['meeting.book']
+      if (!handler) {
+        return { step_name: step.name, step_type: step.type, status: 'failed', error: 'meeting.book handler not registered', executed_at: now }
+      }
+      const meetingPayload = {
+        connector_id: step.connector_id,
+        title: (step as Record<string, unknown>).title as string ?? step.name,
+        start: (step as Record<string, unknown>).start as string ?? new Date().toISOString(),
+        end: (step as Record<string, unknown>).end as string ?? new Date(Date.now() + 3600000).toISOString(),
+        attendees: (step as Record<string, unknown>).attendees as string[] ?? [],
+        block_id: meta.source_block_id,
+      }
+      const meetingResult = await handler.execute(meetingPayload, { orgId, userId: 'system', clerkOrgId: '', role: 'ops-admin' as const }, supabase)
+      return {
+        step_name: step.name,
+        step_type: step.type,
+        status: meetingResult.status === 'completed' ? 'completed' : 'failed',
+        output: { action_id: meetingResult.actionId, event_id: meetingResult.eventId },
+        executed_at: now,
+      }
+    }
+
     default:
       return { step_name: step.name, step_type: step.type, status: 'failed', error: `Unknown step type: ${step.type}`, executed_at: now }
   }

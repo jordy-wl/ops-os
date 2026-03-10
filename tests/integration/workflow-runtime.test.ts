@@ -83,7 +83,7 @@ describe('WorkflowTemplateSchema — validation', () => {
     const result = WorkflowTemplateSchema.safeParse({
       applies_to_type: 'client',
       trigger: { type: 'manual' },
-      steps: [{ name: 'step_1', type: 'send_email' }],
+      steps: [{ name: 'step_1', type: 'invalid_step_type' }],
     })
     expect(result.success).toBe(false)
   })

@@ -251,6 +251,68 @@ function ActionConfig({ node, onUpdate }: Pick<NodeConfigPanelProps, 'node' | 'o
           </div>
         </>
       )}
+      {stepType === 'send_email' && (
+        <>
+          <div className="mb-3">
+            <FieldLabel htmlFor="email-connector">Google Connector ID</FieldLabel>
+            <TextInput
+              id="email-connector"
+              value={(config.connector_id as string) ?? ''}
+              onChange={(v) => updateConfig('connector_id', v)}
+              placeholder="UUID of Google connector"
+            />
+          </div>
+          <div className="mb-3">
+            <FieldLabel htmlFor="email-to">To</FieldLabel>
+            <TextInput
+              id="email-to"
+              value={(config.to as string) ?? ''}
+              onChange={(v) => updateConfig('to', v)}
+              placeholder="recipient@example.com"
+            />
+          </div>
+          <div className="mb-3">
+            <FieldLabel htmlFor="email-subject">Subject</FieldLabel>
+            <TextInput
+              id="email-subject"
+              value={(config.subject as string) ?? ''}
+              onChange={(v) => updateConfig('subject', v)}
+              placeholder="Email subject"
+            />
+          </div>
+        </>
+      )}
+      {stepType === 'book_meeting' && (
+        <>
+          <div className="mb-3">
+            <FieldLabel htmlFor="meeting-connector">Google Connector ID</FieldLabel>
+            <TextInput
+              id="meeting-connector"
+              value={(config.connector_id as string) ?? ''}
+              onChange={(v) => updateConfig('connector_id', v)}
+              placeholder="UUID of Google connector"
+            />
+          </div>
+          <div className="mb-3">
+            <FieldLabel htmlFor="meeting-title">Meeting Title</FieldLabel>
+            <TextInput
+              id="meeting-title"
+              value={(config.title as string) ?? ''}
+              onChange={(v) => updateConfig('title', v)}
+              placeholder="Meeting title"
+            />
+          </div>
+          <div className="mb-3">
+            <FieldLabel htmlFor="meeting-attendees">Attendees</FieldLabel>
+            <TextInput
+              id="meeting-attendees"
+              value={(config.attendees as string) ?? ''}
+              onChange={(v) => updateConfig('attendees', v)}
+              placeholder="Comma-separated emails"
+            />
+          </div>
+        </>
+      )}
     </>
   )
 }

@@ -25,7 +25,7 @@ const TriggerSchema = z.discriminatedUnion('type', [
 
 const StepSchema = z.object({
   name: z.string().min(1).max(100).regex(/^[a-z][a-z0-9_]*$/, 'Step name must be lowercase snake_case'),
-  type: z.enum(['emit_event', 'run_action', 'wait', 'condition', 'call_api']),
+  type: z.enum(['emit_event', 'run_action', 'wait', 'condition', 'call_api', 'send_email', 'book_meeting', 'generate_document']),
   event_type: z.string().min(1).max(100).optional(),
   action_type: z.string().min(1).max(100).optional(),
   wait_seconds: z.number().int().positive().optional(),
