@@ -202,4 +202,73 @@ export const SYSTEM_BLOCK_TYPES = [
       required: ['workflow_instance_id', 'step_name', 'status'],
     },
   },
+  {
+    type_name: 'document_template',
+    display_name: 'Document Template',
+    description: 'A reusable document template for generating contracts, proposals, or reports.',
+    icon: 'file-text',
+    color: 'amber',
+    field_schema: {
+      type: 'object',
+      properties: {
+        template_content: {
+          type: 'string',
+          description: 'Template body in HTML or Markdown with {{variable}} placeholders',
+        },
+        variables: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              name: { type: 'string', description: 'Variable name (e.g., block.name)' },
+              type: { type: 'string', enum: ['string', 'number', 'date', 'currency'], description: 'Data type' },
+              required: { type: 'boolean', description: 'Whether this variable must be provided' },
+            },
+            required: ['name', 'type'],
+          },
+          description: 'Variables used in this template',
+        },
+        output_format: {
+          type: 'string',
+          enum: ['pdf', 'html', 'markdown'],
+          description: 'Default output format',
+        },
+        category: {
+          type: 'string',
+          enum: ['contract', 'proposal', 'nda', 'report', 'letter', 'invoice', 'other'],
+          description: 'Template category',
+        },
+      },
+      required: ['template_content'],
+    },
+  },
+  {
+    type_name: 'brand_kit',
+    display_name: 'Brand Kit',
+    description: 'Organisation brand identity — logo, colours, fonts, and styling for documents.',
+    icon: 'palette',
+    color: 'rose',
+    field_schema: {
+      type: 'object',
+      properties: {
+        logo_url: { type: 'string', description: 'URL to organisation logo' },
+        primary_color: { type: 'string', description: 'Primary brand colour (hex, e.g., #1a2b3c)' },
+        secondary_color: { type: 'string', description: 'Secondary brand colour (hex)' },
+        font_family: { type: 'string', description: 'Font family for documents (e.g., Inter, sans-serif)' },
+        header_style: {
+          type: 'object',
+          properties: {
+            background_color: { type: 'string', description: 'Header background colour' },
+            text_color: { type: 'string', description: 'Header text colour' },
+            show_logo: { type: 'boolean', description: 'Whether to show logo in header' },
+          },
+          description: 'Document header styling',
+        },
+        footer_content: { type: 'string', description: 'Footer text for documents (HTML allowed)' },
+        company_name: { type: 'string', description: 'Company display name' },
+        tagline: { type: 'string', description: 'Company tagline or motto' },
+      },
+      required: ['company_name', 'primary_color'],
+    },
+  },
 ] as const
