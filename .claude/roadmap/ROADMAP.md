@@ -16,10 +16,10 @@
 
 | # | Phase Name | Hypothesis | Exit Condition | Status | Target |
 |---|-----------|-----------|----------------|--------|--------|
-| 1 | Foundation & Primitive Validation | If we build Blocks + Events + Actions + basic workflow + AI chat, 2+ design partners will run live workflows through it | ≥2 orgs each run ≥10 active workflows/week for 2 consecutive weeks | ACTIVE | Q2 2026 |
-| 2 | Composable Blocks & Workflow Engine | If we add custom block types, workflow-as-block, task routing, event subscriptions, webhook triggers, and integration connectors, ≥1 design partner creates a custom workflow and ≥1 LOI is signed | ≥1 custom workflow by partner + ≥1 LOI ≥£500/mo | FUTURE | Q3 2026 |
-| 3 | Visual Builder & Integrations | If we add a React Flow visual canvas, Salesforce/Xero connectors, document generation, agent AI, and operational intelligence, ≥2 customers convert to paying | ≥2 paying customers ≥£2k/mo | FUTURE | Q4 2026 |
-| 4 | Scale, Revenue & Compliance | If we migrate to Temporal, start SOC 2, add multi-region, and build a marketplace, enterprise customers can use production data | ≥5 paying, SOC 2 in progress | FUTURE | Q1–Q2 2027 |
+| 1 | Foundation & Primitive Validation | Blocks + Events + Actions + workflow + AI chat → 2+ design partners run live workflows | ≥2 orgs with ≥10 workflows/week | COMPLETE | Q1 2026 |
+| 2 | Composable Blocks, Visual Builder & Integrations | Canvas + Google + documents + action menu + polish → user runs ≥5 E2E workflows | User runs ≥5 complete workflows with email + docs | CODE COMPLETE | Q1 2026 |
+| 3 | Scale, Advanced AI & Marketplace | Agent AI, operational intelligence, MS 365, Salesforce/Xero, billing | ≥2 paying customers ≥£2k/mo | FUTURE | Q2–Q3 2026 |
+| 4 | Enterprise & Compliance | Temporal, SOC 2, multi-region, marketplace | ≥5 paying, SOC 2 in progress | FUTURE | Q3–Q4 2026 |
 
 > Status values: PLANNING / ACTIVE / COMPLETE / ON HOLD
 
@@ -52,16 +52,18 @@
 
 ## Current Focus
 
-**Phase 1 Sprint 3** — Workflow trigger UI, cron hardening, AI context enrichment, design partner onboarding.
+**Phase 2 — CODE COMPLETE** (Sprint 10 finished 2026-03-10)
 
-| Role | Current Task | Status |
-|------|-------------|--------|
-| Frontend Engineer | P1-S3-FE-01 Workflow Trigger Button + FE-02 Events Timeline | IN_PROGRESS / OPEN |
-| Backend Engineer | P1-S3-BE-01 Cron Config + Engine Hardening | IN_PROGRESS |
-| AI/ML Engineer | P1-S3-AI-01 Context Assembly — Org Summary + Graph | IN_PROGRESS |
-| QA Engineer | P1-S3-QA-01 E2E Workflow Trigger Test (scaffold ready) | OPEN |
-| Data Engineer / ORC | P1-S3-DE-01 Real Design Partner Onboarding | IN_PROGRESS |
-| Researcher | P1-S3-RES-01 Process Sprint 2 Signals | OPEN |
+All Phase 2 features are built, tested, and polished. 395 tests passing. Awaiting user manual testing for formal Phase 2 exit evaluation.
+
+| Milestone | Status |
+|-----------|--------|
+| Visual workflow canvas (React Flow) | DONE — Sprint 7 |
+| Google Workspace integration (OAuth, Gmail, Calendar, Drive) | DONE — Sprint 8 |
+| Document generation (templates, brand kit, AI, PDF) | DONE — Sprint 9 |
+| UI polish, dashboard overhaul, E2E test, manual test plan | DONE — Sprint 10 |
+| User manual testing + Phase 2 exit evaluation | PENDING |
+| Phase 3 sprint planning | BLOCKED on Phase 2 exit |
 
 > This section is updated by orchestrator at each sprint start and /status-report
 
@@ -75,3 +77,4 @@
 |------|--------|---------|-------------|
 | 2026-03-02 | Initial roadmap created — 4 phases with hypotheses and exit conditions | /plan-prd | ORCHESTRATOR |
 | 2026-03-04 | Major restructuring: Phase 2 → "Composable Blocks & Workflow Engine", Phase 3 → "Visual Builder & Integrations", Phase 4 → "Scale, Revenue & Compliance". 8 PRDs updated. | Whiteboard session — product owner validated composable workflow vision | PM + ORCHESTRATOR |
+| 2026-03-10 | Phase 1 marked COMPLETE. Phase 2 scope expanded (Sprints 5–10): canvas, Google, docs, polish. Phase 2 marked CODE COMPLETE. Phase table updated with actual deliverables. | Sprint 10 retro — all 52/54 tasks done (96%) | ORCHESTRATOR |

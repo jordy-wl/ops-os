@@ -177,7 +177,18 @@ function ActivityFeed({ events }: { events: MyWorkEvent[] }) {
           key={event.id}
           className="flex items-center gap-3 rounded-md px-3 py-2 text-xs"
         >
-          <span className="shrink-0 h-1.5 w-1.5 rounded-full bg-gray-300" aria-hidden="true" />
+          <span
+            className={cn(
+              'shrink-0 h-1.5 w-1.5 rounded-full',
+              event.type.startsWith('block.') ? 'bg-blue-400' :
+              event.type.startsWith('workflow.') ? 'bg-purple-400' :
+              event.type.startsWith('email.') ? 'bg-green-400' :
+              event.type.startsWith('document.') ? 'bg-amber-400' :
+              event.type.startsWith('meeting.') ? 'bg-teal-400' :
+              'bg-gray-300'
+            )}
+            aria-hidden="true"
+          />
           <div className="min-w-0 flex-1">
             <span className="font-medium text-gray-700">{event.type}</span>
             {event.block_name && (

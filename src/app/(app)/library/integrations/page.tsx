@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { createServerClient } from '@/lib/supabase/server'
 import { resolveOrgId } from '@/lib/auth/resolve-org'
 import { IntegrationCatalog } from '@/components/library/integration-catalog'
+import { PageHeader } from '@/components/shell/page-header'
 
 export const metadata = { title: 'Integration Library — Ops OS' }
 
@@ -26,6 +27,10 @@ export default async function IntegrationLibraryPage() {
 
   return (
     <div className="p-6 lg:p-8">
+      <PageHeader
+        title="Integration Library"
+        subtitle="Available capabilities and connections"
+      />
       <IntegrationCatalog connectors={connectors ?? []} />
     </div>
   )

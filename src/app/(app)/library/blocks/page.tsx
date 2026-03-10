@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { createServerClient } from '@/lib/supabase/server'
 import { resolveOrgId } from '@/lib/auth/resolve-org'
 import { BlockBrowser } from '@/components/library/block-browser'
+import { PageHeader } from '@/components/shell/page-header'
 
 export const metadata = { title: 'Block Library — Ops OS' }
 
@@ -32,6 +33,10 @@ export default async function BlockLibraryPage() {
 
   return (
     <div className="p-6 lg:p-8">
+      <PageHeader
+        title="Block Library"
+        subtitle="Browse and manage all blocks"
+      />
       <BlockBrowser
         blocks={blocksResult.data ?? []}
         typeDefinitions={typesResult.data ?? []}
