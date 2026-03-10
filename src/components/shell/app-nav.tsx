@@ -30,8 +30,8 @@ const PRIMARY_LINKS: NavLink[] = [
 ]
 
 const LIBRARY_LINKS: NavLink[] = [
-  { href: '/blocks', label: 'Blocks', icon: LayoutGrid },
-  { href: '/integrations', label: 'Integrations', icon: Plug },
+  { href: '/library/blocks', label: 'Blocks', icon: LayoutGrid },
+  { href: '/library/integrations', label: 'Integrations', icon: Plug },
   { href: '/library/documents', label: 'Documents', icon: FileText },
 ]
 
@@ -75,7 +75,8 @@ export function AppNav() {
     }
   }, [libraryOpen])
 
-  const isLibraryActive = LIBRARY_LINKS.some(({ href }) => pathname.startsWith(href))
+  const activeLibraryLink = LIBRARY_LINKS.find(({ href }) => pathname.startsWith(href))
+  const isLibraryActive = !!activeLibraryLink
 
   function renderLink({ href, label, icon: Icon }: NavLink) {
     return (
@@ -137,7 +138,7 @@ export function AppNav() {
             )}
           >
             <Library className="h-4 w-4 shrink-0" aria-hidden="true" />
-            Library
+            {activeLibraryLink ? `Library: ${activeLibraryLink.label}` : 'Library'}
             <ChevronDown
               className={cn('h-3 w-3 transition-transform', libraryOpen && 'rotate-180')}
               aria-hidden="true"

@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { createServerClient } from '@/lib/supabase/server'
 import { resolveOrgId } from '@/lib/auth/resolve-org'
 import { DocumentBrowser } from '@/components/library/document-browser'
+import { PageHeader } from '@/components/shell/page-header'
 
 export const metadata = { title: 'Document Library — Ops OS' }
 
@@ -36,6 +37,10 @@ export default async function DocumentLibraryPage() {
 
   return (
     <div className="p-6 lg:p-8">
+      <PageHeader
+        title="Document Library"
+        subtitle="Templates and generated documents"
+      />
       <DocumentBrowser
         templates={templatesResult.data ?? []}
         hasBrandKit={!!brandKitResult.data}

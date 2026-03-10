@@ -12,6 +12,7 @@
     "db:reset": "supabase db reset",
     "db:migrate": "supabase db push",
     "db:seed": "npx ts-node --project tsconfig.scripts.json scripts/seed.ts",
+    "seed:demo": "npx tsx scripts/seed-demo.ts",
     "db:studio": "supabase studio",
     "test:api": "vitest run tests/api",
     "test:e2e": "playwright test",

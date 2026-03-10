@@ -20,17 +20,11 @@
 
 | Task ID | Title | Role | Status | Last Updated |
 |---------|-------|------|--------|-------------|
-| P2-S10-UI-01 | UX Research + Design Spec | Design Lead | OPEN | 2026-03-10 |
-| P2-S10-FE-01 | UI polish — navigation + layout | Frontend | OPEN | 2026-03-10 |
-| P2-S10-FE-02 | UI polish — blocks + workflows | Frontend | OPEN | 2026-03-10 |
-| P2-S10-FE-03 | Dashboard overhaul | Frontend | OPEN | 2026-03-10 |
-| P2-S10-BE-01 | Seed demo data script | Backend | OPEN | 2026-03-10 |
-| P2-S10-QA-01 | E2E workflow test | QA | OPEN | 2026-03-10 |
-| P2-S10-QA-02 | Manual test checklist | QA | OPEN | 2026-03-10 |
-| P2-S10-ORC-01 | Update coordination files | Orchestrator | OPEN | 2026-03-10 |
+| (none — Sprint 10 complete) | | | | |
 
-**Critical path:** UI-01 (research) → FE-01/02/03 (polish) | BE-01 → QA-01 → ORC-01
-**Sprint metrics:** 0/8 DONE.
+**Sprint metrics:** 8/8 DONE (100%). Sprint 10 complete. Phase 2 code complete.
+
+**Next:** User manual testing → Phase 2 exit evaluation → Phase 3 planning.
 
 ---
 
@@ -53,7 +47,8 @@ No PENDING signals at this time.
 | Date | Author | Note |
 |------|--------|------|
 | 2026-03-10 | ORCHESTRATOR | **SPRINT 9 RETRO COMPLETE** — 10/10 DONE (100%). First perfect completion. Document generation system fully built: templates, brand kit, rendering engine, PDF, AI generation. 382 tests. PR #32. |
-| 2026-03-10 | ORCHESTRATOR | **SPRINT 10 INITIATED** — 7 tasks. Last sprint in Phase 2. Focus: polish, demo data, E2E testing, manual test readiness. No new features. |
+| 2026-03-10 | ORCHESTRATOR | **SPRINT 10 INITIATED** — 8 tasks. Last sprint in Phase 2. Focus: polish, demo data, E2E testing, manual test readiness. No new features. |
+| 2026-03-10 | ORCHESTRATOR | **SPRINT 10 RETRO COMPLETE** — 8/8 DONE (100%). Phase 2 CODE COMPLETE. 395 tests. Dashboard overhaul, loading skeletons, breadcrumbs, error boundary, event coloring, seed demo script, E2E workflow test, 121-step manual test plan. Awaiting user manual testing for Phase 2 exit. |
 
 ---
 
@@ -65,12 +60,15 @@ No PENDING signals at this time.
 
 ---
 
+## Recently Completed — Sprint 10 Archive
+
+Sprint 10 (2026-03-10): 8/8 DONE (100%).
+Deliverables: UX research + design spec, dashboard overhaul (stat cards, activity feed, quick actions, block type breakdown), loading skeletons (5 pages), PageHeader + Skeleton + EmptyState + ErrorBoundary components, nav library link fixes + active sub-page labels, breadcrumb on block detail, event type color coding, seed demo script (811 lines), E2E workflow test (13 tests), 121-step manual test plan. Test count: 395 passed (+13).
+
 ## Recently Completed — Sprint 9 Archive
 
 Sprint 9 (2026-03-10): 10/10 DONE (100%).
-Deliverables: document_template + brand_kit block types, template rendering engine (variable interpolation, markdown→HTML, brand styling), PDF generation (jsPDF), AI document generation action (Claude Sonnet), Document Library page, Brand Kit management UI, Document Generation Modal, canvas generate_document wiring. Test count: 382 passed (+38).
-
-New files: 13 created. Key: `renderer.ts`, `pdf.ts`, `document-generate.ts`, `document-browser.tsx`, `template-editor.tsx`, `brand-kit-editor.tsx`, `generate-document-modal.tsx`. Modified: `system-types.ts`, `registry.ts`, `step-engine.ts`, `node-config-panel.tsx`.
+Deliverables: document_template + brand_kit block types, template rendering engine, PDF generation, AI document generation, Document Library, Brand Kit UI, Document Generation Modal, canvas generate_document wiring. Test count: 382 (+38).
 
 ## Recently Completed — Sprint 8 Archive
 
