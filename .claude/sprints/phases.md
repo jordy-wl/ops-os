@@ -11,7 +11,7 @@
 | Phase | Name | Status | Sprint | Exit Conditions Met |
 |-------|------|--------|--------|---------------------|
 | 1 | Foundation & Primitive Validation | COMPLETE | Sprint 4 | YES (code) — usage metrics deferred (user = test user) |
-| 2 | Composable Blocks, Visual Builder & Integrations | ACTIVE | Sprint 9 | NO — canvas done; Google done; docs in progress |
+| 2 | Composable Blocks, Visual Builder & Integrations | ACTIVE | Sprint 10 | NO — canvas done; Google done; docs done; polish remaining |
 | 3 | Scale, Advanced AI & Marketplace | FUTURE | — | — |
 | 4 | Enterprise & Compliance | FUTURE | — | — |
 
@@ -112,7 +112,8 @@ If exit condition is NOT met after 12 weeks:
 - Sprint 6: Integration connectors, inbound webhooks, outbound API calls, integrations UI — **COMPLETE** (7/7 DONE, PRs #23-#29 merged)
 - Sprint 7: Visual workflow canvas (React Flow), My Work page, navigation restructure, UI/UX agent — **COMPLETE** (10/11 DONE, 1 deferred. 2026-03-10)
 - Sprint 8: Google integration (OAuth, Gmail, Calendar, Drive), action menu, Library pages (blocks, integrations) — **COMPLETE** (10/11 DONE, 1 deferred. 2026-03-10)
-- Sprint 9: Document generation (templates, brand kit, AI generation, PDF), Document Library — **ACTIVE** (started 2026-03-10)
+- Sprint 9: Document generation (templates, brand kit, AI generation, PDF), Document Library — **COMPLETE** (10/10 DONE, 100%. 2026-03-10)
+- Sprint 10: UI polish, dashboard overhaul, demo data, E2E testing, manual test readiness — **ACTIVE** (started 2026-03-10)
 - Sprint 10: UI polish, E2E integration testing, manual test readiness
 
 ---
