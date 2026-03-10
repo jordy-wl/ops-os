@@ -1,6 +1,6 @@
 import Ajv from 'ajv'
 
-const ajv = new Ajv({ allErrors: true })
+const ajv = new Ajv({ allErrors: true, strict: false })
 
 /**
  * Validates that a value is a valid JSON Schema document (draft-07).

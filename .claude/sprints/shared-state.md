@@ -8,9 +8,9 @@
 
 ## Current Phase and Sprint
 
-**Phase:** 2 — Composable Blocks, Visual Builder & Integrations
-**Sprint:** 10
-**Sprint Goal:** UX research to inform targeted polish, UI improvements, demo data seeding, E2E workflow test, manual test readiness. Last sprint before Phase 2 exit evaluation.
+**Phase:** 2 — Composable Blocks, Visual Builder & Integrations (UI/UX Overhaul)
+**Sprint:** 12
+**Sprint Goal:** User-configurable block fields — 12 field types, field management API, admin config UI, block detail inline editing.
 **Sprint Started:** 2026-03-10
 **Sprint Target End:** 2026-03-24
 
@@ -20,11 +20,16 @@
 
 | Task ID | Title | Role | Status | Last Updated |
 |---------|-------|------|--------|-------------|
-| (none — Sprint 10 complete) | | | | |
+| P2-S12-BE-01 | Extended field schema support | Backend | OPEN | 2026-03-10 |
+| P2-S12-BE-02 | Field management API | Backend | OPEN | 2026-03-10 |
+| P2-S12-FE-01 | Dynamic field renderer V2 | Frontend | OPEN | 2026-03-10 |
+| P2-S12-FE-02 | Field configuration UI (admin) | Frontend | OPEN | 2026-03-10 |
+| P2-S12-FE-03 | Block detail page enhancement | Frontend | OPEN | 2026-03-10 |
+| P2-S12-QA-01 | Block field tests | QA | OPEN | 2026-03-10 |
 
-**Sprint metrics:** 8/8 DONE (100%). Sprint 10 complete. Phase 2 code complete.
+**Sprint metrics:** 0/6 DONE (0%). Sprint 12 initiated.
 
-**Next:** User manual testing → Phase 2 exit evaluation → Phase 3 planning.
+**Critical path:** BE-01 → BE-02 → FE-02 | BE-01 → FE-01 → FE-03
 
 ---
 
@@ -38,7 +43,9 @@
 
 ## Signals Queue
 
-No PENDING signals at this time.
+| Date | Signal | Status |
+|------|--------|--------|
+| 2026-03-10 | shadcn JSX→TSX: components as `.jsx` lose all TypeScript type safety (P2-S11-FE-03) | PENDING |
 
 ---
 
@@ -46,9 +53,8 @@ No PENDING signals at this time.
 
 | Date | Author | Note |
 |------|--------|------|
-| 2026-03-10 | ORCHESTRATOR | **SPRINT 9 RETRO COMPLETE** — 10/10 DONE (100%). First perfect completion. Document generation system fully built: templates, brand kit, rendering engine, PDF, AI generation. 382 tests. PR #32. |
-| 2026-03-10 | ORCHESTRATOR | **SPRINT 10 INITIATED** — 8 tasks. Last sprint in Phase 2. Focus: polish, demo data, E2E testing, manual test readiness. No new features. |
-| 2026-03-10 | ORCHESTRATOR | **SPRINT 10 RETRO COMPLETE** — 8/8 DONE (100%). Phase 2 CODE COMPLETE. 395 tests. Dashboard overhaul, loading skeletons, breadcrumbs, error boundary, event coloring, seed demo script, E2E workflow test, 121-step manual test plan. Awaiting user manual testing for Phase 2 exit. |
+| 2026-03-10 | ORCHESTRATOR | **SPRINT 11 RETRO COMPLETE** — 7/7 DONE (100%). UI Foundation: sidebar nav, Geist font, animation system, 6 JSX→TSX conversions, page layout components, loading skeleton standardization. 409 tests. PR #34. |
+| 2026-03-10 | ORCHESTRATOR | **SPRINT 12 INITIATED** — 6 tasks (2 BE, 3 FE, 1 QA). User-configurable block fields with 12 field types. Critical path: BE-01 (field types) → everything else. |
 
 ---
 
@@ -56,25 +62,25 @@ No PENDING signals at this time.
 
 | Date | Server | Action | Outcome | Task ID | Agent |
 |------|--------|--------|---------|---------|-------|
-| 2026-03-10 | supabase | apply_migration | SUCCESS | P2-S9-BE-01/02 | BACKEND |
+| (none yet) | | | | | |
 
 ---
+
+## Recently Completed — Sprint 11 Archive
+
+Sprint 11 (2026-03-10): 7/7 DONE (100%).
+Deliverables: Persistent left sidebar (SidebarProvider, cookie state, mobile overlay, Cmd+B), Geist font integration, 7 animation keyframes + 5 utility classes, 6 shadcn JSX→TSX conversions (sidebar, separator, button, input, sheet, tooltip), PageContainer + ContentSection layout components, 9 loading skeletons standardized, 14 navigation regression tests. Test count: 409 (+14). PR #34.
 
 ## Recently Completed — Sprint 10 Archive
 
 Sprint 10 (2026-03-10): 8/8 DONE (100%).
-Deliverables: UX research + design spec, dashboard overhaul (stat cards, activity feed, quick actions, block type breakdown), loading skeletons (5 pages), PageHeader + Skeleton + EmptyState + ErrorBoundary components, nav library link fixes + active sub-page labels, breadcrumb on block detail, event type color coding, seed demo script (811 lines), E2E workflow test (13 tests), 121-step manual test plan. Test count: 395 passed (+13).
+Deliverables: UX research + design spec, dashboard overhaul (stat cards, activity feed, quick actions, block type breakdown), loading skeletons (5 pages), PageHeader + Skeleton + EmptyState + ErrorBoundary components, nav library link fixes + active sub-page labels, breadcrumb on block detail, event type color coding, seed demo script (811 lines), E2E workflow test (13 tests), 121-step manual test plan. Test count: 395 (+13).
 
 ## Recently Completed — Sprint 9 Archive
 
 Sprint 9 (2026-03-10): 10/10 DONE (100%).
 Deliverables: document_template + brand_kit block types, template rendering engine, PDF generation, AI document generation, Document Library, Brand Kit UI, Document Generation Modal, canvas generate_document wiring. Test count: 382 (+38).
 
-## Recently Completed — Sprint 8 Archive
-
-Sprint 8 (2026-03-10): 10/11 DONE (91%). 1 deferred (BE-03 Gmail receive).
-Deliverables: Google OAuth, Gmail send, Calendar booking, Drive operations, action menu, Integration Library, Block Library. Test count: 344 (+22).
-
 ## Earlier Sprints
 
-Sprints 1–7 complete. Full details in `shared-state-history.md`.
+Sprints 1–8 complete. Full details in `shared-state-history.md`.

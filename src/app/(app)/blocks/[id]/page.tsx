@@ -137,12 +137,12 @@ export default async function BlockDetailPage({ params }: Props) {
   }
 
   return (
-    <div className="p-6 lg:p-8 max-w-5xl">
-      <nav aria-label="Breadcrumb" className="mb-4 text-sm text-gray-500">
+    <div className="p-6 lg:p-8 max-w-5xl animate-page-in">
+      <nav aria-label="Breadcrumb" className="mb-4 text-sm text-muted-foreground">
         <ol className="flex items-center gap-1.5">
-          <li><Link href="/library/blocks" className="hover:text-gray-700 transition-colors">Blocks</Link></li>
+          <li><Link href="/library/blocks" className="hover:text-foreground transition-colors">Blocks</Link></li>
           <li aria-hidden="true">/</li>
-          <li className="text-gray-900 font-medium truncate max-w-[300px]">{block.name}</li>
+          <li className="text-foreground font-medium truncate max-w-[300px]">{block.name}</li>
         </ol>
       </nav>
 
