@@ -282,6 +282,40 @@ function ActionConfig({ node, onUpdate }: Pick<NodeConfigPanelProps, 'node' | 'o
           </div>
         </>
       )}
+      {stepType === 'generate_document' && (
+        <>
+          <div className="mb-3">
+            <FieldLabel htmlFor="doc-template">Template ID (optional)</FieldLabel>
+            <TextInput
+              id="doc-template"
+              value={(config.template_id as string) ?? ''}
+              onChange={(v) => updateConfig('template_id', v)}
+              placeholder="UUID of document template (or leave blank for AI)"
+            />
+          </div>
+          <div className="mb-3">
+            <FieldLabel htmlFor="doc-prompt">AI Prompt (if no template)</FieldLabel>
+            <TextInput
+              id="doc-prompt"
+              value={(config.prompt as string) ?? ''}
+              onChange={(v) => updateConfig('prompt', v)}
+              placeholder="e.g. Draft a proposal for this client"
+            />
+          </div>
+          <div className="mb-3">
+            <FieldLabel htmlFor="doc-format">Output Format</FieldLabel>
+            <SelectInput
+              id="doc-format"
+              value={(config.output_format as string) ?? 'html'}
+              onChange={(v) => updateConfig('output_format', v)}
+              options={[
+                { value: 'html', label: 'HTML' },
+                { value: 'pdf', label: 'PDF' },
+              ]}
+            />
+          </div>
+        </>
+      )}
       {stepType === 'book_meeting' && (
         <>
           <div className="mb-3">
