@@ -1,6 +1,6 @@
 'use client'
 
-import { Zap, Play, GitBranch, Clock, Globe, Mail, FileText, Calendar } from 'lucide-react'
+import { Zap, Play, GitBranch, Clock, Globe, Mail, FileText, Calendar, Pencil } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface PaletteItem {
@@ -28,6 +28,7 @@ const PALETTE_ITEMS: { category: string; items: PaletteItem[] }[] = [
       { nodeType: 'action', stepType: 'send_email', label: 'Send Email', icon: Mail, color: 'text-green-600 bg-green-100' },
       { nodeType: 'action', stepType: 'generate_document', label: 'Generate Doc', icon: FileText, color: 'text-green-600 bg-green-100' },
       { nodeType: 'action', stepType: 'book_meeting', label: 'Book Meeting', icon: Calendar, color: 'text-green-600 bg-green-100' },
+      { nodeType: 'action', stepType: 'update_block', label: 'Update Block', icon: Pencil, color: 'text-green-600 bg-green-100' },
     ],
   },
   {

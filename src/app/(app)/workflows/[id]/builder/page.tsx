@@ -54,13 +54,30 @@ export default async function WorkflowBuilderPage({ params }: Props) {
 
   // Use saved canvas_layout if present, otherwise generate from steps
   const savedLayout = metadata.canvas_layout as CanvasLayout | undefined
-  const initialLayout = savedLayout ?? stepsToCanvas(template)
+  let initialLayout = savedLayout ?? stepsToCanvas(template)
+
+  // Pre-place a trigger node on empty canvas (new workflows)
+  if (initialLayout.nodes.length === 0) {
+    initialLayout = {
+      nodes: [{
+        id: 'trigger-0',
+        type: 'trigger',
+        position: { x: 300, y: 50 },
+        data: {
+          label: 'Manual Start',
+          config: { triggerType: 'manual' },
+        },
+      }],
+      edges: [],
+    }
+  }
 
   return (
     <div className="flex flex-col h-[calc(100vh-3.5rem)]">
       <WorkflowBuilderClient
         templateId={block.id}
         templateName={block.name}
+        appliesToType={(metadata.applies_to_type as string) ?? 'client'}
         initialLayout={initialLayout}
       />
     </div>

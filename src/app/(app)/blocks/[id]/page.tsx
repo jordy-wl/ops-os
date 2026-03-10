@@ -7,7 +7,6 @@ import { BlockHeader } from '@/components/blocks/block-header'
 import { BlockDataPanel } from '@/components/blocks/block-data-panel'
 import { EventTimeline } from '@/components/blocks/event-timeline'
 import { ConnectedBlocksPanel } from '@/components/blocks/connected-blocks-panel'
-import { StartOnboardingButton } from '@/components/blocks/start-onboarding-button'
 import { ActionMenu } from '@/components/actions/action-menu'
 import type { Block, Event } from '@/lib/context-assembly'
 
@@ -155,15 +154,6 @@ export default async function BlockDetailPage({ params }: Props) {
           googleConnectorId={googleConnector?.id ?? null}
         />
       </div>
-
-      {block.type === 'client' && (
-        <div className="mt-4">
-          <StartOnboardingButton
-            clientName={block.name}
-            jurisdiction={block.metadata?.jurisdiction as string | null}
-          />
-        </div>
-      )}
 
       {/* Two-column layout on desktop: main content left, connections right */}
       <div className="mt-6 grid gap-6 lg:grid-cols-3">

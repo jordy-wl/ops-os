@@ -340,6 +340,15 @@ async function executeStep(
       }
     }
 
+    case 'update_block': {
+      const { executeUpdateBlock } = await import('./step-handlers/update-block')
+      const updateConfig = {
+        block_id: (step as Record<string, unknown>).block_id as string ?? meta.source_block_id,
+        fields: ((step as Record<string, unknown>).fields as Record<string, unknown>) ?? {},
+      }
+      return await executeUpdateBlock(step.name, updateConfig, meta, orgId, supabase)
+    }
+
     default:
       return { step_name: step.name, step_type: step.type, status: 'failed', error: `Unknown step type: ${step.type}`, executed_at: now }
   }

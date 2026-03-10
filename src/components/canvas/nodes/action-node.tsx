@@ -2,7 +2,7 @@
 
 import { memo } from 'react'
 import { Handle, Position, type NodeProps } from '@xyflow/react'
-import { Play, Mail, FileText, Calendar, Globe } from 'lucide-react'
+import { Play, Mail, FileText, Calendar, Globe, Pencil } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface ActionNodeData {
@@ -19,6 +19,7 @@ const STEP_ICONS: Record<string, React.ElementType> = {
   send_email: Mail,
   generate_document: FileText,
   book_meeting: Calendar,
+  update_block: Pencil,
 }
 
 function ActionNodeComponent({ data, selected }: NodeProps & { data: ActionNodeData }) {

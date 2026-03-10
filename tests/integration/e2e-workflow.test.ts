@@ -508,7 +508,6 @@ describe('Action registry completeness', () => {
     expect(REGISTRY).toHaveProperty('meeting.book')
     expect(REGISTRY).toHaveProperty('document.generate')
     expect(REGISTRY).toHaveProperty('block.create')
-    expect(REGISTRY).toHaveProperty('onboarding.start')
   })
 
   it('each registered handler has schema and execute', async () => {

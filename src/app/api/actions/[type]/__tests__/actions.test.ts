@@ -116,53 +116,6 @@ describe('POST /api/actions/:type', () => {
     expect(json.error.code).toBe('actions/execution-failed')
   })
 
-  // ── onboarding.start ──────────────────────────────────────────────────────
-
-  it('onboarding.start — happy path returns 201 with actionId, eventId, workflowJobId', async () => {
-    makeDb(
-      { data: { id: BLOCK_ID }, error: null },  // insert block
-      { data: { id: EVENT_ID }, error: null },   // insert event
-      { data: { id: JOB_ID },   error: null },   // insert workflow_job
-    )
-
-    const req = makeReq('onboarding.start', {
-      clientName: 'Thornfield Capital',
-      jurisdiction: 'UK',
-    })
-    const res = await POST(req, { params: Promise.resolve({ type: 'onboarding.start' }) })
-    const json = await res.json()
-
-    expect(res.status).toBe(201)
-    expect(json.data.actionId).toBeTypeOf('string')
-    expect(json.data.eventId).toBe(EVENT_ID)
-    expect(json.data.workflowJobId).toBe(JOB_ID)
-    expect(json.data.status).toBe('pending')
-    expect(json.error).toBeNull()
-  })
-
-  it('onboarding.start — missing clientName returns 400', async () => {
-    makeDb()
-    const req = makeReq('onboarding.start', { jurisdiction: 'UK' })
-    const res = await POST(req, { params: Promise.resolve({ type: 'onboarding.start' }) })
-    const json = await res.json()
-
-    expect(res.status).toBe(400)
-    expect(json.error.code).toBe('validation/invalid-input')
-  })
-
-  it('onboarding.start — workflow_job insert failure returns 500', async () => {
-    makeDb(
-      { data: { id: BLOCK_ID }, error: null },  // block ok
-      { data: { id: EVENT_ID }, error: null },   // event ok
-      { data: null, error: { message: 'Job insert failed', code: 'XX000' } }, // job fails
-    )
-
-    const req = makeReq('onboarding.start', { clientName: 'Client A' })
-    const res = await POST(req, { params: Promise.resolve({ type: 'onboarding.start' }) })
-
-    expect(res.status).toBe(500)
-  })
-
   // ── Registry / routing ────────────────────────────────────────────────────
 
   it('unknown action type returns 404', async () => {

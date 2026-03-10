@@ -1,4 +1,3 @@
-import { onboardingHandler } from '@/lib/workflow/handlers/onboarding'
 import type { WorkflowHandler } from '@/lib/workflow/types'
 
 /**
@@ -9,6 +8,4 @@ import type { WorkflowHandler } from '@/lib/workflow/types'
  *   2. Import and register it here
  *   3. The engine auto-dispatches — no other changes needed
  */
-export const WORKFLOW_REGISTRY: Record<string, WorkflowHandler> = {
-  onboarding: onboardingHandler,
-}
+export const WORKFLOW_REGISTRY: Record<string, WorkflowHandler> = {}
