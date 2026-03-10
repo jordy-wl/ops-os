@@ -1,5 +1,7 @@
 import { blockCreateHandler } from '@/lib/actions/handlers/block-create'
 import { onboardingStartHandler } from '@/lib/actions/handlers/onboarding-start'
+import { emailSendHandler } from '@/lib/actions/handlers/email-send'
+import { meetingBookHandler } from '@/lib/actions/handlers/meeting-book'
 import type { ActionHandler } from '@/lib/actions/types'
 
 /**
@@ -19,4 +21,6 @@ import type { ActionHandler } from '@/lib/actions/types'
 export const REGISTRY: Record<string, ActionHandler<any>> = {
   'block.create': blockCreateHandler,
   'onboarding.start': onboardingStartHandler,
+  'email.send': emailSendHandler,
+  'meeting.book': meetingBookHandler,
 }
