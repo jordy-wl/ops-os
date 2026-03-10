@@ -1,21 +1,21 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-
-/** A single property from a JSON Schema `properties` object */
-interface FieldDef {
-  type?: string
-  enum?: string[]
-  description?: string
-  format?: string
-  minimum?: number
-}
+import { inferFieldType, type FieldType } from '@/lib/block-types/field-types'
+import { DateField } from './fields/date-field'
+import { MultiSelectField } from './fields/multi-select-field'
+import { CurrencyField } from './fields/currency-field'
+import { UrlField } from './fields/url-field'
+import { PhoneField } from './fields/phone-field'
+import { RichTextField } from './fields/rich-text-field'
+import { RelationField } from './fields/relation-field'
+import type { FieldComponentProps } from './fields/field-props'
 
 interface DynamicFieldRendererProps {
   /** JSON Schema field_schema from block_type_definitions */
   fieldSchema: {
     type?: string
-    properties?: Record<string, FieldDef>
+    properties?: Record<string, Record<string, unknown>>
     required?: string[]
   }
   /** Current values keyed by field name */
@@ -27,10 +27,8 @@ interface DynamicFieldRendererProps {
 }
 
 /**
- * DynamicFieldRenderer — renders form inputs or read-only values
- * based on a JSON Schema field_schema from block_type_definitions.
- *
- * Supported field types: text, number, select (enum), boolean.
+ * DynamicFieldRenderer V2 — dispatches to per-type field components.
+ * Supports 12 field types via x-field-type extensions and type inference.
  */
 export function DynamicFieldRenderer({
   fieldSchema,
@@ -39,21 +37,37 @@ export function DynamicFieldRenderer({
   readOnly = false,
 }: DynamicFieldRendererProps) {
   const properties = fieldSchema.properties ?? {}
-  const required = new Set(fieldSchema.required ?? [])
-  const fields = Object.entries(properties)
+  const requiredSet = new Set(fieldSchema.required ?? [])
+
+  // Sort by x-display-order, then by property name as fallback
+  const fields = Object.entries(properties).sort((a, b) => {
+    const orderA = (a[1]['x-display-order'] as number) ?? 999
+    const orderB = (b[1]['x-display-order'] as number) ?? 999
+    if (orderA !== orderB) return orderA - orderB
+    return a[0].localeCompare(b[0])
+  })
 
   if (fields.length === 0) return null
 
+  const mode = readOnly ? 'view' : 'edit'
+
   if (readOnly) {
     return (
-      <dl className="divide-y divide-gray-100 rounded-lg border text-sm">
+      <dl className="divide-y divide-border rounded-lg border text-sm">
         {fields.map(([name, def]) => (
           <div key={name} className="flex gap-4 px-4 py-2.5">
-            <dt className="w-36 shrink-0 font-medium text-gray-600 capitalize">
-              {def.description ?? name.replace(/_/g, ' ')}
+            <dt className="w-36 shrink-0 font-medium text-muted-foreground capitalize">
+              {(def.description as string) ?? name.replace(/_/g, ' ')}
             </dt>
-            <dd className="flex-1 text-gray-900 break-words">
-              {formatValue(values[name])}
+            <dd className="flex-1 text-foreground break-words">
+              <FieldDispatcher
+                name={name}
+                value={values[name]}
+                onChange={() => {}}
+                fieldDef={def}
+                mode={mode}
+                required={requiredSet.has(name)}
+              />
             </dd>
           </div>
         ))}
@@ -64,45 +78,74 @@ export function DynamicFieldRenderer({
   return (
     <div className="space-y-3">
       {fields.map(([name, def]) => (
-        <FieldInput
+        <FieldDispatcher
           key={name}
           name={name}
-          def={def}
           value={values[name]}
-          required={required.has(name)}
           onChange={(v) => onChange?.(name, v)}
+          fieldDef={def}
+          mode={mode}
+          required={requiredSet.has(name)}
         />
       ))}
     </div>
   )
 }
 
-function FieldInput({
+/** Dispatches to the correct field component based on inferred type */
+function FieldDispatcher(props: FieldComponentProps) {
+  const fieldType = inferFieldType(props.fieldDef)
+
+  switch (fieldType) {
+    case 'date':
+      return <DateField {...props} />
+    case 'multi-select':
+      return <MultiSelectField {...props} />
+    case 'currency':
+      return <CurrencyField {...props} />
+    case 'url':
+      return <UrlField {...props} />
+    case 'phone':
+      return <PhoneField {...props} />
+    case 'rich-text':
+      return <RichTextField {...props} />
+    case 'relation':
+      return <RelationField {...props} />
+    default:
+      return <DefaultField {...props} fieldType={fieldType} />
+  }
+}
+
+/** Handles text, email, number, boolean, select — the original field types */
+function DefaultField({
   name,
-  def,
   value,
-  required,
   onChange,
-}: {
-  name: string
-  def: FieldDef
-  value: unknown
-  required: boolean
-  onChange: (v: unknown) => void
-}) {
-  const label = name.replace(/_/g, ' ')
+  fieldDef,
+  mode,
+  required,
+  fieldType,
+}: FieldComponentProps & { fieldType: FieldType }) {
+  const label = (fieldDef.description as string) ?? name.replace(/_/g, ' ')
   const id = `field-${name}`
+  const placeholder = (fieldDef['x-placeholder'] as string) ?? (fieldDef.description as string) ?? ''
 
   const inputClass = cn(
-    'w-full rounded-md border border-gray-200 px-3 py-2 text-sm',
-    'focus:outline-none focus:ring-2 focus:ring-gray-900'
+    'w-full rounded-md border border-input bg-background px-3 py-2 text-sm',
+    'focus:outline-none focus:ring-2 focus:ring-ring'
   )
 
-  // Select (enum)
-  if (def.enum && def.enum.length > 0) {
+  // ─── View mode ──────────────────────────────────────────────────────────
+  if (mode === 'view') {
+    return <span className="text-sm text-foreground">{formatValue(value)}</span>
+  }
+
+  // ─── Select (enum) ──────────────────────────────────────────────────────
+  if (fieldType === 'select' || (fieldDef.enum && (fieldDef.enum as string[]).length > 0)) {
+    const enumValues = (fieldDef.enum as string[]) ?? []
     return (
       <div>
-        <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1 capitalize">
+        <label htmlFor={id} className="block text-sm font-medium text-muted-foreground mb-1 capitalize">
           {label}{required && <span className="text-red-500 ml-0.5">*</span>}
         </label>
         <select
@@ -112,7 +155,7 @@ function FieldInput({
           className={cn(inputClass, 'capitalize')}
         >
           <option value="">Select…</option>
-          {def.enum.map((opt) => (
+          {enumValues.map((opt) => (
             <option key={opt} value={opt} className="capitalize">
               {opt.replace(/_/g, ' ')}
             </option>
@@ -122,8 +165,8 @@ function FieldInput({
     )
   }
 
-  // Boolean
-  if (def.type === 'boolean') {
+  // ─── Boolean ────────────────────────────────────────────────────────────
+  if (fieldType === 'boolean') {
     return (
       <label htmlFor={id} className="flex items-center gap-2 text-sm cursor-pointer">
         <input
@@ -131,45 +174,45 @@ function FieldInput({
           type="checkbox"
           checked={Boolean(value)}
           onChange={(e) => onChange(e.target.checked)}
-          className="rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+          className="rounded border-input text-primary focus:ring-ring"
         />
-        <span className="font-medium text-gray-700 capitalize">{label}</span>
+        <span className="font-medium text-muted-foreground capitalize">{label}</span>
       </label>
     )
   }
 
-  // Number
-  if (def.type === 'number' || def.type === 'integer') {
+  // ─── Number ─────────────────────────────────────────────────────────────
+  if (fieldType === 'number') {
     return (
       <div>
-        <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1 capitalize">
+        <label htmlFor={id} className="block text-sm font-medium text-muted-foreground mb-1 capitalize">
           {label}{required && <span className="text-red-500 ml-0.5">*</span>}
         </label>
         <input
           id={id}
           type="number"
           value={value != null ? String(value) : ''}
-          min={def.minimum}
+          min={fieldDef.minimum as number | undefined}
           onChange={(e) => onChange(e.target.value ? Number(e.target.value) : undefined)}
-          placeholder={def.description}
+          placeholder={placeholder}
           className={inputClass}
         />
       </div>
     )
   }
 
-  // Default: text
+  // ─── Text / Email (default) ─────────────────────────────────────────────
   return (
     <div>
-      <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1 capitalize">
+      <label htmlFor={id} className="block text-sm font-medium text-muted-foreground mb-1 capitalize">
         {label}{required && <span className="text-red-500 ml-0.5">*</span>}
       </label>
       <input
         id={id}
-        type={def.format === 'email' ? 'email' : 'text'}
+        type={fieldType === 'email' ? 'email' : 'text'}
         value={String(value ?? '')}
         onChange={(e) => onChange(e.target.value || undefined)}
-        placeholder={def.description}
+        placeholder={placeholder}
         className={inputClass}
       />
     </div>
@@ -179,6 +222,7 @@ function FieldInput({
 function formatValue(value: unknown): string {
   if (value == null) return '—'
   if (typeof value === 'boolean') return value ? 'Yes' : 'No'
+  if (Array.isArray(value)) return value.join(', ')
   if (typeof value === 'object') return JSON.stringify(value)
   return String(value)
 }

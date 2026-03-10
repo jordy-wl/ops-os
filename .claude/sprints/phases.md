@@ -11,7 +11,7 @@
 | Phase | Name | Status | Sprint | Exit Conditions Met |
 |-------|------|--------|--------|---------------------|
 | 1 | Foundation & Primitive Validation | COMPLETE | Sprint 4 | YES (code) — usage metrics deferred (user = test user) |
-| 2 | Composable Blocks, Visual Builder & Integrations | CODE COMPLETE | Sprint 10 | CODE DONE — awaiting user manual testing for exit evaluation |
+| 2 | Composable Blocks, Visual Builder & Integrations | ACTIVE (UI/UX Overhaul) | Sprint 12 | CODE DONE (S10) — UI/UX overhaul in progress (S11–16) |
 | 3 | Scale, Advanced AI & Marketplace | FUTURE | — | — |
 | 4 | Enterprise & Compliance | FUTURE | — | — |
 
@@ -114,8 +114,10 @@ If exit condition is NOT met after 12 weeks:
 - Sprint 8: Google integration (OAuth, Gmail, Calendar, Drive), action menu, Library pages (blocks, integrations) — **COMPLETE** (10/11 DONE, 1 deferred. 2026-03-10)
 - Sprint 9: Document generation (templates, brand kit, AI generation, PDF), Document Library — **COMPLETE** (10/10 DONE, 100%. 2026-03-10)
 - Sprint 10: UI polish, dashboard overhaul, demo data, E2E testing, manual test readiness — **COMPLETE** (8/8 DONE, 100%. 2026-03-10)
+- Sprint 11: UI Foundation — sidebar nav, Geist font, animations, JSX→TSX, layout components — **COMPLETE** (7/7 DONE, 100%. 2026-03-10. PR #34)
+- Sprint 12: User-configurable block fields — 12 field types, field management API, admin config UI — **ACTIVE**
 
-**Phase 2 Status:** CODE COMPLETE. 52/54 tasks done across 6 sprints (96%). 2 deferred items: Gmail receive trigger (Sprint 8 BE-03), UX research moved to Sprint 10 (completed). 395 tests passing. Awaiting user manual testing for formal exit evaluation.
+**Phase 2 Status:** UI/UX Overhaul in progress. 59/61 tasks done across 7 sprints (97%). 2 deferred items: Gmail receive trigger (Sprint 8 BE-03), UX research moved to Sprint 10 (completed). 409 tests passing. Sprint 11 (UI Foundation) complete. Sprint 12 (User-Configurable Block Fields) initiated.
 
 ---
 
