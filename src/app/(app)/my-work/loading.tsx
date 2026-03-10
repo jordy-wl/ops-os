@@ -1,4 +1,5 @@
 import { Skeleton } from '@/components/ui/skeleton'
+import { PageContainer } from '@/components/shell/page-container'
 
 /**
  * My Work loading skeleton.
@@ -7,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton'
  */
 export default function MyWorkLoading() {
   return (
-    <div className="p-6 lg:p-8" aria-label="Loading my work" role="status">
+    <PageContainer aria-label="Loading my work" role="status">
       {/* Page header skeleton */}
       <Skeleton className="h-8 w-32 mb-1" />
       <Skeleton className="h-4 w-56 mb-6" />
@@ -23,6 +24,6 @@ export default function MyWorkLoading() {
           </div>
         ))}
       </div>
-    </div>
+    </PageContainer>
   )
 }

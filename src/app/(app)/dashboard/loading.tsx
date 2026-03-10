@@ -1,4 +1,5 @@
 import { Skeleton } from '@/components/ui/skeleton'
+import { PageContainer } from '@/components/shell/page-container'
 
 /**
  * Dashboard loading skeleton.
@@ -7,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton'
  */
 export default function DashboardLoading() {
   return (
-    <div className="p-6 lg:p-8" aria-label="Loading dashboard" role="status">
+    <PageContainer aria-label="Loading dashboard" role="status">
       {/* Page header skeleton */}
       <Skeleton className="h-8 w-40 mb-1" />
       <Skeleton className="h-4 w-64 mb-6" />
@@ -34,6 +35,6 @@ export default function DashboardLoading() {
           </div>
         ))}
       </div>
-    </div>
+    </PageContainer>
   )
 }

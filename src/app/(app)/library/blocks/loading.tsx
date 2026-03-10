@@ -1,4 +1,5 @@
 import { Skeleton } from '@/components/ui/skeleton'
+import { PageContainer } from '@/components/shell/page-container'
 
 /**
  * Block Library loading skeleton.
@@ -7,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton'
  */
 export default function BlockLibraryLoading() {
   return (
-    <div className="p-6 lg:p-8" aria-label="Loading block library" role="status">
+    <PageContainer aria-label="Loading block library" role="status">
       {/* Page header skeleton */}
       <Skeleton className="h-8 w-36 mb-1" />
       <Skeleton className="h-4 w-64 mb-6" />
@@ -35,6 +36,6 @@ export default function BlockLibraryLoading() {
           </div>
         ))}
       </div>
-    </div>
+    </PageContainer>
   )
 }

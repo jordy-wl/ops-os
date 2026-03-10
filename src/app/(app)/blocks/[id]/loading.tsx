@@ -1,3 +1,5 @@
+import { PageContainer } from '@/components/shell/page-container'
+
 /**
  * Loading skeleton for the Block Detail page.
  * Automatically shown by Next.js App Router while page.tsx is fetching data.
@@ -5,7 +7,7 @@
  */
 export default function BlockDetailLoading() {
   return (
-    <div className="p-6 lg:p-8 max-w-4xl animate-pulse" aria-label="Loading block details" role="status">
+    <PageContainer maxWidth="md" className="animate-pulse" aria-label="Loading block details" role="status">
       {/* BlockHeader skeleton */}
       <div className="flex items-start gap-3">
         <div className="h-6 w-20 rounded-full bg-gray-200" />
@@ -57,6 +59,6 @@ export default function BlockDetailLoading() {
           ))}
         </div>
       </div>
-    </div>
+    </PageContainer>
   )
 }

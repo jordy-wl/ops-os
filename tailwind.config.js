@@ -4,6 +4,10 @@ module.exports = {
     content: ["./index.html", "./src/**/*.{ts,tsx,js,jsx}"],
   theme: {
   	extend: {
+  		fontFamily: {
+  			sans: ['var(--font-geist-sans)', 'system-ui', '-apple-system', 'sans-serif'],
+  			mono: ['var(--font-geist-mono)', 'ui-monospace', 'monospace'],
+  		},
   		borderRadius: {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',
@@ -63,25 +67,52 @@ module.exports = {
   		},
   		keyframes: {
   			'accordion-down': {
-  				from: {
-  					height: '0'
-  				},
-  				to: {
-  					height: 'var(--radix-accordion-content-height)'
-  				}
+  				from: { height: '0' },
+  				to: { height: 'var(--radix-accordion-content-height)' }
   			},
   			'accordion-up': {
-  				from: {
-  					height: 'var(--radix-accordion-content-height)'
-  				},
-  				to: {
-  					height: '0'
-  				}
+  				from: { height: 'var(--radix-accordion-content-height)' },
+  				to: { height: '0' }
+  			},
+  			'fade-in': {
+  				from: { opacity: '0' },
+  				to: { opacity: '1' }
+  			},
+  			'fade-out': {
+  				from: { opacity: '1' },
+  				to: { opacity: '0' }
+  			},
+  			'slide-in-from-left': {
+  				from: { transform: 'translateX(-100%)' },
+  				to: { transform: 'translateX(0)' }
+  			},
+  			'slide-in-from-bottom': {
+  				from: { transform: 'translateY(8px)', opacity: '0' },
+  				to: { transform: 'translateY(0)', opacity: '1' }
+  			},
+  			'slide-in-from-top': {
+  				from: { transform: 'translateY(-8px)', opacity: '0' },
+  				to: { transform: 'translateY(0)', opacity: '1' }
+  			},
+  			'scale-in': {
+  				from: { transform: 'scale(0.95)', opacity: '0' },
+  				to: { transform: 'scale(1)', opacity: '1' }
+  			},
+  			'shimmer': {
+  				'0%': { backgroundPosition: '-200% 0' },
+  				'100%': { backgroundPosition: '200% 0' }
   			}
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
-  			'accordion-up': 'accordion-up 0.2s ease-out'
+  			'accordion-up': 'accordion-up 0.2s ease-out',
+  			'fade-in': 'fade-in 0.2s ease-out',
+  			'fade-out': 'fade-out 0.15s ease-in',
+  			'slide-in-from-left': 'slide-in-from-left 0.2s ease-out',
+  			'slide-in-from-bottom': 'slide-in-from-bottom 0.2s ease-out',
+  			'slide-in-from-top': 'slide-in-from-top 0.2s ease-out',
+  			'scale-in': 'scale-in 0.15s ease-out',
+  			'shimmer': 'shimmer 2s linear infinite'
   		}
   	}
   },

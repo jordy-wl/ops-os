@@ -1,10 +1,12 @@
+import { PageContainer } from '@/components/shell/page-container'
+
 /**
  * Loading skeleton for the Block List page.
  * Automatically shown while page.tsx fetches blocks from Supabase.
  */
 export default function BlockListLoading() {
   return (
-    <div className="p-6 lg:p-8 animate-pulse" aria-label="Loading blocks" role="status">
+    <PageContainer className="animate-pulse" aria-label="Loading blocks" role="status">
       {/* Header */}
       <div className="h-8 w-40 rounded bg-gray-200 mb-6" />
 
@@ -31,6 +33,6 @@ export default function BlockListLoading() {
           </div>
         ))}
       </div>
-    </div>
+    </PageContainer>
   )
 }

@@ -1,4 +1,5 @@
 import { Skeleton } from '@/components/ui/skeleton'
+import { PageContainer } from '@/components/shell/page-container'
 
 /**
  * Document Library loading skeleton.
@@ -7,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton'
  */
 export default function DocumentLibraryLoading() {
   return (
-    <div className="p-6 lg:p-8" aria-label="Loading document library" role="status">
+    <PageContainer aria-label="Loading document library" role="status">
       {/* Page header skeleton */}
       <Skeleton className="h-8 w-44 mb-1" />
       <Skeleton className="h-4 w-72 mb-6" />
@@ -28,6 +29,6 @@ export default function DocumentLibraryLoading() {
           </div>
         ))}
       </div>
-    </div>
+    </PageContainer>
   )
 }

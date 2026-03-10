@@ -86,3 +86,37 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  /* Standard interactive element transitions */
+  .transition-interactive {
+    @apply transition-all duration-150 ease-in-out;
+  }
+
+  /* Card hover effect */
+  .hover-card {
+    @apply transition-all duration-150 ease-in-out hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600;
+  }
+
+  /* Button press effect */
+  .active-press {
+    @apply active:scale-[0.98] transition-transform duration-75;
+  }
+
+  /* Page content entrance animation */
+  .animate-page-in {
+    @apply animate-fade-in;
+  }
+
+  /* Shimmer background for loading skeletons */
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--muted)) 0%,
+      hsl(var(--muted-foreground) / 0.05) 50%,
+      hsl(var(--muted)) 100%
+    );
+    background-size: 200% 100%;
+    @apply animate-shimmer;
+  }
+}

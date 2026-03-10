@@ -1,6 +1,8 @@
+import { PageContainer } from '@/components/shell/page-container'
+
 export default function IntegrationsLoading() {
   return (
-    <div className="p-6 lg:p-8 animate-pulse" aria-label="Loading integrations" role="status">
+    <PageContainer className="animate-pulse" aria-label="Loading integrations" role="status">
       <div className="h-8 w-48 rounded bg-gray-200 mb-6" />
 
       <div className="flex flex-wrap gap-2 mb-6">
@@ -21,6 +23,6 @@ export default function IntegrationsLoading() {
           </div>
         ))}
       </div>
-    </div>
+    </PageContainer>
   )
 }
