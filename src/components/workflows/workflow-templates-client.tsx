@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import Link from 'next/link'
+import { Pencil } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export interface WorkflowTemplateItem {
@@ -134,8 +136,15 @@ export function WorkflowTemplatesClient({ initialTemplates }: WorkflowTemplatesC
                 )}
               </div>
 
-              <div className="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-400">
-                Created {formatDate(tmpl.created_at)}
+              <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-400">
+                <span>Created {formatDate(tmpl.created_at)}</span>
+                <Link
+                  href={`/workflows/${tmpl.id}/builder`}
+                  className="inline-flex items-center gap-1 text-xs font-medium text-gray-600 hover:text-gray-900 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 rounded"
+                >
+                  <Pencil className="h-3 w-3" aria-hidden="true" />
+                  Edit in Builder
+                </Link>
               </div>
             </div>
           ))}

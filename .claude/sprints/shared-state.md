@@ -8,11 +8,11 @@
 
 ## Current Phase and Sprint
 
-**Phase:** 2 — Composable Blocks & Workflow Engine
-**Sprint:** 5
-**Sprint Goal:** Build workflow runtime — instance spawning from templates, step execution engine, trigger evaluation (manual + event), task queue API. Also: merge the 11-PR backlog to production.
-**Sprint Started:** 2026-03-06
-**Sprint Target End:** 2026-03-20
+**Phase:** 2 — Composable Blocks, Visual Builder & Integrations
+**Sprint:** 8
+**Sprint Goal:** Connect Google Workspace (OAuth, Gmail, Calendar, Drive). Build action menu for block detail pages. Create Block Library and Integration Library pages.
+**Sprint Started:** 2026-03-10
+**Sprint Target End:** 2026-03-24
 
 ---
 
@@ -20,17 +20,20 @@
 
 | Task ID | Title | Role | Status | Last Updated |
 |---------|-------|------|--------|-------------|
-| P2-S5-BE-01 | Workflow Instance Spawning | Backend | OPEN | 2026-03-06 |
-| P2-S5-BE-02 | Step Execution Engine | Backend | OPEN | 2026-03-06 |
-| P2-S5-BE-03 | Trigger Evaluation (Manual + Event) | Backend | OPEN | 2026-03-06 |
-| P2-S5-BE-04 | Task Queue API | Backend | OPEN | 2026-03-06 |
-| P2-S5-FE-01 | Workflow Template List + Create UI | Frontend | OPEN | 2026-03-06 |
-| P2-S5-FE-02 | My Tasks Queue UI | Frontend | OPEN | 2026-03-06 |
-| P2-S5-QA-01 | Workflow Runtime Integration Tests | QA | OPEN | 2026-03-06 |
+| P2-S8-BE-01 | Google OAuth Flow | Backend | OPEN | 2026-03-10 |
+| P2-S8-BE-02 | Gmail Send Action Handler | Backend | OPEN | 2026-03-10 |
+| P2-S8-BE-03 | Gmail Receive Trigger | Backend | OPEN | 2026-03-10 |
+| P2-S8-BE-04 | Calendar Booking Action | Backend | OPEN | 2026-03-10 |
+| P2-S8-BE-05 | Google Drive Document Storage | Backend | OPEN | 2026-03-10 |
+| P2-S8-FE-01 | Action Menu Component | Frontend | OPEN | 2026-03-10 |
+| P2-S8-FE-02 | Google Connect UI | Frontend | OPEN | 2026-03-10 |
+| P2-S8-FE-03 | Wire Actions to Canvas Nodes | Frontend | OPEN | 2026-03-10 |
+| P2-S8-FE-04 | Integration Library Page | Frontend | OPEN | 2026-03-10 |
+| P2-S8-FE-05 | Block Library Page | Frontend | OPEN | 2026-03-10 |
+| P2-S8-QA-01 | Action + Integration Tests | QA | OPEN | 2026-03-10 |
 
-**How to update:** Status → IN_PROGRESS when claiming, DONE when finished, BLOCKED when stuck.
-**Critical path:** BE-01 → BE-02 + BE-03 → BE-04 → FE-02 + QA-01
-**Sprint metrics:** 0/7 DONE. All PRs merged. CI fix deployed.
+**Critical path:** BE-01 (OAuth) → BE-02 + BE-04 (handlers) → FE-03 (canvas wiring) + QA-01. FE-01/FE-04/FE-05 parallel.
+**Sprint metrics:** 0/11 DONE.
 
 ---
 
@@ -38,10 +41,7 @@
 
 | Task ID | Task Title | Blocked By | Age (days) | Escalated? |
 |---------|-----------|-----------|-----------|-----------|
-| — | — | — | — | — |
-
-**Blocker rules:** Log immediately when blocked. Blockers over 48 hours: orchestrator must resolve.
-When unblocked: update status back to OPEN and add a handoff note below.
+| P2-S8-BE-01 | Google OAuth Flow | Needs GOOGLE_CLIENT_ID/SECRET env vars | 0 | NO |
 
 ---
 
@@ -49,17 +49,16 @@ When unblocked: update status back to OPEN and add a handoff note below.
 
 No PENDING signals at this time.
 
-**How to add a signal:** Run `/log-signal [task-id] [strength]` — writes to `build-learnings.md` and here atomically.
-
 ---
 
 ## Notes (cross-role communications)
 
 | Date | Author | Note |
 |------|--------|------|
-| 2026-03-06 | ORCHESTRATOR | **SPRINT 4 RETRO COMPLETE** — 7/7 DONE (100%). Gate evidence + Gate 6 peer review filed for all tasks. Phase 1 exit: code complete, NOT MET (PRs not merged). Sprint 5 initiated with 7 tasks. |
-| 2026-03-06 | ORCHESTRATOR | **11 PRs MERGED** — PRs #2-#12 merged to main. CI fix (eslint-plugin-unused-imports) deployed. Production should now be current. |
-| 2026-03-06 | ORCHESTRATOR | **PHASE TRANSITION** — Phase 2 (Composable Blocks & Workflow Engine). Phase 1 exit re-evaluated at Sprint 5 retro after team usage accumulates. |
+| 2026-03-10 | ORCHESTRATOR | **SPRINT 7 RETRO COMPLETE** — 10/11 DONE (91%). UI-01 (UX Research) deferred. Canvas, My Work, nav restructure all built. 322 tests passing. Gate evidence in `phase-2/sprint-7/gate-results.md`. |
+| 2026-03-10 | ORCHESTRATOR | **SPRINT 8 INITIATED** — 11 tasks. Focus: Google OAuth + action handlers, action menu, Library pages. |
+| 2026-03-10 | ORCHESTRATOR | **SPRINT 7 CODE UNCOMMITTED** — All Sprint 7 work is on `fix/pii-and-atomicity` branch working tree. Needs commit + PR before Sprint 8 implementation starts. |
+| 2026-03-10 | ORCHESTRATOR | **ENV VARS NEEDED** — Sprint 8 BE-01 requires Google Cloud Console project setup: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`. |
 
 ---
 
@@ -70,25 +69,18 @@ No PENDING signals at this time.
 
 ---
 
-## Recently Completed — Sprint 4 Archive
+## Recently Completed — Sprint 7 Archive
 
-Sprint 4 (2026-03-04 to 2026-03-06): 7/7 DONE (100%). Retro in `phase-1/sprint-4/retro-notes.md`.
-Deliverables: block_type_definitions CRUD + Ajv, 5 system types seeded, dynamic forms, workflow template schema, org name sync, empty state CTA. PRs #6-#12 (all OPEN).
+Sprint 7 (2026-03-09 to 2026-03-10): 10/11 DONE (91%). 1 deferred (UI-01).
+Deliverables: React Flow visual workflow canvas (drag-drop nodes, config panels, serialization), My Work personal hub page, navigation restructure (Dashboard/My Work/Workflows/Library/Chat), Edit in Builder links, 15 canvas serialization tests. Test count: 322 passed.
 
-| Task ID | Title | Role | Status |
-|---------|-------|------|--------|
-| P1-S4-BE-01 | Sync Org Name from Clerk | Backend | DONE |
-| P1-S4-FE-01 | Dashboard Empty State CTA | Frontend | DONE |
-| P2-S4-BE-02 | block_type_definitions Table + CRUD API | Backend | DONE |
-| P2-S4-DE-01 | Seed System Block Types | Data | DONE |
-| P2-S4-FE-02 | Dynamic Block Forms from field_schema | Frontend | DONE |
-| P2-S4-QA-01 | Block Type Definitions — Unit + Contract Tests | QA | DONE |
-| P2-S4-BE-03 | Workflow Template Block Schema + CRUD API | Backend | DONE |
+New files: 12 created. Key: `workflow-canvas.tsx`, `canvas-layout.ts`, `node-config-panel.tsx`, `my-work/page.tsx`, `my-work-client.tsx`. Modified: `app-nav.tsx` (nav restructure), `template-schema.ts` (canvas_layout + webhook trigger), `workflow-templates-client.tsx` (builder link).
 
-## Recently Completed — Sprint 3 Archive
+## Recently Completed — Sprint 6 Archive
 
-Sprint 3 (2026-03-04): 7/7 DONE. PRs #1-#5 (only #1 merged).
+Sprint 6 (2026-03-09): 7/7 DONE (100%). PRs #23-#29 merged.
+Deliverables: integration_connectors table + CRUD API, inbound webhook processing with HMAC, webhook trigger evaluation, call_api step type, integrations management UI, workflow jobs dashboard, contract tests.
 
-## Recently Completed — Sprint 2 Archive
+## Earlier Sprints
 
-Sprint 2 (2026-03-03): 9/9 DONE. Sprint 1 (2026-03-02): 16/16 DONE. Full details in `shared-state-history.md`.
+Sprints 1–5 complete. Full details in `shared-state-history.md`.
