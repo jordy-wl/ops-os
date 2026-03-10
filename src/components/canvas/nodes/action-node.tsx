@@ -1,0 +1,49 @@
+'use client'
+
+import { memo } from 'react'
+import { Handle, Position, type NodeProps } from '@xyflow/react'
+import { Play, Mail, FileText, Calendar, Globe } from 'lucide-react'
+import { cn } from '@/lib/utils'
+
+interface ActionNodeData {
+  label: string
+  stepType?: string
+  config: Record<string, unknown>
+  selected?: boolean
+}
+
+const STEP_ICONS: Record<string, React.ElementType> = {
+  emit_event: Play,
+  run_action: Play,
+  call_api: Globe,
+  send_email: Mail,
+  generate_document: FileText,
+  book_meeting: Calendar,
+}
+
+function ActionNodeComponent({ data, selected }: NodeProps & { data: ActionNodeData }) {
+  const Icon = STEP_ICONS[data.stepType ?? ''] ?? Play
+
+  return (
+    <div
+      className={cn(
+        'min-w-[180px] rounded-lg border-2 bg-green-50 px-4 py-3 shadow-sm',
+        selected ? 'border-green-600 ring-2 ring-green-200' : 'border-green-300'
+      )}
+    >
+      <Handle type="target" position={Position.Top} className="!bg-green-500 !w-3 !h-3 !border-2 !border-white" />
+      <div className="flex items-center gap-2">
+        <div className="flex h-7 w-7 items-center justify-center rounded-md bg-green-100">
+          <Icon className="h-4 w-4 text-green-600" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-medium text-green-600 uppercase tracking-wide">Action</p>
+          <p className="text-sm font-medium text-gray-900 truncate">{data.label}</p>
+        </div>
+      </div>
+      <Handle type="source" position={Position.Bottom} className="!bg-green-500 !w-3 !h-3 !border-2 !border-white" />
+    </div>
+  )
+}
+
+export const ActionNode = memo(ActionNodeComponent)

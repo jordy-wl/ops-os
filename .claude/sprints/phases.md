@@ -10,10 +10,10 @@
 
 | Phase | Name | Status | Sprint | Exit Conditions Met |
 |-------|------|--------|--------|---------------------|
-| 1 | Foundation & Primitive Validation | ACTIVE (code complete) | Sprint 4 | NO — code done, usage metrics pending (PRs not merged) |
-| 2 | Composable Blocks & Workflow Engine | ACTIVE | Sprint 5 | NO — workflow runtime in progress |
-| 3 | Visual Builder & Integrations | FUTURE | — | — |
-| 4 | Scale, Revenue & Compliance | FUTURE | — | — |
+| 1 | Foundation & Primitive Validation | COMPLETE | Sprint 4 | YES (code) — usage metrics deferred (user = test user) |
+| 2 | Composable Blocks, Visual Builder & Integrations | ACTIVE | Sprint 8 | NO — canvas done; Google + docs in progress |
+| 3 | Scale, Advanced AI & Marketplace | FUTURE | — | — |
+| 4 | Enterprise & Compliance | FUTURE | — | — |
 
 ---
 
@@ -71,76 +71,73 @@ If exit condition is NOT met after 12 weeks:
 
 ---
 
-## Phase 2: Composable Blocks & Workflow Engine
+## Phase 2: Composable Blocks, Visual Builder & Integrations
 
-**Status:** FUTURE
-**Target:** Q3 2026 (approximately 8–10 weeks, Sprints 4–7)
-**Active Roles:** Backend Engineer, Frontend Engineer, AI/ML Engineer, PM, Researcher
+**Status:** ACTIVE
+**Target:** Q2-Q3 2026 (Sprints 4–10)
+**Active Roles:** Backend Engineer, Frontend Engineer, Design Lead, AI/ML Engineer, PM
 
-**Hypothesis:** If we add custom block type definitions, the workflow-as-block pattern (templates that spawn instances), human/agent task routing, event subscriptions, webhook triggers, and integration connectors — at least 1 design partner will create a custom workflow using the composable builder, and at least 1 LOI at ≥£500/month will be signed.
+**Hypothesis:** If we add custom block types, the workflow-as-block pattern, a visual workflow canvas (React Flow), Google Workspace integration, document generation with brand components, and a polished action menu — the user (as primary test user) will run ≥5 complete end-to-end workflows, proving the system is ready for internal company onboarding.
 
 **What we're building:**
-- `block_type_definitions` table + API: custom block types with JSON Schema field validation
-- Workflow-as-block: `workflow_template` Blocks store full definitions (triggers, steps, conditions, edges in data JSONB); `workflow_instance` Blocks track runtime state; `task_queue_item` Blocks for human/agent routing
-- Workflow runtime: trigger evaluation engine, step executor, condition evaluator, branching logic
-- Task queue: claim/complete/reassign API + "My Tasks" UI
-- Integration connector framework: `integration_connectors` table, inbound webhook processing, trigger evaluation
-- Event subscriptions: workflow templates triggered by event patterns
-- Block Type Configuration UI (form-based, no canvas)
-- AI confidence routing: full context assembly + risk policy + human approval queue
-- Dashboard improvements: workflow instance views, task queue badge, dynamic block forms
+- `block_type_definitions` table + API: custom block types with JSON Schema field validation ✓
+- Workflow-as-block: templates, instances, task_queue_items ✓
+- Workflow runtime: trigger evaluation, step execution, job queue + cron ✓
+- Task queue: claim/complete API + "My Tasks" UI ✓
+- Integration connectors: CRUD API, inbound webhooks, HMAC, outbound API calls ✓
+- **Visual Workflow Canvas:** React Flow canvas, node palette, config panels, bidirectional template serialization
+- **Google Workspace Integration:** OAuth, Gmail (send/receive), Calendar (book meetings), Drive (document storage)
+- **Document Generation:** templates with variables, brand kit (logo/colors/fonts), AI document generation, PDF output
+- **Action Menu:** discrete actions (SendEmail, GenerateDocument, BookMeeting) on block detail pages
+- **My Work Hub:** personal page aggregating tasks, workflows, blocks, activity
+- **Library Pages:** Block Library, Integration Library (capability-focused), Document Library
+- **Navigation Restructure:** Dashboard, My Work, Workflows, Library (dropdown), Chat
+- UI/UX Design Lead agent for design system and UX guidance
 
-**Sprint planning guidance:**
-- Sprint 4: `block_type_definitions` table + API, workflow_template Block schema + CRUD API, seed system types
-- Sprint 5: Workflow runtime (instance spawning, step execution, manual + event triggers), task queue API
-- Sprint 6: Integration connectors, inbound webhooks, trigger evaluation engine, task routing UI
-- Sprint 7: AI confidence routing, condition/branching logic, Block Type Configuration UI, polish + LOI outreach
+**Dependencies on Phase 1:** Core Blocks/Events/Actions schema stable ✓; production deployed ✓.
 
-**Dependencies on Phase 1:** Core Blocks/Events/Actions schema stable; at least 1 design partner actively using Phase 1 primitives; workflow engine has processed ≥100 jobs without silent failures; production deployed and stable.
-
-**Exit Condition:** TRUE when ≥1 design partner has created a custom workflow template (with ≥1 condition or branching node), AND ≥1 signed LOI at ≥£500/month referencing workflow capabilities.
+**Exit Condition:** TRUE when user (as test user) has run ≥5 complete workflows using canvas + Google integration + document generation, AND at least 1 workflow includes email sending + document generation, AND internal company onboarding preparation is complete.
 
 **Evidence Required:**
-- Supabase: ≥1 org with a workflow_template Block containing conditions/branching
-- Signed LOI document at ≥£500/month
-- ≥3 custom block types created by partners (not seeded)
-- ≥10 task_queue_items completed by human routing
+- Supabase: ≥5 workflow_instance Blocks with status='done' containing send_email + generate_document steps
+- Google OAuth connected and working (Gmail, Calendar, Drive)
+- ≥3 documents generated from templates with brand styling
+- ≥10 task_queue_items completed by the user
+- Internal company onboarding plan documented
 
-**Failure Path:** If custom workflows not created → simplify builder UX. If no LOI → pricing interviews. If task routing underused → reduce friction on route_human.
+**Failure Path:** If canvas UX too complex → simplify to form-based builder. If Google API issues → mock email/calendar for testing. If document generation quality low → improve templates before AI generation.
 
 **Sprints in This Phase:**
-- Sprint 5: Workflow runtime (instance spawning, step execution, triggers, task queue) — **ACTIVE** (generated at Sprint 4 retro, 2026-03-06)
+- Sprint 5: Workflow runtime (instance spawning, step execution, triggers, task queue) — **COMPLETE** (7/7 DONE, PRs #13-#22 merged)
+- Sprint 6: Integration connectors, inbound webhooks, outbound API calls, integrations UI — **COMPLETE** (7/7 DONE, PRs #23-#29 merged)
+- Sprint 7: Visual workflow canvas (React Flow), My Work page, navigation restructure, UI/UX agent — **COMPLETE** (10/11 DONE, 1 deferred. 2026-03-10)
+- Sprint 8: Google integration (OAuth, Gmail, Calendar, Drive), action menu, Library pages (blocks, integrations) — **ACTIVE** (started 2026-03-10)
+- Sprint 9: Document generation (templates, brand kit, AI generation, PDF), Document Library
+- Sprint 10: UI polish, E2E integration testing, manual test readiness
 
 ---
 
-## Phase 3: Visual Builder & Integrations
+## Phase 3: Scale, Advanced AI & Marketplace
 
 **Status:** FUTURE
-**Target:** Q4 2026 (approximately 8–10 weeks, Sprints 8–11)
-**Active Roles:** Frontend Engineer, Backend Engineer, AI/ML Engineer, DevOps Engineer, PM
+**Target:** Q1 2027 (approximately 8–10 weeks)
+**Active Roles:** Backend Engineer, AI/ML Engineer, DevOps Engineer, PM
 
-**Hypothesis:** If we add a React Flow visual canvas for workflow composition, Salesforce/Xero integration connectors, document generation, agent AI processing, and operational intelligence (design vs reality analysis) — at least 2 customers will convert to paying at ≥£2k/month.
+**Hypothesis:** If we add agent AI processing with confidence scoring, operational intelligence (design vs reality analysis), Microsoft 365 integration, Salesforce/Xero connectors, and billing — at least 2 customers (including internal company) will convert to paying at ≥£2k/month.
 
 **What we're building:**
-- Visual Workflow Builder: React Flow canvas, node palette (triggers/actions/conditions/branching), config panel, template variable autocomplete
-- Salesforce connector: read client/deal data, bidirectional sync
-- Xero connector: read invoices, outbound payment notifications
-- Document generation: template-based PDF/email generation from block data, `generate_doc` workflow step
 - Agent Queue Processor: AI processes `route_agent` task_queue_items with confidence scoring
 - Operational Intelligence: compare workflow template (design) vs instance events (reality), surface deviations and bottlenecks
+- Microsoft 365 integration (for internal company onboarding)
+- Salesforce connector: read client/deal data, bidirectional sync (deferred from Phase 2)
+- Xero connector: read invoices, outbound payment notifications (deferred from Phase 2)
 - Workflow suggestion: AI suggests template structure from historical event patterns
 - Billing integration (Stripe) for paying customers
 - Audit trail export: PDF/JSON for regulatory requests
 
-**Dependencies on Phase 2:** Workflow-as-block pattern working; ≥1 LOI signed; ≥1 custom workflow template created by a partner; task routing proven.
+**Dependencies on Phase 2:** Visual canvas working; Google integration proven; document generation working; user has run ≥5 complete workflows.
 
 **Exit Condition:** TRUE when ≥2 paying customers at ≥£2k/month, each processing ≥50 workflow instances/week.
-
-**Evidence Required:**
-- Stripe: 2 active subscriptions at ≥£2k/month
-- Supabase: ≥50 workflow_instance Blocks completed/week per paying org
-- ≥1 paying customer using a Salesforce or Xero connector
-- Operational intelligence accessed ≥1x/week per paying org
 
 **Failure Path:** If no conversion → re-evaluate pricing and value proposition. If integrations unused → webhooks sufficient. If agent AI error rate too high → keep human-only.
 
@@ -148,10 +145,10 @@ If exit condition is NOT met after 12 weeks:
 
 ---
 
-## Phase 4: Scale, Revenue & Compliance
+## Phase 4: Enterprise, Scale & Compliance
 
 **Status:** FUTURE
-**Target:** Q1–Q2 2027
+**Target:** Q2–Q3 2027
 **Active Roles:** DevOps Engineer, Backend Engineer, AI/ML Engineer, PM
 
 **Hypothesis:** If we migrate to Temporal for durable workflow execution, start SOC 2 Type II, add multi-region data residency, and build a marketplace for workflow templates and connectors — 5+ paying customers can use production data at enterprise scale.

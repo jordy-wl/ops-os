@@ -14,6 +14,13 @@ const TriggerSchema = z.discriminatedUnion('type', [
     type: z.literal('event'),
     event_pattern: z.string().min(1).max(100),
   }),
+  z.object({
+    type: z.literal('webhook'),
+    config: z.object({
+      connector_id: z.string().uuid(),
+      event_type_mapping: z.record(z.string()).optional(),
+    }).optional(),
+  }),
 ])
 
 const StepSchema = z.object({
@@ -37,6 +44,7 @@ export const WorkflowTemplateSchema = z.object({
   trigger: TriggerSchema,
   steps: z.array(StepSchema).min(1).max(50),
   description: z.string().max(500).optional(),
+  canvas_layout: z.unknown().optional(),
 })
 
 export type WorkflowTemplate = z.infer<typeof WorkflowTemplateSchema>

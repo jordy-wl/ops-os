@@ -31,12 +31,15 @@ export const GET = withAuth(async (req: NextRequest, ctx, params) => {
     .eq('org_id', ctx.orgId)
     .single()
 
-  if (error?.code === 'PGRST116' || !connector) {
-    return apiError('Integration connector not found', 'integrations/not-found', 404)
-  }
   if (error) {
+    if (error.code === 'PGRST116') {
+      return apiError('Integration connector not found', 'integrations/not-found', 404)
+    }
     logger.error('api-integrations', 'db.query_failed', { error_code: error.code })
     return apiError('Failed to fetch integration', 'db/query-failed', 500)
+  }
+  if (!connector) {
+    return apiError('Integration connector not found', 'integrations/not-found', 404)
   }
 
   // Build response — include webhook URL, exclude webhook_secret
@@ -90,12 +93,15 @@ export const PATCH = withAuth(requireRole(['ops-admin'], async (req: NextRequest
     .select()
     .single()
 
-  if (error?.code === 'PGRST116' || !connector) {
-    return apiError('Integration connector not found', 'integrations/not-found', 404)
-  }
   if (error) {
+    if (error.code === 'PGRST116') {
+      return apiError('Integration connector not found', 'integrations/not-found', 404)
+    }
     logger.error('api-integrations', 'db.update_failed', { error_code: error.code })
     return apiError('Failed to update integration', 'db/update-failed', 500)
+  }
+  if (!connector) {
+    return apiError('Integration connector not found', 'integrations/not-found', 404)
   }
 
   // Exclude webhook_secret from response
@@ -122,12 +128,15 @@ export const DELETE = withAuth(requireRole(['ops-admin'], async (req: NextReques
     .select('id')
     .single()
 
-  if (error?.code === 'PGRST116' || !connector) {
-    return apiError('Integration connector not found', 'integrations/not-found', 404)
-  }
   if (error) {
+    if (error.code === 'PGRST116') {
+      return apiError('Integration connector not found', 'integrations/not-found', 404)
+    }
     logger.error('api-integrations', 'db.archive_failed', { error_code: error.code })
     return apiError('Failed to archive integration', 'db/archive-failed', 500)
+  }
+  if (!connector) {
+    return apiError('Integration connector not found', 'integrations/not-found', 404)
   }
 
   logger.info('api-integrations', 'connector.archived', { connector_id: id })

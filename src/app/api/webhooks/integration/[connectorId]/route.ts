@@ -25,17 +25,23 @@ export async function POST(
     .eq('id', connectorId)
     .single()
 
-  if (connectorError?.code === 'PGRST116' || !connector) {
-    return NextResponse.json(
-      { error: { code: 'webhooks/connector-not-found', message: 'Connector not found' } },
-      { status: 404 }
-    )
-  }
   if (connectorError) {
+    if (connectorError.code === 'PGRST116') {
+      return NextResponse.json(
+        { error: { code: 'webhooks/connector-not-found', message: 'Connector not found' } },
+        { status: 404 }
+      )
+    }
     logger.error('api-webhooks', 'db.connector_query_failed', { error_code: connectorError.code })
     return NextResponse.json(
       { error: { code: 'db/query-failed', message: 'Internal error' } },
       { status: 500 }
+    )
+  }
+  if (!connector) {
+    return NextResponse.json(
+      { error: { code: 'webhooks/connector-not-found', message: 'Connector not found' } },
+      { status: 404 }
     )
   }
 

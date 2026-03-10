@@ -33,7 +33,7 @@ coordinated via shared filesystem files. Each agent tab adopts a single role per
 Format: `P{phase}-S{sprint}-{ROLE}-{NUM}`
 Example: `P1-S2-BE-04` = Phase 1, Sprint 2, Backend Engineer, Task 04
 
-Role codes: `ORC` `RES` `PM` `FE` `BE` `AI` `OPS` `DE` `QA`
+Role codes: `ORC` `RES` `PM` `FE` `BE` `AI` `OPS` `DE` `QA` `UI`
 
 ## Status Values
 | Status | Meaning |
@@ -58,6 +58,7 @@ Role codes: `ORC` `RES` `PM` `FE` `BE` `AI` `OPS` `DE` `QA`
 | DevOps Engineer | `infra/`, `terraform/`, `.github/workflows/`, `docker/`, `k8s/` | Application code |
 | Data Engineer | `src/pipelines/`, `src/etl/`, `db/schema/`, `db/migrations/`, `src/analytics/` | Frontend, API routes |
 | QA Engineer | `tests/`, `**/*.test.*`, `**/*.spec.*` | Feature code |
+| Design Lead | `prd/06-frontend-spec.md` (design), `src/styles/`, design standards | Application code, infra, DB |
 
 ---
 
@@ -72,7 +73,7 @@ Role codes: `ORC` `RES` `PM` `FE` `BE` `AI` `OPS` `DE` `QA`
 
 ## Rules and Standards
 - **Auto-loaded rules** (`.claude/rules/`): coordination, quality gates, security baseline load in every session for every agent
-- **Path-scoped rules**: frontend/backend/ai-ml/devops/data/testing rules activate when working in matching directories
+- **Path-scoped rules**: frontend/backend/ai-ml/devops/data/testing/design rules activate when working in matching directories
 - **Role standards** (`.claude/standards/`): each agent reads its own standards file at session start — these are detailed reference docs, not auto-loaded
 - **Critical for subagents**: path-scoped rules do NOT auto-load inside subagent contexts — read your standards file explicitly
 
