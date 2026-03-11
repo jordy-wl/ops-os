@@ -224,9 +224,9 @@ export function ChatWidget() {
       >
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center py-8">
-            <MessageCircle className="h-8 w-8 text-gray-300 mb-3" />
-            <p className="text-sm font-medium text-gray-600 mb-1">How can I help?</p>
-            <p className="text-xs text-gray-400 max-w-[280px]">
+            <MessageCircle className="h-8 w-8 text-muted-foreground mb-3" />
+            <p className="text-sm font-medium text-muted-foreground mb-1">How can I help?</p>
+            <p className="text-xs text-muted-foreground max-w-[280px]">
               {mode === 'discuss' && 'Ask questions about your blocks, workflows, and events.'}
               {mode === 'plan' && 'Describe what you want to achieve and I\'ll create a step-by-step plan.'}
               {mode === 'execute' && 'Tell me what to do and I\'ll take action in the system.'}
@@ -237,7 +237,7 @@ export function ChatWidget() {
             <div key={msg.id}>
               {/* Plan mode: structured rendering for assistant messages */}
               {msg.role === 'assistant' && msg.mode === 'plan' && !msg.isError && !msg.streaming && msg.content ? (
-                <div className="bg-white border border-gray-200 rounded-2xl rounded-bl-sm px-4 py-2.5 max-w-[85%]">
+                <div className="bg-background border border-border rounded-2xl rounded-bl-sm px-4 py-2.5 max-w-[85%]">
                   <PlanMessage content={msg.content} />
                 </div>
               ) : (
@@ -269,7 +269,7 @@ export function ChatWidget() {
                       >
                         <Wrench className="h-3 w-3 shrink-0" />
                         <span className="font-medium">{tc.name}</span>
-                        <span className="text-gray-400">—</span>
+                        <span className="text-muted-foreground">—</span>
                         <span className="truncate">
                           {tc.result.success
                             ? JSON.stringify(tc.result.data).slice(0, 60)

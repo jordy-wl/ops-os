@@ -39,7 +39,7 @@ function getEventColor(type: string): string {
   if (type.startsWith('document.')) return 'bg-amber-500'
   if (type.startsWith('workflow.')) return 'bg-purple-500'
   if (type.startsWith('onboarding.')) return 'bg-cyan-500'
-  return 'bg-gray-400'
+  return 'bg-muted-foreground'
 }
 
 /** Convert a dot-delimited event type to human-readable label. */
@@ -166,7 +166,7 @@ export function DashboardClient({ initialData }: DashboardClientProps) {
         </p>
         <button
           onClick={fetchSummary}
-          className="mt-3 text-sm font-medium text-gray-900 underline hover:no-underline"
+          className="mt-3 text-sm font-medium text-foreground underline hover:no-underline"
         >
           Try again
         </button>
@@ -212,15 +212,15 @@ export function DashboardClient({ initialData }: DashboardClientProps) {
       {/* ---- Page Header ---- */}
       <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>
-          <p className="text-sm text-gray-500 mt-1">Your workspace at a glance</p>
+          <h1 className="text-2xl font-semibold text-foreground">Dashboard</h1>
+          <p className="text-sm text-muted-foreground mt-1">Your workspace at a glance</p>
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
           className={cn(
             'inline-flex items-center gap-1.5 px-4 py-2 rounded-md text-sm font-medium',
-            'bg-gray-900 text-white',
-            'hover:bg-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900'
+            'bg-primary text-primary-foreground',
+            'hover:bg-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
           )}
         >
           <Plus className="h-4 w-4" aria-hidden="true" />
@@ -237,22 +237,22 @@ export function DashboardClient({ initialData }: DashboardClientProps) {
 
       {/* ---- Empty state CTA (zero blocks) ---- */}
       {block_counts.total === 0 && (
-        <div className="rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 p-8 text-center mb-8">
+        <div className="rounded-lg border-2 border-dashed border-border bg-muted p-8 text-center mb-8">
           <div className="mx-auto mb-3 text-3xl" aria-hidden="true">
             +
           </div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-1">
+          <h2 className="text-lg font-semibold text-foreground mb-1">
             Create your first Block
           </h2>
-          <p className="text-sm text-gray-500 mb-4 max-w-md mx-auto">
+          <p className="text-sm text-muted-foreground mb-4 max-w-md mx-auto">
             Blocks are the core entities in your workspace -- clients, deals,
             projects, and more. Start by creating one.
           </p>
           <Link
             href="/library/blocks"
             className={cn(
-              'inline-flex px-5 py-2.5 rounded-md text-sm font-medium bg-gray-900 text-white',
-              'hover:bg-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900'
+              'inline-flex px-5 py-2.5 rounded-md text-sm font-medium bg-primary text-primary-foreground',
+              'hover:bg-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
             )}
           >
             Go to Blocks
@@ -272,21 +272,21 @@ export function DashboardClient({ initialData }: DashboardClientProps) {
           const cardContent = (
             <div
               className={cn(
-                'rounded-lg border bg-white p-4',
-                'hover:border-gray-300 hover:shadow-sm transition-all cursor-pointer',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-1',
+                'rounded-lg border bg-background p-4',
+                'hover:border-border hover:shadow-sm transition-all cursor-pointer',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
                 'flex flex-col justify-between h-full'
               )}
             >
               <div className="flex items-start justify-between">
-                <Icon className="h-5 w-5 text-gray-400" aria-hidden="true" />
+                <Icon className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
                 {card.href && (
-                  <ArrowRight className="h-4 w-4 text-gray-300" aria-hidden="true" />
+                  <ArrowRight className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                 )}
               </div>
               <div className="mt-3">
-                <p className="text-3xl font-bold text-gray-900 tabular-nums">{value}</p>
-                <p className="text-sm text-gray-500 mt-1">{card.label}</p>
+                <p className="text-3xl font-bold text-foreground tabular-nums">{value}</p>
+                <p className="text-sm text-muted-foreground mt-1">{card.label}</p>
               </div>
             </div>
           )
@@ -321,18 +321,18 @@ export function DashboardClient({ initialData }: DashboardClientProps) {
 
       {/* ---- Recent Activity Feed ---- */}
       <section ref={activityRef} aria-label="Recent activity" className="mb-8">
-        <h2 className="text-lg font-semibold text-gray-900 mb-3">Recent Activity</h2>
+        <h2 className="text-lg font-semibold text-foreground mb-3">Recent Activity</h2>
 
         {displayEvents.length === 0 ? (
-          <div className="rounded-lg border bg-white px-6 py-10 text-center">
-            <Activity className="h-10 w-10 text-gray-300 mx-auto mb-3" aria-hidden="true" />
-            <p className="text-sm text-gray-500">No events recorded yet.</p>
-            <p className="mt-1 text-xs text-gray-400">
+          <div className="rounded-lg border bg-background px-6 py-10 text-center">
+            <Activity className="h-10 w-10 text-muted-foreground mx-auto mb-3" aria-hidden="true" />
+            <p className="text-sm text-muted-foreground">No events recorded yet.</p>
+            <p className="mt-1 text-xs text-muted-foreground">
               Events appear here when blocks are created or workflows run.
             </p>
           </div>
         ) : (
-          <div className="rounded-lg border bg-white divide-y">
+          <div className="rounded-lg border bg-background divide-y">
             {displayEvents.map((event: RecentEvent) => {
               const dotColor = getEventColor(event.type)
               const relative = formatRelativeTime(event.occurred_at)
@@ -345,17 +345,17 @@ export function DashboardClient({ initialData }: DashboardClientProps) {
                     aria-hidden="true"
                   />
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-gray-900 truncate">
+                    <p className="text-sm font-medium text-foreground truncate">
                       {humanType}
                     </p>
-                    <p className="text-xs text-gray-500 mt-0.5 truncate">
+                    <p className="text-xs text-muted-foreground mt-0.5 truncate">
                       {event.block_name ?? 'Org-level'}
                     </p>
                   </div>
                   <time
                     dateTime={event.occurred_at}
                     title={event.occurred_at}
-                    className="text-xs text-gray-400 shrink-0 whitespace-nowrap"
+                    className="text-xs text-muted-foreground shrink-0 whitespace-nowrap"
                   >
                     {relative}
                   </time>
@@ -367,8 +367,8 @@ export function DashboardClient({ initialData }: DashboardClientProps) {
                   key={event.id}
                   href={`/blocks/${event.block_id}`}
                   className={cn(
-                    'block hover:bg-gray-50 transition-colors',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-gray-900'
+                    'block hover:bg-muted transition-colors',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring'
                   )}
                   aria-label={`${humanType} on ${event.block_name ?? 'org'} -- ${relative}`}
                 >
@@ -386,8 +386,8 @@ export function DashboardClient({ initialData }: DashboardClientProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Quick Actions */}
         <section aria-label="Quick actions">
-          <h2 className="text-lg font-semibold text-gray-900 mb-3">Quick Actions</h2>
-          <div className="rounded-lg border bg-white p-4">
+          <h2 className="text-lg font-semibold text-foreground mb-3">Quick Actions</h2>
+          <div className="rounded-lg border bg-background p-4">
             <div className="flex flex-col gap-2">
               {QUICK_ACTIONS.map((action) => {
                 const Icon = action.icon
@@ -396,12 +396,12 @@ export function DashboardClient({ initialData }: DashboardClientProps) {
                     key={action.label}
                     href={action.href}
                     className={cn(
-                      'flex items-center gap-2 px-3 py-2 rounded-md text-sm text-gray-700',
-                      'hover:bg-gray-50 border transition-colors',
-                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900'
+                      'flex items-center gap-2 px-3 py-2 rounded-md text-sm text-foreground',
+                      'hover:bg-muted border transition-colors',
+                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
                     )}
                   >
-                    <Icon className="h-4 w-4 text-gray-400" aria-hidden="true" />
+                    <Icon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                     {action.label}
                   </Link>
                 )
@@ -412,10 +412,10 @@ export function DashboardClient({ initialData }: DashboardClientProps) {
 
         {/* Block Types Breakdown */}
         <section aria-label="Block type breakdown">
-          <h2 className="text-lg font-semibold text-gray-900 mb-3">Block Types</h2>
-          <div className="rounded-lg border bg-white p-4">
+          <h2 className="text-lg font-semibold text-foreground mb-3">Block Types</h2>
+          <div className="rounded-lg border bg-background p-4">
             {activeBlockTypes.length === 0 ? (
-              <p className="text-sm text-gray-500 py-4 text-center">
+              <p className="text-sm text-muted-foreground py-4 text-center">
                 No blocks created yet.
               </p>
             ) : (
@@ -427,16 +427,16 @@ export function DashboardClient({ initialData }: DashboardClientProps) {
                   return (
                     <div key={key}>
                       <div className="flex items-center justify-between mb-1">
-                        <dt className="text-sm text-gray-700">
+                        <dt className="text-sm text-foreground">
                           {capitalize(key)}s
                         </dt>
-                        <dd className="text-sm font-medium text-gray-900 tabular-nums">
+                        <dd className="text-sm font-medium text-foreground tabular-nums">
                           {count}
                         </dd>
                       </div>
-                      <div className="h-2 w-full rounded-full bg-gray-100" aria-hidden="true">
+                      <div className="h-2 w-full rounded-full bg-muted" aria-hidden="true">
                         <div
-                          className="h-2 rounded-full bg-gray-900 transition-all"
+                          className="h-2 rounded-full bg-primary transition-all"
                           style={{ width: `${widthPercent}%` }}
                         />
                       </div>
@@ -471,23 +471,23 @@ function DashboardSkeleton() {
       {/* Header skeleton */}
       <div className="flex items-start justify-between mb-6">
         <div>
-          <div className="h-8 w-28 rounded-md bg-gray-100 animate-pulse" />
-          <div className="h-4 w-48 rounded-md bg-gray-100 animate-pulse mt-2" />
+          <div className="h-8 w-28 rounded-md bg-muted animate-pulse" />
+          <div className="h-4 w-48 rounded-md bg-muted animate-pulse mt-2" />
         </div>
-        <div className="h-9 w-32 rounded-md bg-gray-100 animate-pulse" />
+        <div className="h-9 w-32 rounded-md bg-muted animate-pulse" />
       </div>
 
       {/* Stat card skeletons */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="rounded-lg border bg-white p-4">
+          <div key={i} className="rounded-lg border bg-background p-4">
             <div className="flex items-start justify-between">
-              <div className="h-5 w-5 rounded bg-gray-100 animate-pulse" />
-              <div className="h-4 w-4 rounded bg-gray-100 animate-pulse" />
+              <div className="h-5 w-5 rounded bg-muted animate-pulse" />
+              <div className="h-4 w-4 rounded bg-muted animate-pulse" />
             </div>
             <div className="mt-3">
-              <div className="h-9 w-16 rounded bg-gray-100 animate-pulse" />
-              <div className="h-4 w-24 rounded bg-gray-100 animate-pulse mt-2" />
+              <div className="h-9 w-16 rounded bg-muted animate-pulse" />
+              <div className="h-4 w-24 rounded bg-muted animate-pulse mt-2" />
             </div>
           </div>
         ))}
@@ -495,16 +495,16 @@ function DashboardSkeleton() {
 
       {/* Activity feed skeleton */}
       <div className="mb-8">
-        <div className="h-6 w-36 rounded bg-gray-100 animate-pulse mb-3" />
-        <div className="rounded-lg border bg-white divide-y">
+        <div className="h-6 w-36 rounded bg-muted animate-pulse mb-3" />
+        <div className="rounded-lg border bg-background divide-y">
           {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="flex items-center gap-3 px-4 py-3">
-              <div className="h-2.5 w-2.5 rounded-full bg-gray-100 animate-pulse shrink-0" />
+              <div className="h-2.5 w-2.5 rounded-full bg-muted animate-pulse shrink-0" />
               <div className="flex-1 space-y-1.5">
-                <div className="h-4 w-40 rounded bg-gray-100 animate-pulse" />
-                <div className="h-3 w-28 rounded bg-gray-100 animate-pulse" />
+                <div className="h-4 w-40 rounded bg-muted animate-pulse" />
+                <div className="h-3 w-28 rounded bg-muted animate-pulse" />
               </div>
-              <div className="h-3 w-14 rounded bg-gray-100 animate-pulse shrink-0" />
+              <div className="h-3 w-14 rounded bg-muted animate-pulse shrink-0" />
             </div>
           ))}
         </div>
@@ -513,23 +513,23 @@ function DashboardSkeleton() {
       {/* Quick actions + block types skeleton */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <div className="h-6 w-32 rounded bg-gray-100 animate-pulse mb-3" />
-          <div className="rounded-lg border bg-white p-4 space-y-2">
+          <div className="h-6 w-32 rounded bg-muted animate-pulse mb-3" />
+          <div className="rounded-lg border bg-background p-4 space-y-2">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="h-10 w-full rounded-md bg-gray-100 animate-pulse" />
+              <div key={i} className="h-10 w-full rounded-md bg-muted animate-pulse" />
             ))}
           </div>
         </div>
         <div>
-          <div className="h-6 w-28 rounded bg-gray-100 animate-pulse mb-3" />
-          <div className="rounded-lg border bg-white p-4 space-y-3">
+          <div className="h-6 w-28 rounded bg-muted animate-pulse mb-3" />
+          <div className="rounded-lg border bg-background p-4 space-y-3">
             {Array.from({ length: 3 }).map((_, i) => (
               <div key={i}>
                 <div className="flex justify-between mb-1">
-                  <div className="h-4 w-20 rounded bg-gray-100 animate-pulse" />
-                  <div className="h-4 w-8 rounded bg-gray-100 animate-pulse" />
+                  <div className="h-4 w-20 rounded bg-muted animate-pulse" />
+                  <div className="h-4 w-8 rounded bg-muted animate-pulse" />
                 </div>
-                <div className="h-2 w-full rounded-full bg-gray-100 animate-pulse" />
+                <div className="h-2 w-full rounded-full bg-muted animate-pulse" />
               </div>
             ))}
           </div>

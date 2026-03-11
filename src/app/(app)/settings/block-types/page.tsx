@@ -91,8 +91,8 @@ export default async function BlockTypesPage() {
 
       {!error && types.length === 0 && (
         <div className="flex flex-col items-center justify-center py-12 text-center">
-          <p className="text-lg font-medium text-gray-900 mb-1">No block types found</p>
-          <p className="text-sm text-gray-500">
+          <p className="text-lg font-medium text-foreground mb-1">No block types found</p>
+          <p className="text-sm text-muted-foreground">
             Block types are automatically created when your organisation is set up.
           </p>
         </div>
@@ -108,29 +108,29 @@ export default async function BlockTypesPage() {
             <Link
               key={typeDef.id}
               href={`/settings/block-types/${typeDef.id}`}
-              className={`group block rounded-lg border border-l-4 ${getColorClass(typeDef.color)} bg-white p-4 shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring`}
+              className={`group block rounded-lg border border-l-4 ${getColorClass(typeDef.color)} bg-background p-4 shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring`}
             >
               <div className="flex items-center gap-3 mb-2">
                 <span className="text-xl" aria-hidden="true">
                   {getIconDisplay(typeDef.icon)}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <h2 className="text-sm font-semibold text-gray-900 truncate group-hover:text-gray-700">
+                  <h2 className="text-sm font-semibold text-foreground truncate group-hover:text-foreground">
                     {typeDef.display_name}
                   </h2>
                   {typeDef.is_system && (
-                    <span className="inline-block text-[10px] font-medium uppercase tracking-wide text-gray-400">
+                    <span className="inline-block text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
                       System
                     </span>
                   )}
                 </div>
               </div>
               {typeDef.description && (
-                <p className="text-xs text-gray-500 mb-3 line-clamp-2">
+                <p className="text-xs text-muted-foreground mb-3 line-clamp-2">
                   {typeDef.description}
                 </p>
               )}
-              <div className="text-xs text-gray-400">
+              <div className="text-xs text-muted-foreground">
                 {fieldCount} {fieldCount === 1 ? 'field' : 'fields'}
               </div>
             </Link>

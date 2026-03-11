@@ -40,17 +40,17 @@ function formatRelativeTime(isoDate: string): string {
 export function RecentEventsFeed({ events }: RecentEventsFeedProps) {
   return (
     <section aria-label="Recent events">
-      <h2 className="text-sm font-semibold text-gray-700 mb-3">Recent Events</h2>
+      <h2 className="text-sm font-semibold text-foreground mb-3">Recent Events</h2>
 
       {events.length === 0 ? (
-        <div className="rounded-lg border bg-white px-6 py-10 text-center">
-          <p className="text-sm text-gray-500">No events recorded yet.</p>
-          <p className="mt-1 text-xs text-gray-400">
+        <div className="rounded-lg border bg-background px-6 py-10 text-center">
+          <p className="text-sm text-muted-foreground">No events recorded yet.</p>
+          <p className="mt-1 text-xs text-muted-foreground">
             Events appear here when blocks are created or workflows run.
           </p>
         </div>
       ) : (
-        <div className="rounded-lg border bg-white divide-y">
+        <div className="rounded-lg border bg-background divide-y">
           {events.map((event) => {
             const relative = formatRelativeTime(event.occurred_at)
             const actor = ACTOR_LABELS[event.actor_type] ?? event.actor_type
@@ -58,15 +58,15 @@ export function RecentEventsFeed({ events }: RecentEventsFeedProps) {
             const row = (
               <div className="flex items-center justify-between gap-4 px-4 py-3">
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-gray-900 truncate">{event.type}</p>
-                  <p className="text-xs text-gray-500 mt-0.5 truncate">
+                  <p className="text-sm font-medium text-foreground truncate">{event.type}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5 truncate">
                     {event.block_name ?? 'Org-level'} · {actor}
                   </p>
                 </div>
                 <time
                   dateTime={event.occurred_at}
                   title={event.occurred_at}
-                  className="text-xs text-gray-400 shrink-0 cursor-default"
+                  className="text-xs text-muted-foreground shrink-0 cursor-default"
                 >
                   {relative}
                 </time>
@@ -77,7 +77,7 @@ export function RecentEventsFeed({ events }: RecentEventsFeedProps) {
               <Link
                 key={event.id}
                 href={`/blocks/${event.block_id}`}
-                className="block hover:bg-gray-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-gray-900"
+                className="block hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
                 aria-label={`${event.type} on ${event.block_name ?? 'org'} — ${relative}`}
               >
                 {row}

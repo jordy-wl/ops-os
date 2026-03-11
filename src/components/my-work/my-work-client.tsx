@@ -38,7 +38,7 @@ function TasksSection({ tasks, currentUserId }: { tasks: MyWorkTask[]; currentUs
 
   if (myTasks.length === 0) {
     return (
-      <div className="text-center py-8 text-sm text-gray-400">
+      <div className="text-center py-8 text-sm text-muted-foreground">
         No open tasks. You&apos;re all caught up!
       </div>
     )
@@ -50,11 +50,11 @@ function TasksSection({ tasks, currentUserId }: { tasks: MyWorkTask[]; currentUs
         <Link
           key={task.id}
           href={`/tasks`}
-          className="flex items-center justify-between rounded-lg border border-gray-100 p-3 hover:border-gray-200 hover:bg-gray-50 transition-colors"
+          className="flex items-center justify-between rounded-lg border border-border p-3 hover:border-border hover:bg-muted transition-colors"
         >
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium text-gray-900 truncate">{task.name}</p>
-            <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-400">
+            <p className="text-sm font-medium text-foreground truncate">{task.name}</p>
+            <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground">
               {task.step_name && <span>{task.step_name}</span>}
               {task.workflow_instance_name && (
                 <span className="truncate max-w-[140px]">{task.workflow_instance_name}</span>
@@ -74,7 +74,7 @@ function TasksSection({ tasks, currentUserId }: { tasks: MyWorkTask[]; currentUs
       {myTasks.length > 8 && (
         <Link
           href="/tasks"
-          className="flex items-center justify-center gap-1 py-2 text-xs text-gray-500 hover:text-gray-700"
+          className="flex items-center justify-center gap-1 py-2 text-xs text-muted-foreground hover:text-foreground"
         >
           View all {myTasks.length} tasks <ArrowRight className="h-3 w-3" />
         </Link>
@@ -86,7 +86,7 @@ function TasksSection({ tasks, currentUserId }: { tasks: MyWorkTask[]; currentUs
 function WorkflowsSection({ workflows }: { workflows: MyWorkWorkflow[] }) {
   if (workflows.length === 0) {
     return (
-      <div className="text-center py-8 text-sm text-gray-400">
+      <div className="text-center py-8 text-sm text-muted-foreground">
         No active workflows.
       </div>
     )
@@ -98,11 +98,11 @@ function WorkflowsSection({ workflows }: { workflows: MyWorkWorkflow[] }) {
         <Link
           key={wf.id}
           href={`/blocks/${wf.id}`}
-          className="flex items-center justify-between rounded-lg border border-gray-100 p-3 hover:border-gray-200 hover:bg-gray-50 transition-colors"
+          className="flex items-center justify-between rounded-lg border border-border p-3 hover:border-border hover:bg-muted transition-colors"
         >
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium text-gray-900 truncate">{wf.name}</p>
-            <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-400">
+            <p className="text-sm font-medium text-foreground truncate">{wf.name}</p>
+            <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground">
               {wf.template_name && (
                 <span className="truncate max-w-[160px]">{wf.template_name}</span>
               )}
@@ -122,7 +122,7 @@ function WorkflowsSection({ workflows }: { workflows: MyWorkWorkflow[] }) {
       {workflows.length > 6 && (
         <Link
           href="/workflows"
-          className="flex items-center justify-center gap-1 py-2 text-xs text-gray-500 hover:text-gray-700"
+          className="flex items-center justify-center gap-1 py-2 text-xs text-muted-foreground hover:text-foreground"
         >
           View all {workflows.length} workflows <ArrowRight className="h-3 w-3" />
         </Link>
@@ -134,7 +134,7 @@ function WorkflowsSection({ workflows }: { workflows: MyWorkWorkflow[] }) {
 function RecentBlocksSection({ blocks }: { blocks: MyWorkBlock[] }) {
   if (blocks.length === 0) {
     return (
-      <div className="text-center py-8 text-sm text-gray-400">
+      <div className="text-center py-8 text-sm text-muted-foreground">
         No blocks yet.
       </div>
     )
@@ -146,13 +146,13 @@ function RecentBlocksSection({ blocks }: { blocks: MyWorkBlock[] }) {
         <Link
           key={block.id}
           href={`/blocks/${block.id}`}
-          className="flex items-center justify-between rounded-lg border border-gray-100 p-3 hover:border-gray-200 hover:bg-gray-50 transition-colors"
+          className="flex items-center justify-between rounded-lg border border-border p-3 hover:border-border hover:bg-muted transition-colors"
         >
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium text-gray-900 truncate">{block.name}</p>
-            <p className="text-xs text-gray-400 mt-0.5">{block.type}</p>
+            <p className="text-sm font-medium text-foreground truncate">{block.name}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{block.type}</p>
           </div>
-          <span className="shrink-0 ml-2 text-xs text-gray-400">
+          <span className="shrink-0 ml-2 text-xs text-muted-foreground">
             {formatRelative(block.updated_at)}
           </span>
         </Link>
@@ -164,7 +164,7 @@ function RecentBlocksSection({ blocks }: { blocks: MyWorkBlock[] }) {
 function ActivityFeed({ events }: { events: MyWorkEvent[] }) {
   if (events.length === 0) {
     return (
-      <div className="text-center py-8 text-sm text-gray-400">
+      <div className="text-center py-8 text-sm text-muted-foreground">
         No recent activity.
       </div>
     )
@@ -185,22 +185,22 @@ function ActivityFeed({ events }: { events: MyWorkEvent[] }) {
               event.type.startsWith('email.') ? 'bg-green-400' :
               event.type.startsWith('document.') ? 'bg-amber-400' :
               event.type.startsWith('meeting.') ? 'bg-teal-400' :
-              'bg-gray-300'
+              'bg-muted-foreground'
             )}
             aria-hidden="true"
           />
           <div className="min-w-0 flex-1">
-            <span className="font-medium text-gray-700">{event.type}</span>
+            <span className="font-medium text-foreground">{event.type}</span>
             {event.block_name && (
-              <span className="text-gray-400">
+              <span className="text-muted-foreground">
                 {' '}on{' '}
-                <Link href={`/blocks/${event.block_id}`} className="text-gray-600 hover:underline">
+                <Link href={`/blocks/${event.block_id}`} className="text-muted-foreground hover:underline">
                   {event.block_name}
                 </Link>
               </span>
             )}
           </div>
-          <span className="shrink-0 text-gray-400">{formatRelative(event.occurred_at)}</span>
+          <span className="shrink-0 text-muted-foreground">{formatRelative(event.occurred_at)}</span>
         </div>
       ))}
     </div>
@@ -219,10 +219,10 @@ function SectionCard({
   children: React.ReactNode
 }) {
   return (
-    <div className="rounded-lg border border-gray-200 bg-white">
+    <div className="rounded-lg border border-border bg-background">
       <div className="flex items-center gap-2 border-b px-4 py-3">
-        <Icon className="h-4 w-4 text-gray-500" aria-hidden="true" />
-        <h2 className="text-sm font-semibold text-gray-900">{title}</h2>
+        <Icon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+        <h2 className="text-sm font-semibold text-foreground">{title}</h2>
       </div>
       <div className="p-4">{children}</div>
     </div>
@@ -233,7 +233,7 @@ export function MyWorkClient({ initialData, currentUserId }: MyWorkClientProps) 
   if (!initialData) {
     return (
       <div className="p-6 lg:p-8">
-        <h1 className="text-2xl font-semibold text-gray-900 mb-6">My Work</h1>
+        <h1 className="text-2xl font-semibold text-foreground mb-6">My Work</h1>
         <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center" role="alert">
           <p className="text-sm font-medium text-red-800">Failed to load data.</p>
           <p className="mt-1 text-sm text-red-600">Refresh the page to try again.</p>
@@ -244,7 +244,7 @@ export function MyWorkClient({ initialData, currentUserId }: MyWorkClientProps) 
 
   return (
     <div className="p-6 lg:p-8">
-      <h1 className="text-2xl font-semibold text-gray-900 mb-6">My Work</h1>
+      <h1 className="text-2xl font-semibold text-foreground mb-6">My Work</h1>
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Tasks — top left */}

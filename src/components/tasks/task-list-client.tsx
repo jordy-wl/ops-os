@@ -101,10 +101,10 @@ export function TaskListClient({ initialTasks, currentUserId }: TaskListClientPr
               onClick={() => setFilter(s)}
               className={cn(
                 'px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                 filter === s
-                  ? 'bg-gray-900 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted text-muted-foreground hover:bg-muted'
               )}
             >
               {s === 'all' ? 'All' : s.charAt(0).toUpperCase() + s.slice(1)}
@@ -112,12 +112,12 @@ export function TaskListClient({ initialTasks, currentUserId }: TaskListClientPr
           ))}
         </div>
 
-        <label className="flex items-center gap-2 text-xs text-gray-600 cursor-pointer select-none">
+        <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
           <input
             type="checkbox"
             checked={showMine}
             onChange={(e) => setShowMine(e.target.checked)}
-            className="rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+            className="rounded border-border text-primary focus:ring-ring"
           />
           My tasks only
           {myTaskCount > 0 && (
@@ -127,7 +127,7 @@ export function TaskListClient({ initialTasks, currentUserId }: TaskListClientPr
           )}
         </label>
 
-        <span className="ml-auto text-xs text-gray-400">
+        <span className="ml-auto text-xs text-muted-foreground">
           {filtered.length} task{filtered.length !== 1 ? 's' : ''}
         </span>
       </div>
@@ -141,10 +141,10 @@ export function TaskListClient({ initialTasks, currentUserId }: TaskListClientPr
       {/* Empty state */}
       {filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <p className="text-lg font-semibold text-gray-900 mb-2">
+          <p className="text-lg font-semibold text-foreground mb-2">
             {tasks.length === 0 ? 'No tasks yet' : 'No matching tasks'}
           </p>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-muted-foreground">
             {tasks.length === 0
               ? 'Tasks appear here when workflows create them.'
               : 'Try adjusting your filters.'}
@@ -155,12 +155,12 @@ export function TaskListClient({ initialTasks, currentUserId }: TaskListClientPr
           {filtered.map((task) => (
             <div
               key={task.id}
-              className="flex items-center gap-4 rounded-lg border border-gray-200 bg-white p-4 hover:border-gray-300 transition-colors"
+              className="flex items-center gap-4 rounded-lg border border-border bg-background p-4 hover:border-border transition-colors"
             >
               {/* Task info */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <h3 className="text-sm font-medium text-gray-900 truncate">{task.name}</h3>
+                  <h3 className="text-sm font-medium text-foreground truncate">{task.name}</h3>
                   <span
                     className={cn(
                       'shrink-0 inline-flex rounded-full px-2 py-0.5 text-xs font-medium',
@@ -170,7 +170,7 @@ export function TaskListClient({ initialTasks, currentUserId }: TaskListClientPr
                     {task.status}
                   </span>
                 </div>
-                <div className="flex items-center gap-3 text-xs text-gray-500">
+                <div className="flex items-center gap-3 text-xs text-muted-foreground">
                   {task.step_name && <span>Step: {task.step_name}</span>}
                   {task.workflow_instance_name && (
                     <span className="truncate max-w-[200px]" title={task.workflow_instance_name}>
@@ -188,9 +188,9 @@ export function TaskListClient({ initialTasks, currentUserId }: TaskListClientPr
                     onClick={() => handleClaim(task.id)}
                     disabled={actionLoading === task.id}
                     className={cn(
-                      'px-3 py-1.5 rounded-md text-xs font-medium bg-gray-900 text-white',
-                      'hover:bg-gray-700 transition-colors',
-                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900',
+                      'px-3 py-1.5 rounded-md text-xs font-medium bg-primary text-primary-foreground',
+                      'hover:bg-primary/80 transition-colors',
+                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                       'disabled:opacity-50 disabled:cursor-not-allowed'
                     )}
                   >
@@ -212,7 +212,7 @@ export function TaskListClient({ initialTasks, currentUserId }: TaskListClientPr
                   </button>
                 )}
                 {task.status === 'claimed' && task.assigned_to !== currentUserId && (
-                  <span className="text-xs text-gray-400 italic">Assigned to another user</span>
+                  <span className="text-xs text-muted-foreground italic">Assigned to another user</span>
                 )}
               </div>
             </div>

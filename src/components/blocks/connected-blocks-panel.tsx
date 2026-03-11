@@ -23,10 +23,10 @@ const TYPE_STYLES: Record<string, string> = {
 export function ConnectedBlocksPanel({ neighbours }: ConnectedBlocksPanelProps) {
   return (
     <section aria-label="Connected blocks">
-      <h2 className="text-sm font-semibold text-gray-700 mb-3">Connected to</h2>
+      <h2 className="text-sm font-semibold text-foreground mb-3">Connected to</h2>
 
       {neighbours.length === 0 ? (
-        <p className="text-sm text-gray-400 italic">(none)</p>
+        <p className="text-sm text-muted-foreground italic">(none)</p>
       ) : (
         <ul className="space-y-2" role="list">
           {neighbours.map((block) => {
@@ -36,7 +36,7 @@ export function ConnectedBlocksPanel({ neighbours }: ConnectedBlocksPanelProps) 
               <li key={block.id}>
                 <Link
                   href={`/blocks/${block.id}`}
-                  className="flex items-center gap-2 rounded-md p-2 text-sm hover:bg-gray-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900"
+                  className="flex items-center gap-2 rounded-md p-2 text-sm hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <span
                     className={cn(
@@ -46,7 +46,7 @@ export function ConnectedBlocksPanel({ neighbours }: ConnectedBlocksPanelProps) 
                   >
                     {block.type}
                   </span>
-                  <span className="text-gray-900 truncate">{block.name}</span>
+                  <span className="text-foreground truncate">{block.name}</span>
                 </Link>
               </li>
             )

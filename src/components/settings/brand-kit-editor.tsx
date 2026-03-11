@@ -128,15 +128,15 @@ export function BrandKitEditor({
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Brand Kit</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className="text-2xl font-semibold text-foreground">Brand Kit</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             Configure your organisation&apos;s brand identity for generated documents.
           </p>
         </div>
         <button
           onClick={handleSave}
           disabled={saving}
-          className="inline-flex items-center gap-2 rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/80 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
           {saving ? 'Saving...' : saved ? 'Saved' : 'Save Brand Kit'}
         </button>
@@ -151,10 +151,10 @@ export function BrandKitEditor({
       <div className="space-y-8">
         {/* Company Info */}
         <section>
-          <h2 className="text-lg font-medium text-gray-900 mb-4">Company Information</h2>
+          <h2 className="text-lg font-medium text-foreground mb-4">Company Information</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="company-name" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="company-name" className="block text-sm font-medium text-foreground mb-1">
                 Company Name *
               </label>
               <input
@@ -162,12 +162,12 @@ export function BrandKitEditor({
                 type="text"
                 value={brand.company_name}
                 onChange={(e) => update('company_name', e.target.value)}
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+                className="w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 placeholder="Your Company Name"
               />
             </div>
             <div>
-              <label htmlFor="tagline" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="tagline" className="block text-sm font-medium text-foreground mb-1">
                 Tagline
               </label>
               <input
@@ -175,7 +175,7 @@ export function BrandKitEditor({
                 type="text"
                 value={brand.tagline}
                 onChange={(e) => update('tagline', e.target.value)}
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+                className="w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 placeholder="Your company tagline"
               />
             </div>
@@ -184,9 +184,9 @@ export function BrandKitEditor({
 
         {/* Logo */}
         <section>
-          <h2 className="text-lg font-medium text-gray-900 mb-4">Logo</h2>
+          <h2 className="text-lg font-medium text-foreground mb-4">Logo</h2>
           <div>
-            <label htmlFor="logo-url" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="logo-url" className="block text-sm font-medium text-foreground mb-1">
               Logo URL
             </label>
             <input
@@ -194,11 +194,11 @@ export function BrandKitEditor({
               type="url"
               value={brand.logo_url}
               onChange={(e) => update('logo_url', e.target.value)}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+              className="w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               placeholder="https://example.com/logo.png"
             />
             {brand.logo_url && (
-              <div className="mt-3 p-4 bg-gray-50 rounded-md inline-block">
+              <div className="mt-3 p-4 bg-muted rounded-md inline-block">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={brand.logo_url}
@@ -213,10 +213,10 @@ export function BrandKitEditor({
 
         {/* Colors */}
         <section>
-          <h2 className="text-lg font-medium text-gray-900 mb-4">Brand Colours</h2>
+          <h2 className="text-lg font-medium text-foreground mb-4">Brand Colours</h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label htmlFor="primary-color" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="primary-color" className="block text-sm font-medium text-foreground mb-1">
                 Primary Colour
               </label>
               <div className="flex items-center gap-2">
@@ -225,19 +225,19 @@ export function BrandKitEditor({
                   type="color"
                   value={brand.primary_color}
                   onChange={(e) => update('primary_color', e.target.value)}
-                  className="w-10 h-10 rounded border border-gray-300 cursor-pointer"
+                  className="w-10 h-10 rounded border border-border cursor-pointer"
                 />
                 <input
                   type="text"
                   value={brand.primary_color}
                   onChange={(e) => update('primary_color', e.target.value)}
-                  className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm font-mono"
+                  className="flex-1 rounded-md border border-border px-3 py-2 text-sm font-mono"
                   placeholder="#1a1a2e"
                 />
               </div>
             </div>
             <div>
-              <label htmlFor="secondary-color" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="secondary-color" className="block text-sm font-medium text-foreground mb-1">
                 Secondary Colour
               </label>
               <div className="flex items-center gap-2">
@@ -246,19 +246,19 @@ export function BrandKitEditor({
                   type="color"
                   value={brand.secondary_color}
                   onChange={(e) => update('secondary_color', e.target.value)}
-                  className="w-10 h-10 rounded border border-gray-300 cursor-pointer"
+                  className="w-10 h-10 rounded border border-border cursor-pointer"
                 />
                 <input
                   type="text"
                   value={brand.secondary_color}
                   onChange={(e) => update('secondary_color', e.target.value)}
-                  className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm font-mono"
+                  className="flex-1 rounded-md border border-border px-3 py-2 text-sm font-mono"
                   placeholder="#16213e"
                 />
               </div>
             </div>
             <div>
-              <label htmlFor="header-bg" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="header-bg" className="block text-sm font-medium text-foreground mb-1">
                 Header Background
               </label>
               <div className="flex items-center gap-2">
@@ -267,13 +267,13 @@ export function BrandKitEditor({
                   type="color"
                   value={brand.header_style.background_color || brand.primary_color}
                   onChange={(e) => updateHeader('background_color', e.target.value)}
-                  className="w-10 h-10 rounded border border-gray-300 cursor-pointer"
+                  className="w-10 h-10 rounded border border-border cursor-pointer"
                 />
                 <input
                   type="text"
                   value={brand.header_style.background_color || brand.primary_color}
                   onChange={(e) => updateHeader('background_color', e.target.value)}
-                  className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm font-mono"
+                  className="flex-1 rounded-md border border-border px-3 py-2 text-sm font-mono"
                 />
               </div>
             </div>
@@ -282,16 +282,16 @@ export function BrandKitEditor({
 
         {/* Typography */}
         <section>
-          <h2 className="text-lg font-medium text-gray-900 mb-4">Typography</h2>
+          <h2 className="text-lg font-medium text-foreground mb-4">Typography</h2>
           <div>
-            <label htmlFor="font-family" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="font-family" className="block text-sm font-medium text-foreground mb-1">
               Font Family
             </label>
             <select
               id="font-family"
               value={brand.font_family}
               onChange={(e) => update('font_family', e.target.value)}
-              className="w-full max-w-md rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+              className="w-full max-w-md rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             >
               {FONT_OPTIONS.map((f) => (
                 <option key={f} value={f} style={{ fontFamily: f }}>
@@ -304,9 +304,9 @@ export function BrandKitEditor({
 
         {/* Footer */}
         <section>
-          <h2 className="text-lg font-medium text-gray-900 mb-4">Document Footer</h2>
+          <h2 className="text-lg font-medium text-foreground mb-4">Document Footer</h2>
           <div>
-            <label htmlFor="footer-content" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="footer-content" className="block text-sm font-medium text-foreground mb-1">
               Footer Content (HTML allowed)
             </label>
             <textarea
@@ -314,7 +314,7 @@ export function BrandKitEditor({
               value={brand.footer_content}
               onChange={(e) => update('footer_content', e.target.value)}
               rows={3}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+              className="w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               placeholder="© 2026 Your Company. All rights reserved. ABN: 12 345 678 901"
             />
           </div>
@@ -322,8 +322,8 @@ export function BrandKitEditor({
 
         {/* Live Preview */}
         <section>
-          <h2 className="text-lg font-medium text-gray-900 mb-4">Preview</h2>
-          <div className="border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+          <h2 className="text-lg font-medium text-foreground mb-4">Preview</h2>
+          <div className="border border-border rounded-lg overflow-hidden shadow-sm">
             {/* Header Preview */}
             <div
               className="px-6 py-4 flex items-center gap-3"
@@ -350,7 +350,7 @@ export function BrandKitEditor({
               <h3 className="text-lg font-semibold mb-2" style={{ color: brand.primary_color }}>
                 Sample Document Heading
               </h3>
-              <p className="text-sm text-gray-700 mb-3">
+              <p className="text-sm text-foreground mb-3">
                 This is how your generated documents will look with the current brand settings.
                 Headings use your primary colour, and links use the secondary colour.
               </p>
@@ -361,7 +361,7 @@ export function BrandKitEditor({
               </p>
             </div>
             {/* Footer Preview */}
-            <div className="border-t px-6 py-3 text-xs text-gray-500">
+            <div className="border-t px-6 py-3 text-xs text-muted-foreground">
               {brand.footer_content || `© ${new Date().getFullYear()} ${brand.company_name || 'Company Name'}`}
             </div>
           </div>

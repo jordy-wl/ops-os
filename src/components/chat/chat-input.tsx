@@ -340,21 +340,21 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
   const showDropdown = showMention && (mentionLoading || mentionResults.length > 0 || mentionQuery.trim().length > 0)
 
   return (
-    <div className="relative border-t bg-white px-4 py-3">
+    <div className="relative border-t bg-background px-4 py-3">
       {/* Mention autocomplete dropdown — positioned above the input */}
       {showDropdown && (
         <div
-          className="absolute bottom-full left-4 right-4 mb-1 rounded-lg border border-gray-200 bg-white shadow-lg z-10"
+          className="absolute bottom-full left-4 right-4 mb-1 rounded-lg border border-border bg-background shadow-lg z-10"
           role="dialog"
           aria-label="Block mention suggestions"
         >
           {mentionLoading && mentionResults.length === 0 ? (
-            <div className="flex items-center gap-2 px-3 py-3 text-sm text-gray-500" role="status" aria-label="Searching blocks">
+            <div className="flex items-center gap-2 px-3 py-3 text-sm text-muted-foreground" role="status" aria-label="Searching blocks">
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
               <span>Searching blocks...</span>
             </div>
           ) : mentionResults.length === 0 && mentionQuery.trim().length > 0 && !mentionLoading ? (
-            <div className="px-3 py-3 text-sm text-gray-500">
+            <div className="px-3 py-3 text-sm text-muted-foreground">
               No blocks found
             </div>
           ) : (
@@ -372,8 +372,8 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
                   className={cn(
                     'flex items-center gap-2 px-3 py-2 text-sm cursor-pointer transition-colors',
                     index === activeIndex
-                      ? 'bg-gray-100 text-gray-900'
-                      : 'text-gray-700 hover:bg-gray-50'
+                      ? 'bg-muted text-foreground'
+                      : 'text-foreground hover:bg-muted'
                   )}
                   onMouseDown={(e) => {
                     // Use mousedown (not click) to fire before blur
@@ -382,7 +382,7 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
                   }}
                   onMouseEnter={() => setActiveIndex(index)}
                 >
-                  <Search className="h-3.5 w-3.5 shrink-0 text-gray-400" aria-hidden="true" />
+                  <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
                   <span className="truncate font-medium">{block.name}</span>
                   <span
                     className={cn(
@@ -395,7 +395,7 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
                 </li>
               ))}
               {mentionLoading && mentionResults.length > 0 && (
-                <li className="flex items-center gap-2 px-3 py-1.5 text-xs text-gray-400" role="status" aria-label="Updating results">
+                <li className="flex items-center gap-2 px-3 py-1.5 text-xs text-muted-foreground" role="status" aria-label="Updating results">
                   <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" />
                   <span>Updating...</span>
                 </li>
@@ -405,7 +405,7 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
         </div>
       )}
 
-      <div className="flex items-end gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 focus-within:border-gray-400 focus-within:ring-1 focus-within:ring-gray-400">
+      <div className="flex items-end gap-2 rounded-xl border border-border bg-muted px-3 py-2 focus-within:border-ring focus-within:ring-1 focus-within:ring-ring">
         <textarea
           ref={textareaRef}
           value={value}
@@ -418,7 +418,7 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
           aria-expanded={showDropdown}
           aria-haspopup="listbox"
           className={cn(
-            'flex-1 resize-none bg-transparent text-sm text-gray-900 placeholder:text-gray-400',
+            'flex-1 resize-none bg-transparent text-sm text-foreground placeholder:text-muted-foreground',
             'focus:outline-none max-h-32 leading-relaxed',
             disabled && 'opacity-60 cursor-not-allowed'
           )}
@@ -430,10 +430,10 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
           aria-label="Send message"
           className={cn(
             'shrink-0 h-8 w-8 rounded-lg flex items-center justify-center transition-colors',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
             disabled || !value.trim()
-              ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-              : 'bg-gray-900 text-white hover:bg-gray-700'
+              ? 'bg-muted text-muted-foreground cursor-not-allowed'
+              : 'bg-primary text-primary-foreground hover:bg-primary/80'
           )}
         >
           {/* Send arrow icon */}
@@ -447,7 +447,7 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
           </svg>
         </button>
       </div>
-      <p className="mt-1.5 text-center text-xs text-gray-400">
+      <p className="mt-1.5 text-center text-xs text-muted-foreground">
         Enter to send · Shift+Enter for newline · @ to mention a block
       </p>
     </div>

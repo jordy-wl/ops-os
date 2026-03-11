@@ -159,10 +159,10 @@ export function WorkflowJobsClient({ initialJobs }: WorkflowJobsClientProps) {
               aria-pressed={activeFilter === f}
               className={cn(
                 'h-9 px-3 rounded-md text-sm font-medium capitalize transition-colors',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                 activeFilter === f
-                  ? 'bg-gray-900 text-white'
-                  : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-background border border-border text-foreground hover:bg-muted'
               )}
             >
               {f}
@@ -175,7 +175,7 @@ export function WorkflowJobsClient({ initialJobs }: WorkflowJobsClientProps) {
 
         {/* Auto-refresh indicator */}
         {hasActiveJobs && (
-          <span className="ml-auto text-xs text-gray-400" aria-live="polite">
+          <span className="ml-auto text-xs text-muted-foreground" aria-live="polite">
             Auto-refreshing
           </span>
         )}
@@ -186,27 +186,27 @@ export function WorkflowJobsClient({ initialJobs }: WorkflowJobsClientProps) {
         <div className="flex flex-col items-center justify-center py-16 text-center">
           {jobs.length === 0 ? (
             <>
-              <p className="text-lg font-semibold text-gray-900 mb-2">No workflows yet</p>
-              <p className="text-sm text-gray-500 mb-6">
+              <p className="text-lg font-semibold text-foreground mb-2">No workflows yet</p>
+              <p className="text-sm text-muted-foreground mb-6">
                 Trigger an onboarding workflow from any block to get started.
               </p>
               <Link
                 href="/blocks"
                 className={cn(
-                  'px-4 py-2 rounded-md bg-gray-900 text-white text-sm font-medium',
-                  'hover:bg-gray-700 transition-colors',
-                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900'
+                  'px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium',
+                  'hover:bg-primary/80 transition-colors',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
                 )}
               >
                 Go to Blocks
               </Link>
             </>
           ) : (
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-muted-foreground">
               No workflows match this filter.{' '}
               <button
                 onClick={() => setActiveFilter('all')}
-                className="underline hover:no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 rounded"
+                className="underline hover:no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
               >
                 Show all
               </button>
@@ -214,29 +214,29 @@ export function WorkflowJobsClient({ initialJobs }: WorkflowJobsClientProps) {
           )}
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-gray-200">
+        <div className="overflow-x-auto rounded-lg border border-border">
           <table className="w-full text-sm" aria-label="Workflow jobs">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-muted border-b border-border">
               <tr>
-                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide w-8" />
-                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
+                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide w-8" />
+                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">
                   Workflow
                 </th>
-                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
+                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">
                   Block
                 </th>
-                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
+                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">
                   Status
                 </th>
-                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
+                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">
                   Created
                 </th>
-                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
+                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">
                   Completed
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 bg-white">
+            <tbody className="divide-y divide-border bg-background">
               {filtered.map((job) => {
                 const isExpanded = expandedJobId === job.id
                 const detail = instanceDetails[job.id]
@@ -272,19 +272,19 @@ function JobRow({ job, isExpanded, detail, onToggle }: JobRowProps) {
   return (
     <>
       <tr
-        className={cn('hover:bg-gray-50 transition-colors cursor-pointer', isExpanded && 'bg-gray-50')}
+        className={cn('hover:bg-muted transition-colors cursor-pointer', isExpanded && 'bg-muted')}
         onClick={onToggle}
         aria-expanded={isExpanded}
       >
         {/* Expand toggle */}
-        <td className="px-4 py-3 text-gray-400">
+        <td className="px-4 py-3 text-muted-foreground">
           <span className={cn('inline-block transition-transform', isExpanded && 'rotate-90')} aria-hidden="true">
             &#9654;
           </span>
         </td>
 
         {/* Workflow type */}
-        <td className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap">
+        <td className="px-4 py-3 font-medium text-foreground whitespace-nowrap">
           {formatWorkflowType(job.workflow_type)}
         </td>
 
@@ -296,14 +296,14 @@ function JobRow({ job, isExpanded, detail, onToggle }: JobRowProps) {
               onClick={(e) => e.stopPropagation()}
               className={cn(
                 'text-blue-700 hover:underline',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 rounded'
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded'
               )}
               aria-label={`View block: ${job.block_name ?? job.block_id}`}
             >
               {job.block_name ?? job.block_id}
             </Link>
           ) : (
-            <span className="text-gray-400">{'\u2014'}</span>
+            <span className="text-muted-foreground">{'\u2014'}</span>
           )}
         </td>
 
@@ -330,16 +330,16 @@ function JobRow({ job, isExpanded, detail, onToggle }: JobRowProps) {
         </td>
 
         {/* Created at */}
-        <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
+        <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
           <time dateTime={job.created_at}>{formatDate(job.created_at)}</time>
         </td>
 
         {/* Completed at */}
-        <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
+        <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
           {job.completed_at ? (
             <time dateTime={job.completed_at}>{formatDate(job.completed_at)}</time>
           ) : (
-            <span className="text-gray-400">{'\u2014'}</span>
+            <span className="text-muted-foreground">{'\u2014'}</span>
           )}
         </td>
       </tr>
@@ -347,13 +347,13 @@ function JobRow({ job, isExpanded, detail, onToggle }: JobRowProps) {
       {/* Expanded detail row — step results timeline */}
       {isExpanded && (
         <tr>
-          <td colSpan={6} className="px-4 py-4 bg-gray-50 border-t border-gray-100">
+          <td colSpan={6} className="px-4 py-4 bg-muted border-t border-border">
             {detail ? (
               <StepTimeline detail={detail} />
             ) : job.block_id ? (
-              <p className="text-xs text-gray-400 animate-pulse">Loading step results...</p>
+              <p className="text-xs text-muted-foreground animate-pulse">Loading step results...</p>
             ) : (
-              <p className="text-xs text-gray-400">No instance detail available for this job.</p>
+              <p className="text-xs text-muted-foreground">No instance detail available for this job.</p>
             )}
           </td>
         </tr>
@@ -366,7 +366,7 @@ function JobRow({ job, isExpanded, detail, onToggle }: JobRowProps) {
 
 function StepTimeline({ detail }: { detail: InstanceDetail }) {
   if (detail.step_results.length === 0) {
-    return <p className="text-xs text-gray-400">No steps executed yet.</p>
+    return <p className="text-xs text-muted-foreground">No steps executed yet.</p>
   }
 
   return (
@@ -381,17 +381,17 @@ function StepTimeline({ detail }: { detail: InstanceDetail }) {
         )}>
           {detail.status}
         </span>
-        <span className="text-xs text-gray-500">
+        <span className="text-xs text-muted-foreground">
           Step {detail.current_step_index + 1} of {detail.step_results.length + (detail.status === 'running' ? 1 : 0)}
         </span>
         {detail.started_at && (
-          <span className="text-xs text-gray-400">
+          <span className="text-xs text-muted-foreground">
             Started: {formatDate(detail.started_at)}
           </span>
         )}
       </div>
 
-      <ol className="relative border-l border-gray-200 ml-2 space-y-3">
+      <ol className="relative border-l border-border ml-2 space-y-3">
         {detail.step_results.map((step, i) => (
           <li key={i} className="ml-4">
             <div className={cn(
@@ -401,26 +401,26 @@ function StepTimeline({ detail }: { detail: InstanceDetail }) {
                 : 'bg-yellow-400'
             )} />
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-gray-900">
+              <span className="text-sm font-medium text-foreground">
                 {step.step_name.replace(/_/g, ' ')}
               </span>
               <span className={cn(
                 'inline-flex rounded-full px-1.5 py-0.5 text-[10px] font-medium capitalize',
-                STEP_STATUS_STYLES[step.status] ?? 'bg-gray-100 text-gray-600'
+                STEP_STATUS_STYLES[step.status] ?? 'bg-muted text-muted-foreground'
               )}>
                 {step.status}
               </span>
-              <span className="text-[10px] text-gray-400">{step.step_type}</span>
+              <span className="text-[10px] text-muted-foreground">{step.step_type}</span>
             </div>
             {step.error && (
               <p className="text-xs text-red-600 mt-0.5">{step.error}</p>
             )}
             {step.output && Object.keys(step.output).length > 0 && (
-              <p className="text-xs text-gray-500 mt-0.5">
+              <p className="text-xs text-muted-foreground mt-0.5">
                 {Object.entries(step.output).map(([k, v]) => `${k}: ${v}`).join(', ')}
               </p>
             )}
-            <p className="text-[10px] text-gray-400 mt-0.5">{formatDate(step.executed_at)}</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">{formatDate(step.executed_at)}</p>
           </li>
         ))}
       </ol>

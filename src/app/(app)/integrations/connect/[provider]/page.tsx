@@ -21,7 +21,7 @@ export default async function ProviderConnectPage({
 
   return (
     <div className="p-6 lg:p-8">
-      <h1 className="text-2xl font-semibold text-gray-900 mb-8">Connect Integration</h1>
+      <h1 className="text-2xl font-semibold text-foreground mb-8">Connect Integration</h1>
       <OnboardingWizard initialProvider={provider as Provider} />
     </div>
   )

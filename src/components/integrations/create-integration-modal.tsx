@@ -88,30 +88,30 @@ export function CreateIntegrationModal({ onClose, onCreated }: Props) {
     >
       <div className="absolute inset-0 bg-black/40" onClick={webhookUrl ? handleDone : onClose} aria-hidden="true" />
 
-      <div className="relative w-full max-w-sm rounded-lg bg-white p-6 shadow-lg max-h-[85vh] overflow-y-auto">
-        <h2 id="create-connector-title" className="text-lg font-semibold text-gray-900 mb-4">
+      <div className="relative w-full max-w-sm rounded-lg bg-background p-6 shadow-lg max-h-[85vh] overflow-y-auto">
+        <h2 id="create-connector-title" className="text-lg font-semibold text-foreground mb-4">
           {webhookUrl ? 'Connector Created' : 'New Connector'}
         </h2>
 
         {/* Success state — show webhook URL */}
         {webhookUrl && (
           <div>
-            <p className="text-sm text-gray-600 mb-3">
+            <p className="text-sm text-muted-foreground mb-3">
               Your webhook URL is ready. Copy it and configure your external system to send POST requests here.
             </p>
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Webhook URL</label>
+              <label className="block text-sm font-medium text-foreground mb-1">Webhook URL</label>
               <div className="flex gap-2">
                 <input
                   type="text"
                   readOnly
                   value={webhookUrl}
-                  className="flex-1 rounded-md border border-gray-200 px-3 py-2 text-xs font-mono bg-gray-50"
+                  className="flex-1 rounded-md border border-border px-3 py-2 text-xs font-mono bg-muted"
                   onClick={(e) => (e.target as HTMLInputElement).select()}
                 />
                 <button
                   onClick={() => navigator.clipboard.writeText(webhookUrl)}
-                  className="shrink-0 px-3 py-2 rounded-md text-sm font-medium border border-gray-200 text-gray-700 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900"
+                  className="shrink-0 px-3 py-2 rounded-md text-sm font-medium border border-border text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   Copy
                 </button>
@@ -121,8 +121,8 @@ export function CreateIntegrationModal({ onClose, onCreated }: Props) {
               <button
                 onClick={handleDone}
                 className={cn(
-                  'px-4 py-2 rounded-md text-sm font-medium bg-gray-900 text-white',
-                  'hover:bg-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900'
+                  'px-4 py-2 rounded-md text-sm font-medium bg-primary text-primary-foreground',
+                  'hover:bg-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
                 )}
               >
                 Done
@@ -134,7 +134,7 @@ export function CreateIntegrationModal({ onClose, onCreated }: Props) {
         {/* Create form */}
         {!webhookUrl && (
           <form onSubmit={handleSubmit} noValidate>
-            <label htmlFor="connector-name" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="connector-name" className="block text-sm font-medium text-foreground mb-1">
               Name
             </label>
             <input
@@ -146,31 +146,31 @@ export function CreateIntegrationModal({ onClose, onCreated }: Props) {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. CRM Webhook"
-              className="mb-4 w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+              className="mb-4 w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             />
 
-            <label htmlFor="connector-provider" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="connector-provider" className="block text-sm font-medium text-foreground mb-1">
               Provider
             </label>
             <select
               id="connector-provider"
               value={provider}
               onChange={(e) => setProvider(e.target.value)}
-              className="mb-4 w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 bg-white"
+              className="mb-4 w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring bg-background"
             >
               {PROVIDERS.map((p) => (
                 <option key={p.value} value={p.value}>{p.label}</option>
               ))}
             </select>
 
-            <label htmlFor="connector-direction" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="connector-direction" className="block text-sm font-medium text-foreground mb-1">
               Direction
             </label>
             <select
               id="connector-direction"
               value={direction}
               onChange={(e) => setDirection(e.target.value)}
-              className="mb-4 w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 bg-white"
+              className="mb-4 w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring bg-background"
             >
               {DIRECTIONS.map((d) => (
                 <option key={d.value} value={d.value}>{d.label}</option>
@@ -186,8 +186,8 @@ export function CreateIntegrationModal({ onClose, onCreated }: Props) {
                 type="button"
                 onClick={onClose}
                 className={cn(
-                  'px-4 py-2 rounded-md text-sm font-medium border border-gray-200 text-gray-700',
-                  'hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900'
+                  'px-4 py-2 rounded-md text-sm font-medium border border-border text-foreground',
+                  'hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
                 )}
               >
                 Cancel
@@ -196,8 +196,8 @@ export function CreateIntegrationModal({ onClose, onCreated }: Props) {
                 type="submit"
                 disabled={submitting || !name.trim()}
                 className={cn(
-                  'px-4 py-2 rounded-md text-sm font-medium bg-gray-900 text-white',
-                  'hover:bg-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900',
+                  'px-4 py-2 rounded-md text-sm font-medium bg-primary text-primary-foreground',
+                  'hover:bg-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                   'disabled:opacity-50 disabled:cursor-not-allowed'
                 )}
               >

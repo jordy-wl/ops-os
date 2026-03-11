@@ -40,12 +40,12 @@ export function MessageList({ messages }: MessageListProps) {
     >
       {messages.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-full text-center py-12">
-          <p className="text-lg font-medium text-gray-700 mb-2">Ask about your operations</p>
-          <p className="text-sm text-gray-400 max-w-xs">
+          <p className="text-lg font-medium text-foreground mb-2">Ask about your operations</p>
+          <p className="text-sm text-muted-foreground max-w-xs">
             Select a block above to ask about a specific client, deal, or project — or ask
             org-level questions without a block selected.
           </p>
-          <p className="mt-4 text-xs text-gray-400 italic">
+          <p className="mt-4 text-xs text-muted-foreground italic">
             Try: &quot;What&apos;s the status of Thornfield Capital?&quot;
           </p>
         </div>

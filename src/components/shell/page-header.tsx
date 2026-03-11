@@ -23,26 +23,26 @@ export function PageHeader({ title, subtitle, actions, breadcrumbs }: PageHeader
   return (
     <div className="border-b pb-4 mb-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-gray-900">{title}</h1>
+        <h1 className="text-2xl font-semibold text-foreground">{title}</h1>
         {actions && <div className="flex items-center gap-2">{actions}</div>}
       </div>
-      {subtitle && <p className="text-sm text-gray-500 mt-1">{subtitle}</p>}
+      {subtitle && <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>}
       {breadcrumbs && breadcrumbs.length > 0 && (
         <nav aria-label="Breadcrumb" className="mt-2">
-          <ol className="flex items-center gap-1.5 text-sm text-gray-500">
+          <ol className="flex items-center gap-1.5 text-sm text-muted-foreground">
             {breadcrumbs.map((crumb, index) => (
               <li key={crumb.label} className="flex items-center gap-1.5">
                 {index > 0 && (
-                  <span className="text-gray-300" aria-hidden="true">
+                  <span className="text-muted-foreground" aria-hidden="true">
                     /
                   </span>
                 )}
                 {crumb.href ? (
-                  <Link href={crumb.href} className="hover:text-gray-700 transition-colors">
+                  <Link href={crumb.href} className="hover:text-foreground transition-colors">
                     {crumb.label}
                   </Link>
                 ) : (
-                  <span className="text-gray-900">{crumb.label}</span>
+                  <span className="text-foreground">{crumb.label}</span>
                 )}
               </li>
             ))}

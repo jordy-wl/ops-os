@@ -51,12 +51,12 @@ export function NodePalette({ onAddNode }: NodePaletteProps) {
   }
 
   return (
-    <div className="w-52 shrink-0 border-r bg-white overflow-y-auto">
+    <div className="w-52 shrink-0 border-r bg-background overflow-y-auto">
       <div className="p-3">
-        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Node Palette</h3>
+        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Node Palette</h3>
         {PALETTE_ITEMS.map((group) => (
           <div key={group.category} className="mb-4">
-            <p className="text-xs font-medium text-gray-400 mb-1.5">{group.category}</p>
+            <p className="text-xs font-medium text-muted-foreground mb-1.5">{group.category}</p>
             <div className="space-y-1">
               {group.items.map((item) => {
                 const Icon = item.icon
@@ -69,14 +69,14 @@ export function NodePalette({ onAddNode }: NodePaletteProps) {
                     onClick={() => onAddNode(item)}
                     className={cn(
                       'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm',
-                      'hover:bg-gray-50 active:bg-gray-100 cursor-grab active:cursor-grabbing',
+                      'hover:bg-muted active:bg-muted cursor-grab active:cursor-grabbing',
                       'transition-colors'
                     )}
                   >
                     <div className={cn('flex h-6 w-6 items-center justify-center rounded', item.color)}>
                       <Icon className="h-3.5 w-3.5" />
                     </div>
-                    <span className="text-gray-700 text-xs font-medium">{item.label}</span>
+                    <span className="text-foreground text-xs font-medium">{item.label}</span>
                   </button>
                 )
               })}

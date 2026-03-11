@@ -63,24 +63,24 @@ export function BlockCreationPreview({
       </div>
 
       {/* Block info card */}
-      <div className="flex items-start gap-2.5 bg-white rounded-md border border-gray-200 p-2.5 mb-2">
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-gray-100">
-          <Box className="h-4 w-4 text-gray-500" aria-hidden="true" />
+      <div className="flex items-start gap-2.5 bg-background rounded-md border border-border p-2.5 mb-2">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-muted">
+          <Box className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
         </div>
         <div className="min-w-0">
-          <p className="text-sm font-medium text-gray-900 truncate">{name}</p>
-          <p className="text-xs text-gray-500">{typeLabel}</p>
+          <p className="text-sm font-medium text-foreground truncate">{name}</p>
+          <p className="text-xs text-muted-foreground">{typeLabel}</p>
         </div>
       </div>
 
       {/* Fields preview */}
       {fields && Object.keys(fields).length > 0 && (
         <div className="space-y-1 mb-2">
-          <p className="text-xs font-medium text-gray-600">Fields</p>
+          <p className="text-xs font-medium text-muted-foreground">Fields</p>
           {Object.entries(fields).map(([key, value]) => (
             <div key={key} className="flex items-center gap-2 text-xs">
-              <span className="text-gray-500 shrink-0">{key}:</span>
-              <span className="text-gray-900 truncate">{String(value)}</span>
+              <span className="text-muted-foreground shrink-0">{key}:</span>
+              <span className="text-foreground truncate">{String(value)}</span>
             </div>
           ))}
         </div>

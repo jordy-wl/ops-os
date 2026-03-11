@@ -139,13 +139,13 @@ export function CreateBlockModal({ onClose, onCreated }: CreateBlockModalProps) 
         aria-hidden="true"
       />
 
-      <div className="relative w-full max-w-sm rounded-lg bg-white p-6 shadow-lg max-h-[85vh] overflow-y-auto">
-        <h2 id="create-block-title" className="text-lg font-semibold text-gray-900 mb-4">
+      <div className="relative w-full max-w-sm rounded-lg bg-background p-6 shadow-lg max-h-[85vh] overflow-y-auto">
+        <h2 id="create-block-title" className="text-lg font-semibold text-foreground mb-4">
           Create Block
         </h2>
 
         {typesLoading ? (
-          <div className="py-8 text-center text-sm text-gray-400" aria-busy="true">
+          <div className="py-8 text-center text-sm text-muted-foreground" aria-busy="true">
             Loading types…
           </div>
         ) : (
@@ -153,7 +153,7 @@ export function CreateBlockModal({ onClose, onCreated }: CreateBlockModalProps) 
             {/* Block type */}
             <label
               htmlFor="block-type"
-              className="block text-sm font-medium text-gray-700 mb-1"
+              className="block text-sm font-medium text-foreground mb-1"
             >
               Type
             </label>
@@ -161,7 +161,7 @@ export function CreateBlockModal({ onClose, onCreated }: CreateBlockModalProps) 
               id="block-type"
               value={type}
               onChange={(e) => handleTypeChange(e.target.value)}
-              className="mb-4 w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+              className="mb-4 w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             >
               {typeOptions.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -173,7 +173,7 @@ export function CreateBlockModal({ onClose, onCreated }: CreateBlockModalProps) 
             {/* Block name */}
             <label
               htmlFor="block-name"
-              className="block text-sm font-medium text-gray-700 mb-1"
+              className="block text-sm font-medium text-foreground mb-1"
             >
               Name
             </label>
@@ -186,13 +186,13 @@ export function CreateBlockModal({ onClose, onCreated }: CreateBlockModalProps) 
               placeholder="e.g. Thornfield Capital Partners"
               maxLength={255}
               required
-              className="mb-4 w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+              className="mb-4 w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             />
 
             {/* Dynamic fields from field_schema */}
             {selectedType && Object.keys(selectedType.field_schema).length > 0 && (
               <div className="mb-4">
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
                   {selectedType.display_name} Fields
                 </p>
                 <DynamicFieldRenderer
@@ -214,8 +214,8 @@ export function CreateBlockModal({ onClose, onCreated }: CreateBlockModalProps) 
                 type="button"
                 onClick={onClose}
                 className={cn(
-                  'px-4 py-2 rounded-md text-sm font-medium border border-gray-200 text-gray-700',
-                  'hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900'
+                  'px-4 py-2 rounded-md text-sm font-medium border border-border text-foreground',
+                  'hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
                 )}
               >
                 Cancel
@@ -224,8 +224,8 @@ export function CreateBlockModal({ onClose, onCreated }: CreateBlockModalProps) 
                 type="submit"
                 disabled={submitting || !name.trim() || !type}
                 className={cn(
-                  'px-4 py-2 rounded-md text-sm font-medium bg-gray-900 text-white',
-                  'hover:bg-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900',
+                  'px-4 py-2 rounded-md text-sm font-medium bg-primary text-primary-foreground',
+                  'hover:bg-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                   'disabled:opacity-50 disabled:cursor-not-allowed'
                 )}
               >

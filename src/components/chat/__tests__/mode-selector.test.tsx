@@ -39,7 +39,7 @@ describe('ModeSelector', () => {
   it('applies active styling to selected mode', () => {
     render(<ModeSelector mode="execute" onModeChange={vi.fn()} />)
     const executeBtn = screen.getByText('Execute').closest('button')!
-    expect(executeBtn.className).toContain('bg-white')
+    expect(executeBtn.className).toContain('bg-background')
     expect(executeBtn.className).toContain('shadow-sm')
   })
 })

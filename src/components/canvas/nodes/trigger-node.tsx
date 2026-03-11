@@ -25,7 +25,7 @@ function TriggerNodeComponent({ data, selected }: NodeProps & { data: TriggerNod
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-xs font-medium text-blue-600 uppercase tracking-wide">Trigger</p>
-          <p className="text-sm font-medium text-gray-900 truncate">{data.label}</p>
+          <p className="text-sm font-medium text-foreground truncate">{data.label}</p>
         </div>
       </div>
       <Handle type="source" position={Position.Bottom} className="!bg-blue-500 !w-3 !h-3 !border-2 !border-white" />

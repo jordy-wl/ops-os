@@ -171,8 +171,8 @@ export function WorkflowCanvas({ initialLayout, templateName, onSave, saving }: 
 
       <div className="flex-1 flex flex-col">
         {/* Toolbar */}
-        <div className="flex items-center justify-between border-b bg-white px-4 py-2">
-          <h2 className="text-sm font-semibold text-gray-900 truncate">{templateName}</h2>
+        <div className="flex items-center justify-between border-b bg-background px-4 py-2">
+          <h2 className="text-sm font-semibold text-foreground truncate">{templateName}</h2>
           <div className="flex items-center gap-2">
             {selectedNode && (
               <button
@@ -187,7 +187,7 @@ export function WorkflowCanvas({ initialLayout, templateName, onSave, saving }: 
               type="button"
               onClick={handleSave}
               disabled={saving}
-              className="rounded-md bg-gray-900 px-4 py-1.5 text-xs font-medium text-white hover:bg-gray-800 disabled:opacity-50"
+              className="rounded-md bg-primary px-4 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/80 disabled:opacity-50"
             >
               {saving ? 'Saving…' : 'Save'}
             </button>
@@ -212,16 +212,16 @@ export function WorkflowCanvas({ initialLayout, templateName, onSave, saving }: 
             snapToGrid
             snapGrid={[15, 15]}
             deleteKeyCode="Delete"
-            className="bg-gray-50"
+            className="bg-muted"
           >
             <Controls position="bottom-right" />
             <MiniMap
               nodeStrokeWidth={3}
               zoomable
               pannable
-              className="!bg-white !border !rounded-lg !shadow-sm"
+              className="!bg-background !border !rounded-lg !shadow-sm"
             />
-            <Background variant={BackgroundVariant.Dots} gap={15} size={1} color="#e5e7eb" />
+            <Background variant={BackgroundVariant.Dots} gap={15} size={1} color="hsl(var(--border))" />
           </ReactFlow>
         </div>
       </div>

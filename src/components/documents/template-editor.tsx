@@ -84,7 +84,7 @@ export function TemplateEditor({
         <select
           value={category}
           onChange={(e) => setCategory(e.target.value)}
-          className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+          className="rounded-md border border-border px-3 py-1.5 text-sm"
           aria-label="Template category"
         >
           <option value="contract">Contract</option>
@@ -98,7 +98,7 @@ export function TemplateEditor({
         <select
           value={outputFormat}
           onChange={(e) => setOutputFormat(e.target.value)}
-          className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+          className="rounded-md border border-border px-3 py-1.5 text-sm"
           aria-label="Output format"
         >
           <option value="html">HTML</option>
@@ -107,13 +107,13 @@ export function TemplateEditor({
         </select>
         <button
           onClick={handlePreview}
-          className="ml-auto rounded-md border border-gray-300 px-3 py-1.5 text-sm hover:bg-gray-50"
+          className="ml-auto rounded-md border border-border px-3 py-1.5 text-sm hover:bg-muted"
         >
           Preview
         </button>
         <button
           onClick={handleSave}
-          className="rounded-md bg-gray-900 px-4 py-1.5 text-sm text-white hover:bg-gray-700"
+          className="rounded-md bg-primary px-4 py-1.5 text-sm text-primary-foreground hover:bg-primary/80"
         >
           Save Template
         </button>
@@ -122,13 +122,13 @@ export function TemplateEditor({
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Variable Palette */}
         <div className="lg:col-span-1 order-2 lg:order-1">
-          <h3 className="text-sm font-medium text-gray-700 mb-3">Insert Variable</h3>
+          <h3 className="text-sm font-medium text-foreground mb-3">Insert Variable</h3>
           <div className="space-y-1">
             {COMMON_VARIABLES.map((v) => (
               <button
                 key={v.name}
                 onClick={() => insertVariable(v.name)}
-                className="block w-full text-left px-3 py-1.5 text-xs rounded hover:bg-gray-100 font-mono text-gray-600"
+                className="block w-full text-left px-3 py-1.5 text-xs rounded hover:bg-muted font-mono text-muted-foreground"
                 title={`Insert {{${v.name}}}`}
               >
                 {'{{'}
@@ -140,12 +140,12 @@ export function TemplateEditor({
 
           {variables.length > 0 && (
             <div className="mt-4">
-              <h3 className="text-sm font-medium text-gray-700 mb-2">Used Variables</h3>
-              <ul className="text-xs text-gray-500 space-y-1">
+              <h3 className="text-sm font-medium text-foreground mb-2">Used Variables</h3>
+              <ul className="text-xs text-muted-foreground space-y-1">
                 {variables.map((v) => (
                   <li key={v.name} className="flex items-center gap-2">
                     <span className="font-mono">{v.name}</span>
-                    <span className="text-gray-400">({v.type})</span>
+                    <span className="text-muted-foreground">({v.type})</span>
                   </li>
                 ))}
               </ul>
@@ -175,7 +175,7 @@ Supports HTML or Markdown:
 ## Overview
 
 This document outlines the onboarding process for {{block.name}}..."
-            className="w-full min-h-[400px] rounded-md border border-gray-300 px-4 py-3 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-gray-400 resize-y"
+            className="w-full min-h-[400px] rounded-md border border-border px-4 py-3 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ring resize-y"
             spellCheck={false}
           />
         </div>
@@ -183,12 +183,12 @@ This document outlines the onboarding process for {{block.name}}..."
 
       {/* Preview Panel */}
       {previewHtml !== null && (
-        <div className="border border-gray-200 rounded-lg overflow-hidden">
-          <div className="flex items-center justify-between bg-gray-50 px-4 py-2 border-b">
-            <h3 className="text-sm font-medium text-gray-700">Preview</h3>
+        <div className="border border-border rounded-lg overflow-hidden">
+          <div className="flex items-center justify-between bg-muted px-4 py-2 border-b">
+            <h3 className="text-sm font-medium text-foreground">Preview</h3>
             <button
               onClick={() => setPreviewHtml(null)}
-              className="text-xs text-gray-500 hover:text-gray-700"
+              className="text-xs text-muted-foreground hover:text-foreground"
               aria-label="Close preview"
             >
               Close

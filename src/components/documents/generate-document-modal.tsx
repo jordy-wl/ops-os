@@ -123,14 +123,14 @@ export function GenerateDocumentModal({
     >
       <div
         ref={dialogRef}
-        className="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4"
+        className="bg-background rounded-lg shadow-xl w-full max-w-lg mx-4"
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b">
-          <h2 className="text-lg font-semibold text-gray-900">Generate Document</h2>
+          <h2 className="text-lg font-semibold text-foreground">Generate Document</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
+            className="text-muted-foreground hover:text-foreground"
             aria-label="Close"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -141,8 +141,8 @@ export function GenerateDocumentModal({
 
         {/* Body */}
         <div className="px-6 py-4 space-y-4">
-          <p className="text-sm text-gray-500">
-            Source block: <span className="font-medium text-gray-700">{blockName}</span>
+          <p className="text-sm text-muted-foreground">
+            Source block: <span className="font-medium text-foreground">{blockName}</span>
           </p>
 
           {/* Mode Toggle */}
@@ -151,8 +151,8 @@ export function GenerateDocumentModal({
               onClick={() => setMode('template')}
               className={`flex-1 py-2 text-sm font-medium rounded-md border transition ${
                 mode === 'template'
-                  ? 'bg-gray-900 text-white border-gray-900'
-                  : 'bg-white text-gray-600 border-gray-300 hover:border-gray-400'
+                  ? 'bg-primary text-primary-foreground border-primary'
+                  : 'bg-background text-muted-foreground border-border hover:border-ring'
               }`}
             >
               From Template
@@ -161,8 +161,8 @@ export function GenerateDocumentModal({
               onClick={() => setMode('ai')}
               className={`flex-1 py-2 text-sm font-medium rounded-md border transition ${
                 mode === 'ai'
-                  ? 'bg-gray-900 text-white border-gray-900'
-                  : 'bg-white text-gray-600 border-gray-300 hover:border-gray-400'
+                  ? 'bg-primary text-primary-foreground border-primary'
+                  : 'bg-background text-muted-foreground border-border hover:border-ring'
               }`}
             >
               AI Generate
@@ -172,11 +172,11 @@ export function GenerateDocumentModal({
           {/* Template Selection */}
           {mode === 'template' && (
             <div>
-              <label htmlFor="template-select" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="template-select" className="block text-sm font-medium text-foreground mb-1">
                 Select Template
               </label>
               {templates.length === 0 ? (
-                <p className="text-sm text-gray-500 py-2">
+                <p className="text-sm text-muted-foreground py-2">
                   No templates found. Create one in the Document Library.
                 </p>
               ) : (
@@ -184,7 +184,7 @@ export function GenerateDocumentModal({
                   id="template-select"
                   value={selectedTemplateId}
                   onChange={(e) => setSelectedTemplateId(e.target.value)}
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+                  className="w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 >
                   <option value="">Choose a template...</option>
                   {templates.map((t) => (
@@ -201,7 +201,7 @@ export function GenerateDocumentModal({
           {/* AI Prompt */}
           {mode === 'ai' && (
             <div>
-              <label htmlFor="doc-prompt" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="doc-prompt" className="block text-sm font-medium text-foreground mb-1">
                 Generation Prompt
               </label>
               <textarea
@@ -209,7 +209,7 @@ export function GenerateDocumentModal({
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
                 rows={4}
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+                className="w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 placeholder={`Draft a client onboarding proposal for ${blockName}...`}
               />
             </div>
@@ -217,14 +217,14 @@ export function GenerateDocumentModal({
 
           {/* Output Format */}
           <div>
-            <label htmlFor="output-format" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="output-format" className="block text-sm font-medium text-foreground mb-1">
               Output Format
             </label>
             <select
               id="output-format"
               value={outputFormat}
               onChange={(e) => setOutputFormat(e.target.value as 'html' | 'pdf')}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+              className="w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="html">HTML (preview in browser)</option>
               <option value="pdf">PDF (download)</option>
@@ -247,17 +247,17 @@ export function GenerateDocumentModal({
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-3 px-6 py-4 border-t bg-gray-50 rounded-b-lg">
+        <div className="flex justify-end gap-3 px-6 py-4 border-t bg-muted rounded-b-lg">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800"
+            className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground"
           >
             Cancel
           </button>
           <button
             onClick={handleGenerate}
             disabled={generating}
-            className="px-4 py-2 text-sm font-medium text-white bg-gray-900 rounded-md hover:bg-gray-700 disabled:opacity-50"
+            className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-md hover:bg-primary/80 disabled:opacity-50"
           >
             {generating ? 'Generating...' : 'Generate'}
           </button>

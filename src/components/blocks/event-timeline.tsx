@@ -79,8 +79,8 @@ export function EventTimeline({ events }: EventTimelineProps) {
   if (!events || events.length === 0) {
     return (
       <section aria-label="Event timeline">
-        <h2 className="text-sm font-semibold text-gray-700 mb-3">Event Timeline</h2>
-        <p className="text-sm text-gray-400 italic py-4 text-center">
+        <h2 className="text-sm font-semibold text-foreground mb-3">Event Timeline</h2>
+        <p className="text-sm text-muted-foreground italic py-4 text-center">
           No events recorded yet.
         </p>
       </section>
@@ -91,18 +91,18 @@ export function EventTimeline({ events }: EventTimelineProps) {
 
   return (
     <section aria-label="Event timeline">
-      <h2 className="text-sm font-semibold text-gray-700 mb-3">Event Timeline</h2>
+      <h2 className="text-sm font-semibold text-foreground mb-3">Event Timeline</h2>
 
       <div className="space-y-4">
         {[...groups.entries()].map(([label, groupEvents]) => (
           <div key={label}>
             {/* Date divider */}
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-xs font-medium text-gray-500">{label}</span>
-              <div className="flex-1 h-px bg-gray-200" />
+              <span className="text-xs font-medium text-muted-foreground">{label}</span>
+              <div className="flex-1 h-px bg-border" />
             </div>
 
-            <ol className="relative border-l border-gray-200 ml-3 space-y-3">
+            <ol className="relative border-l border-border ml-3 space-y-3">
               {groupEvents.map((event) => {
                 const summary = payloadOneLiner(event.payload)
                 const badgeStyle = getBadgeStyle(event)
@@ -113,11 +113,11 @@ export function EventTimeline({ events }: EventTimelineProps) {
                     {/* Timeline dot — coloured by category */}
                     <span
                       className={cn(
-                        'absolute -left-1.5 mt-1.5 h-3 w-3 rounded-full border-2 border-white',
+                        'absolute -left-1.5 mt-1.5 h-3 w-3 rounded-full border-2 border-background',
                         event.actor_type === 'ai' ? 'bg-purple-400' :
                         event.type.startsWith('workflow') || event.type.startsWith('onboarding') ? 'bg-blue-400' :
                         event.type.startsWith('block') || event.type.startsWith('action') ? 'bg-green-400' :
-                        'bg-gray-300'
+                        'bg-muted-foreground'
                       )}
                       aria-hidden="true"
                     />
@@ -144,7 +144,7 @@ export function EventTimeline({ events }: EventTimelineProps) {
                       <time
                         dateTime={event.occurred_at}
                         title={event.occurred_at}
-                        className="ml-auto text-xs text-gray-400 shrink-0"
+                        className="ml-auto text-xs text-muted-foreground shrink-0"
                       >
                         {formatTime(event.occurred_at)}
                       </time>
@@ -152,7 +152,7 @@ export function EventTimeline({ events }: EventTimelineProps) {
 
                     {/* Payload summary */}
                     {summary && (
-                      <p className="mt-1 text-xs text-gray-500 truncate">
+                      <p className="mt-1 text-xs text-muted-foreground truncate">
                         {summary}
                       </p>
                     )}

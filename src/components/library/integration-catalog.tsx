@@ -108,27 +108,27 @@ export function IntegrationCatalog({ connectors }: IntegrationCatalogProps) {
     <div>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Integration Library</h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <h1 className="text-2xl font-bold text-foreground">Integration Library</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             Connect services and use their capabilities in workflows and actions.
           </p>
         </div>
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" aria-hidden="true" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
           <input
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             aria-label="Search integrations"
             placeholder="Search integrations..."
-            className="h-9 w-64 rounded-md border border-gray-200 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+            className="h-9 w-64 rounded-md border border-border pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
           />
         </div>
       </div>
 
       {/* Google Workspace connection card */}
       <section className="mb-8">
-        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
           Google Workspace
         </h2>
         <GoogleConnect
@@ -142,7 +142,7 @@ export function IntegrationCatalog({ connectors }: IntegrationCatalogProps) {
       {/* Connected capabilities */}
       {connected.length > 0 && (
         <section className="mb-8">
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
             Active Capabilities ({connected.length})
           </h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -156,7 +156,7 @@ export function IntegrationCatalog({ connectors }: IntegrationCatalogProps) {
       {/* Available capabilities */}
       {available.length > 0 && (
         <section className="mb-8">
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
             Available Capabilities ({available.length})
           </h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -170,16 +170,16 @@ export function IntegrationCatalog({ connectors }: IntegrationCatalogProps) {
       {/* Existing connectors */}
       {connectors.length > 0 && (
         <section>
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
             All Connectors ({connectors.length})
           </h2>
           <div className="rounded-lg border divide-y">
             {connectors.map((c) => (
               <div key={c.id} className="flex items-center gap-3 px-4 py-3">
-                <Plug className="h-4 w-4 text-gray-400 shrink-0" aria-hidden="true" />
+                <Plug className="h-4 w-4 text-muted-foreground shrink-0" aria-hidden="true" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">{c.name}</p>
-                  <p className="text-xs text-gray-500">{c.provider} &middot; {c.direction}</p>
+                  <p className="text-sm font-medium text-foreground truncate">{c.name}</p>
+                  <p className="text-xs text-muted-foreground">{c.provider} &middot; {c.direction}</p>
                 </div>
                 <span className={cn(
                   'inline-flex rounded-full px-2 py-0.5 text-xs font-medium capitalize',
@@ -198,7 +198,7 @@ export function IntegrationCatalog({ connectors }: IntegrationCatalogProps) {
       {/* Empty state */}
       {filtered.length === 0 && (
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-muted-foreground">
             No integrations match your search.{' '}
             <button onClick={() => setSearch('')} className="underline">Clear search</button>
           </p>
@@ -214,28 +214,28 @@ function CapabilityCard({ capability, connected }: { capability: Capability; con
   return (
     <div className={cn(
       'rounded-lg border p-4 transition-all',
-      connected ? 'border-green-200 bg-green-50/30' : 'hover:border-gray-400 hover:shadow-sm'
+      connected ? 'border-green-200 bg-green-50/30' : 'hover:border-ring hover:shadow-sm'
     )}>
       <div className="flex items-center gap-2.5 mb-2">
         <div className={cn(
           'flex h-8 w-8 items-center justify-center rounded-md',
-          connected ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
+          connected ? 'bg-green-100 text-green-700' : 'bg-muted text-muted-foreground'
         )}>
           {capability.icon}
         </div>
         <div>
-          <h3 className="text-sm font-semibold text-gray-900">{capability.label}</h3>
+          <h3 className="text-sm font-semibold text-foreground">{capability.label}</h3>
           {connected && (
             <span className="text-xs text-green-600">Connected</span>
           )}
         </div>
       </div>
-      <p className="text-xs text-gray-500 mb-3">{capability.description}</p>
+      <p className="text-xs text-muted-foreground mb-3">{capability.description}</p>
       <div className="flex flex-wrap gap-1">
         {capability.actions.map((action) => (
           <span
             key={action}
-            className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600"
+            className="inline-flex rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground"
           >
             {action}
           </span>

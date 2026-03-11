@@ -125,7 +125,7 @@ export default async function WorkflowsPage() {
 
   return (
     <div className="p-6 lg:p-8">
-      <h1 className="text-2xl font-semibold text-gray-900 mb-6">Workflows</h1>
+      <h1 className="text-2xl font-semibold text-foreground mb-6">Workflows</h1>
       <WorkflowTabShell
         templatesPanel={<WorkflowTemplatesClient initialTemplates={initialTemplates} />}
         jobsPanel={<WorkflowJobsClient initialJobs={initialJobs} />}

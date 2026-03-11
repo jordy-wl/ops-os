@@ -48,7 +48,7 @@ export function BlockListClient({ blocks }: BlockListClientProps) {
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search blocks…"
           aria-label="Search blocks by name"
-          className="h-9 rounded-md border border-gray-200 px-3 text-sm w-full sm:w-80 focus:outline-none focus:ring-2 focus:ring-gray-900"
+          className="h-9 rounded-md border border-border px-3 text-sm w-full sm:w-80 focus:outline-none focus:ring-2 focus:ring-ring"
         />
 
         {/* Type filter buttons */}
@@ -57,10 +57,10 @@ export function BlockListClient({ blocks }: BlockListClientProps) {
             onClick={() => setActiveType('all')}
             className={cn(
               'h-9 px-3 rounded-md text-sm font-medium transition-colors',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
               activeType === 'all'
-                ? 'bg-gray-900 text-white'
-                : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-background border border-border text-foreground hover:bg-muted'
             )}
             aria-pressed={activeType === 'all'}
           >
@@ -72,10 +72,10 @@ export function BlockListClient({ blocks }: BlockListClientProps) {
               onClick={() => setActiveType(type)}
               className={cn(
                 'h-9 px-3 rounded-md text-sm font-medium capitalize transition-colors',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                 activeType === type
-                  ? 'bg-gray-900 text-white'
-                  : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-background border border-border text-foreground hover:bg-muted'
               )}
               aria-pressed={activeType === type}
             >
@@ -90,19 +90,19 @@ export function BlockListClient({ blocks }: BlockListClientProps) {
         <div className="flex flex-col items-center justify-center py-16 text-center">
           {blocks.length === 0 ? (
             <>
-              <p className="text-lg font-semibold text-gray-900 mb-2">No blocks yet</p>
-              <p className="text-sm text-gray-500 mb-6">
+              <p className="text-lg font-semibold text-foreground mb-2">No blocks yet</p>
+              <p className="text-sm text-muted-foreground mb-6">
                 Create your first block from the dashboard.
               </p>
               <Link
                 href="/dashboard"
-                className="px-4 py-2 rounded-md bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900"
+                className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 Go to dashboard
               </Link>
             </>
           ) : (
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-muted-foreground">
               No blocks match your filter.{' '}
               <button
                 onClick={() => { setSearch(''); setActiveType('all') }}
@@ -128,8 +128,8 @@ export function BlockListClient({ blocks }: BlockListClientProps) {
                 <Link
                   href={`/blocks/${block.id}`}
                   className={cn(
-                    'block rounded-lg border p-4 hover:border-gray-400 hover:shadow-sm transition-all',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900'
+                    'block rounded-lg border p-4 hover:border-ring hover:shadow-sm transition-all',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
                   )}
                   aria-label={`${block.name} — ${block.type}`}
                 >
@@ -144,15 +144,15 @@ export function BlockListClient({ blocks }: BlockListClientProps) {
                       {block.type}
                     </span>
                     {jurisdiction && (
-                      <span className="text-xs text-gray-500 bg-gray-100 rounded-full px-2 py-0.5">
+                      <span className="text-xs text-muted-foreground bg-muted rounded-full px-2 py-0.5">
                         {jurisdiction}
                       </span>
                     )}
                   </div>
 
-                  <p className="font-medium text-gray-900 truncate">{block.name}</p>
+                  <p className="font-medium text-foreground truncate">{block.name}</p>
 
-                  <p className="mt-1 text-xs text-gray-400">
+                  <p className="mt-1 text-xs text-muted-foreground">
                     Updated{' '}
                     <time dateTime={block.updated_at}>
                       {new Date(block.updated_at).toLocaleDateString()}
