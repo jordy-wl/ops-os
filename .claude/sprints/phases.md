@@ -11,7 +11,7 @@
 | Phase | Name | Status | Sprint | Exit Conditions Met |
 |-------|------|--------|--------|---------------------|
 | 1 | Foundation & Primitive Validation | COMPLETE | Sprint 4 | YES (code) — usage metrics deferred (user = test user) |
-| 2 | Composable Blocks, Visual Builder & Integrations | ACTIVE (UI/UX Overhaul) | Sprint 12 | CODE DONE (S10) — UI/UX overhaul in progress (S11–16) |
+| 2 | Composable Blocks, Visual Builder & Integrations | ACTIVE (UI/UX Overhaul) | Sprint 14 | CODE DONE (S10) — UI/UX overhaul in progress (S11–16) |
 | 3 | Scale, Advanced AI & Marketplace | FUTURE | — | — |
 | 4 | Enterprise & Compliance | FUTURE | — | — |
 
@@ -116,9 +116,10 @@ If exit condition is NOT met after 12 weeks:
 - Sprint 10: UI polish, dashboard overhaul, demo data, E2E testing, manual test readiness — **COMPLETE** (8/8 DONE, 100%. 2026-03-10)
 - Sprint 11: UI Foundation — sidebar nav, Geist font, animations, JSX→TSX, layout components — **COMPLETE** (7/7 DONE, 100%. 2026-03-10. PR #34)
 - Sprint 12: User-configurable block fields — 12 field types, field management API, admin config UI — **COMPLETE** (6/6 DONE, 100%. 2026-03-11. PR #35)
-- Sprint 13: update_block step + remove onboarding + canvas-first workflow creation — **ACTIVE**
+- Sprint 13: update_block step + remove onboarding + canvas-first workflow creation — **COMPLETE** (5/5 DONE, 100%. 2026-03-11. PR #36)
+- Sprint 14: Chat widget + AI modes (Discuss/Plan/Execute) — **ACTIVE**
 
-**Phase 2 Status:** UI/UX Overhaul in progress. 65/67 tasks done across 8 sprints (97%). 484 tests passing. Sprint 12 (User-Configurable Block Fields) complete. Sprint 13 (update_block + Canvas-First) initiated.
+**Phase 2 Status:** UI/UX Overhaul in progress. 70/72 tasks done across 9 sprints (97%). 486 tests passing. Sprint 13 (update_block + Canvas-First) complete. Sprint 14 (Chat Widget + AI Modes) initiated.
 
 ---
 
