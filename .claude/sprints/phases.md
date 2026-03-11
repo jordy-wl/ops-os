@@ -117,9 +117,10 @@ If exit condition is NOT met after 12 weeks:
 - Sprint 11: UI Foundation — sidebar nav, Geist font, animations, JSX→TSX, layout components — **COMPLETE** (7/7 DONE, 100%. 2026-03-10. PR #34)
 - Sprint 12: User-configurable block fields — 12 field types, field management API, admin config UI — **COMPLETE** (6/6 DONE, 100%. 2026-03-11. PR #35)
 - Sprint 13: update_block step + remove onboarding + canvas-first workflow creation — **COMPLETE** (5/5 DONE, 100%. 2026-03-11. PR #36)
-- Sprint 14: Chat widget + AI modes (Discuss/Plan/Execute) — **ACTIVE**
+- Sprint 14: Chat widget + AI modes (Discuss/Plan/Execute) — **COMPLETE** (6/6 DONE, 100%. 2026-03-11. PR #37)
+- Sprint 15: Integration onboarding wizard + AI entity creation + @mention — **ACTIVE**
 
-**Phase 2 Status:** UI/UX Overhaul in progress. 70/72 tasks done across 9 sprints (97%). 486 tests passing. Sprint 13 (update_block + Canvas-First) complete. Sprint 14 (Chat Widget + AI Modes) initiated.
+**Phase 2 Status:** UI/UX Overhaul in progress. 76/78 tasks done across 10 sprints (97%). 521 tests passing. Sprint 14 (Chat Widget + AI Modes) complete. Sprint 15 (Integration + AI Entity Creation) initiated.
 
 ---
 
