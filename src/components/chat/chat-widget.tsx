@@ -182,9 +182,9 @@ export function ChatWidget() {
         className={cn(
           'fixed bottom-5 left-5 z-50',
           'flex h-12 w-12 items-center justify-center rounded-full',
-          'bg-gray-900 text-white shadow-lg',
-          'hover:bg-gray-700 transition-all hover:scale-105',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2'
+          'bg-gray-900 text-white shadow-lg dark:bg-gray-100 dark:text-gray-900',
+          'hover:bg-gray-700 dark:hover:bg-gray-300 transition-all hover:scale-105',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 dark:focus-visible:ring-gray-100 focus-visible:ring-offset-2'
         )}
         aria-label="Open chat"
       >
@@ -199,7 +199,7 @@ export function ChatWidget() {
       className={cn(
         'fixed bottom-5 left-5 z-50',
         'flex flex-col w-[480px] h-[600px] max-h-[calc(100vh-4rem)]',
-        'rounded-xl border border-gray-200 bg-white shadow-2xl',
+        'rounded-xl border border-border bg-background shadow-2xl',
         'animate-slide-up'
       )}
     >
@@ -209,7 +209,7 @@ export function ChatWidget() {
         <button
           type="button"
           onClick={close}
-          className="flex h-7 w-7 items-center justify-center rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+          className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
           aria-label="Close chat"
         >
           <X className="h-4 w-4" />
@@ -218,7 +218,7 @@ export function ChatWidget() {
 
       {/* Messages */}
       <div
-        className="flex-1 overflow-y-auto px-3 py-3 space-y-3 bg-gray-50"
+        className="flex-1 overflow-y-auto px-3 py-3 space-y-3 bg-muted"
         role="log"
         aria-label="Chat messages"
       >

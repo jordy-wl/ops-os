@@ -21,7 +21,7 @@
 | Task ID | Title | Role | Status | Last Updated |
 |---------|-------|------|--------|-------------|
 | P2-S16-FE-01 | Visual polish pass | Frontend | OPEN | 2026-03-11 |
-| P2-S16-FE-02 | Dark mode verification | Frontend | OPEN | 2026-03-11 |
+| P2-S16-FE-02 | Dark mode verification | Frontend | IN_PROGRESS | 2026-03-11 |
 | P2-S16-FE-03 | Dead code cleanup | Frontend | OPEN | 2026-03-11 |
 | P2-S16-QA-01 | Full regression suite | QA | OPEN | 2026-03-11 |
 | P2-S16-OPS-01 | Performance audit | DevOps | OPEN | 2026-03-11 |
