@@ -11,7 +11,7 @@
 | Phase | Name | Status | Sprint | Exit Conditions Met |
 |-------|------|--------|--------|---------------------|
 | 1 | Foundation & Primitive Validation | COMPLETE | Sprint 4 | YES (code) — usage metrics deferred (user = test user) |
-| 2 | Composable Blocks, Visual Builder & Integrations | ACTIVE (UI/UX Overhaul) | Sprint 14 | CODE DONE (S10) — UI/UX overhaul in progress (S11–16) |
+| 2 | Composable Blocks, Visual Builder & Integrations | CODE COMPLETE | Sprint 16 | CODE DONE (S16) — exit conditions require live usage testing |
 | 3 | Scale, Advanced AI & Marketplace | FUTURE | — | — |
 | 4 | Enterprise & Compliance | FUTURE | — | — |
 
@@ -119,9 +119,9 @@ If exit condition is NOT met after 12 weeks:
 - Sprint 13: update_block step + remove onboarding + canvas-first workflow creation — **COMPLETE** (5/5 DONE, 100%. 2026-03-11. PR #36)
 - Sprint 14: Chat widget + AI modes (Discuss/Plan/Execute) — **COMPLETE** (6/6 DONE, 100%. 2026-03-11. PR #37)
 - Sprint 15: Integration onboarding wizard + AI entity creation + @mention — **COMPLETE** (5/5 DONE, 100%. 2026-03-11)
-- Sprint 16: Polish + regression + production (FINAL) — **ACTIVE**
+- Sprint 16: Polish + regression + production (FINAL) — **COMPLETE** (5/5 DONE, 100%. 2026-03-11. PR #39)
 
-**Phase 2 Status:** UI/UX Overhaul nearing completion. 81/83 tasks done across 11 sprints (98%). 550 tests passing. Sprint 16 (FINAL — polish + regression) initiated.
+**Phase 2 Status:** CODE COMPLETE. 86/88 tasks done across 12 sprints (98%). 550 tests passing. All features built, tested, deployed. Exit conditions require live usage testing (run >=5 workflows with canvas + Google + document generation).
 
 ---
 
