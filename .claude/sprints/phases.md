@@ -115,9 +115,10 @@ If exit condition is NOT met after 12 weeks:
 - Sprint 9: Document generation (templates, brand kit, AI generation, PDF), Document Library — **COMPLETE** (10/10 DONE, 100%. 2026-03-10)
 - Sprint 10: UI polish, dashboard overhaul, demo data, E2E testing, manual test readiness — **COMPLETE** (8/8 DONE, 100%. 2026-03-10)
 - Sprint 11: UI Foundation — sidebar nav, Geist font, animations, JSX→TSX, layout components — **COMPLETE** (7/7 DONE, 100%. 2026-03-10. PR #34)
-- Sprint 12: User-configurable block fields — 12 field types, field management API, admin config UI — **ACTIVE**
+- Sprint 12: User-configurable block fields — 12 field types, field management API, admin config UI — **COMPLETE** (6/6 DONE, 100%. 2026-03-11. PR #35)
+- Sprint 13: update_block step + remove onboarding + canvas-first workflow creation — **ACTIVE**
 
-**Phase 2 Status:** UI/UX Overhaul in progress. 59/61 tasks done across 7 sprints (97%). 2 deferred items: Gmail receive trigger (Sprint 8 BE-03), UX research moved to Sprint 10 (completed). 409 tests passing. Sprint 11 (UI Foundation) complete. Sprint 12 (User-Configurable Block Fields) initiated.
+**Phase 2 Status:** UI/UX Overhaul in progress. 65/67 tasks done across 8 sprints (97%). 484 tests passing. Sprint 12 (User-Configurable Block Fields) complete. Sprint 13 (update_block + Canvas-First) initiated.
 
 ---
 

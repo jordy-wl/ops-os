@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Pencil } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -20,13 +21,6 @@ interface WorkflowTemplatesClientProps {
   initialTemplates: WorkflowTemplateItem[] | null
 }
 
-const STEP_TYPE_LABELS: Record<string, string> = {
-  emit_event: 'Emit Event',
-  run_action: 'Run Action',
-  wait: 'Wait',
-  condition: 'Condition',
-}
-
 const TRIGGER_LABELS: Record<string, string> = {
   manual: 'Manual',
   event: 'Event',
@@ -38,7 +32,7 @@ function formatDate(iso: string): string {
 
 export function WorkflowTemplatesClient({ initialTemplates }: WorkflowTemplatesClientProps) {
   const [showCreate, setShowCreate] = useState(false)
-  const [templates, setTemplates] = useState(initialTemplates)
+  const templates = initialTemplates
 
   if (!templates) {
     return (
@@ -47,19 +41,6 @@ export function WorkflowTemplatesClient({ initialTemplates }: WorkflowTemplatesC
         <p className="mt-1 text-sm text-red-600">Refresh the page to try again.</p>
       </div>
     )
-  }
-
-  function handleCreated() {
-    // Refetch templates
-    fetch('/api/blocks?type=workflow_template&limit=100')
-      .then((r) => r.json())
-      .then((json) => {
-        if (json.data) {
-          const mapped = (json.data as Array<Record<string, unknown>>).map(mapBlockToTemplate)
-          setTemplates(mapped)
-        }
-      })
-      .catch(() => {})
   }
 
   return (
@@ -151,12 +132,9 @@ export function WorkflowTemplatesClient({ initialTemplates }: WorkflowTemplatesC
         </div>
       )}
 
-      {/* Create modal */}
+      {/* Create modal — name only, redirects to builder */}
       {showCreate && (
-        <CreateTemplateModal
-          onClose={() => setShowCreate(false)}
-          onCreated={handleCreated}
-        />
+        <CreateTemplateModal onClose={() => setShowCreate(false)} />
       )}
     </div>
   )
@@ -180,34 +158,15 @@ export function mapBlockToTemplate(block: Record<string, unknown>): WorkflowTemp
   }
 }
 
-// ─── Create Template Modal ───────────────────────────────────────────────────
+// ─── Create Template Modal (Canvas-first: name only → redirect to builder) ──
 
 interface CreateTemplateModalProps {
   onClose: () => void
-  onCreated: () => void
 }
 
-interface StepDraft {
-  name: string
-  type: 'emit_event' | 'run_action' | 'wait' | 'condition'
-  event_type?: string
-  action_type?: string
-  wait_seconds?: number
-  condition?: string
-}
-
-const STEP_TYPES = ['emit_event', 'run_action', 'wait', 'condition'] as const
-const BLOCK_TYPES = ['client', 'deal', 'project', 'contact', 'contract']
-
-function CreateTemplateModal({ onClose, onCreated }: CreateTemplateModalProps) {
+function CreateTemplateModal({ onClose }: CreateTemplateModalProps) {
+  const router = useRouter()
   const [name, setName] = useState('')
-  const [appliesToType, setAppliesToType] = useState('client')
-  const [triggerType, setTriggerType] = useState<'manual' | 'event'>('manual')
-  const [eventPattern, setEventPattern] = useState('')
-  const [description, setDescription] = useState('')
-  const [steps, setSteps] = useState<StepDraft[]>([
-    { name: 'step_1', type: 'emit_event', event_type: '' },
-  ])
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const nameRef = useRef<HTMLInputElement>(null)
@@ -224,44 +183,13 @@ function CreateTemplateModal({ onClose, onCreated }: CreateTemplateModalProps) {
     return () => document.removeEventListener('keydown', onKey)
   }, [onClose])
 
-  function addStep() {
-    setSteps((prev) => [
-      ...prev,
-      { name: `step_${prev.length + 1}`, type: 'emit_event', event_type: '' },
-    ])
-  }
-
-  function removeStep(index: number) {
-    if (steps.length <= 1) return
-    setSteps((prev) => prev.filter((_, i) => i !== index))
-  }
-
-  function updateStep(index: number, field: string, value: unknown) {
-    setSteps((prev) =>
-      prev.map((s, i) => (i === index ? { ...s, [field]: value } : s))
-    )
-  }
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     const trimmed = name.trim()
-    if (!trimmed || steps.length === 0) return
+    if (!trimmed) return
 
     setSubmitting(true)
     setError(null)
-
-    const trigger = triggerType === 'manual'
-      ? { type: 'manual' as const }
-      : { type: 'event' as const, event_pattern: eventPattern }
-
-    const cleanSteps = steps.map((s) => {
-      const step: Record<string, unknown> = { name: s.name, type: s.type }
-      if (s.type === 'emit_event' && s.event_type) step.event_type = s.event_type
-      if (s.type === 'run_action' && s.action_type) step.action_type = s.action_type
-      if (s.type === 'wait' && s.wait_seconds) step.wait_seconds = Number(s.wait_seconds)
-      if (s.type === 'condition' && s.condition) step.condition = s.condition
-      return step
-    })
 
     try {
       const res = await fetch('/api/blocks', {
@@ -271,10 +199,9 @@ function CreateTemplateModal({ onClose, onCreated }: CreateTemplateModalProps) {
           type: 'workflow_template',
           name: trimmed,
           metadata: {
-            applies_to_type: appliesToType,
-            trigger,
-            steps: cleanSteps,
-            ...(description.trim() ? { description: description.trim() } : {}),
+            applies_to_type: 'client',
+            trigger: { type: 'manual' },
+            steps: [],
           },
         }),
       })
@@ -285,8 +212,11 @@ function CreateTemplateModal({ onClose, onCreated }: CreateTemplateModalProps) {
         return
       }
 
-      onCreated()
-      onClose()
+      // Redirect to canvas builder immediately
+      const blockId = json.data?.id
+      if (blockId) {
+        router.push(`/workflows/${blockId}/builder`)
+      }
     } catch {
       setError('Network error — please try again')
     } finally {
@@ -303,15 +233,17 @@ function CreateTemplateModal({ onClose, onCreated }: CreateTemplateModalProps) {
     >
       <div className="absolute inset-0 bg-black/40" onClick={onClose} aria-hidden="true" />
 
-      <div className="relative w-full max-w-lg rounded-lg bg-white p-6 shadow-lg max-h-[85vh] overflow-y-auto">
-        <h2 id="create-template-title" className="text-lg font-semibold text-gray-900 mb-4">
-          Create Workflow Template
+      <div className="relative w-full max-w-sm rounded-lg bg-white p-6 shadow-lg">
+        <h2 id="create-template-title" className="text-lg font-semibold text-gray-900 mb-1">
+          New Workflow
         </h2>
+        <p className="text-sm text-gray-500 mb-4">
+          Give it a name, then build it on the canvas.
+        </p>
 
         <form onSubmit={handleSubmit} noValidate>
-          {/* Name */}
           <label htmlFor="tmpl-name" className="block text-sm font-medium text-gray-700 mb-1">
-            Template Name
+            Workflow Name
           </label>
           <input
             ref={nameRef}
@@ -324,153 +256,6 @@ function CreateTemplateModal({ onClose, onCreated }: CreateTemplateModalProps) {
             required
             className="mb-4 w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
           />
-
-          {/* Description */}
-          <label htmlFor="tmpl-desc" className="block text-sm font-medium text-gray-700 mb-1">
-            Description <span className="text-gray-400">(optional)</span>
-          </label>
-          <input
-            id="tmpl-desc"
-            type="text"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Brief description of what this workflow does"
-            maxLength={500}
-            className="mb-4 w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
-          />
-
-          {/* Applies to type */}
-          <label htmlFor="tmpl-type" className="block text-sm font-medium text-gray-700 mb-1">
-            Applies To
-          </label>
-          <select
-            id="tmpl-type"
-            value={appliesToType}
-            onChange={(e) => setAppliesToType(e.target.value)}
-            className="mb-4 w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
-          >
-            {BLOCK_TYPES.map((t) => (
-              <option key={t} value={t}>
-                {t.charAt(0).toUpperCase() + t.slice(1)}
-              </option>
-            ))}
-          </select>
-
-          {/* Trigger */}
-          <label htmlFor="tmpl-trigger" className="block text-sm font-medium text-gray-700 mb-1">
-            Trigger
-          </label>
-          <select
-            id="tmpl-trigger"
-            value={triggerType}
-            onChange={(e) => setTriggerType(e.target.value as 'manual' | 'event')}
-            className="mb-2 w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
-          >
-            <option value="manual">Manual</option>
-            <option value="event">Event</option>
-          </select>
-          {triggerType === 'event' && (
-            <input
-              type="text"
-              value={eventPattern}
-              onChange={(e) => setEventPattern(e.target.value)}
-              placeholder="e.g. block.created"
-              maxLength={100}
-              className="mb-4 w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
-            />
-          )}
-          {triggerType === 'manual' && <div className="mb-2" />}
-
-          {/* Steps */}
-          <div className="mb-4">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm font-medium text-gray-700">Steps</p>
-              <button
-                type="button"
-                onClick={addStep}
-                className="text-xs text-blue-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 rounded"
-              >
-                + Add Step
-              </button>
-            </div>
-
-            <div className="space-y-3">
-              {steps.map((step, idx) => (
-                <div key={idx} className="rounded-md border border-gray-200 p-3 bg-gray-50">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-xs font-medium text-gray-400 w-5">{idx + 1}</span>
-                    <input
-                      type="text"
-                      value={step.name}
-                      onChange={(e) => updateStep(idx, 'name', e.target.value)}
-                      placeholder="step_name"
-                      className="flex-1 rounded border border-gray-200 px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-gray-900"
-                    />
-                    <select
-                      value={step.type}
-                      onChange={(e) => updateStep(idx, 'type', e.target.value)}
-                      className="rounded border border-gray-200 px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-gray-900"
-                    >
-                      {STEP_TYPES.map((t) => (
-                        <option key={t} value={t}>
-                          {STEP_TYPE_LABELS[t] ?? t}
-                        </option>
-                      ))}
-                    </select>
-                    {steps.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeStep(idx)}
-                        className="text-xs text-red-500 hover:text-red-700"
-                        aria-label={`Remove step ${idx + 1}`}
-                      >
-                        Remove
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Step-type-specific field */}
-                  {step.type === 'emit_event' && (
-                    <input
-                      type="text"
-                      value={step.event_type ?? ''}
-                      onChange={(e) => updateStep(idx, 'event_type', e.target.value)}
-                      placeholder="Event type (e.g. onboarding.started)"
-                      className="w-full rounded border border-gray-200 px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-gray-900"
-                    />
-                  )}
-                  {step.type === 'run_action' && (
-                    <input
-                      type="text"
-                      value={step.action_type ?? ''}
-                      onChange={(e) => updateStep(idx, 'action_type', e.target.value)}
-                      placeholder="Action type (e.g. send_notification)"
-                      className="w-full rounded border border-gray-200 px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-gray-900"
-                    />
-                  )}
-                  {step.type === 'wait' && (
-                    <input
-                      type="number"
-                      value={step.wait_seconds ?? 60}
-                      onChange={(e) => updateStep(idx, 'wait_seconds', parseInt(e.target.value) || 60)}
-                      placeholder="Wait seconds"
-                      min={1}
-                      className="w-full rounded border border-gray-200 px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-gray-900"
-                    />
-                  )}
-                  {step.type === 'condition' && (
-                    <input
-                      type="text"
-                      value={step.condition ?? ''}
-                      onChange={(e) => updateStep(idx, 'condition', e.target.value)}
-                      placeholder="Condition expression"
-                      className="w-full rounded border border-gray-200 px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-gray-900"
-                    />
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
 
           {error && (
             <p role="alert" className="mb-4 text-xs text-red-600">
@@ -491,14 +276,14 @@ function CreateTemplateModal({ onClose, onCreated }: CreateTemplateModalProps) {
             </button>
             <button
               type="submit"
-              disabled={submitting || !name.trim() || steps.length === 0}
+              disabled={submitting || !name.trim()}
               className={cn(
                 'px-4 py-2 rounded-md text-sm font-medium bg-gray-900 text-white',
                 'hover:bg-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900',
                 'disabled:opacity-50 disabled:cursor-not-allowed'
               )}
             >
-              {submitting ? 'Creating…' : 'Create Template'}
+              {submitting ? 'Creating…' : 'Create & Open Builder'}
             </button>
           </div>
         </form>

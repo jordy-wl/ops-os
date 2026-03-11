@@ -165,6 +165,8 @@ function stepToLabel(step: WorkflowStep): string {
       return `If: ${step.condition ?? 'condition'}`
     case 'call_api':
       return `API: ${step.method ?? 'GET'} ${step.path ?? '/'}`
+    case 'update_block':
+      return 'Update Block'
     default:
       return step.name
   }
@@ -182,6 +184,8 @@ function stepToConfig(step: WorkflowStep): Record<string, unknown> {
   if (step.body_template) config.body_template = step.body_template
   if (step.timeout_ms != null) config.timeout_ms = step.timeout_ms
   if (step.max_retries != null) config.max_retries = step.max_retries
+  if (step.block_id) config.block_id = step.block_id
+  if (step.fields) config.fields = step.fields
   return config
 }
 
@@ -204,5 +208,7 @@ function configToStep(data: CanvasNode['data']): WorkflowStep {
     ...(config.body_template ? { body_template: String(config.body_template) } : {}),
     ...(config.timeout_ms != null ? { timeout_ms: Number(config.timeout_ms) } : {}),
     ...(config.max_retries != null ? { max_retries: Number(config.max_retries) } : {}),
+    ...(config.block_id ? { block_id: String(config.block_id) } : {}),
+    ...(config.fields ? { fields: config.fields as Record<string, unknown> } : {}),
   }
 }

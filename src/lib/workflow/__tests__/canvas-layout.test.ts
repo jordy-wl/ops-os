@@ -359,6 +359,67 @@ describe('canvasToTemplate', () => {
       max_retries: 3,
     })
   })
+
+  it('maps update_block step to action node with block_id and fields', () => {
+    const template: WorkflowTemplate = {
+      applies_to_type: 'client',
+      trigger: { type: 'manual' },
+      steps: [
+        {
+          name: 'update_status',
+          type: 'update_block',
+          block_id: '{{context.source_block_id}}',
+          fields: { status: 'active', priority: 'high' },
+        },
+      ],
+    }
+
+    const layout = stepsToCanvas(template)
+
+    expect(layout.nodes[1].type).toBe('action')
+    expect(layout.nodes[1].data.stepType).toBe('update_block')
+    expect(layout.nodes[1].data.label).toBe('Update Block')
+    expect(layout.nodes[1].data.config.block_id).toBe('{{context.source_block_id}}')
+    expect(layout.nodes[1].data.config.fields).toEqual({ status: 'active', priority: 'high' })
+  })
+
+  it('converts update_block canvas node back to step', () => {
+    const layout: CanvasLayout = {
+      nodes: [
+        {
+          id: 'trigger-0',
+          type: 'trigger',
+          position: { x: 300, y: 50 },
+          data: { label: 'Manual', config: { triggerType: 'manual' } },
+        },
+        {
+          id: 'step-0',
+          type: 'action',
+          position: { x: 300, y: 170 },
+          data: {
+            stepName: 'update_client',
+            stepType: 'update_block',
+            label: 'Update Block',
+            config: {
+              block_id: 'block-123',
+              fields: { onboarded: true },
+            },
+          },
+        },
+      ],
+      edges: [{ id: 'e-1', source: 'trigger-0', target: 'step-0' }],
+    }
+
+    const result = canvasToTemplate(layout)
+
+    expect(result.steps).toHaveLength(1)
+    expect(result.steps[0]).toMatchObject({
+      name: 'update_client',
+      type: 'update_block',
+      block_id: 'block-123',
+      fields: { onboarded: true },
+    })
+  })
 })
 
 // ─── Round-trip ─────────────────────────────────────────────────────────────
@@ -425,6 +486,31 @@ describe('round-trip: stepsToCanvas → canvasToTemplate', () => {
       body_template: '{"data": "{{block.name}}"}',
       timeout_ms: 15000,
       max_retries: 1,
+    })
+  })
+
+  it('preserves update_block config through round-trip', () => {
+    const original: WorkflowTemplate = {
+      applies_to_type: 'client',
+      trigger: { type: 'manual' },
+      steps: [
+        {
+          name: 'set_status',
+          type: 'update_block',
+          block_id: '{{context.source_block_id}}',
+          fields: { status: 'onboarded', onboarded_at: '2026-01-01' },
+        },
+      ],
+    }
+
+    const layout = stepsToCanvas(original)
+    const result = canvasToTemplate(layout)
+
+    expect(result.steps[0]).toMatchObject({
+      name: 'set_status',
+      type: 'update_block',
+      block_id: '{{context.source_block_id}}',
+      fields: { status: 'onboarded', onboarded_at: '2026-01-01' },
     })
   })
 })

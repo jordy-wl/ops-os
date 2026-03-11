@@ -9,10 +9,10 @@
 ## Current Phase and Sprint
 
 **Phase:** 2 — Composable Blocks, Visual Builder & Integrations (UI/UX Overhaul)
-**Sprint:** 12
-**Sprint Goal:** User-configurable block fields — 12 field types, field management API, admin config UI, block detail inline editing.
-**Sprint Started:** 2026-03-10
-**Sprint Target End:** 2026-03-24
+**Sprint:** 13
+**Sprint Goal:** update_block step type for living blocks, remove hardcoded onboarding, canvas-first workflow creation.
+**Sprint Started:** 2026-03-11
+**Sprint Target End:** 2026-03-25
 
 ---
 
@@ -20,16 +20,15 @@
 
 | Task ID | Title | Role | Status | Last Updated |
 |---------|-------|------|--------|-------------|
-| P2-S12-BE-01 | Extended field schema support | Backend | OPEN | 2026-03-10 |
-| P2-S12-BE-02 | Field management API | Backend | OPEN | 2026-03-10 |
-| P2-S12-FE-01 | Dynamic field renderer V2 | Frontend | OPEN | 2026-03-10 |
-| P2-S12-FE-02 | Field configuration UI (admin) | Frontend | OPEN | 2026-03-10 |
-| P2-S12-FE-03 | Block detail page enhancement | Frontend | OPEN | 2026-03-10 |
-| P2-S12-QA-01 | Block field tests | QA | OPEN | 2026-03-10 |
+| P2-S13-BE-01 | `update_block` step type | Backend | OPEN | 2026-03-11 |
+| P2-S13-FE-01 | Update Block canvas node | Frontend | OPEN | 2026-03-11 |
+| P2-S13-BE-02 | Remove hardcoded onboarding | Backend | OPEN | 2026-03-11 |
+| P2-S13-FE-02 | Canvas-first workflow creation | Frontend | OPEN | 2026-03-11 |
+| P2-S13-QA-01 | Workflow system tests | QA | OPEN | 2026-03-11 |
 
-**Sprint metrics:** 0/6 DONE (0%). Sprint 12 initiated.
+**Sprint metrics:** 0/5 DONE (0%). Sprint 13 initiated.
 
-**Critical path:** BE-01 → BE-02 → FE-02 | BE-01 → FE-01 → FE-03
+**Critical path:** BE-01 → FE-01 → QA-01 | BE-02 and FE-02 independent
 
 ---
 
@@ -53,8 +52,8 @@
 
 | Date | Author | Note |
 |------|--------|------|
-| 2026-03-10 | ORCHESTRATOR | **SPRINT 11 RETRO COMPLETE** — 7/7 DONE (100%). UI Foundation: sidebar nav, Geist font, animation system, 6 JSX→TSX conversions, page layout components, loading skeleton standardization. 409 tests. PR #34. |
-| 2026-03-10 | ORCHESTRATOR | **SPRINT 12 INITIATED** — 6 tasks (2 BE, 3 FE, 1 QA). User-configurable block fields with 12 field types. Critical path: BE-01 (field types) → everything else. |
+| 2026-03-11 | ORCHESTRATOR | **SPRINT 12 RETRO COMPLETE** — 6/6 DONE (100%). User-configurable block fields: 12 field types with x-* extensions, field management API (CRUD), admin config UI, 7 per-type field components, inline editing on block detail. 484 tests (+75). PR #35. |
+| 2026-03-11 | ORCHESTRATOR | **SPRINT 13 INITIATED** — 5 tasks (2 BE, 2 FE, 1 QA). update_block step + onboarding removal + canvas-first creation. Critical path: BE-01 → FE-01 → QA-01. |
 
 ---
 
@@ -66,21 +65,21 @@
 
 ---
 
+## Recently Completed — Sprint 12 Archive
+
+Sprint 12 (2026-03-11): 6/6 DONE (100%).
+Deliverables: 12 field type definitions (field-types.ts), field schema builder (add/remove/update/extract), AJV strict:false for x-* extensions, field management API (GET/POST/PATCH/DELETE with system field protection + relation constraints), 7 per-type field components (date, multi-select, currency, url, phone, rich-text, relation), DynamicFieldRenderer V2 dispatcher, BlockDataPanel inline editing, settings block-types list + detail pages, FieldManager + FieldConfigPanel. Test count: 484 (+75). PR #35.
+
 ## Recently Completed — Sprint 11 Archive
 
 Sprint 11 (2026-03-10): 7/7 DONE (100%).
-Deliverables: Persistent left sidebar (SidebarProvider, cookie state, mobile overlay, Cmd+B), Geist font integration, 7 animation keyframes + 5 utility classes, 6 shadcn JSX→TSX conversions (sidebar, separator, button, input, sheet, tooltip), PageContainer + ContentSection layout components, 9 loading skeletons standardized, 14 navigation regression tests. Test count: 409 (+14). PR #34.
+Deliverables: Persistent left sidebar (SidebarProvider, cookie state, mobile overlay, Cmd+B), Geist font integration, 7 animation keyframes + 5 utility classes, 6 shadcn JSX→TSX conversions, PageContainer + ContentSection layout components, 9 loading skeletons standardized, 14 navigation regression tests. Test count: 409 (+14). PR #34.
 
 ## Recently Completed — Sprint 10 Archive
 
 Sprint 10 (2026-03-10): 8/8 DONE (100%).
-Deliverables: UX research + design spec, dashboard overhaul (stat cards, activity feed, quick actions, block type breakdown), loading skeletons (5 pages), PageHeader + Skeleton + EmptyState + ErrorBoundary components, nav library link fixes + active sub-page labels, breadcrumb on block detail, event type color coding, seed demo script (811 lines), E2E workflow test (13 tests), 121-step manual test plan. Test count: 395 (+13).
-
-## Recently Completed — Sprint 9 Archive
-
-Sprint 9 (2026-03-10): 10/10 DONE (100%).
-Deliverables: document_template + brand_kit block types, template rendering engine, PDF generation, AI document generation, Document Library, Brand Kit UI, Document Generation Modal, canvas generate_document wiring. Test count: 382 (+38).
+Deliverables: UX research + design spec, dashboard overhaul, loading skeletons, PageHeader + Skeleton + EmptyState + ErrorBoundary, nav fixes, breadcrumbs, event color coding, seed demo script, E2E workflow test, manual test plan. Test count: 395 (+13).
 
 ## Earlier Sprints
 
-Sprints 1–8 complete. Full details in `shared-state-history.md`.
+Sprints 1–9 complete. Full details in `shared-state-history.md`.

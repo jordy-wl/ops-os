@@ -188,6 +188,7 @@ function ActionConfig({ node, onUpdate }: Pick<NodeConfigPanelProps, 'node' | 'o
             { value: 'send_email', label: 'Send Email' },
             { value: 'generate_document', label: 'Generate Document' },
             { value: 'book_meeting', label: 'Book Meeting' },
+            { value: 'update_block', label: 'Update Block' },
           ]}
         />
       </div>
@@ -347,6 +348,109 @@ function ActionConfig({ node, onUpdate }: Pick<NodeConfigPanelProps, 'node' | 'o
           </div>
         </>
       )}
+      {stepType === 'update_block' && (
+        <UpdateBlockConfig node={node} onUpdate={onUpdate} />
+      )}
+    </>
+  )
+}
+
+// ─── Update Block Config ────────────────────────────────────────────────────
+
+function UpdateBlockConfig({ node, onUpdate }: Pick<NodeConfigPanelProps, 'node' | 'onUpdate'>) {
+  const data = node.data as Record<string, unknown>
+  const config = (data.config ?? {}) as Record<string, unknown>
+  const fields = (config.fields ?? {}) as Record<string, string>
+  const fieldEntries = Object.entries(fields)
+
+  function updateConfig(field: string, value: unknown) {
+    onUpdate(node.id, { ...data, config: { ...config, [field]: value } })
+  }
+
+  function setField(key: string, value: string) {
+    updateConfig('fields', { ...fields, [key]: value })
+  }
+
+  function removeField(key: string) {
+    const next = { ...fields }
+    delete next[key]
+    updateConfig('fields', next)
+  }
+
+  function addField() {
+    const key = `field_${fieldEntries.length + 1}`
+    updateConfig('fields', { ...fields, [key]: '' })
+  }
+
+  function renameField(oldKey: string, newKey: string) {
+    if (newKey === oldKey || !newKey.trim()) return
+    const next: Record<string, string> = {}
+    for (const [k, v] of Object.entries(fields)) {
+      next[k === oldKey ? newKey.trim() : k] = v
+    }
+    updateConfig('fields', next)
+  }
+
+  return (
+    <>
+      <div className="mb-3">
+        <FieldLabel htmlFor="ub-block-id">Target Block ID</FieldLabel>
+        <TextInput
+          id="ub-block-id"
+          value={(config.block_id as string) ?? ''}
+          onChange={(v) => updateConfig('block_id', v)}
+          placeholder="UUID or {{context.source_block_id}}"
+        />
+        <p className="mt-1 text-xs text-gray-400">
+          Use {'{{context.source_block_id}}'} for the trigger block, or a literal UUID.
+        </p>
+      </div>
+
+      <div className="mb-3">
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-xs font-medium text-gray-700">Fields to Update</span>
+          <button
+            type="button"
+            onClick={addField}
+            className="text-xs text-blue-700 hover:underline"
+          >
+            + Add
+          </button>
+        </div>
+        {fieldEntries.length === 0 && (
+          <p className="text-xs text-gray-400 italic">No fields configured yet.</p>
+        )}
+        <div className="space-y-2">
+          {fieldEntries.map(([key, val]) => (
+            <div key={key} className="rounded border border-gray-200 p-2 bg-gray-50">
+              <div className="flex items-center gap-1 mb-1">
+                <input
+                  type="text"
+                  defaultValue={key}
+                  onBlur={(e) => renameField(key, e.target.value)}
+                  className="flex-1 rounded border border-gray-200 px-1.5 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-gray-900"
+                  placeholder="field name"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeField(key)}
+                  className="text-xs text-red-500 hover:text-red-700 px-1"
+                  aria-label={`Remove field ${key}`}
+                >
+                  x
+                </button>
+              </div>
+              <input
+                type="text"
+                value={val}
+                onChange={(e) => setField(key, e.target.value)}
+                className="w-full rounded border border-gray-200 px-1.5 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-gray-900"
+                placeholder="value or {{block.field_name}}"
+              />
+            </div>
+          ))}
+        </div>
+      </div>
     </>
   )
 }

@@ -1,5 +1,4 @@
 import { blockCreateHandler } from '@/lib/actions/handlers/block-create'
-import { onboardingStartHandler } from '@/lib/actions/handlers/onboarding-start'
 import { emailSendHandler } from '@/lib/actions/handlers/email-send'
 import { meetingBookHandler } from '@/lib/actions/handlers/meeting-book'
 import { documentGenerateHandler } from '@/lib/actions/handlers/document-generate'
@@ -21,7 +20,6 @@ import type { ActionHandler } from '@/lib/actions/types'
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const REGISTRY: Record<string, ActionHandler<any>> = {
   'block.create': blockCreateHandler,
-  'onboarding.start': onboardingStartHandler,
   'email.send': emailSendHandler,
   'meeting.book': meetingBookHandler,
   'document.generate': documentGenerateHandler,
