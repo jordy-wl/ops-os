@@ -17,7 +17,7 @@ const MODES: Array<{ value: ChatMode; label: string; icon: React.ElementType; co
 
 export function ModeSelector({ mode, onModeChange }: ModeSelectorProps) {
   return (
-    <div className="flex gap-0.5 rounded-lg bg-gray-100 p-0.5">
+    <div className="flex gap-0.5 rounded-lg bg-muted p-0.5">
       {MODES.map((m) => {
         const Icon = m.icon
         const active = mode === m.value
@@ -29,12 +29,12 @@ export function ModeSelector({ mode, onModeChange }: ModeSelectorProps) {
             className={cn(
               'flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition-colors',
               active
-                ? 'bg-white shadow-sm text-gray-900'
-                : 'text-gray-500 hover:text-gray-700'
+                ? 'bg-background shadow-sm text-foreground'
+                : 'text-muted-foreground hover:text-foreground'
             )}
             aria-pressed={active}
           >
-            <Icon className={cn('h-3 w-3', active ? m.color : 'text-gray-400')} />
+            <Icon className={cn('h-3 w-3', active ? m.color : 'text-muted-foreground')} />
             {m.label}
           </button>
         )

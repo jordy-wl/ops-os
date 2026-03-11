@@ -41,8 +41,8 @@ export function ConnectionTest({ connectorId, onSuccess }: ConnectionTestProps) 
         disabled={status === 'testing'}
         className={cn(
           'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium',
-          'border border-gray-200 text-gray-700 hover:bg-gray-50',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900',
+          'border border-border text-foreground hover:bg-muted',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
           'disabled:opacity-50 disabled:cursor-not-allowed'
         )}
       >

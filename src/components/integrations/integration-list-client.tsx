@@ -55,8 +55,8 @@ export function IntegrationListClient({ initialConnectors }: Props) {
   if (connectors === null) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center" role="alert">
-        <p className="text-lg font-semibold text-gray-900 mb-2">Failed to load integrations</p>
-        <p className="text-sm text-gray-500">Please refresh the page or try again later.</p>
+        <p className="text-lg font-semibold text-foreground mb-2">Failed to load integrations</p>
+        <p className="text-sm text-muted-foreground">Please refresh the page or try again later.</p>
       </div>
     )
   }
@@ -78,10 +78,10 @@ export function IntegrationListClient({ initialConnectors }: Props) {
               aria-pressed={activeFilter === f}
               className={cn(
                 'h-9 px-3 rounded-md text-sm font-medium capitalize transition-colors',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                 activeFilter === f
-                  ? 'bg-gray-900 text-white'
-                  : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-background border border-border text-foreground hover:bg-muted'
               )}
             >
               {f === 'all' ? 'All' : (PROVIDER_LABELS[f] ?? f)}
@@ -93,8 +93,8 @@ export function IntegrationListClient({ initialConnectors }: Props) {
         <Link
           href="/integrations/connect"
           className={cn(
-            'ml-auto h-9 px-4 rounded-md text-sm font-medium bg-gray-900 text-white inline-flex items-center',
-            'hover:bg-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900'
+            'ml-auto h-9 px-4 rounded-md text-sm font-medium bg-primary text-primary-foreground inline-flex items-center',
+            'hover:bg-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
           )}
         >
           Connect Integration
@@ -104,16 +104,16 @@ export function IntegrationListClient({ initialConnectors }: Props) {
       {/* Empty state */}
       {filtered.length === 0 && (
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <p className="text-lg font-semibold text-gray-900 mb-2">
+          <p className="text-lg font-semibold text-foreground mb-2">
             {activeFilter === 'all' ? 'No connectors yet' : `No ${PROVIDER_LABELS[activeFilter] ?? activeFilter} connectors`}
           </p>
-          <p className="text-sm text-gray-500 mb-6">
+          <p className="text-sm text-muted-foreground mb-6">
             Connect external systems to trigger workflows or push data.
           </p>
           {activeFilter === 'all' && (
             <Link
               href="/integrations/connect"
-              className="px-4 py-2 rounded-md bg-gray-900 text-white text-sm font-medium inline-flex items-center hover:bg-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900"
+              className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium inline-flex items-center hover:bg-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               Create First Connector
             </Link>
@@ -126,32 +126,32 @@ export function IntegrationListClient({ initialConnectors }: Props) {
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" role="list">
           {filtered.map((c) => (
             <li key={c.id}>
-              <div className="rounded-lg border border-gray-200 p-4 hover:border-gray-400 hover:shadow-sm transition-all">
+              <div className="rounded-lg border border-border p-4 hover:border-ring hover:shadow-sm transition-all">
                 {/* Header row */}
                 <div className="flex items-center gap-2 mb-2">
                   <span className={cn(
                     'inline-flex rounded-full px-2 py-0.5 text-xs font-medium capitalize',
-                    STATUS_STYLES[c.status] ?? 'bg-gray-100 text-gray-600'
+                    STATUS_STYLES[c.status] ?? 'bg-muted text-muted-foreground'
                   )}>
                     {c.status}
                   </span>
-                  <span className="text-xs text-gray-400 capitalize">
+                  <span className="text-xs text-muted-foreground capitalize">
                     {PROVIDER_LABELS[c.provider] ?? c.provider}
                   </span>
                 </div>
 
                 {/* Name */}
-                <p className="font-medium text-gray-900 truncate mb-1">{c.name}</p>
+                <p className="font-medium text-foreground truncate mb-1">{c.name}</p>
 
                 {/* Direction + webhook URL */}
-                <p className="text-xs text-gray-500 mb-2 capitalize">{c.direction}</p>
+                <p className="text-xs text-muted-foreground mb-2 capitalize">{c.direction}</p>
 
                 {(c.direction === 'inbound' || c.direction === 'bidirectional') && (
                   <WebhookUrl connectorId={c.id} />
                 )}
 
                 {/* Last sync */}
-                <p className="text-xs text-gray-400 mt-2">
+                <p className="text-xs text-muted-foreground mt-2">
                   {c.last_sync_at
                     ? `Last sync: ${new Date(c.last_sync_at).toLocaleString()}`
                     : 'No activity yet'}
@@ -187,12 +187,12 @@ function WebhookUrl({ connectorId }: { connectorId: string }) {
 
   return (
     <div className="flex items-center gap-1">
-      <code className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded truncate flex-1">
+      <code className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded truncate flex-1">
         {url}
       </code>
       <button
         onClick={handleCopy}
-        className="shrink-0 text-xs text-gray-500 hover:text-gray-900 px-2 py-1 rounded hover:bg-gray-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900"
+        className="shrink-0 text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         aria-label="Copy webhook URL"
       >
         {copied ? 'Copied' : 'Copy'}

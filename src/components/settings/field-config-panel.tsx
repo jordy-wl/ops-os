@@ -188,19 +188,19 @@ export function FieldConfigPanel({
       {/* Header */}
       <div className="flex items-center gap-3 mb-6 pb-4 border-b">
         <span
-          className="flex h-9 w-9 items-center justify-center rounded bg-gray-100 text-sm font-medium text-gray-600"
+          className="flex h-9 w-9 items-center justify-center rounded bg-muted text-sm font-medium text-muted-foreground"
           aria-hidden="true"
         >
           {getFieldTypeIcon(fieldType)}
         </span>
         <div>
-          <h3 className="text-base font-semibold text-gray-900">
+          <h3 className="text-base font-semibold text-foreground">
             {fieldName}
           </h3>
-          <p className="text-xs text-gray-500">{typeDef.label} field</p>
+          <p className="text-xs text-muted-foreground">{typeDef.label} field</p>
         </div>
         {isSystem && (
-          <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-500">
+          <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
             <svg
               width="12"
               height="12"
@@ -221,7 +221,7 @@ export function FieldConfigPanel({
       </div>
 
       {isSystem && (
-        <p className="text-sm text-gray-500 mb-6">
+        <p className="text-sm text-muted-foreground mb-6">
           System fields cannot be modified. They are managed automatically by
           Ops OS.
         </p>
@@ -250,7 +250,7 @@ export function FieldConfigPanel({
         <div>
           <label
             htmlFor={`field-description-${fieldName}`}
-            className="block text-sm font-medium text-gray-700 mb-1"
+            className="block text-sm font-medium text-foreground mb-1"
           >
             Description
           </label>
@@ -277,11 +277,11 @@ export function FieldConfigPanel({
               setRequired(e.target.checked)
               setSaveStatus('idle')
             }}
-            className="h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-2 focus:ring-ring"
+            className="h-4 w-4 rounded border-border text-primary focus:ring-2 focus:ring-ring"
           />
           <label
             htmlFor={`field-required-${fieldName}`}
-            className="text-sm font-medium text-gray-700"
+            className="text-sm font-medium text-foreground"
           >
             Required field
           </label>
@@ -291,7 +291,7 @@ export function FieldConfigPanel({
         <div>
           <label
             htmlFor={`field-placeholder-${fieldName}`}
-            className="block text-sm font-medium text-gray-700 mb-1"
+            className="block text-sm font-medium text-foreground mb-1"
           >
             Placeholder
           </label>
@@ -313,7 +313,7 @@ export function FieldConfigPanel({
           <div>
             <label
               htmlFor={`field-enum-${fieldName}`}
-              className="block text-sm font-medium text-gray-700 mb-1"
+              className="block text-sm font-medium text-foreground mb-1"
             >
               Options (comma-separated)
             </label>
@@ -328,7 +328,7 @@ export function FieldConfigPanel({
               placeholder="option_a, option_b, option_c"
               className="text-sm"
             />
-            <p className="mt-1 text-xs text-gray-400">
+            <p className="mt-1 text-xs text-muted-foreground">
               Enter each option separated by a comma.
             </p>
           </div>
@@ -339,7 +339,7 @@ export function FieldConfigPanel({
           <div>
             <label
               htmlFor={`field-relation-target-${fieldName}`}
-              className="block text-sm font-medium text-gray-700 mb-1"
+              className="block text-sm font-medium text-foreground mb-1"
             >
               Relation Target Type
             </label>
@@ -361,7 +361,7 @@ export function FieldConfigPanel({
                   </option>
                 ))}
             </select>
-            <p className="mt-1 text-xs text-gray-400">
+            <p className="mt-1 text-xs text-muted-foreground">
               The block type that this relation field points to.
             </p>
           </div>
@@ -372,7 +372,7 @@ export function FieldConfigPanel({
           <div>
             <label
               htmlFor={`field-currency-${fieldName}`}
-              className="block text-sm font-medium text-gray-700 mb-1"
+              className="block text-sm font-medium text-foreground mb-1"
             >
               Currency Code (ISO 4217)
             </label>

@@ -9,10 +9,9 @@
 ## Current Phase and Sprint
 
 **Phase:** 2 — Composable Blocks, Visual Builder & Integrations (UI/UX Overhaul)
-**Sprint:** 16 (FINAL)
-**Sprint Goal:** Visual polish, dark mode verification, dead code cleanup, full regression, performance audit. Phase 2 exit.
-**Sprint Started:** 2026-03-11
-**Sprint Target End:** 2026-03-25
+**Phase Status:** CODE COMPLETE. Sprint 16 (FINAL) done. Exit conditions require live usage testing.
+**Sprint:** 16 COMPLETE (FINAL)
+**Next:** Phase 2 exit validation → Phase 3 planning
 
 ---
 
@@ -20,15 +19,9 @@
 
 | Task ID | Title | Role | Status | Last Updated |
 |---------|-------|------|--------|-------------|
-| P2-S16-FE-01 | Visual polish pass | Frontend | OPEN | 2026-03-11 |
-| P2-S16-FE-02 | Dark mode verification | Frontend | OPEN | 2026-03-11 |
-| P2-S16-FE-03 | Dead code cleanup | Frontend | OPEN | 2026-03-11 |
-| P2-S16-QA-01 | Full regression suite | QA | OPEN | 2026-03-11 |
-| P2-S16-OPS-01 | Performance audit | DevOps | OPEN | 2026-03-11 |
+| (none) | Phase 2 complete — no active engineering tasks | — | — | 2026-03-11 |
 
-**Sprint metrics:** 0/5 DONE (0%). Sprint 16 initiated.
-
-**Critical path:** FE-01 + FE-02 + FE-03 (parallel) → QA-01 | OPS-01 independent
+**Sprint metrics:** Phase 2: 86/88 tasks DONE (98%) across 12 sprints. 550 tests. Lint/build clean.
 
 ---
 
@@ -44,7 +37,7 @@
 
 | Date | Signal | Status |
 |------|--------|--------|
-| 2026-03-10 | shadcn JSX→TSX: components as `.jsx` lose all TypeScript type safety (P2-S11-FE-03) | PENDING |
+| 2026-03-10 | shadcn JSX→TSX: components as `.jsx` lose all TypeScript type safety (P2-S11-FE-03) | MITIGATED — 39 unused JSX files deleted in S16. 4 remaining `.jsx` files (toast, toaster, toggle, toggle-group, use-toast) are shadcn library code with CSS var dark mode. Full TSX migration deferred to Phase 3. |
 
 ---
 
@@ -54,6 +47,7 @@
 |------|--------|------|
 | 2026-03-11 | ORCHESTRATOR | **SPRINT 15 RETRO COMPLETE** — 5/5 DONE (100%). Integration onboarding wizard (4-step, 3 providers), AI entity creation (field validation + duplicate detection via Dice coefficient), @mention autocomplete (debounced search, keyboard nav, type badges), block creation preview in chat (created/duplicate/error states). +29 tests (550 total). 17 files changed. |
 | 2026-03-11 | ORCHESTRATOR | **SPRINT 16 INITIATED (FINAL)** — 5 tasks (3 FE, 1 QA, 1 OPS). Polish + dark mode + cleanup + regression + performance. 4 tasks can start in parallel. |
+| 2026-03-11 | FRONTEND/QA/OPS | **SPRINT 16 COMPLETE (5/5 DONE)** — Full dark mode conversion (58 component + 15 page files, hardcoded gray→CSS vars), visual polish (consistent focus rings, hover states, primary buttons), dead code cleanup (39 unused shadcn components removed, ~3000 lines), performance audit (no pages >200kB, builder 176kB largest), full regression (550 tests pass, build clean, lint clean). 100 files changed (+660/-3489). |
 
 ---
 
@@ -64,6 +58,11 @@
 | (none yet) | | | | | |
 
 ---
+
+## Recently Completed — Sprint 16 Archive
+
+Sprint 16 FINAL (2026-03-11): 5/5 DONE (100%).
+Deliverables: Full dark mode conversion (73 files, hardcoded gray→CSS vars), visual polish (consistent focus rings, hover states, primary buttons across all 58 components + 15 pages), dead code cleanup (41 files deleted — 39 unused shadcn components + app-nav.tsx + skeleton.jsx, ~3200 lines removed), performance audit (no pages >200kB, builder 176kB largest, shared bundle 102kB), full regression (550 tests, build clean 10.3s, lint clean). 100 files changed (+660/-3489). PR #39.
 
 ## Recently Completed — Sprint 15 Archive
 

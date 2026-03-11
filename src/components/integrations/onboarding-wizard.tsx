@@ -155,9 +155,9 @@ export function OnboardingWizard({ initialProvider }: OnboardingWizardProps) {
               <div
                 className={cn(
                   'flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-medium transition-colors',
-                  i < stepIndex && 'bg-gray-900 text-white',
-                  i === stepIndex && 'bg-gray-900 text-white ring-2 ring-gray-900 ring-offset-2',
-                  i > stepIndex && 'bg-gray-100 text-gray-400'
+                  i < stepIndex && 'bg-primary text-primary-foreground',
+                  i === stepIndex && 'bg-primary text-primary-foreground ring-2 ring-ring ring-offset-2',
+                  i > stepIndex && 'bg-muted text-muted-foreground'
                 )}
               >
                 {i < stepIndex ? <CheckCircle className="h-4 w-4" /> : i + 1}
@@ -165,14 +165,14 @@ export function OnboardingWizard({ initialProvider }: OnboardingWizardProps) {
               <span
                 className={cn(
                   'hidden sm:block text-sm',
-                  i <= stepIndex ? 'text-gray-900 font-medium' : 'text-gray-400'
+                  i <= stepIndex ? 'text-foreground font-medium' : 'text-muted-foreground'
                 )}
               >
                 {s.label}
               </span>
               {i < STEPS.length - 1 && (
                 <div
-                  className={cn('flex-1 h-px', i < stepIndex ? 'bg-gray-900' : 'bg-gray-200')}
+                  className={cn('flex-1 h-px', i < stepIndex ? 'bg-primary' : 'bg-border')}
                 />
               )}
             </li>
@@ -183,8 +183,8 @@ export function OnboardingWizard({ initialProvider }: OnboardingWizardProps) {
       {/* Step 1: Provider Selection */}
       {step === 'select' && (
         <div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-1">Choose a provider</h2>
-          <p className="text-sm text-gray-500 mb-6">
+          <h2 className="text-lg font-semibold text-foreground mb-1">Choose a provider</h2>
+          <p className="text-sm text-muted-foreground mb-6">
             Select the type of integration you want to connect.
           </p>
           <div className="grid gap-3">
@@ -196,17 +196,17 @@ export function OnboardingWizard({ initialProvider }: OnboardingWizardProps) {
                   type="button"
                   onClick={() => handleProviderSelect(p.value)}
                   className={cn(
-                    'flex items-center gap-4 rounded-lg border border-gray-200 p-4 text-left transition-all',
-                    'hover:border-gray-400 hover:shadow-sm',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900'
+                    'flex items-center gap-4 rounded-lg border border-border p-4 text-left transition-all',
+                    'hover:border-ring hover:shadow-sm',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
                   )}
                 >
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-100">
-                    <Icon className="h-5 w-5 text-gray-600" aria-hidden="true" />
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted">
+                    <Icon className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-900">{p.label}</p>
-                    <p className="text-xs text-gray-500">{p.description}</p>
+                    <p className="text-sm font-medium text-foreground">{p.label}</p>
+                    <p className="text-xs text-muted-foreground">{p.description}</p>
                   </div>
                 </button>
               )
@@ -218,10 +218,10 @@ export function OnboardingWizard({ initialProvider }: OnboardingWizardProps) {
       {/* Step 2: Configure */}
       {step === 'configure' && provider && (
         <div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-1">
+          <h2 className="text-lg font-semibold text-foreground mb-1">
             Configure {PROVIDERS.find((p) => p.value === provider)?.label}
           </h2>
-          <p className="text-sm text-gray-500 mb-6">
+          <p className="text-sm text-muted-foreground mb-6">
             {provider === 'google' &&
               'You will be redirected to Google to authorize access.'}
             {provider === 'webhook' &&
@@ -232,7 +232,7 @@ export function OnboardingWizard({ initialProvider }: OnboardingWizardProps) {
 
           <label
             htmlFor="connector-name"
-            className="block text-sm font-medium text-gray-700 mb-1"
+            className="block text-sm font-medium text-foreground mb-1"
           >
             Connector Name
           </label>
@@ -243,20 +243,20 @@ export function OnboardingWizard({ initialProvider }: OnboardingWizardProps) {
             onChange={(e) => setConnectorName(e.target.value)}
             placeholder="e.g. Production CRM"
             maxLength={255}
-            className="mb-4 w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+            className="mb-4 w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
           />
 
           {provider === 'custom_api' && (
             <>
               <label
                 htmlFor="api-endpoint"
-                className="block text-sm font-medium text-gray-700 mb-1"
+                className="block text-sm font-medium text-foreground mb-1"
               >
                 API Endpoint
               </label>
               <div className="relative mb-4">
                 <Link2
-                  className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
                   aria-hidden="true"
                 />
                 <input
@@ -265,19 +265,19 @@ export function OnboardingWizard({ initialProvider }: OnboardingWizardProps) {
                   value={config.endpoint ?? ''}
                   onChange={(e) => setConfig((c) => ({ ...c, endpoint: e.target.value }))}
                   placeholder="https://api.example.com/webhook"
-                  className="w-full rounded-md border border-gray-200 pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+                  className="w-full rounded-md border border-border pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 />
               </div>
 
               <label
                 htmlFor="api-key"
-                className="block text-sm font-medium text-gray-700 mb-1"
+                className="block text-sm font-medium text-foreground mb-1"
               >
-                API Key <span className="text-gray-400">(optional)</span>
+                API Key <span className="text-muted-foreground">(optional)</span>
               </label>
               <div className="relative mb-4">
                 <Key
-                  className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
                   aria-hidden="true"
                 />
                 <input
@@ -286,7 +286,7 @@ export function OnboardingWizard({ initialProvider }: OnboardingWizardProps) {
                   value={config.api_key ?? ''}
                   onChange={(e) => setConfig((c) => ({ ...c, api_key: e.target.value }))}
                   placeholder="sk-..."
-                  className="w-full rounded-md border border-gray-200 pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+                  className="w-full rounded-md border border-border pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 />
               </div>
             </>
@@ -298,8 +298,8 @@ export function OnboardingWizard({ initialProvider }: OnboardingWizardProps) {
               onClick={handleBack}
               className={cn(
                 'inline-flex items-center gap-1.5 px-4 py-2 rounded-md text-sm font-medium',
-                'border border-gray-200 text-gray-700 hover:bg-gray-50',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900'
+                'border border-border text-foreground hover:bg-muted',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
               )}
             >
               <ArrowLeft className="h-4 w-4" aria-hidden="true" />
@@ -311,8 +311,8 @@ export function OnboardingWizard({ initialProvider }: OnboardingWizardProps) {
               disabled={!canProceedConfigure || creating}
               className={cn(
                 'ml-auto inline-flex items-center gap-1.5 px-4 py-2 rounded-md text-sm font-medium',
-                'bg-gray-900 text-white hover:bg-gray-700',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900',
+                'bg-primary text-primary-foreground hover:bg-primary/80',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                 'disabled:opacity-50 disabled:cursor-not-allowed'
               )}
             >
@@ -335,8 +335,8 @@ export function OnboardingWizard({ initialProvider }: OnboardingWizardProps) {
       {/* Step 3: Test Connection */}
       {step === 'test' && (
         <div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-1">Connection Test</h2>
-          <p className="text-sm text-gray-500 mb-6">
+          <h2 className="text-lg font-semibold text-foreground mb-1">Connection Test</h2>
+          <p className="text-sm text-muted-foreground mb-6">
             Verifying your integration is set up correctly.
           </p>
 
@@ -345,16 +345,16 @@ export function OnboardingWizard({ initialProvider }: OnboardingWizardProps) {
               'rounded-lg border p-6 text-center',
               testStatus === 'success' && 'border-green-200 bg-green-50',
               testStatus === 'error' && 'border-red-200 bg-red-50',
-              (testStatus === 'idle' || testStatus === 'testing') && 'border-gray-200 bg-gray-50'
+              (testStatus === 'idle' || testStatus === 'testing') && 'border-border bg-muted'
             )}
           >
             {testStatus === 'testing' && (
               <>
                 <Loader2
-                  className="h-8 w-8 animate-spin text-gray-400 mx-auto mb-3"
+                  className="h-8 w-8 animate-spin text-muted-foreground mx-auto mb-3"
                   aria-hidden="true"
                 />
-                <p className="text-sm font-medium text-gray-700" role="status">
+                <p className="text-sm font-medium text-foreground" role="status">
                   Testing connection...
                 </p>
               </>
@@ -382,20 +382,20 @@ export function OnboardingWizard({ initialProvider }: OnboardingWizardProps) {
           {provider === 'webhook' && webhookUrl && (
             <div className="mt-4 space-y-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Webhook URL</label>
+                <label className="block text-sm font-medium text-foreground mb-1">Webhook URL</label>
                 <div className="flex gap-2">
                   <input
                     type="text"
                     readOnly
                     value={webhookUrl}
-                    className="flex-1 rounded-md border border-gray-200 px-3 py-2 text-xs font-mono bg-gray-50"
+                    className="flex-1 rounded-md border border-border px-3 py-2 text-xs font-mono bg-muted"
                     onClick={(e) => (e.target as HTMLInputElement).select()}
                   />
                   <button
                     type="button"
                     onClick={() => handleCopy(webhookUrl, 'url')}
                     aria-label="Copy webhook URL"
-                    className="shrink-0 inline-flex items-center gap-1 px-3 py-2 rounded-md text-sm border border-gray-200 text-gray-700 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900"
+                    className="shrink-0 inline-flex items-center gap-1 px-3 py-2 rounded-md text-sm border border-border text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     {copied === 'url' ? (
                       <Check className="h-3.5 w-3.5" aria-hidden="true" />
@@ -408,7 +408,7 @@ export function OnboardingWizard({ initialProvider }: OnboardingWizardProps) {
               </div>
               {hmacSecret && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     HMAC Secret
                   </label>
                   <div className="flex gap-2">
@@ -416,14 +416,14 @@ export function OnboardingWizard({ initialProvider }: OnboardingWizardProps) {
                       type="text"
                       readOnly
                       value={hmacSecret}
-                      className="flex-1 rounded-md border border-gray-200 px-3 py-2 text-xs font-mono bg-gray-50"
+                      className="flex-1 rounded-md border border-border px-3 py-2 text-xs font-mono bg-muted"
                       onClick={(e) => (e.target as HTMLInputElement).select()}
                     />
                     <button
                       type="button"
                       onClick={() => handleCopy(hmacSecret, 'secret')}
                       aria-label="Copy HMAC secret"
-                      className="shrink-0 inline-flex items-center gap-1 px-3 py-2 rounded-md text-sm border border-gray-200 text-gray-700 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900"
+                      className="shrink-0 inline-flex items-center gap-1 px-3 py-2 rounded-md text-sm border border-border text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       {copied === 'secret' ? (
                         <Check className="h-3.5 w-3.5" aria-hidden="true" />
@@ -444,8 +444,8 @@ export function OnboardingWizard({ initialProvider }: OnboardingWizardProps) {
               onClick={() => setStep('configure')}
               className={cn(
                 'inline-flex items-center gap-1.5 px-4 py-2 rounded-md text-sm font-medium',
-                'border border-gray-200 text-gray-700 hover:bg-gray-50',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900'
+                'border border-border text-foreground hover:bg-muted',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
               )}
             >
               <ArrowLeft className="h-4 w-4" aria-hidden="true" />
@@ -457,8 +457,8 @@ export function OnboardingWizard({ initialProvider }: OnboardingWizardProps) {
                 onClick={() => setStep('complete')}
                 className={cn(
                   'ml-auto inline-flex items-center gap-1.5 px-4 py-2 rounded-md text-sm font-medium',
-                  'bg-gray-900 text-white hover:bg-gray-700',
-                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900'
+                  'bg-primary text-primary-foreground hover:bg-primary/80',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
                 )}
               >
                 Continue
@@ -472,8 +472,8 @@ export function OnboardingWizard({ initialProvider }: OnboardingWizardProps) {
                 disabled={creating}
                 className={cn(
                   'ml-auto inline-flex items-center gap-1.5 px-4 py-2 rounded-md text-sm font-medium',
-                  'bg-gray-900 text-white hover:bg-gray-700',
-                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900',
+                  'bg-primary text-primary-foreground hover:bg-primary/80',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                   'disabled:opacity-50 disabled:cursor-not-allowed'
                 )}
               >
@@ -488,8 +488,8 @@ export function OnboardingWizard({ initialProvider }: OnboardingWizardProps) {
       {step === 'complete' && (
         <div className="text-center py-8">
           <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-4" aria-hidden="true" />
-          <h2 className="text-lg font-semibold text-gray-900 mb-1">Integration Connected!</h2>
-          <p className="text-sm text-gray-500 mb-6">
+          <h2 className="text-lg font-semibold text-foreground mb-1">Integration Connected!</h2>
+          <p className="text-sm text-muted-foreground mb-6">
             Your {PROVIDERS.find((p) => p.value === provider)?.label} integration is ready to use.
           </p>
           <button
@@ -497,8 +497,8 @@ export function OnboardingWizard({ initialProvider }: OnboardingWizardProps) {
             onClick={() => router.push('/integrations')}
             className={cn(
               'inline-flex items-center gap-1.5 px-4 py-2 rounded-md text-sm font-medium',
-              'bg-gray-900 text-white hover:bg-gray-700',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900'
+              'bg-primary text-primary-foreground hover:bg-primary/80',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
             )}
           >
             View Integrations

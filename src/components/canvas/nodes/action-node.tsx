@@ -39,7 +39,7 @@ function ActionNodeComponent({ data, selected }: NodeProps & { data: ActionNodeD
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-xs font-medium text-green-600 uppercase tracking-wide">Action</p>
-          <p className="text-sm font-medium text-gray-900 truncate">{data.label}</p>
+          <p className="text-sm font-medium text-foreground truncate">{data.label}</p>
         </div>
       </div>
       <Handle type="source" position={Position.Bottom} className="!bg-green-500 !w-3 !h-3 !border-2 !border-white" />

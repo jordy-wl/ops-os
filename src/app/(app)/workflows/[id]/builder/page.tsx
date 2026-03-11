@@ -34,14 +34,14 @@ export default async function WorkflowBuilderPage({ params }: Props) {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] p-6 text-center">
-        <p className="text-4xl font-bold text-gray-200 mb-4" aria-hidden="true">404</p>
-        <h1 className="text-xl font-semibold text-gray-900 mb-2">Template not found</h1>
-        <p className="text-sm text-gray-500 mb-6">
+        <p className="text-4xl font-bold text-muted-foreground mb-4" aria-hidden="true">404</p>
+        <h1 className="text-xl font-semibold text-foreground mb-2">Template not found</h1>
+        <p className="text-sm text-muted-foreground mb-6">
           This workflow template may have been deleted or the link is incorrect.
         </p>
         <Link
           href="/workflows"
-          className="text-sm font-medium text-gray-900 underline hover:no-underline"
+          className="text-sm font-medium text-foreground underline hover:no-underline"
         >
           &larr; Back to workflows
         </Link>

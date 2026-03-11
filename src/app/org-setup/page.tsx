@@ -5,7 +5,7 @@ export default function OrgSetupPage() {
     <div className="flex min-h-screen flex-col items-center justify-center gap-4">
       <div className="text-center">
         <h1 className="text-2xl font-semibold">Select your organisation</h1>
-        <p className="mt-2 text-gray-500">
+        <p className="mt-2 text-muted-foreground">
           Choose an existing organisation or create a new one to get started.
         </p>
       </div>

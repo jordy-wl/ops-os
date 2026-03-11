@@ -31,14 +31,14 @@ export function GoogleConnect({ connectorId, connectorStatus, connectedBy, conne
       <div className="flex items-start gap-3">
         <div className={cn(
           'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg',
-          isConnected ? 'bg-green-50' : 'bg-gray-100'
+          isConnected ? 'bg-green-50' : 'bg-muted'
         )}>
-          <Chrome className={cn('h-5 w-5', isConnected ? 'text-green-600' : 'text-gray-500')} aria-hidden="true" />
+          <Chrome className={cn('h-5 w-5', isConnected ? 'text-green-600' : 'text-muted-foreground')} aria-hidden="true" />
         </div>
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <h3 className="text-sm font-semibold text-gray-900">Google Workspace</h3>
+            <h3 className="text-sm font-semibold text-foreground">Google Workspace</h3>
             {isConnected && (
               <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
                 <CheckCircle className="h-3 w-3" aria-hidden="true" />
@@ -53,14 +53,14 @@ export function GoogleConnect({ connectorId, connectorStatus, connectedBy, conne
             )}
           </div>
 
-          <p className="mt-1 text-xs text-gray-500">
+          <p className="mt-1 text-xs text-muted-foreground">
             {isConnected
               ? 'Gmail, Calendar, and Drive are connected.'
               : 'Connect to send emails, book meetings, and store documents.'}
           </p>
 
           {isConnected && connectedAt && (
-            <p className="mt-1 text-xs text-gray-400">
+            <p className="mt-1 text-xs text-muted-foreground">
               Connected <time dateTime={connectedAt}>{new Date(connectedAt).toLocaleDateString()}</time>
               {connectedBy && ` by ${connectedBy}`}
             </p>
@@ -69,14 +69,14 @@ export function GoogleConnect({ connectorId, connectorStatus, connectedBy, conne
           <div className="mt-3 flex items-center gap-2">
             {isConnected ? (
               <>
-                <span className="text-xs text-gray-500">Scopes: Gmail, Calendar, Drive</span>
+                <span className="text-xs text-muted-foreground">Scopes: Gmail, Calendar, Drive</span>
                 <button
                   type="button"
                   onClick={handleConnect}
                   className={cn(
                     'ml-auto inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-medium',
-                    'border border-gray-200 text-gray-600 hover:bg-gray-50',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900'
+                    'border border-border text-muted-foreground hover:bg-muted',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
                   )}
                 >
                   <Unplug className="h-3 w-3" aria-hidden="true" />
@@ -90,8 +90,8 @@ export function GoogleConnect({ connectorId, connectorStatus, connectedBy, conne
                 disabled={loading}
                 className={cn(
                   'inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium',
-                  'bg-gray-900 text-white hover:bg-gray-700',
-                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900',
+                  'bg-primary text-primary-foreground hover:bg-primary/80',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                   'disabled:opacity-50 disabled:cursor-not-allowed'
                 )}
               >

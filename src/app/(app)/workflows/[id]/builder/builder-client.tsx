@@ -79,15 +79,15 @@ export function WorkflowBuilderClient({
   return (
     <>
       {/* Header bar */}
-      <div className="flex items-center gap-3 border-b bg-white px-4 py-2 shrink-0">
+      <div className="flex items-center gap-3 border-b bg-background px-4 py-2 shrink-0">
         <Link
           href="/workflows"
-          className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900"
+          className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
           Workflows
         </Link>
-        <span className="text-gray-300">/</span>
+        <span className="text-border">/</span>
 
         {editing ? (
           <span className="flex items-center gap-1">
@@ -99,12 +99,12 @@ export function WorkflowBuilderClient({
               onBlur={finishEditing}
               onKeyDown={(e) => { if (e.key === 'Enter') finishEditing() }}
               maxLength={255}
-              className="text-sm font-medium text-gray-900 border-b border-gray-400 bg-transparent outline-none px-0 py-0 w-48"
+              className="text-sm font-medium text-foreground border-b border-border bg-transparent outline-none px-0 py-0 w-48"
             />
             <button
               type="button"
               onClick={finishEditing}
-              className="p-0.5 text-gray-400 hover:text-gray-700"
+              className="p-0.5 text-muted-foreground hover:text-foreground"
               aria-label="Confirm name"
             >
               <Check className="h-3.5 w-3.5" />
@@ -114,15 +114,15 @@ export function WorkflowBuilderClient({
           <button
             type="button"
             onClick={startEditing}
-            className="flex items-center gap-1 text-sm font-medium text-gray-900 hover:text-gray-600 truncate"
+            className="flex items-center gap-1 text-sm font-medium text-foreground hover:text-muted-foreground truncate"
           >
             {name}
-            <Pencil className="h-3 w-3 text-gray-400" aria-hidden="true" />
+            <Pencil className="h-3 w-3 text-muted-foreground" aria-hidden="true" />
           </button>
         )}
 
-        <span className="text-gray-300">/</span>
-        <span className="text-sm text-gray-500">Builder</span>
+        <span className="text-border">/</span>
+        <span className="text-sm text-muted-foreground">Builder</span>
 
         {error && (
           <span className="ml-auto text-xs text-red-600 bg-red-50 px-2 py-1 rounded">

@@ -43,7 +43,7 @@ export default async function TasksPage() {
     })
     return (
       <div className="p-6 lg:p-8">
-        <h1 className="text-2xl font-semibold text-gray-900 mb-6">My Tasks</h1>
+        <h1 className="text-2xl font-semibold text-foreground mb-6">My Tasks</h1>
         <TaskListClient initialTasks={null} currentUserId={userId} />
       </div>
     )
@@ -89,7 +89,7 @@ export default async function TasksPage() {
 
   return (
     <div className="p-6 lg:p-8">
-      <h1 className="text-2xl font-semibold text-gray-900 mb-6">My Tasks</h1>
+      <h1 className="text-2xl font-semibold text-foreground mb-6">My Tasks</h1>
       <TaskListClient initialTasks={initialTasks} currentUserId={userId} />
     </div>
   )

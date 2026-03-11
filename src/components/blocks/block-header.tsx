@@ -37,17 +37,17 @@ export function BlockHeader({ block }: BlockHeaderProps) {
 
       <div className="flex-1 min-w-0">
         {/* Block name */}
-        <h1 className="text-2xl font-semibold text-gray-900 truncate">{block.name}</h1>
+        <h1 className="text-2xl font-semibold text-foreground truncate">{block.name}</h1>
 
         {/* Jurisdiction tag + state */}
-        <div className="mt-1 flex flex-wrap gap-2 text-sm text-gray-500">
+        <div className="mt-1 flex flex-wrap gap-2 text-sm text-muted-foreground">
           {jurisdiction && (
-            <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
+            <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
               {jurisdiction}
             </span>
           )}
           <span className="capitalize">{block.state}</span>
-          <span className="text-gray-300" aria-hidden="true">·</span>
+          <span className="text-muted-foreground" aria-hidden="true">·</span>
           <span>
             Updated{' '}
             <time dateTime={block.updated_at}>

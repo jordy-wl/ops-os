@@ -33,7 +33,7 @@ export function PlanMessage({ content }: { content: string }) {
   // If no steps detected, render as plain text
   const hasSteps = sections.some((s) => s.type === 'step')
   if (!hasSteps) {
-    return <p className="text-sm text-gray-700 whitespace-pre-wrap">{content}</p>
+    return <p className="text-sm text-foreground whitespace-pre-wrap">{content}</p>
   }
 
   return (
@@ -46,13 +46,13 @@ export function PlanMessage({ content }: { content: string }) {
           const boldMatch = trimmed.match(/^\*\*(.+?)\*\*$/)
           if (boldMatch) {
             return (
-              <p key={i} className="text-sm font-semibold text-gray-900">
+              <p key={i} className="text-sm font-semibold text-foreground">
                 {boldMatch[1]}
               </p>
             )
           }
           return (
-            <p key={i} className="text-sm text-gray-700 whitespace-pre-wrap">
+            <p key={i} className="text-sm text-foreground whitespace-pre-wrap">
               {trimmed}
             </p>
           )
@@ -62,7 +62,7 @@ export function PlanMessage({ content }: { content: string }) {
             <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700 text-xs font-semibold">
               {section.number}
             </span>
-            <p className="text-sm text-gray-700 pt-0.5">{section.content}</p>
+            <p className="text-sm text-foreground pt-0.5">{section.content}</p>
           </div>
         )
       })}

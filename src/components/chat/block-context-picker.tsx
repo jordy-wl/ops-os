@@ -20,14 +20,14 @@ interface BlockContextPickerProps {
 export function BlockContextPicker({ blocks, selectedId, onChange }: BlockContextPickerProps) {
   return (
     <div className="flex items-center gap-2">
-      <label htmlFor="block-context" className="text-xs font-medium text-gray-500 shrink-0">
+      <label htmlFor="block-context" className="text-xs font-medium text-muted-foreground shrink-0">
         Context:
       </label>
       <select
         id="block-context"
         value={selectedId ?? ''}
         onChange={(e) => onChange(e.target.value || null)}
-        className="h-8 rounded-md border border-gray-200 px-2 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-gray-900 max-w-[200px] truncate"
+        className="h-8 rounded-md border border-border px-2 text-sm text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-ring max-w-[200px] truncate"
         aria-label="Select block context for AI chat"
       >
         <option value="">Org-level (no block)</option>

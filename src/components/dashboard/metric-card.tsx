@@ -14,10 +14,10 @@ interface MetricCardProps {
  */
 export function MetricCard({ label, value, sublabel }: MetricCardProps) {
   return (
-    <div className="rounded-lg border bg-white p-5">
-      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{label}</p>
-      <p className="mt-2 text-3xl font-bold text-gray-900 tabular-nums">{value}</p>
-      {sublabel && <p className="mt-1 text-xs text-gray-400">{sublabel}</p>}
+    <div className="rounded-lg border bg-background p-5">
+      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{label}</p>
+      <p className="mt-2 text-3xl font-bold text-foreground tabular-nums">{value}</p>
+      {sublabel && <p className="mt-1 text-xs text-muted-foreground">{sublabel}</p>}
     </div>
   )
 }

@@ -29,10 +29,10 @@ export function MessageBubble({ role, content, streaming, isError }: MessageBubb
         className={cn(
           'max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed',
           isUser
-            ? 'bg-gray-900 text-white rounded-br-sm'
+            ? 'bg-primary text-primary-foreground rounded-br-sm'
             : isError
               ? 'bg-red-50 text-red-700 border border-red-200 rounded-bl-sm'
-              : 'bg-white border border-gray-200 text-gray-900 rounded-bl-sm'
+              : 'bg-background border border-border text-foreground rounded-bl-sm'
         )}
       >
         {content.length === 0 && streaming ? (

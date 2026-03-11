@@ -91,31 +91,31 @@ export function BlockBrowser({ blocks, typeDefinitions }: BlockBrowserProps) {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Block Library</h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <h1 className="text-2xl font-bold text-foreground">Block Library</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             {blocks.length} block{blocks.length !== 1 ? 's' : ''} across {types.length} type{types.length !== 1 ? 's' : ''}
           </p>
         </div>
         <div className="flex items-center gap-2">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" aria-hidden="true" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
             <input
               type="search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               aria-label="Search blocks by name"
               placeholder="Search blocks..."
-              className="h-9 w-56 rounded-md border border-gray-200 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+              className="h-9 w-56 rounded-md border border-border pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
-          <div className="flex rounded-md border border-gray-200" role="group" aria-label="View mode">
+          <div className="flex rounded-md border border-border" role="group" aria-label="View mode">
             <button
               type="button"
               onClick={() => setViewMode('grid')}
               aria-pressed={viewMode === 'grid'}
               className={cn(
                 'p-2 rounded-l-md',
-                viewMode === 'grid' ? 'bg-gray-900 text-white' : 'text-gray-500 hover:bg-gray-50'
+                viewMode === 'grid' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'
               )}
             >
               <LayoutGrid className="h-4 w-4" aria-hidden="true" />
@@ -126,8 +126,8 @@ export function BlockBrowser({ blocks, typeDefinitions }: BlockBrowserProps) {
               onClick={() => setViewMode('list')}
               aria-pressed={viewMode === 'list'}
               className={cn(
-                'p-2 rounded-r-md border-l border-gray-200',
-                viewMode === 'list' ? 'bg-gray-900 text-white' : 'text-gray-500 hover:bg-gray-50'
+                'p-2 rounded-r-md border-l border-border',
+                viewMode === 'list' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'
               )}
             >
               <List className="h-4 w-4" aria-hidden="true" />
@@ -145,10 +145,10 @@ export function BlockBrowser({ blocks, typeDefinitions }: BlockBrowserProps) {
           aria-pressed={activeType === 'all'}
           className={cn(
             'rounded-full px-3 py-1 text-sm font-medium transition-colors',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
             activeType === 'all'
-              ? 'bg-gray-900 text-white'
-              : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
+              ? 'bg-primary text-primary-foreground'
+              : 'bg-background border border-border text-foreground hover:bg-muted'
           )}
         >
           All ({blocks.length})
@@ -161,10 +161,10 @@ export function BlockBrowser({ blocks, typeDefinitions }: BlockBrowserProps) {
             aria-pressed={activeType === typeName}
             className={cn(
               'rounded-full px-3 py-1 text-sm font-medium transition-colors',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
               activeType === typeName
-                ? 'bg-gray-900 text-white'
-                : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-background border border-border text-foreground hover:bg-muted'
             )}
           >
             {info.label} ({info.count})
@@ -182,14 +182,14 @@ export function BlockBrowser({ blocks, typeDefinitions }: BlockBrowserProps) {
                   href={`/blocks/${block.id}`}
                   aria-label={`${block.name} — ${block.type}`}
                   className={cn(
-                    'block rounded-lg border p-4 hover:border-gray-400 hover:shadow-sm transition-all',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900'
+                    'block rounded-lg border p-4 hover:border-ring hover:shadow-sm transition-all',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
                   )}
                 >
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <Box className="h-4 w-4 text-gray-400 shrink-0" aria-hidden="true" />
-                      <h3 className="text-sm font-semibold text-gray-900 truncate">{block.name}</h3>
+                      <Box className="h-4 w-4 text-muted-foreground shrink-0" aria-hidden="true" />
+                      <h3 className="text-sm font-semibold text-foreground truncate">{block.name}</h3>
                     </div>
                     <span className={cn(
                       'inline-flex rounded-full px-2 py-0.5 text-xs font-medium capitalize shrink-0',
@@ -198,7 +198,7 @@ export function BlockBrowser({ blocks, typeDefinitions }: BlockBrowserProps) {
                       {block.type}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between text-xs text-gray-500">
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
                     <span className={cn(
                       'inline-flex rounded-full px-2 py-0.5 font-medium capitalize',
                       STATE_STYLES[block.state] ?? 'bg-gray-50 text-gray-600'
@@ -219,12 +219,12 @@ export function BlockBrowser({ blocks, typeDefinitions }: BlockBrowserProps) {
               <Link
                 key={block.id}
                 href={`/blocks/${block.id}`}
-                className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors"
+                className="flex items-center gap-3 px-4 py-3 hover:bg-muted transition-colors"
               >
-                <Box className="h-4 w-4 text-gray-400 shrink-0" aria-hidden="true" />
+                <Box className="h-4 w-4 text-muted-foreground shrink-0" aria-hidden="true" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">{block.name}</p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-sm font-medium text-foreground truncate">{block.name}</p>
+                  <p className="text-xs text-muted-foreground">
                     {block.state} &middot; Updated{' '}
                     <time dateTime={block.updated_at}>{new Date(block.updated_at).toLocaleDateString()}</time>
                   </p>
@@ -243,21 +243,21 @@ export function BlockBrowser({ blocks, typeDefinitions }: BlockBrowserProps) {
         <div className="flex flex-col items-center justify-center py-16 text-center">
           {blocks.length === 0 ? (
             <>
-              <p className="text-lg font-semibold text-gray-900 mb-2">No blocks yet</p>
-              <p className="text-sm text-gray-500 mb-6">Create your first block from the dashboard.</p>
+              <p className="text-lg font-semibold text-foreground mb-2">No blocks yet</p>
+              <p className="text-sm text-muted-foreground mb-6">Create your first block from the dashboard.</p>
               <Link
                 href="/dashboard"
                 className={cn(
                   'px-4 py-2 rounded-md text-sm font-medium',
-                  'bg-gray-900 text-white hover:bg-gray-700',
-                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900'
+                  'bg-primary text-primary-foreground hover:bg-primary/80',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
                 )}
               >
                 Go to dashboard
               </Link>
             </>
           ) : (
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-muted-foreground">
               No blocks match your filter.{' '}
               <button onClick={() => { setSearch(''); setActiveType('all') }} className="underline">
                 Clear filters

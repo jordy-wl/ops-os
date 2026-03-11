@@ -182,9 +182,9 @@ export function ChatWidget() {
         className={cn(
           'fixed bottom-5 left-5 z-50',
           'flex h-12 w-12 items-center justify-center rounded-full',
-          'bg-gray-900 text-white shadow-lg',
-          'hover:bg-gray-700 transition-all hover:scale-105',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2'
+          'bg-gray-900 text-white shadow-lg dark:bg-gray-100 dark:text-gray-900',
+          'hover:bg-gray-700 dark:hover:bg-gray-300 transition-all hover:scale-105',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 dark:focus-visible:ring-gray-100 focus-visible:ring-offset-2'
         )}
         aria-label="Open chat"
       >
@@ -199,7 +199,7 @@ export function ChatWidget() {
       className={cn(
         'fixed bottom-5 left-5 z-50',
         'flex flex-col w-[480px] h-[600px] max-h-[calc(100vh-4rem)]',
-        'rounded-xl border border-gray-200 bg-white shadow-2xl',
+        'rounded-xl border border-border bg-background shadow-2xl',
         'animate-slide-up'
       )}
     >
@@ -209,7 +209,7 @@ export function ChatWidget() {
         <button
           type="button"
           onClick={close}
-          className="flex h-7 w-7 items-center justify-center rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+          className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
           aria-label="Close chat"
         >
           <X className="h-4 w-4" />
@@ -218,15 +218,15 @@ export function ChatWidget() {
 
       {/* Messages */}
       <div
-        className="flex-1 overflow-y-auto px-3 py-3 space-y-3 bg-gray-50"
+        className="flex-1 overflow-y-auto px-3 py-3 space-y-3 bg-muted"
         role="log"
         aria-label="Chat messages"
       >
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center py-8">
-            <MessageCircle className="h-8 w-8 text-gray-300 mb-3" />
-            <p className="text-sm font-medium text-gray-600 mb-1">How can I help?</p>
-            <p className="text-xs text-gray-400 max-w-[280px]">
+            <MessageCircle className="h-8 w-8 text-muted-foreground mb-3" />
+            <p className="text-sm font-medium text-muted-foreground mb-1">How can I help?</p>
+            <p className="text-xs text-muted-foreground max-w-[280px]">
               {mode === 'discuss' && 'Ask questions about your blocks, workflows, and events.'}
               {mode === 'plan' && 'Describe what you want to achieve and I\'ll create a step-by-step plan.'}
               {mode === 'execute' && 'Tell me what to do and I\'ll take action in the system.'}
@@ -237,7 +237,7 @@ export function ChatWidget() {
             <div key={msg.id}>
               {/* Plan mode: structured rendering for assistant messages */}
               {msg.role === 'assistant' && msg.mode === 'plan' && !msg.isError && !msg.streaming && msg.content ? (
-                <div className="bg-white border border-gray-200 rounded-2xl rounded-bl-sm px-4 py-2.5 max-w-[85%]">
+                <div className="bg-background border border-border rounded-2xl rounded-bl-sm px-4 py-2.5 max-w-[85%]">
                   <PlanMessage content={msg.content} />
                 </div>
               ) : (
@@ -269,7 +269,7 @@ export function ChatWidget() {
                       >
                         <Wrench className="h-3 w-3 shrink-0" />
                         <span className="font-medium">{tc.name}</span>
-                        <span className="text-gray-400">—</span>
+                        <span className="text-muted-foreground">—</span>
                         <span className="truncate">
                           {tc.result.success
                             ? JSON.stringify(tc.result.data).slice(0, 60)

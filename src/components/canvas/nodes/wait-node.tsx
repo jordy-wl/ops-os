@@ -26,7 +26,7 @@ function WaitNodeComponent({ data, selected }: NodeProps & { data: WaitNodeData 
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Wait</p>
-          <p className="text-sm font-medium text-gray-900 truncate">{data.label}</p>
+          <p className="text-sm font-medium text-foreground truncate">{data.label}</p>
         </div>
       </div>
       <Handle type="source" position={Position.Bottom} className="!bg-gray-500 !w-3 !h-3 !border-2 !border-white" />

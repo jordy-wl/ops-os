@@ -193,7 +193,7 @@ export function FieldManager({
       )}
 
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-medium text-gray-900">
+        <h2 className="text-lg font-medium text-foreground">
           Fields ({fields.length})
         </h2>
         <Button
@@ -207,15 +207,15 @@ export function FieldManager({
 
       {/* Add field form */}
       {showAddForm && (
-        <div className="mb-6 rounded-lg border bg-gray-50 p-4">
-          <h3 className="text-sm font-medium text-gray-900 mb-3">
+        <div className="mb-6 rounded-lg border bg-muted p-4">
+          <h3 className="text-sm font-medium text-foreground mb-3">
             New Field
           </h3>
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="flex-1">
               <label
                 htmlFor="new-field-name"
-                className="block text-xs font-medium text-gray-600 mb-1"
+                className="block text-xs font-medium text-muted-foreground mb-1"
               >
                 Field Name (snake_case)
               </label>
@@ -231,7 +231,7 @@ export function FieldManager({
             <div className="sm:w-48">
               <label
                 htmlFor="new-field-type"
-                className="block text-xs font-medium text-gray-600 mb-1"
+                className="block text-xs font-medium text-muted-foreground mb-1"
               >
                 Field Type
               </label>
@@ -264,10 +264,10 @@ export function FieldManager({
       {/* Field list + config panel layout */}
       {fields.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
-          <p className="text-lg font-medium text-gray-900 mb-1">
+          <p className="text-lg font-medium text-foreground mb-1">
             No fields configured
           </p>
-          <p className="text-sm text-gray-500 mb-4">
+          <p className="text-sm text-muted-foreground mb-4">
             Add your first field to start defining the structure of this block
             type.
           </p>
@@ -294,15 +294,15 @@ export function FieldManager({
                       className={cn(
                         'w-full flex items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                         selectedField === field.name
-                          ? 'bg-gray-100 text-gray-900'
-                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                          ? 'bg-muted text-foreground'
+                          : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                       )}
                       aria-current={
                         selectedField === field.name ? 'true' : undefined
                       }
                     >
                       <span
-                        className="flex h-7 w-7 items-center justify-center rounded bg-gray-200 text-xs font-medium text-gray-600 flex-shrink-0"
+                        className="flex h-7 w-7 items-center justify-center rounded bg-muted text-xs font-medium text-muted-foreground flex-shrink-0"
                         aria-hidden="true"
                       >
                         {getFieldTypeIcon(field.fieldType)}
@@ -314,7 +314,7 @@ export function FieldManager({
                           </span>
                           {field.isSystem && (
                             <span
-                              className="text-gray-400 flex-shrink-0"
+                              className="text-muted-foreground flex-shrink-0"
                               aria-label="System field (locked)"
                               title="System field"
                             >
@@ -342,7 +342,7 @@ export function FieldManager({
                             </span>
                           )}
                         </div>
-                        <span className="text-xs text-gray-400">
+                        <span className="text-xs text-muted-foreground">
                           {FIELD_TYPE_DEFINITIONS[field.fieldType].label}
                         </span>
                       </div>
@@ -353,7 +353,7 @@ export function FieldManager({
                             handleDeleteField(field.name)
                           }}
                           disabled={isDeleting === field.name}
-                          className="flex-shrink-0 p-1 text-gray-300 hover:text-red-500 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+                          className="flex-shrink-0 p-1 text-muted-foreground hover:text-red-500 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
                           aria-label={`Delete field ${field.name}`}
                           title="Delete field"
                         >
@@ -398,7 +398,7 @@ export function FieldManager({
                 allBlockTypes={allBlockTypes}
               />
             ) : (
-              <div className="flex items-center justify-center py-12 text-center text-sm text-gray-400 border rounded-lg border-dashed">
+              <div className="flex items-center justify-center py-12 text-center text-sm text-muted-foreground border rounded-lg border-dashed">
                 Select a field from the list to view its configuration.
               </div>
             )}

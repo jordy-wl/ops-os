@@ -2,6 +2,7 @@ import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import { createServerClient } from '@/lib/supabase/server'
 import { resolveOrgId } from '@/lib/auth/resolve-org'
+import { PageContainer } from '@/components/shell/page-container'
 import { BrandKitEditor } from '@/components/settings/brand-kit-editor'
 
 export const metadata = { title: 'Brand Kit — Ops OS' }
@@ -26,11 +27,11 @@ export default async function BrandKitPage() {
     .single()
 
   return (
-    <div className="p-6 lg:p-8 max-w-4xl">
+    <PageContainer maxWidth="md">
       <BrandKitEditor
         orgId={internalOrgId}
         existingBlock={brandKitBlock ?? undefined}
       />
-    </div>
+    </PageContainer>
   )
 }

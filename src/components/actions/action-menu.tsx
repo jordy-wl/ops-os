@@ -186,8 +186,8 @@ export function ActionMenu({ blockId, blockName, blockType, googleConnectorId }:
         aria-haspopup="true"
         className={cn(
           'inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium',
-          'bg-gray-900 text-white hover:bg-gray-700',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900'
+          'bg-primary text-primary-foreground hover:bg-primary/80',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
         )}
       >
         <Play className="h-4 w-4" aria-hidden="true" />
@@ -199,7 +199,7 @@ export function ActionMenu({ blockId, blockName, blockType, googleConnectorId }:
       {open && (
         <div
           role="menu"
-          className="absolute right-0 top-full z-20 mt-1 w-56 rounded-lg border bg-white py-1 shadow-lg"
+          className="absolute right-0 top-full z-20 mt-1 w-56 rounded-lg border bg-background py-1 shadow-lg"
         >
           {availableActions.map((action) => {
             const disabled = action.requiresGoogle && !googleConnectorId
@@ -212,14 +212,14 @@ export function ActionMenu({ blockId, blockName, blockType, googleConnectorId }:
                 className={cn(
                   'flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm',
                   disabled
-                    ? 'cursor-not-allowed text-gray-400'
-                    : 'text-gray-700 hover:bg-gray-50'
+                    ? 'cursor-not-allowed text-muted-foreground'
+                    : 'text-foreground hover:bg-muted'
                 )}
               >
                 {action.icon}
                 <span>{action.label}</span>
                 {disabled && (
-                  <span className="ml-auto text-xs text-gray-400">No Google</span>
+                  <span className="ml-auto text-xs text-muted-foreground">No Google</span>
                 )}
               </button>
             )
@@ -240,29 +240,29 @@ export function ActionMenu({ blockId, blockName, blockType, googleConnectorId }:
             onClick={() => { setActiveAction(null); setFormData({}); setResult(null) }}
             aria-hidden="true"
           />
-          <div className="relative w-full max-w-md rounded-lg bg-white p-6 shadow-lg max-h-[85vh] overflow-y-auto">
+          <div className="relative w-full max-w-md rounded-lg bg-background p-6 shadow-lg max-h-[85vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
-              <h2 id="action-modal-title" className="text-lg font-semibold text-gray-900">
+              <h2 id="action-modal-title" className="text-lg font-semibold text-foreground">
                 {activeAction.label}
               </h2>
               <button
                 type="button"
                 onClick={() => { setActiveAction(null); setFormData({}); setResult(null) }}
                 aria-label="Close"
-                className="rounded-md p-1 text-gray-400 hover:text-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900"
+                className="rounded-md p-1 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <p className="text-sm text-gray-500 mb-4">
+            <p className="text-sm text-muted-foreground mb-4">
               For <strong>{blockName}</strong> ({blockType})
             </p>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               {activeAction.fields.map((field) => (
                 <div key={field.name}>
-                  <label htmlFor={`action-${field.name}`} className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor={`action-${field.name}`} className="block text-sm font-medium text-foreground mb-1">
                     {field.label}
                     {field.required && <span className="text-red-500 ml-0.5">*</span>}
                   </label>
@@ -274,7 +274,7 @@ export function ActionMenu({ blockId, blockName, blockType, googleConnectorId }:
                       placeholder={field.placeholder}
                       required={field.required}
                       rows={3}
-                      className="w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+                      className="w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                     />
                   ) : (
                     <input
@@ -284,7 +284,7 @@ export function ActionMenu({ blockId, blockName, blockType, googleConnectorId }:
                       onChange={(e) => setFormData((prev) => ({ ...prev, [field.name]: e.target.value }))}
                       placeholder={field.placeholder}
                       required={field.required}
-                      className="w-full h-9 rounded-md border border-gray-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+                      className="w-full h-9 rounded-md border border-border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                     />
                   )}
                 </div>
@@ -301,8 +301,8 @@ export function ActionMenu({ blockId, blockName, blockType, googleConnectorId }:
                 disabled={submitting}
                 className={cn(
                   'w-full rounded-md px-4 py-2 text-sm font-medium',
-                  'bg-gray-900 text-white hover:bg-gray-700',
-                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900',
+                  'bg-primary text-primary-foreground hover:bg-primary/80',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                   'disabled:opacity-50 disabled:cursor-not-allowed'
                 )}
               >

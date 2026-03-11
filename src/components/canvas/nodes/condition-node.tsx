@@ -26,7 +26,7 @@ function ConditionNodeComponent({ data, selected }: NodeProps & { data: Conditio
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-xs font-medium text-amber-600 uppercase tracking-wide">Condition</p>
-          <p className="text-sm font-medium text-gray-900 truncate">{data.label}</p>
+          <p className="text-sm font-medium text-foreground truncate">{data.label}</p>
         </div>
       </div>
       {/* True branch (right) and False branch (bottom) */}

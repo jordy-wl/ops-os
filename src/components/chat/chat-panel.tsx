@@ -137,17 +137,17 @@ export function ChatPanel({ blocks, mode = 'full-page' }: ChatPanelProps) {
   const heightClass = mode === 'full-page' ? 'h-[calc(100vh-3.5rem)]' : 'h-[600px]'
 
   return (
-    <div className={`flex flex-col ${heightClass} bg-gray-50`}>
+    <div className={`flex flex-col ${heightClass} bg-muted`}>
       {/* Chat header — context picker + selected block name */}
-      <div className="flex items-center gap-3 border-b bg-white px-4 py-2.5 flex-wrap">
+      <div className="flex items-center gap-3 border-b bg-background px-4 py-2.5 flex-wrap">
         <BlockContextPicker
           blocks={blocks}
           selectedId={selectedBlockId}
           onChange={setSelectedBlockId}
         />
         {selectedBlock && (
-          <p className="text-sm font-medium text-gray-700 truncate" aria-live="polite">
-            Asking about: <span className="text-gray-900">{selectedBlock.name}</span>
+          <p className="text-sm font-medium text-foreground truncate" aria-live="polite">
+            Asking about: <span className="text-foreground">{selectedBlock.name}</span>
           </p>
         )}
       </div>
