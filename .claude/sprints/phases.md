@@ -118,9 +118,10 @@ If exit condition is NOT met after 12 weeks:
 - Sprint 12: User-configurable block fields — 12 field types, field management API, admin config UI — **COMPLETE** (6/6 DONE, 100%. 2026-03-11. PR #35)
 - Sprint 13: update_block step + remove onboarding + canvas-first workflow creation — **COMPLETE** (5/5 DONE, 100%. 2026-03-11. PR #36)
 - Sprint 14: Chat widget + AI modes (Discuss/Plan/Execute) — **COMPLETE** (6/6 DONE, 100%. 2026-03-11. PR #37)
-- Sprint 15: Integration onboarding wizard + AI entity creation + @mention — **ACTIVE**
+- Sprint 15: Integration onboarding wizard + AI entity creation + @mention — **COMPLETE** (5/5 DONE, 100%. 2026-03-11)
+- Sprint 16: Polish + regression + production (FINAL) — **ACTIVE**
 
-**Phase 2 Status:** UI/UX Overhaul in progress. 76/78 tasks done across 10 sprints (97%). 521 tests passing. Sprint 14 (Chat Widget + AI Modes) complete. Sprint 15 (Integration + AI Entity Creation) initiated.
+**Phase 2 Status:** UI/UX Overhaul nearing completion. 81/83 tasks done across 11 sprints (98%). 550 tests passing. Sprint 16 (FINAL — polish + regression) initiated.
 
 ---
 
