@@ -6,10 +6,17 @@
  *   data: [DONE]\n\n            — stream end sentinel
  *   data: {"error": "..."}\n\n  — error mid-stream
  */
+export type ToolCallChunk = {
+  name: string
+  input: unknown
+  result: { success: boolean; data?: unknown; error?: string }
+}
+
 export type SseChunk =
   | { type: 'text'; text: string }
   | { type: 'done' }
   | { type: 'error'; message: string }
+  | { type: 'tool_call'; tool_call: ToolCallChunk }
 
 /**
  * parseSseChunk — parses a raw SSE string into typed chunk objects.
@@ -51,6 +58,16 @@ export function parseSseChunk(raw: string): SseChunk[] {
         typeof (parsed as Record<string, unknown>).error === 'string'
       ) {
         results.push({ type: 'error', message: (parsed as { error: string }).error })
+      } else if (
+        parsed !== null &&
+        typeof parsed === 'object' &&
+        'tool_call' in parsed &&
+        typeof (parsed as Record<string, unknown>).tool_call === 'object'
+      ) {
+        results.push({
+          type: 'tool_call',
+          tool_call: (parsed as { tool_call: ToolCallChunk }).tool_call,
+        })
       }
     } catch {
       // Malformed JSON — skip silently (partial chunk edge case)

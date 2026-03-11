@@ -55,6 +55,44 @@ describe('parseSseChunk', () => {
     })
   })
 
+  describe('tool_call chunks', () => {
+    it('parses a tool_call chunk', () => {
+      const payload = JSON.stringify({
+        tool_call: {
+          name: 'search_blocks',
+          input: { query: 'Acme' },
+          result: { success: true, data: { blocks: [] } },
+        },
+      })
+      const result = parseSseChunk(`data: ${payload}\n\n`)
+      expect(result).toEqual([
+        {
+          type: 'tool_call',
+          tool_call: {
+            name: 'search_blocks',
+            input: { query: 'Acme' },
+            result: { success: true, data: { blocks: [] } },
+          },
+        },
+      ])
+    })
+
+    it('parses text followed by tool_call', () => {
+      const toolPayload = JSON.stringify({
+        tool_call: {
+          name: 'create_block',
+          input: { name: 'Test', type: 'client' },
+          result: { success: true, data: { block_id: 'b1' } },
+        },
+      })
+      const raw = `data: {"text":"Let me create that."}\n\ndata: ${toolPayload}\n\n`
+      const result = parseSseChunk(raw)
+      expect(result).toHaveLength(2)
+      expect(result[0].type).toBe('text')
+      expect(result[1].type).toBe('tool_call')
+    })
+  })
+
   describe('edge cases', () => {
     it('returns empty array for empty string', () => {
       expect(parseSseChunk('')).toEqual([])

@@ -27,6 +27,11 @@ vi.mock('@/lib/context-assembly', () => ({
   contextToPromptString: vi.fn().mockReturnValue('[CONTEXT]\nOrg: Thornfield Capital\n[END CONTEXT]'),
 }))
 
+vi.mock('@/lib/ai/chat-tools', () => ({
+  CHAT_TOOLS: [],
+  executeChatTool: vi.fn().mockResolvedValue({ success: true, data: {} }),
+}))
+
 vi.mock('@anthropic-ai/sdk', () => {
   const mockStream = {
     [Symbol.asyncIterator]: async function* () {
@@ -143,5 +148,31 @@ describe('POST /api/ai/chat', () => {
     expect(text).toContain('"text":"Hello"')
     expect(text).toContain('"text":" world"')
     expect(text).toContain('[DONE]')
+  })
+
+  it('accepts mode=discuss and returns SSE stream', async () => {
+    const res = await chatEndpoint(
+      makeReq({ message: 'Test', mode: 'discuss' }),
+      { params: Promise.resolve({}) }
+    )
+    expect(res.status).toBe(200)
+    expect(res.headers.get('Content-Type')).toBe('text/event-stream')
+  })
+
+  it('accepts mode=plan and returns SSE stream', async () => {
+    const res = await chatEndpoint(
+      makeReq({ message: 'Help me plan onboarding', mode: 'plan' }),
+      { params: Promise.resolve({}) }
+    )
+    expect(res.status).toBe(200)
+    expect(res.headers.get('Content-Type')).toBe('text/event-stream')
+  })
+
+  it('defaults to discuss mode when mode is omitted', async () => {
+    const res = await chatEndpoint(
+      makeReq({ message: 'No mode specified' }),
+      { params: Promise.resolve({}) }
+    )
+    expect(res.status).toBe(200)
   })
 })
