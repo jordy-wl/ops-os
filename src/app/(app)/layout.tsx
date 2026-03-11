@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import { AppSidebar } from '@/components/shell/app-sidebar'
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
 import { Separator } from '@/components/ui/separator'
+import { ChatWidgetShell } from '@/components/chat/chat-widget-shell'
 
 /**
  * Authenticated app layout — wraps all routes under (app)/.
@@ -42,6 +43,7 @@ export default async function AppLayout({
           {children}
         </main>
       </SidebarInset>
+      <ChatWidgetShell />
     </SidebarProvider>
   )
 }
