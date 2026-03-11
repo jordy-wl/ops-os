@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
+import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { CreateIntegrationModal } from './create-integration-modal'
 
@@ -88,16 +89,16 @@ export function IntegrationListClient({ initialConnectors }: Props) {
           ))}
         </div>
 
-        {/* Create button */}
-        <button
-          onClick={() => setShowCreate(true)}
+        {/* Connect button */}
+        <Link
+          href="/integrations/connect"
           className={cn(
-            'ml-auto h-9 px-4 rounded-md text-sm font-medium bg-gray-900 text-white',
+            'ml-auto h-9 px-4 rounded-md text-sm font-medium bg-gray-900 text-white inline-flex items-center',
             'hover:bg-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900'
           )}
         >
-          Add Connector
-        </button>
+          Connect Integration
+        </Link>
       </div>
 
       {/* Empty state */}
@@ -110,12 +111,12 @@ export function IntegrationListClient({ initialConnectors }: Props) {
             Connect external systems to trigger workflows or push data.
           </p>
           {activeFilter === 'all' && (
-            <button
-              onClick={() => setShowCreate(true)}
-              className="px-4 py-2 rounded-md bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900"
+            <Link
+              href="/integrations/connect"
+              className="px-4 py-2 rounded-md bg-gray-900 text-white text-sm font-medium inline-flex items-center hover:bg-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900"
             >
               Create First Connector
-            </button>
+            </Link>
           )}
         </div>
       )}

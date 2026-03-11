@@ -1,6 +1,8 @@
 import type Anthropic from '@anthropic-ai/sdk'
 import { createServerClient } from '@/lib/supabase/server'
 import { logger } from '@/lib/logger'
+import { checkForDuplicates } from '@/lib/ai/research-tools'
+import { validateFieldsAgainstSchema, getBlockTypeSchemas } from '@/lib/ai/entity-creation'
 import type { UserRole } from '@/lib/auth/withAuth'
 
 // ─── Tool Definitions ────────────────────────────────────────────────────────
@@ -28,7 +30,7 @@ export const CHAT_TOOLS: Anthropic.Tool[] = [
   {
     name: 'create_block',
     description:
-      'Create a new block (operational entity) in the system. Returns the created block ID.',
+      'Create a new block (operational entity). Validates metadata fields against the block type schema and checks for duplicates before creation. Returns the created block or duplicate warnings.',
     input_schema: {
       type: 'object' as const,
       properties: {
@@ -39,7 +41,13 @@ export const CHAT_TOOLS: Anthropic.Tool[] = [
         },
         metadata: {
           type: 'object',
-          description: 'Optional metadata fields for the block',
+          description:
+            'Optional metadata fields — validated against the block type field schema. Invalid or unknown fields are stripped with warnings.',
+        },
+        skip_duplicate_check: {
+          type: 'boolean',
+          description:
+            'Set to true to skip duplicate detection (e.g. after user confirmed creation despite duplicates)',
         },
       },
       required: ['name', 'type'],
@@ -80,6 +88,16 @@ export const CHAT_TOOLS: Anthropic.Tool[] = [
       required: ['template_id', 'block_id'],
     },
   },
+  {
+    name: 'list_block_types',
+    description:
+      'List all available block types with their field schemas. Use this to understand what types of blocks can be created and what fields each type supports.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {},
+      required: [],
+    },
+  },
 ]
 
 // ─── Tool Execution ──────────────────────────────────────────────────────────
@@ -104,7 +122,7 @@ export async function executeChatTool(
   role: UserRole
 ): Promise<ToolResult> {
   // RBAC: only ops-admin can mutate
-  const readOnlyTools = new Set(['search_blocks'])
+  const readOnlyTools = new Set(['search_blocks', 'list_block_types'])
   if (!readOnlyTools.has(toolName) && role !== 'ops-admin') {
     return {
       success: false,
@@ -124,6 +142,8 @@ export async function executeChatTool(
         return await executeUpdateBlock(supabase, orgId, input)
       case 'trigger_workflow':
         return await executeTriggerWorkflow(supabase, orgId, input)
+      case 'list_block_types':
+        return await executeListBlockTypes(orgId)
       default:
         return { success: false, error: `Unknown tool: ${toolName}` }
     }
@@ -174,14 +194,56 @@ async function executeCreateBlock(
   const name = String(input.name ?? '')
   const type = String(input.type ?? '')
   const metadata = (input.metadata as Record<string, unknown>) ?? {}
+  const skipDuplicateCheck = input.skip_duplicate_check === true
 
   if (!name || !type) {
     return { success: false, error: 'name and type are required' }
   }
 
+  // Step 1: Duplicate detection (unless explicitly skipped)
+  if (!skipDuplicateCheck) {
+    const duplicates = await checkForDuplicates(name, type, orgId)
+    if (duplicates.hasDuplicates) {
+      return {
+        success: false,
+        error: 'Potential duplicates found. Set skip_duplicate_check=true to create anyway.',
+        data: {
+          duplicates: duplicates.matches.map((m) => ({
+            id: m.source_id,
+            name: m.content,
+            similarity: Math.round(m.similarity * 100) + '%',
+          })),
+        },
+      }
+    }
+  }
+
+  // Step 2: Validate metadata against block type field schema (if metadata provided)
+  let validatedMetadata = metadata
+  const warnings: string[] = []
+
+  if (Object.keys(metadata).length > 0) {
+    const { data: typeDef } = await supabase
+      .from('block_type_definitions')
+      .select('field_schema')
+      .eq('org_id', orgId)
+      .eq('type', type)
+      .single()
+
+    if (typeDef?.field_schema) {
+      const schema = typeDef.field_schema as Record<string, unknown>
+      const { validFields, errors } = validateFieldsAgainstSchema(metadata, schema)
+      validatedMetadata = validFields
+      if (errors.length > 0) {
+        warnings.push(...errors)
+      }
+    }
+  }
+
+  // Step 3: Insert the block
   const { data, error } = await supabase
     .from('blocks')
-    .insert({ name, type, org_id: orgId, metadata, state: 'active' })
+    .insert({ name, type, org_id: orgId, metadata: validatedMetadata, state: 'active' })
     .select('id, name, type')
     .single()
 
@@ -194,10 +256,18 @@ async function executeCreateBlock(
     type: 'block.created',
     actor_type: 'ai_chat',
     actor_id: 'system',
-    payload: { name, block_type: type },
+    payload: { name, block_type: type, field_count: Object.keys(validatedMetadata).length },
   })
 
-  return { success: true, data: { block_id: data.id, name: data.name, type: data.type } }
+  return {
+    success: true,
+    data: {
+      block_id: data.id,
+      name: data.name,
+      type: data.type,
+      ...(warnings.length > 0 ? { warnings } : {}),
+    },
+  }
 }
 
 async function executeUpdateBlock(
@@ -313,4 +383,30 @@ async function executeTriggerWorkflow(
     success: true,
     data: { instance_id: instance.id, template_name: template.name, target_name: target.name },
   }
+}
+
+async function executeListBlockTypes(orgId: string): Promise<ToolResult> {
+  const schemas = await getBlockTypeSchemas(orgId)
+
+  if (schemas.length === 0) {
+    return { success: true, data: { block_types: [], message: 'No custom block types configured' } }
+  }
+
+  const blockTypes = schemas.map((s) => {
+    const properties = (s.field_schema as Record<string, unknown>).properties as
+      | Record<string, Record<string, unknown>>
+      | undefined
+    const fields = properties
+      ? Object.entries(properties).map(([key, prop]) => ({
+          name: key,
+          type: prop['x-field-type'] ?? prop.type,
+          required: ((s.field_schema as Record<string, unknown>).required as string[] ?? []).includes(key),
+          system: prop['x-is-system'] === true,
+        }))
+      : []
+
+    return { type: s.type, label: s.label, fields }
+  })
+
+  return { success: true, data: { block_types: blockTypes } }
 }

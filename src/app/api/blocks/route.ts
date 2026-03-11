@@ -18,6 +18,7 @@ const CreateBlockSchema = z.object({
 export const GET = withAuth(async (req: NextRequest, ctx) => {
   const { searchParams } = new URL(req.url)
   const type = searchParams.get('type')
+  const q = searchParams.get('q')
   const limit = Math.min(parseInt(searchParams.get('limit') ?? '50', 10), 200)
 
   const supabase = createServerClient()
@@ -30,6 +31,10 @@ export const GET = withAuth(async (req: NextRequest, ctx) => {
 
   if (type) {
     query = query.eq('type', type)
+  }
+
+  if (q) {
+    query = query.ilike('name', `%${q}%`)
   }
 
   const { data, error } = await query

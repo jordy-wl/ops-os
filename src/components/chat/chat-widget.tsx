@@ -9,6 +9,7 @@ import { ChatInput } from './chat-input'
 import { PlanMessage } from './plan-message'
 import { ExecuteConfirmation } from './execute-confirmation'
 import { MessageBubble } from './message-bubble'
+import { BlockCreationPreview, extractBlockCreationData } from './block-creation-preview'
 import { parseSseChunk } from '@/lib/chat/parse-sse'
 import type { ChatMode } from './chat-widget-provider'
 import type { ToolCallChunk } from '@/lib/chat/parse-sse'
@@ -250,27 +251,33 @@ export function ChatWidget() {
 
               {/* Tool call indicators */}
               {msg.toolCalls && msg.toolCalls.length > 0 && (
-                <div className="mt-1.5 space-y-1">
-                  {msg.toolCalls.map((tc, i) => (
-                    <div
-                      key={i}
-                      className={cn(
-                        'flex items-center gap-1.5 text-xs rounded-md px-2.5 py-1 max-w-[85%]',
-                        tc.result.success
-                          ? 'bg-green-50 text-green-700 border border-green-200'
-                          : 'bg-red-50 text-red-700 border border-red-200'
-                      )}
-                    >
-                      <Wrench className="h-3 w-3 shrink-0" />
-                      <span className="font-medium">{tc.name}</span>
-                      <span className="text-gray-400">—</span>
-                      <span className="truncate">
-                        {tc.result.success
-                          ? JSON.stringify(tc.result.data).slice(0, 60)
-                          : tc.result.error}
-                      </span>
-                    </div>
-                  ))}
+                <div className="mt-1.5 space-y-1.5">
+                  {msg.toolCalls.map((tc, i) => {
+                    const creationData = extractBlockCreationData(tc)
+                    if (creationData) {
+                      return <BlockCreationPreview key={i} {...creationData} />
+                    }
+                    return (
+                      <div
+                        key={i}
+                        className={cn(
+                          'flex items-center gap-1.5 text-xs rounded-md px-2.5 py-1 max-w-[85%]',
+                          tc.result.success
+                            ? 'bg-green-50 text-green-700 border border-green-200'
+                            : 'bg-red-50 text-red-700 border border-red-200'
+                        )}
+                      >
+                        <Wrench className="h-3 w-3 shrink-0" />
+                        <span className="font-medium">{tc.name}</span>
+                        <span className="text-gray-400">—</span>
+                        <span className="truncate">
+                          {tc.result.success
+                            ? JSON.stringify(tc.result.data).slice(0, 60)
+                            : tc.result.error}
+                        </span>
+                      </div>
+                    )
+                  })}
                 </div>
               )}
             </div>
