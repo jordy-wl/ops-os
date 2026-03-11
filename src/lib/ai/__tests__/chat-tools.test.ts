@@ -56,8 +56,8 @@ function makeSupabase(responses: Record<string, { data: unknown; error: unknown 
 }
 
 describe('CHAT_TOOLS', () => {
-  it('defines 4 tools', () => {
-    expect(CHAT_TOOLS).toHaveLength(4)
+  it('defines 5 tools', () => {
+    expect(CHAT_TOOLS).toHaveLength(5)
   })
 
   it('each tool has name, description, and input_schema', () => {
@@ -75,6 +75,7 @@ describe('CHAT_TOOLS', () => {
     expect(names).toContain('create_block')
     expect(names).toContain('update_block')
     expect(names).toContain('trigger_workflow')
+    expect(names).toContain('list_block_types')
   })
 })
 
