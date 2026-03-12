@@ -77,7 +77,7 @@ describe('POST /api/blocks', () => {
     const block = { id: 'block-1', org_id: 'uuid-org-1', type: 'client', name: 'Acme Corp', state: 'active', metadata: {} }
     const event = { id: 'event-1', type: 'block.created', actor_id: 'user_111' }
     makeDb(
-      { data: { type_key: 'client' }, error: null },    // maybeSingle: type validation
+      { data: { type_name: 'client' }, error: null },    // maybeSingle: type validation
       { data: { block, event }, error: null },           // rpc: create_block_with_event
     )
 
@@ -120,7 +120,7 @@ describe('POST /api/blocks', () => {
 
   it('returns 500 on DB insert failure', async () => {
     makeDb(
-      { data: { type_key: 'deal' }, error: null },      // maybeSingle: type validation passes
+      { data: { type_name: 'deal' }, error: null },      // maybeSingle: type validation passes
       { data: null, error: { code: 'DB_ERR' } },        // rpc: insert fails
     )
     const req = makeReq('http://localhost/api/blocks', {

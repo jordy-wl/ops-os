@@ -121,7 +121,7 @@ export function CreateBlockModal({ onClose, onCreated }: CreateBlockModalProps) 
   }
 
   // Fallback types if API fetch fails or returns empty
-  const FALLBACK_TYPES = ['client', 'deal', 'project', 'contract', 'contact']
+  const FALLBACK_TYPES = ['client', 'deal', 'project', 'contract', 'contact', 'solution', 'product', 'service', 'team_member', 'policy']
   const typeOptions = blockTypes.length > 0
     ? blockTypes.map((t) => ({ value: t.type_name, label: t.display_name }))
     : FALLBACK_TYPES.map((t) => ({ value: t, label: t }))

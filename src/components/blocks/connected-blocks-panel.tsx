@@ -7,11 +7,16 @@ interface ConnectedBlocksPanelProps {
 }
 
 const TYPE_STYLES: Record<string, string> = {
-  client:   'bg-blue-100 text-blue-700',
-  deal:     'bg-green-100 text-green-700',
-  project:  'bg-yellow-100 text-yellow-700',
-  contract: 'bg-purple-100 text-purple-700',
-  contact:  'bg-gray-100 text-gray-700',
+  client:      'bg-blue-100 text-blue-700',
+  deal:        'bg-green-100 text-green-700',
+  project:     'bg-yellow-100 text-yellow-700',
+  contract:    'bg-purple-100 text-purple-700',
+  contact:     'bg-gray-100 text-gray-700',
+  solution:    'bg-indigo-100 text-indigo-700',
+  product:     'bg-emerald-100 text-emerald-700',
+  service:     'bg-violet-100 text-violet-700',
+  team_member: 'bg-orange-100 text-orange-700',
+  policy:      'bg-red-100 text-red-700',
 }
 
 /**

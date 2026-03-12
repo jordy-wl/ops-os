@@ -9,9 +9,9 @@
 ## Current Phase and Sprint
 
 **Phase:** 3 — Platform Evolution (RBAC, Routing Engine, Delta AI, Document Gen V2)
-**Phase Status:** ACTIVE. Sprint 0 + Sprint 1 COMPLETE. Sprint 2 ready.
-**Sprint:** 2 — New Block Types & Schema Foundation (7 tasks)
-**Previous:** Sprint 1 DONE (6/6, 100%). Phase 2 CODE COMPLETE (86/88, 98%, 12 sprints, 550 tests)
+**Phase Status:** ACTIVE. Sprints 0-2 COMPLETE. Sprint 3 ready.
+**Sprint:** 3 — Custom RBAC Engine (8 tasks)
+**Previous:** Sprint 2 DONE (7/7, 100%). Sprint 1 DONE (6/6, 100%).
 
 ---
 
@@ -19,20 +19,9 @@
 
 | Task ID | Title | Role | Status | Last Updated |
 |---------|-------|------|--------|-------------|
-| (none active — Sprint 2 ready to claim) | | | | |
+| (none active — Sprint 3 ready to claim) | | | | |
 
-**Sprint metrics:** Phase 3: Sprints 0-1 DONE. 6/53 engineering tasks DONE (11%) across 8 planned sprints. Sprint 2 ready (7 tasks).
-
-**Sprint 2 tasks (ready to claim):**
-| Task ID | Title | Role | Status |
-|---------|-------|------|--------|
-| P3-S2-BE-01 | Define 5 new system block types | BE | OPEN |
-| P3-S2-BE-02 | Enrich Contact block type | BE | OPEN |
-| P3-S2-BE-03 | Sub-org hierarchy data model | BE | OPEN |
-| P3-S2-BE-04 | Seed migration for new block types | BE | OPEN |
-| P3-S2-BE-05 | Dynamic block type validation API | BE | OPEN |
-| P3-S2-FE-01 | Update block creation UI for new types | FE | OPEN |
-| P3-S2-QA-01 | Test new block types | QA | OPEN |
+**Sprint metrics:** Phase 3: Sprints 0-2 DONE. 13/53 engineering tasks DONE (25%) across 8 planned sprints. 629 tests passing.
 
 ---
 
@@ -59,6 +48,7 @@
 | 2026-03-12 | ORCHESTRATOR | **PHASE 3 ACTIVATED** — 8 sprints planned, 53 tasks. Sprint 0 = scaffold updates (PRDs, rules, standards, agent personas, sprint task files). Sprint 1 = bug fixes + quick wins. Full plan in `.claude/plans/cozy-dancing-giraffe.md`. |
 | 2026-03-12 | ORCHESTRATOR | **Phase 2 exit conditions re-scoped** — Original exit conditions required live design partner usage. Re-scoped as Phase 3 milestones since no design partners onboarded yet. Phase 2 closed as code-complete. |
 | 2026-03-12 | ORCHESTRATOR | **Phase 3 scope confirmed with user**: 5 new block types (Solution, Product, Service, Team Member, Policy), custom RBAC (Clerk=login only), routing engine (Human/Agent/Auto), AI delta engine, document gen V2, enhanced task cards, workflow canvas I/O nodes, admin settings, bug fixes. Block-specific layouts deferred to Phase 4. |
+| 2026-03-12 | ORCHESTRATOR | **Sprint 2 retro complete** — 7/7 tasks, 100%. 0 blockers, 0 new signals. 629 tests. Phase exit: 0/5 met (expected — schema foundation sprint). Sprint 3 files ready (8 tasks, 3 HIGH). Critical path: BE-01→BE-02→BE-03→QA-01. withAuth.ts refactor is HIGH risk — backward compat required. |
 
 ---
 
@@ -66,9 +56,14 @@
 
 | Date | Server | Action | Outcome | Task ID | Agent |
 |------|--------|--------|---------|---------|-------|
-| (none yet) | | | | | |
+| (none yet — Sprint 3) | | | | | |
 
 ---
+
+## Recently Completed — Sprint 2 Archive
+
+Sprint 2 (2026-03-12): 7/7 DONE (100%).
+Deliverables: 5 new system block types (solution, product, service, team_member, policy) in system-types.ts + seeded to production DB, contact type enriched with 6 new fields, sub-org hierarchy (parent_org_id + org_level + depth trigger + get_org_hierarchy RPC), field-level metadata validation (getFieldSchema + validateFields), all frontend TYPE_STYLES/BLOCK_TYPES updated (7 files), block-create action handler made dynamic (removed hardcoded enum). 2 Supabase migrations applied. 79 new tests. Test count: 629 (+79). Lint + build clean.
 
 ## Recently Completed — Sprint 1 Archive
 

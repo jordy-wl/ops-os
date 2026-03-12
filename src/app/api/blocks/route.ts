@@ -6,6 +6,7 @@ import { createServerClient } from '@/lib/supabase/server'
 import { ok, apiError, validationError } from '@/lib/api/responses'
 import { logger } from '@/lib/logger'
 import { WorkflowTemplateSchema } from '@/lib/workflow/template-schema'
+import { getFieldSchema, validateFields } from '@/lib/blocks/validation'
 
 const CreateBlockBaseSchema = z.object({
   type: z.string().min(1).max(100),
@@ -57,9 +58,9 @@ export const POST = withAuth(requireRole(['ops-admin', 'ops-user'], async (req: 
   // Validate block type against block_type_definitions table (dynamic, not hardcoded)
   const { data: typeDef, error: typeError } = await supabase
     .from('block_type_definitions')
-    .select('type_key')
+    .select('type_name')
     .or(`org_id.eq.${ctx.orgId},org_id.is.null`)
-    .eq('type_key', parsed.data.type)
+    .eq('type_name', parsed.data.type)
     .limit(1)
     .maybeSingle()
 
@@ -76,6 +77,21 @@ export const POST = withAuth(requireRole(['ops-admin', 'ops-user'], async (req: 
   if (parsed.data.type === 'workflow_template') {
     const templateParsed = WorkflowTemplateSchema.safeParse(parsed.data.metadata)
     if (!templateParsed.success) return validationError(templateParsed.error.issues)
+  }
+
+  // Validate metadata fields against the type's field_schema
+  if (parsed.data.metadata && Object.keys(parsed.data.metadata).length > 0) {
+    const fieldSchema = await getFieldSchema(ctx.orgId, parsed.data.type)
+    if (fieldSchema) {
+      const fieldErrors = validateFields(fieldSchema, parsed.data.metadata as Record<string, unknown>)
+      if (fieldErrors.length > 0) {
+        return apiError(
+          `Field validation failed: ${fieldErrors.map((e) => e.message).join('; ')}`,
+          'validation/invalid-fields',
+          400
+        )
+      }
+    }
   }
 
   // Atomic: block + audit event in a single transaction via Postgres function

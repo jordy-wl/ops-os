@@ -103,7 +103,7 @@ const QUICK_ACTIONS = [
   { label: 'View Integrations', href: '/library/integrations', icon: Cable },
 ] as const
 
-const BLOCK_TYPE_KEYS = ['client', 'deal', 'project', 'contract', 'contact'] as const
+const BLOCK_TYPE_KEYS = ['client', 'deal', 'project', 'contract', 'contact', 'solution', 'product', 'service', 'team_member', 'policy'] as const
 
 /* -------------------------------------------------------------------------- */
 /*  Main Component                                                             */

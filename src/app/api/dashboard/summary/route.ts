@@ -20,6 +20,11 @@ export type DashboardSummary = {
     project: number
     contract: number
     contact: number
+    solution: number
+    product: number
+    service: number
+    team_member: number
+    policy: number
     total: number
   }
   active_workflow_jobs: number
@@ -87,6 +92,11 @@ export const GET = withAuth(async (_req: NextRequest, ctx) => {
     project: 0,
     contract: 0,
     contact: 0,
+    solution: 0,
+    product: 0,
+    service: 0,
+    team_member: 0,
+    policy: 0,
     total: 0,
   }
   for (const block of blocksRes.data ?? []) {

@@ -34,12 +34,17 @@ import { POST } from '@/app/api/actions/[type]/route'
 function makeDb(...responses: { data: unknown; error: unknown }[]) {
   let i = 0
   const singleFn = vi.fn().mockImplementation(() => Promise.resolve(responses[i++] ?? { data: null, error: null }))
+  const maybeSingleFn = vi.fn().mockImplementation(() => Promise.resolve(responses[i++] ?? { data: null, error: null }))
 
   const chain: Record<string, unknown> = {
     from: vi.fn().mockReturnThis(),
     insert: vi.fn().mockReturnThis(),
     select: vi.fn().mockReturnThis(),
+    or: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockReturnThis(),
     single: singleFn,
+    maybeSingle: maybeSingleFn,
   }
 
   vi.mocked(createServerClient).mockReturnValue(chain as unknown as ReturnType<typeof createServerClient>)
@@ -68,8 +73,9 @@ describe('POST /api/actions/:type', () => {
 
   it('block.create — happy path returns 201 with actionId and eventId', async () => {
     makeDb(
-      { data: { id: BLOCK_ID }, error: null },  // insert block
-      { data: { id: EVENT_ID }, error: null },   // insert event
+      { data: { type_name: 'client' }, error: null },  // maybeSingle: type validation
+      { data: { id: BLOCK_ID }, error: null },          // single: insert block
+      { data: { id: EVENT_ID }, error: null },           // single: insert event
     )
 
     const req = makeReq('block.create', { type: 'client', name: 'Acme Ltd' })
@@ -95,17 +101,20 @@ describe('POST /api/actions/:type', () => {
     expect(json.error.code).toBe('validation/invalid-input')
   })
 
-  it('block.create — invalid type returns 400 validation error', async () => {
-    makeDb()
+  it('block.create — invalid type is rejected by dynamic type lookup', async () => {
+    makeDb() // no type_name match → maybeSingle returns null → handler throws
     const req = makeReq('block.create', { type: 'INVALID', name: 'Test' })
     const res = await POST(req, { params: Promise.resolve({ type: 'block.create' }) })
 
-    expect(res.status).toBe(400)
+    expect(res.status).toBe(500)
+    const json = await res.json()
+    expect(json.error.code).toBe('actions/execution-failed')
   })
 
   it('block.create — DB insert failure returns 500', async () => {
     makeDb(
-      { data: null, error: { message: 'DB error', code: 'XX000' } }, // block insert fails
+      { data: { type_name: 'deal' }, error: null },                 // maybeSingle: type validation
+      { data: null, error: { message: 'DB error', code: 'XX000' } }, // single: block insert fails
     )
 
     const req = makeReq('block.create', { type: 'deal', name: 'Deal Alpha' })
