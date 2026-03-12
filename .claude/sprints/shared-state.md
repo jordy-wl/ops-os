@@ -9,8 +9,8 @@
 ## Current Phase and Sprint
 
 **Phase:** 3 — Platform Evolution (RBAC, Routing Engine, Delta AI, Document Gen V2, Block Configurability)
-**Phase Status:** ACTIVE. Sprints 0-7 COMPLETE. Sprint 8 READY.
-**Sprint:** 8 — Core Admin Settings + Org Page (9 tasks) — ACTIVE
+**Phase Status:** CODE COMPLETE. All 8 sprints DONE. 70/70 tasks (100%).
+**Sprint:** 8 — Core Admin Settings + Org Page (9 tasks) — DONE
 **Previous:** Sprint 7 DONE (8/8, 100%). Sprint 6 DONE (8/8, 100%).
 
 ---
@@ -19,17 +19,9 @@
 
 | Task ID | Title | Role | Status | Last Updated |
 |---------|-------|------|--------|-------------|
-| P3-S8-FE-01 | Settings page restructure | Frontend | DONE | 2026-03-12 |
-| P3-S8-BE-01 | Routing policy settings API | Backend | DONE | 2026-03-12 |
-| P3-S8-FE-02 | Routing policy config UI | Frontend | DONE | 2026-03-12 |
-| P3-S8-FE-03 | Notification preferences UI | Frontend | DONE | 2026-03-12 |
-| P3-S8-BE-02 | API key management | Backend | DONE | 2026-03-12 |
-| P3-S8-FE-04 | Audit log viewer | Frontend | DONE | 2026-03-12 |
-| P3-S8-BE-03 | Org overview page API | Backend | DONE | 2026-03-12 |
-| P3-S8-FE-05 | Org overview page | Frontend | DONE | 2026-03-12 |
-| P3-S8-QA-01 | Sprint 8 integration tests | QA | DONE | 2026-03-12 |
+| (none — Phase 3 complete) | | | | |
 
-**Sprint metrics:** Phase 3: Sprints 0-7 DONE. Sprint 8: 9/9 DONE (100%). 70/70 engineering tasks DONE (100%) across 8 planned sprints. 1230 tests passing.
+**Phase 3 Final Metrics:** 70/70 engineering tasks DONE (100%) across 8 sprints. 1230 tests passing. 0 blockers. 0 unprocessed signals. All gate evidence logged.
 
 ---
 
@@ -53,12 +45,9 @@
 
 | Date | Author | Note |
 |------|--------|------|
-| 2026-03-12 | ORCHESTRATOR | **PHASE 3 ACTIVATED** — 8 sprints planned, 53 tasks. Sprint 0 = scaffold updates (PRDs, rules, standards, agent personas, sprint task files). Sprint 1 = bug fixes + quick wins. Full plan in `.claude/plans/cozy-dancing-giraffe.md`. |
-| 2026-03-12 | ORCHESTRATOR | **Phase 2 exit conditions re-scoped** — Original exit conditions required live design partner usage. Re-scoped as Phase 3 milestones since no design partners onboarded yet. Phase 2 closed as code-complete. |
-| 2026-03-12 | ORCHESTRATOR | **Phase 3 scope confirmed with user**: 5 new block types (Solution, Product, Service, Team Member, Policy), custom RBAC (Clerk=login only), routing engine (Human/Agent/Auto), AI delta engine, document gen V2, enhanced task cards, workflow canvas I/O nodes, admin settings, bug fixes. Block-specific layouts deferred to Phase 4. |
-| 2026-03-12 | ORCHESTRATOR | **Block configurability scope added** — 8 new tasks woven across Sprints 5-8: field group schema, AI field suggestion engine, block config chat tools, field group UI, AI-assisted block creation, inline field manager, org page. Manual + AI-guided, applies to every block type. Total Phase 3 tasks now 69 (was 53). |
-| 2026-03-12 | ORCHESTRATOR | **Sprint 5 retro complete** — 9/9 tasks, 100%. 0 blockers, 0 new signals. 823 tests (+63). Canvas I/O nodes, data flow visualization, field group schema, AI field suggestion engine, block config chat tools all shipped. Sprint 6 tasks updated to include 2 block config UI tasks (FE-03 + FE-04). |
-| 2026-03-12 | ORCHESTRATOR | **Sprint 7 retro complete** — 8/8 tasks, 100%. 0 blockers, 0 new signals. 1074 tests (+189). Delta engine, AI insights, auto tasks, notifications, inline field manager, delta-aware chat all shipped. Sprint 8 tasks updated: added BE-03 (org overview API), FE-05 (org overview page), QA-01 (integration tests). Total Sprint 8: 9 tasks. |
+| 2026-03-12 | ORCHESTRATOR | **PHASE 3 CODE COMPLETE** — 70/70 tasks, 1230 tests, 8 sprints. Deliverables: custom RBAC (10 permissions, 3 system roles, custom roles), routing engine (human/agent/auto, policy-based, 6-level priority), AI delta engine (gap analysis, insights, auto tasks), document gen V2 (reference templates, context-aware, versioning), workflow canvas I/O nodes + data flow, block configurability (field groups, AI suggestions, inline manager), admin settings (10 sections), org overview page, API key management, notification system, audit log. |
+| 2026-03-12 | ORCHESTRATOR | **Sprint 8 retro complete** — 9/9 tasks, 100%. 0 blockers, 0 new signals. 1230 tests (+156). Settings restructure, routing policy config, notification preferences, API key management, audit log viewer, org overview page. MCP: 1 migration applied (api_keys table). Phase 3 exit conditions: all 5 CODE COMPLETE. |
+| 2026-03-12 | ORCHESTRATOR | **Phase 3 → Phase 4 transition needed.** All code built. Next: user testing of Phase 3 features, design direction for Phase 4 block-specific layouts, design partner onboarding planning. |
 
 ---
 
@@ -66,44 +55,28 @@
 
 | Date | Server | Action | Outcome | Task ID | Agent |
 |------|--------|--------|---------|---------|-------|
-| (none yet — Sprint 8) | | | | | |
+| 2026-03-12 | supabase | apply_migration: create_api_keys_table | SUCCESS | P3-S8-BE-02 | BACKEND |
 
 ---
+
+## Recently Completed — Sprint 8 Archive
+
+Sprint 8 (2026-03-12): 9/9 DONE (100%).
+Deliverables: Settings page restructure (sidebar nav, 10 sections in 3 groups, mobile dropdown), routing policy settings API (GET/PUT, Zod validation, manage_settings permission), API key management (SHA-256 hashed, ops_ prefix, never stored cleartext, generate/list/revoke with audit events), org overview page API (Promise.all 6 parallel queries, system type exclusion, graceful degradation), routing policy config UI (confidence slider, risk matrix, routing preview, mode selector), notification preferences UI (5 event types x 2 channels, in_app enforced server-side, per-user blocks), audit log viewer (filter bar, cursor pagination, event type badges, 7 known types), org overview page (hero metrics, hierarchy tree, team/block distribution, recent activity, quick actions), cross-cutting integration tests (RBAC enforcement, API contract consistency, lifecycle validation). MCP: 1 migration applied (api_keys table). Test count: 1230 (+156). Lint + build clean.
 
 ## Recently Completed — Sprint 7 Archive
 
 Sprint 7 (2026-03-12): 8/8 DONE (100%).
-Deliverables: Delta calculation engine (pure function, health score 0-100, gap analysis: overdue/skipped/out-of-order, timeline deltas), AI insights generator (Claude claude-sonnet-4-6, 4-section insights with 5-min cache, fallback to delta-derived insights), auto task generation (4 trigger types: health_critical, step_overdue, workflow_failed, workflow_stalled, configurable thresholds, deduplication keys), AI insights panel (right-side panel on workflow_instance block detail, progress bar, risk indicators, collapsible sections, 30s auto-refresh), inline field manager (permission-gated, grouped field list, add/delete/suggest fields, AI suggest via suggest_fields API, group management), delta-aware chat context (buildDeltaContextString formatter, 2 new chat tools: reassign_step + extend_deadline, context assembly integration), notification system (notifications table with RLS, service CRUD, 3 API endpoints, delta threshold triggers), QA integration tests (pipeline end-to-end, notification service). MCP: 1 migration applied (notifications table). Test count: 1074 (+189). Lint + build clean.
+Deliverables: Delta calculation engine, AI insights generator, auto task generation, AI insights panel, inline field manager, delta-aware chat context, notification system, QA integration tests. Test count: 1074 (+189).
 
 ## Recently Completed — Sprint 6 Archive
 
 Sprint 6 (2026-03-12): 8/8 DONE (100%).
-Deliverables: Reference template storage (multipart upload to Supabase Storage, AI structure extraction via Claude, document_template block creation), document storage & versioning (documents table with auto-increment version trigger, Supabase Storage bucket, 4 API endpoints, storage service), context-aware document generation (assembleDocumentContext fetches connected blocks + events, buildDocGenSystemPrompt includes Connected Blocks/Recent Activity/Reference Structure/Brand Context), template library page (/library/templates with upload, search, category filters, responsive grid), document preview component (slide-over panel with inline editing, version history, PDF download, block detail integration), field group UI (grouped field list, group management, field-to-group assignment, grouped block detail rendering), AI-assisted block creation modal (describe-what-you-need textarea, suggest_fields API, field preview with accept/reject), QA tests (27 new: template card, version history, field group utilities). Test count: 885 (+27). Lint + build clean.
+Deliverables: Reference template storage, document storage & versioning, context-aware document generation, template library page, document preview, field group UI, AI-assisted block creation modal, QA tests. Test count: 885 (+62).
 
-## Recently Completed — Sprint 5 Archive
+## Recently Completed — Sprints 1-5 Archive
 
-Sprint 5 (2026-03-12): 9/9 DONE (100%).
-Deliverables: Input/Output node types (InputNode indigo + OutputNode teal with specialized handles), reorganized node palette (4 categories: Triggers/Actions/Conditions/Flow with collapsible sections), step instructions panel (edit/preview toggle + simpleMarkdown renderer, 5000 char limit), canvas data flow serialization (DataInputSchema/DataOutputSchema Zod schemas, canvasToTemplate/stepsToCanvas round-trip for I/O nodes, data_inputs/data_outputs optional arrays), data flow visualization (DataFlowEdge custom edge — blue dashed for data, gray solid for control, hover tooltip for field mappings), field group schema extension (FieldGroup interface, getFieldGroups/groupFieldsByCategory utilities, x-field-group/x-field-groups schema extensions, default groups on 5 system types), AI field suggestion engine (Claude claude-sonnet-4-6, prompt versioned at field-suggestion.v1.md, field type validation, name sanitization, safe fallback), block configuration chat tools (4 new tools: suggest_fields, configure_block_type, create_block_type, create_relationship — all ops-admin RBAC), comprehensive QA (54 new tests: canvas I/O round-trip, field groups, template schema validation, RBAC enforcement). Test count: 823 (+63). Lint + build clean.
-
-## Recently Completed — Sprint 4 Archive
-
-Sprint 4 (2026-03-12): 8/8 DONE (100%).
-Deliverables: Routing type system, policy resolution, routing decision engine (6-level priority), confidence scoring via Claude claude-sonnet-4-6, enriched workflow template schema, enhanced task card data model, routing config in workflow builder, enhanced task card UI, 22 new integration tests. Test count: 760 (+22).
-
-## Recently Completed — Sprint 3 Archive
-
-Sprint 3 (2026-03-12): 8/8 DONE (100%).
-Deliverables: Custom RBAC engine (3 tables, 10 permissions, 3 system roles), withAuth refactor, Team Member CRUD, Org Hierarchy API, Roles API, Team + Roles settings pages, sidebar nav. 71 new tests. Test count: 706 (+77).
-
-## Recently Completed — Sprint 2 Archive
-
-Sprint 2 (2026-03-12): 7/7 DONE (100%).
-Deliverables: 5 new system block types, contact enrichment, sub-org hierarchy, field-level validation, frontend type updates, dynamic block-create. 79 new tests. Test count: 629 (+79).
-
-## Recently Completed — Sprint 1 Archive
-
-Sprint 1 (2026-03-12): 6/6 DONE (100%).
-Deliverables: Workflow 400 fix, chat widget position, dark mode toggle, responsive fixes. Test count: 550.
+Sprint 5 (9/9), Sprint 4 (8/8), Sprint 3 (8/8), Sprint 2 (7/7), Sprint 1 (6/6). Full details in `shared-state-history.md`.
 
 ## Earlier Sprints
 
