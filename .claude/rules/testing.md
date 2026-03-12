@@ -83,3 +83,35 @@ E2E test results go in `gate-results.md` with Browserbase session ID if applicab
 - Integration tests: `tests/integration/`
 - E2E tests: `tests/e2e/` or `e2e/`
 - Fixtures: `tests/fixtures/`
+
+---
+
+## Phase 3 — New Testing Patterns
+
+### RBAC Test Patterns
+- Test each of 10 permissions individually: create test user with ONLY that permission, verify access
+- Test permission denial: user WITHOUT permission gets 403
+- Test system role backward compat: ops-admin still has full access after RBAC migration
+- Test custom role creation: create role → assign permissions → verify enforcement
+- Test permission groups: assign group → verify all grouped permissions activate
+- Pattern: `describe.each(PERMISSIONS)` for systematic coverage
+
+### Routing Engine Test Matrix
+Test all combinations:
+| Confidence | Risk Level | Step Override | Expected Route |
+|------------|-----------|---------------|----------------|
+| ≥0.85 | low | none | auto |
+| ≥0.85 | high | none | human |
+| 0.6-0.84 | low | none | agent |
+| <0.6 | any | none | human |
+| any | any | human | human |
+| any | any | agent | agent |
+
+Use `describe.each` or test matrix pattern for all combinations.
+
+### Delta Engine Mock Patterns
+- Mock block data: use factory function `createMockBlock({ type, metadata })`
+- Mock workflow instances: `createMockWorkflowInstance({ templateId, currentStep, totalSteps })`
+- Mock events: `createMockEventStream(blockId, count)` — generates time-ordered events
+- Test cache invalidation: create delta → add event → verify cache miss → verify recalculation
+- Test threshold triggers: set threshold at X → create delta at X-0.01 (no trigger) → create delta at X+0.01 (trigger)

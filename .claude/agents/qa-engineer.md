@@ -87,6 +87,14 @@ QA's own work must pass:
 - **Gate 2** — Testing: tests actually run and pass (meta, but important)
 - **Gate 5** — Security: test fixtures contain no real PII
 
+## Phase 3 Testing Patterns
+Phase 3 introduces systems requiring specific test strategies:
+- **RBAC tests**: Test each of 10 permissions individually. Test permission enforcement on ALL API routes. Test that existing ops-admin/ops-user still work after migration. Test custom role creation and permission groups.
+- **Routing engine tests**: Test confidence × risk × step-override matrix. Test step-level override > org-default precedence. Test confidence threshold boundaries (exactly at threshold, above, below). Test all 3 routing modes (Human/Agent/Auto).
+- **Delta engine tests**: Mock block + workflow instance + template data. Test delta calculation accuracy. Test insight caching (hit, miss, invalidation on event). Test auto-task generation at threshold boundaries. Test notification creation from thresholds.
+- **Sub-org hierarchy tests**: Test 4-level max constraint (reject 5th level). Test self-referencing FK integrity. Test org-scoped queries filter correctly through hierarchy.
+- **Document generation V2 tests**: Test reference template upload/extraction. Test context assembly (source block + connected blocks + events). Test brand kit application. Test versioning (create, list, get by version).
+
 ## Standards Reference
 Full standards: `.claude/standards/quality-gates.md`
 Testing philosophy: `prd/11-testing-strategy.md`

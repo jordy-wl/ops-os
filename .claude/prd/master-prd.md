@@ -67,9 +67,9 @@ Status: DRAFT / IN REVIEW / APPROVED / SUPERSEDED
 | Which specific capital markets workflow is the highest-pain entry point? | Client onboarding is the leading hypothesis; validate with design partner interviews | Researcher | OPEN |
 | ~~Canvas requirement timing: do design partners need it before paying?~~ | ~~If yes, Phase 2 timeline moves up; if no, Phase 1 proves primitives without it~~ | ~~PM~~ | **CLOSED** — 2026-03-04. Answer: No. Phase 2 delivers composable workflows via API + forms. Canvas (React Flow) is Phase 3 — after composition patterns are validated. Validated in whiteboard session. |
 | Time to first working version / launch target | Affects phase scope and resourcing | PM | OPEN — NEEDS USER INPUT |
-| React Flow vs alternative canvas libraries | Phase 3 visual workflow builder needs a canvas library. React Flow is leading candidate but evaluate alternatives (Xyflow, custom SVG). | Frontend Engineer | OPEN — Phase 3 |
+| ~~React Flow vs alternative canvas libraries~~ | ~~Phase 3 visual workflow builder needs a canvas library. React Flow is leading candidate but evaluate alternatives (Xyflow, custom SVG).~~ | ~~Frontend Engineer~~ | **CLOSED** — 2026-03-12. Answer: React Flow confirmed. Already implemented in Phase 2 canvas. No re-evaluation needed. |
 | What is the "signature workflow" for each vertical? | The workflow template that becomes the entry point demo. Client onboarding for capital markets; what for professional services? | Researcher + PM | OPEN — Phase 2 |
-| Which agent framework for route_agent processing? | Phase 3 agent queue processor needs a framework. Claude API tool use is baseline; evaluate LangChain, custom. | AI/ML Engineer | OPEN — Phase 3 |
+| ~~Which agent framework for route_agent processing?~~ | ~~Phase 3 agent queue processor needs a framework. Claude API tool use is baseline; evaluate LangChain, custom.~~ | ~~AI/ML Engineer~~ | **CLOSED** — 2026-03-12. Answer: Claude API tool use (current approach). Already implemented in Phase 2 chat system. Agent queue processor deferred to Phase 4. |
 
 ---
 
@@ -85,6 +85,11 @@ Status: DRAFT / IN REVIEW / APPROVED / SUPERSEDED
 | 2026-03-04 | Phase 2 restructured: "Composable Blocks & Workflow Engine" (custom block types, workflow-as-block, task routing, integration connectors) | Keep original Phase 2 (AI routing focus), Restructure around composability | Composability is the validated purchase driver; AI autonomy is premature without workflow infrastructure | PM + Orchestrator |
 | 2026-03-04 | Visual canvas moved to Phase 3 (was Phase 4) | Phase 2 canvas, Phase 3 canvas, Phase 4 canvas | Phase 2 proves composable workflows via API+forms; Phase 3 adds visual canvas when patterns are validated | PM + Orchestrator |
 | 2026-03-04 | Temporal deferred to Phase 4 (was Phase 2) | Phase 2 Temporal, Phase 4 Temporal | Workflow-as-block pattern handles Phase 2-3 scale; Temporal needed only for exactly-once at enterprise scale | PM + Orchestrator |
+| 2026-03-12 | Phase 3 scope: RBAC + Routing + Delta AI + Doc Gen V2 | HubSpot-style layouts (deferred), full platform evolution, incremental | Foundation engines first; block-specific layouts require user-provided design direction deferred to Phase 4 | PM + Orchestrator |
+| 2026-03-12 | Custom RBAC independent of Clerk | Clerk-managed roles, hybrid, fully custom | Clerk = login only; full RBAC independence allows granular permissions (10 permissions) and custom role creation | PM |
+| 2026-03-12 | React Flow confirmed for Phase 3 canvas enhancements | React Flow, Xyflow, custom SVG | Already implemented in Phase 2; no need to re-evaluate. Add Input/Output nodes and data flow visualization | PM + Frontend Engineer |
+| 2026-03-12 | Agent framework = Claude API tool use (current approach) | Claude API, LangChain, custom framework | Already implemented in Phase 2 chat; agent queue processor deferred to Phase 4 | AI/ML Engineer |
+| 2026-03-12 | Sub-org hierarchy: 4-level max | Flat (no hierarchy), unlimited depth, fixed depth | Org → SubOrg → Department → Team. Self-referencing FK on orgs table. Prevents runaway nesting complexity | PM |
 
 ---
 
@@ -95,12 +100,12 @@ Status: DRAFT / IN REVIEW / APPROVED / SUPERSEDED
 | 01 Vision | Researcher | 2026-03-04 | PM — PENDING |
 | 02 Research | Researcher | 2026-03-02 | PM — PENDING |
 | 03 Architecture | Orchestrator | 2026-03-04 | PM — PENDING |
-| 04 Data Models | Data Engineer | 2026-03-04 | Orchestrator — PENDING |
-| 05 API Contracts | Backend Engineer | 2026-03-04 | Frontend Engineer — PENDING |
-| 06 Frontend Spec | Frontend Engineer | 2026-03-04 | PM — PENDING |
-| 07 AI/ML Spec | AI/ML Engineer | 2026-03-04 | PM — PENDING |
+| 04 Data Models | Data Engineer | 2026-03-12 | Orchestrator — PENDING |
+| 05 API Contracts | Backend Engineer | 2026-03-12 | Frontend Engineer — PENDING |
+| 06 Frontend Spec | Frontend Engineer | 2026-03-12 | PM — PENDING |
+| 07 AI/ML Spec | AI/ML Engineer | 2026-03-12 | PM — PENDING |
 | 08 Infra/DevOps | DevOps Engineer | 2026-03-02 | Orchestrator — PENDING |
 | 09 Data Pipeline | Data Engineer | 2026-03-04 | Orchestrator — PENDING |
-| 10 Security | All roles review | 2026-03-02 | PM — PENDING |
+| 10 Security | All roles review | 2026-03-12 | PM — PENDING |
 | 11 Testing | QA Engineer | 2026-03-02 | Orchestrator — PENDING |
 | 12 Launch Ops | PM + DevOps | 2026-03-02 | PM — PENDING |

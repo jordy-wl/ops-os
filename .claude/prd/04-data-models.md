@@ -1,6 +1,6 @@
 # PRD Layer 04: Data Models
 
-> Last updated: 2026-03-04 | Author: Data Engineer / Backend Engineer | Status: DRAFT
+> Last updated: 2026-03-12 | Author: Data Engineer / Backend Engineer | Status: DRAFT
 > Cross-references: `prd/09-data-pipeline.md` (pipeline), `prd/10-security-compliance.md` (PII handling).
 > Data engineer and backend engineer: read this before writing migrations or queries.
 > All schema changes via Supabase migrations only — never raw ALTER TABLE in application code.
@@ -9,7 +9,7 @@
 
 ## Data Model Overview
 
-The Ops OS data model has seven core entities: **Blocks** (business entities), **Block Edges** (graph connections between Blocks), **Block Type Definitions** (custom block schemas), **Events** (immutable audit log), **Workflow Jobs** (Phase 1 execution queue), **Integration Connectors** (external system connections), and **Embeddings** (semantic search). Everything in the system is either a Block, an event that happened to a Block, or a connection between Blocks.
+The Ops OS data model has seven core entities: **Blocks** (business entities), **Block Edges** (graph connections between Blocks), **Block Type Definitions** (custom block schemas), **Events** (immutable audit log), **Workflow Jobs** (Phase 1 execution queue), **Integration Connectors** (external system connections), and **Embeddings** (semantic search). **Phase 3 adds:** **Roles** (custom RBAC), **Permission Groups**, **User Permissions**, and **Notifications**. Everything in the system is either a Block, an event that happened to a Block, or a connection between Blocks.
 
 The central entity is the **Block** — a flexible, stateful business record. A client is a Block. A deal is a Block. A project is a Block. A contract is a Block. **In Phase 2, workflow templates are also Blocks** — they store the full workflow definition (triggers, steps, conditions, edges) in their `data` JSONB field. When triggered, a workflow template Block spawns a workflow instance Block that tracks runtime state. This "workflow-as-block" pattern means workflow definitions live in the business graph, connect to entities via edges, and generate events like any other Block. Blocks connect to each other via Block Edges, forming the business graph. Every change to every Block is recorded as an Event. Events are immutable — they are never updated or deleted. This is both an architectural pattern (event sourcing) and a product feature (compliance-grade audit trail).
 
@@ -58,9 +58,12 @@ The root of multi-tenancy. Each customer firm is one Org. All data is isolated b
 | clerk_org_id | TEXT | YES | Clerk organisation ID for auth sync |
 | plan | TEXT | NO | `prototype` / `starter` / `growth` / `enterprise` |
 | settings | JSONB | NO | Org-level config (default: `{}`) |
+| parent_org_id | UUID | YES | Self-referencing FK for sub-org hierarchy (Phase 3). NULL = top-level org |
+| org_level | TEXT | NO | `org` / `suborg` / `department` / `team` (Phase 3, default: `org`) |
 | created_at | TIMESTAMPTZ | NO | Creation timestamp |
 
-**Indexes:** `slug` (unique), `clerk_org_id` (unique)
+**Indexes:** `slug` (unique), `clerk_org_id` (unique), `parent_org_id`
+**Constraint (Phase 3):** Max 4 levels deep — enforce via CHECK constraint or trigger. Hierarchy: org → suborg → department → team.
 
 ---
 
@@ -95,6 +98,13 @@ The fundamental business entity. Type-flexible via JSONB `data` field.
 - `fund` — a financial fund or investment vehicle
 - `regulatory_filing` — a regulatory submission or filing
 - `compliance_case` — an open compliance review or investigation
+
+**Block types (Phase 3 — system-defined):**
+- `solution` — a bundled offering to a client. Fields: `product_refs` (array of product block IDs), `pricing` (JSONB: line items + totals), `quantities` (JSONB), `status` (draft/proposed/accepted/rejected), `valid_until` (date)
+- `product` — a product or service catalogue entry. Fields: `description`, `pricing` (JSONB: unit_price, currency, billing_cycle), `category`, `features` (array of strings), `sku` (optional)
+- `service` — a service offering. Fields: `description`, `rate` (JSONB: amount, currency, billing_cycle), `service_type` (retainer/project/hourly), `deliverables` (array)
+- `team_member` — a person in the org. Fields: `clerk_user_id` (links to Clerk), `reporting_to` (team_member block ID), `department` (string), `permissions_group` (role ID), `title`, `email`, `phone`
+- `policy` — routing and org rules. Fields: `policy_type` (routing/approval/escalation/org_default), `routing_mode` (human/agent/auto), `confidence_threshold` (0-1), `risk_levels` (JSONB: low/medium/high/critical thresholds), `risk_routing_map` (JSONB: risk_level → routing_mode), `approval_chain` (array of role/user refs)
 
 **Block types (Phase 2+ — org-defined custom types):** Organisations can define their own block types via the `block_type_definitions` table. Custom types have org-scoped field schemas (JSON Schema draft-07) that validate the `data` JSONB field on create/update.
 
@@ -187,6 +197,23 @@ The most important table. Append-only. **Never UPDATE or DELETE.** Enforced via 
 | `integration.webhook.received` | An inbound webhook is received from an external system |
 | `integration.api_call.completed` | An outbound API call to an external system completes |
 | `integration.api_call.failed` | An outbound API call to an external system fails |
+| **Phase 3 event types** | |
+| `rbac.role.created` | A custom RBAC role is created |
+| `rbac.role.updated` | A role's permissions are modified |
+| `rbac.permission.granted` | A user is granted a permission or role |
+| `rbac.permission.revoked` | A user's permission or role is revoked |
+| `routing.decision.made` | Routing engine makes a human/agent/auto decision (includes confidence, risk, reasoning) |
+| `task.approved` | A human approves an AI-recommended task action |
+| `task.rejected` | A human rejects an AI-recommended task action |
+| `task.modified` | A human modifies an AI recommendation before approving |
+| `delta.threshold.breached` | A delta calculation exceeds a configured threshold |
+| `delta.auto_task.created` | An auto-generated task is created from a delta breach |
+| `notification.sent` | A notification is dispatched to a user |
+| `document.generated` | A document is generated (includes version number, template ref) |
+| `document.version.created` | A new version of a document is saved |
+| `api_key.created` | An org API key is generated |
+| `api_key.revoked` | An org API key is revoked |
+| `org.hierarchy.updated` | Sub-org hierarchy is modified (parent change, level change) |
 
 **Immutability enforcement:**
 - Supabase RLS policy: no `UPDATE` or `DELETE` on `events` for any role (including service role)
@@ -260,7 +287,8 @@ Defines a block type's schema and display properties. System types are seeded wi
 **Unique constraint:** `(org_id, type_key)` — each type key is unique within an org (or globally for system types)
 
 **System-seeded types (Phase 1):** `client`, `deal`, `project`, `contract`, `contact`
-**System-seeded types (Phase 2):** `workflow_template`, `workflow_instance`, `task_queue_item`, `fund`, `regulatory_filing`, `compliance_case`
+**System-seeded types (Phase 2):** `workflow_template`, `workflow_instance`, `task_queue_item`, `fund`, `regulatory_filing`, `compliance_case`, `document_template`, `brand_kit`
+**System-seeded types (Phase 3):** `solution`, `product`, `service`, `team_member`, `policy`
 
 ---
 
@@ -403,6 +431,84 @@ All within Supabase free tier (500MB database).
 - `orgs` — set at account creation; rarely updated
 - `block_edges` — connections are established and rarely removed
 - `workflow_jobs` (completed/failed rows) — terminal state; never change
+
+---
+
+## Phase 3 Entities
+
+### Role (Phase 3 — Custom RBAC)
+
+Custom roles with granular permissions. System roles are seeded; orgs create custom roles.
+
+| Field | Type | Nullable | Description |
+|-------|------|----------|-------------|
+| id | UUID | NO | Primary identifier |
+| org_id | UUID | NO | Org isolation key |
+| name | TEXT | NO | Human-readable role name (e.g. "Deal Manager") |
+| permissions | JSONB | NO | Array of permission strings (e.g. `["manage_blocks", "edit_blocks"]`) |
+| is_system | BOOLEAN | NO | TRUE for system-defined roles (ops-admin, ops-user, compliance-approver); cannot be deleted by orgs |
+| created_by | UUID | YES | Clerk user ID of creator |
+| created_at | TIMESTAMPTZ | NO | Creation timestamp |
+| updated_at | TIMESTAMPTZ | NO | Last modification timestamp |
+
+**Unique constraint:** `(org_id, name)`
+**System-seeded roles:** `ops-admin` (all permissions), `ops-user` (edit_blocks, view_blocks, execute_workflows), `compliance-approver` (view_blocks, approve_tasks, view_audit_log)
+
+**Permission enum (10 values):**
+`manage_blocks`, `edit_blocks`, `view_blocks`, `manage_workflows`, `execute_workflows`, `approve_tasks`, `manage_team`, `manage_settings`, `manage_integrations`, `view_audit_log`
+
+---
+
+### Permission Group (Phase 3)
+
+Named groups of permissions for easier role management.
+
+| Field | Type | Nullable | Description |
+|-------|------|----------|-------------|
+| id | UUID | NO | Primary identifier |
+| org_id | UUID | NO | Org isolation key |
+| name | TEXT | NO | Group name (e.g. "Block Management") |
+| permissions | JSONB | NO | Array of permission strings |
+| created_at | TIMESTAMPTZ | NO | Creation timestamp |
+
+---
+
+### User Permission (Phase 3)
+
+Links users to roles with optional per-user overrides.
+
+| Field | Type | Nullable | Description |
+|-------|------|----------|-------------|
+| id | UUID | NO | Primary identifier |
+| user_id | TEXT | NO | Clerk user ID |
+| org_id | UUID | NO | Org isolation key |
+| role_id | UUID | NO | FK → roles.id |
+| custom_overrides | JSONB | YES | Per-user permission additions/removals (e.g. `{"add": ["manage_team"], "remove": []}`) |
+| created_at | TIMESTAMPTZ | NO | Creation timestamp |
+| updated_at | TIMESTAMPTZ | NO | Last modification timestamp |
+
+**Unique constraint:** `(user_id, org_id)` — one role per user per org
+**Migration:** Existing `user_roles` table rows map to `user_permissions` with role_id pointing to matching system role.
+
+---
+
+### Notification (Phase 3)
+
+User notifications triggered by events, delta thresholds, and workflow actions.
+
+| Field | Type | Nullable | Description |
+|-------|------|----------|-------------|
+| id | UUID | NO | Primary identifier |
+| user_id | TEXT | NO | Clerk user ID of recipient |
+| org_id | UUID | NO | Org isolation key |
+| type | TEXT | NO | `task_assigned`, `delta_threshold`, `approval_needed`, `workflow_completed`, `system` |
+| title | TEXT | NO | Short notification title |
+| body | TEXT | YES | Notification detail text |
+| block_id | UUID | YES | Related block (for navigation) |
+| read | BOOLEAN | NO | Whether user has read this notification (default: false) |
+| created_at | TIMESTAMPTZ | NO | Creation timestamp |
+
+**Indexes:** `(user_id, org_id, read, created_at DESC)` — for listing unread notifications efficiently
 
 ---
 

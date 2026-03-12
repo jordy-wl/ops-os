@@ -66,3 +66,33 @@ Story must cover: default state, loading, empty, error, and all key variants.
 - Inline styles for layout (`style={{ display: 'flex' }}`) — use CSS classes
 - Direct `document.querySelector` or `getElementById` — use refs
 - `!important` in CSS — fix the specificity instead
+
+---
+
+## Phase 3 — New Frontend Patterns
+
+### React Flow Custom Nodes
+- All custom nodes in `src/components/canvas/nodes/` — one file per node type
+- Consistent Handle positioning: inputs on left, outputs on right
+- Every node has a config panel component: `{NodeType}ConfigPanel.tsx`
+- Node state syncs to server on config panel close (debounced, not on every keystroke)
+- Categories in palette: Triggers, Actions, Conditions, Flow — use collapsible groups
+
+### Theme Toggle
+- `ThemeToggle` component: Sun/Moon icon button in app header top-right
+- Toggle `.dark` class on `<html>` element
+- Persist preference to `localStorage` key `theme`
+- Default: system preference via `prefers-color-scheme` media query
+- Never conditionally import theme CSS — use CSS variables (already in `src/index.css`)
+
+### Settings Page Sidebar Nav
+- Settings uses sidebar layout: nav on left, content on right
+- Sections: Org Profile, Team, Roles, Block Types, Brand Kit, Integrations, Routing Policies, Notifications, API Keys, Audit Log
+- Use Next.js layout.tsx for sidebar + `children` pattern
+- Active section highlighted in sidebar nav
+
+### Task Card Component Structure
+- `TaskCard` → `TaskCardHeader` (title + routing badge) + `TaskCardBody` (context + AI recommendation) + `TaskCardActions` (Approve/Reject/Edit)
+- Confidence badge: color-coded (green ≥0.8, yellow ≥0.5, red <0.5)
+- Routing indicator: Human (user icon), Agent (bot icon), Auto (zap icon)
+- Edit mode: inline form for modifying AI recommendation before approval

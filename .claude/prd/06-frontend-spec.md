@@ -1,6 +1,6 @@
 # PRD Layer 06: Frontend Specification
 
-> Last updated: 2026-03-04 | Author: Frontend Engineer | Status: DRAFT
+> Last updated: 2026-03-12 | Author: Frontend Engineer | Status: DRAFT
 > Cross-references: `prd/05-api-contracts.md` (data source), `prd/02-user-research.md` (user journeys).
 > Frontend engineer: read this before claiming tasks.
 
@@ -368,6 +368,88 @@ Every data-fetching component must implement all three states:
 | Tab switch | Instant (no animation needed in Phase 1) | LOW |
 | Streaming chat | Text appears character by character (SSE) | HIGH |
 | Page transitions | None in Phase 1 | LOW |
+
+---
+
+## Phase 3 Flows & Components
+
+### Flow: Settings Page Restructure
+**Route:** `/settings` with sidebar layout
+**Sections:**
+1. **Org Profile** — name, logo, default settings
+2. **Team** (`/settings/team`) — list members, invite, assign roles, set reporting-to hierarchy
+3. **Roles** (`/settings/roles`) — create/edit custom roles, checkbox permission matrix. System roles read-only.
+4. **Block Types** (`/settings/block-types`) — existing page, integrated into new sidebar
+5. **Brand Kit** (`/settings/brand`) — existing page, integrated into new sidebar
+6. **Integrations** (`/settings/integrations`) — existing page, integrated into new sidebar
+7. **Routing Policies** (`/settings/routing`) — confidence slider, risk level matrix (grid: risk × confidence → route). Preview routing decision at each combination.
+8. **Notifications** (`/settings/notifications`) — per-user preferences: event types, delivery method (in-app/email), frequency (immediate/daily digest)
+9. **API Keys** (`/settings/api-keys`) — generate/revoke keys, show prefix only, usage stats
+10. **Audit Log** (`/settings/audit-log`) — paginated event viewer, filters (actor, event type, date range, block). Read-only.
+
+### Flow: Enhanced Task Cards
+**Where:** Task list in My Work hub and block detail task tab
+**Components:**
+- `TaskCard` — container showing full context
+- `TaskCardHeader` — task title + routing badge (Human/Agent/Auto icons) + confidence badge (green/yellow/red)
+- `TaskCardBody` — context summary (block info, step info, input data) + AI recommendation (expandable)
+- `TaskCardActions` — Approve (green primary), Reject (red secondary), Edit (opens inline form to modify AI recommendation before approval)
+
+**Behavior:**
+- On Approve: execute the AI-recommended action, log `task.approved` event
+- On Reject: log `task.rejected` event, move to next routing fallback
+- On Edit: modify recommendation text/params → then Approve modified version, log `task.modified` event
+
+### Flow: Canvas Input/Output Nodes
+**New node types:**
+- `InputNode` — defines data entering the workflow (block fields or external webhook/API payload schema). Handle on right side.
+- `OutputNode` — defines data produced (updated fields, generated documents, emitted events, API calls). Handle on left side.
+
+**Palette restructure (collapsible categories):**
+- **Triggers:** Manual, Event, Webhook, Schedule
+- **Actions:** Emit Event, Run Action, Call API, Send Email, Generate Doc, Book Meeting, Update Block
+- **Conditions:** If/Else, Switch
+- **Flow:** Wait/Delay, Input, Output
+
+### Flow: Document Preview
+**Component:** `DocumentPreview` — artifact-like right-side drawer or modal
+- Shows generated document with brand kit CSS variables applied
+- Inline editing via contenteditable sections with formatting toolbar
+- Download as PDF button
+- Send via email action button
+- Version history dropdown (previous versions from events)
+- Accessible from block detail page document tab
+
+### Flow: AI Insights Panel
+**Component:** `AIInsightsPanel` — right-side collapsible panel on block detail pages
+**Sections (from delta engine):**
+1. Progress bar (completed/total steps across active workflow instances)
+2. "What's Done" — completed milestones (max 3 bullets)
+3. "What's Next" — upcoming steps with timing (max 3 bullets)
+4. "What's at Risk" — overdue items, stalled workflows (max 3 bullets, red indicators)
+5. "Recommendations" — actionable suggestions (max 3 bullets)
+
+**Behavior:** Lazy-loaded on panel open. Polls every 5 minutes while visible. Shows skeleton while loading.
+
+### Component: Theme Toggle
+**Location:** App header, top-right corner
+**Component:** `ThemeToggle` — Sun/Moon icon button
+- Click toggles `.dark` class on `<html>`
+- Persists to `localStorage` key `theme`
+- Default: system preference via `prefers-color-scheme`
+- Transitions: 200ms ease for background/text color changes
+
+### Phase 3 UI State Requirements
+| Component | Loading | Empty | Error |
+|-----------|---------|-------|-------|
+| Settings sidebar | Skeleton nav items | N/A | "Failed to load settings." |
+| Team list | Skeleton rows | "No team members yet. Invite your first member." | "Failed to load team." |
+| Role matrix | Skeleton grid | System roles always shown | "Failed to load roles." |
+| Task card list | Skeleton cards | "No tasks assigned." | "Failed to load tasks." |
+| AI Insights panel | Skeleton sections | "No active workflows for insights." | "Insights unavailable. Retry." |
+| Document preview | Loading spinner | "No document generated yet." | "Failed to load document." |
+| Notification list | Skeleton items | "No notifications." | "Failed to load notifications." |
+| Audit log | Skeleton rows | "No events recorded." | "Failed to load audit log." |
 
 ---
 

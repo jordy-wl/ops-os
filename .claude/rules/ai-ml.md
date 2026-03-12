@@ -63,3 +63,32 @@ Define explicit triggers for routing to human review:
 - High-stakes actions (financial, personal data changes)
 - Output contains a refusal or uncertainty marker
 - User explicitly requests human review
+
+---
+
+## Phase 3 — New AI/ML Patterns
+
+### Delta Engine Caching
+- Cache delta calculations per block in memory (Map or LRU cache)
+- Invalidation: on any new event for the block's workflow instances
+- Max staleness: 5 minutes — force recalculate if cache older than 5min
+- Cache key: `block_id:workflow_instance_count:latest_event_timestamp`
+- Never cache across requests for different orgs — org isolation is mandatory
+
+### Confidence Scoring
+- All confidence scores in 0-1 range (inclusive) — validate before use
+- Calibration data required: log predicted confidence vs actual human decision (approved/rejected/modified)
+- Thresholds configured per-org via Policy blocks — never hardcode thresholds
+- Default thresholds: auto ≥0.85, agent ≥0.6, human <0.6
+
+### Insight Generation Prompt Versioning
+- Insight prompts live in `src/prompts/insights/`
+- Version as: `block-insights.v1.md`, `block-insights.v2.md`
+- Each version documents: categories generated (What's done/next/at risk/Recommendations), model, eval results
+- Never generate more than 4 insight categories per block — keep focused
+
+### Document Generation Context Assembly
+- Context budget: max 4000 tokens for block data + connected blocks + events
+- Priority order: source block fields > directly connected blocks > recent events > reference template structure
+- Truncation: if over budget, drop oldest events first, then distant connected blocks
+- Include brand kit (fonts, colors, logo URL) as structured metadata, not prose

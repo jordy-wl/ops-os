@@ -11,8 +11,8 @@
 | Phase | Name | Status | Sprint | Exit Conditions Met |
 |-------|------|--------|--------|---------------------|
 | 1 | Foundation & Primitive Validation | COMPLETE | Sprint 4 | YES (code) — usage metrics deferred (user = test user) |
-| 2 | Composable Blocks, Visual Builder & Integrations | CODE COMPLETE | Sprint 16 | CODE DONE (S16) — exit conditions require live usage testing |
-| 3 | Scale, Advanced AI & Marketplace | FUTURE | — | — |
+| 2 | Composable Blocks, Visual Builder & Integrations | COMPLETE (code) | Sprint 16 | CODE DONE — usage validation re-scoped as P3 milestones |
+| 3 | Platform Evolution: RBAC, Routing, Delta AI, Doc Gen V2 | ACTIVE | Sprint 2 | 1/8 sprints complete |
 | 4 | Enterprise & Compliance | FUTURE | — | — |
 
 ---
@@ -125,31 +125,60 @@ If exit condition is NOT met after 12 weeks:
 
 ---
 
-## Phase 3: Scale, Advanced AI & Marketplace
+## Phase 3: Platform Evolution — RBAC, Routing, Delta AI, Doc Gen V2
 
-**Status:** FUTURE
-**Target:** Q1 2027 (approximately 8–10 weeks)
-**Active Roles:** Backend Engineer, AI/ML Engineer, DevOps Engineer, PM
+**Status:** ACTIVE
+**Target:** Q2 2026 (8 sprints)
+**Active Roles:** Backend Engineer, Frontend Engineer, AI/ML Engineer, QA Engineer
 
-**Hypothesis:** If we add agent AI processing with confidence scoring, operational intelligence (design vs reality analysis), Microsoft 365 integration, Salesforce/Xero connectors, and billing — at least 2 customers (including internal company) will convert to paying at ≥£2k/month.
+**Hypothesis:** If we add custom RBAC with org hierarchy, a routing engine (human/agent/auto) with policy-based confidence thresholds, an AI delta engine that calculates workflow gaps and generates proactive insights, document generation V2 with external reference templates, and enhanced task cards — the platform will support real operational workflows for capital markets firms, proving readiness for design partner onboarding.
 
 **What we're building:**
-- Agent Queue Processor: AI processes `route_agent` task_queue_items with confidence scoring
-- Operational Intelligence: compare workflow template (design) vs instance events (reality), surface deviations and bottlenecks
-- Microsoft 365 integration (for internal company onboarding)
-- Salesforce connector: read client/deal data, bidirectional sync (deferred from Phase 2)
-- Xero connector: read invoices, outbound payment notifications (deferred from Phase 2)
-- Workflow suggestion: AI suggests template structure from historical event patterns
-- Billing integration (Stripe) for paying customers
-- Audit trail export: PDF/JSON for regulatory requests
+- **Sprint 1:** Bug fixes (workflow 400 error, chat position, dark toggle, responsiveness)
+- **Sprint 2:** 5 new block types (Solution, Product, Service, Team Member, Policy) + Contact enrichment + sub-org hierarchy (4 levels: Org → SubOrg → Department → Team)
+- **Sprint 3:** Custom RBAC engine (independent of Clerk, 10 granular permissions, custom roles, permission groups, team member CRUD, org hierarchy API)
+- **Sprint 4:** Routing engine (Human/Agent/Auto per step, org policy defaults, confidence scoring, enhanced task cards with approve/reject/edit)
+- **Sprint 5:** Workflow canvas enhancements (Input/Output nodes, reorganized palette, step instructions, data flow visualization)
+- **Sprint 6:** Document Generation V2 (external reference templates, AI content from block data, artifact-like preview, versioning)
+- **Sprint 7:** AI Delta Engine (gap calculation, insights panel, auto task generation, notifications, delta-aware chat)
+- **Sprint 8:** Core admin settings (settings restructure, routing policy config, notification preferences, API key management, audit log viewer)
 
-**Dependencies on Phase 2:** Visual canvas working; Google integration proven; document generation working; user has run ≥5 complete workflows.
+**Design decisions confirmed with user:**
+- Client fields: configurable per org (not hardcoded)
+- Solutions: block type + tab on client detail
+- Revenue: derived from deals + placeholder (no accounting integration yet)
+- Team: fully custom RBAC, Clerk = login only
+- Playbooks: covered by template step instructions (no new block type)
+- Task routing: org default + per-step override
+- Doc templates: external files + AI rendering
+- Sub-orgs: 4-level max (org → suborg → dept → team)
 
-**Exit Condition:** TRUE when ≥2 paying customers at ≥£2k/month, each processing ≥50 workflow instances/week.
+**Dependencies on Phase 2:** All Phase 2 features complete ✓. 550 tests passing ✓. Production deployed ✓.
 
-**Failure Path:** If no conversion → re-evaluate pricing and value proposition. If integrations unused → webhooks sufficient. If agent AI error rate too high → keep human-only.
+**Exit Condition:** TRUE when:
+1. Custom RBAC deployed with ≥3 custom roles per test org
+2. Routing engine processes ≥10 tasks through human/agent/auto routing
+3. AI delta engine generates insights on ≥5 active workflow instances
+4. ≥3 documents generated via V2 (external template reference + block data)
+5. Settings page covers all admin functions (team, roles, routing, notifications, API keys, audit)
 
-**Sprints in This Phase:** Generated at Phase 2 exit retro.
+**Phase 2 usage conditions re-scoped as Phase 3 milestones:**
+- Onboard 2-3 design partners
+- Run ≥5 complete workflows with canvas + Google + document generation
+- ≥10 task queue items completed
+
+**Failure Path:** If RBAC too complex → simplify to 3 fixed roles. If AI delta latency unacceptable → remove real-time, cache only. If routing engine unused → default to human-only. If doc gen quality low → improve prompt templates before advanced rendering.
+
+**Sprints in This Phase:**
+- Sprint 0: Scaffold updates (PRDs, rules, standards, agents, sprint files) — **COMPLETE** (2026-03-12)
+- Sprint 1: Bug fixes & quick wins (6 tasks) — **COMPLETE** (6/6 DONE, 100%. 2026-03-12)
+- Sprint 2: New block types & schema foundation (7 tasks) — PENDING
+- Sprint 3: Custom RBAC engine (8 tasks) — PENDING
+- Sprint 4: Routing engine & policy system (7 tasks) — PENDING
+- Sprint 5: Workflow canvas enhancements (6 tasks) — PENDING
+- Sprint 6: Document Generation V2 (6 tasks) — PENDING
+- Sprint 7: AI Delta Engine (7 tasks) — PENDING
+- Sprint 8: Core admin settings (6 tasks) — PENDING
 
 ---
 

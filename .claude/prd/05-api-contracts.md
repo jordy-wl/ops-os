@@ -1,6 +1,6 @@
 # PRD Layer 05: API Contracts
 
-> Last updated: 2026-03-04 | Author: Backend Engineer | Status: DRAFT
+> Last updated: 2026-03-12 | Author: Backend Engineer | Status: DRAFT
 > LIVING DOCUMENT — update this file when implementation diverges from spec. Log a signal in build-learnings.md.
 > Cross-references: `prd/03-system-architecture.md` (auth scheme), `prd/04-data-models.md` (response shapes).
 
@@ -588,6 +588,109 @@ When implementation diverges from this spec:
 2. Log a signal in `research/signals/build-learnings.md`
 3. If response shape changes: notify frontend engineer explicitly in `sprints/shared-state.md` notes
 4. Update the PRD CHANGELOG
+
+---
+
+## Phase 3 API Endpoints
+
+### RBAC & Team Management
+
+#### `GET /api/roles`
+List all roles for the org (system + custom).
+**Response:** `{ data: Role[] }` — each Role has `id`, `name`, `permissions`, `is_system`
+
+#### `POST /api/roles`
+Create a custom role. **Permission required:** `manage_team`
+**Body:** `{ name: string, permissions: string[] }`
+**Response:** `{ data: Role }` (201)
+
+#### `PATCH /api/roles/:id`
+Update a custom role's permissions. System roles cannot be modified.
+**Body:** `{ permissions: string[] }`
+**Response:** `{ data: Role }`
+
+#### `DELETE /api/roles/:id`
+Delete a custom role. System roles cannot be deleted. Users on this role are reassigned to `ops-user`.
+**Response:** `{ data: null }` (204)
+
+#### `GET /api/team`
+List team members for the org with hierarchy.
+**Response:** `{ data: TeamMember[] }` — includes role, reporting_to, department
+
+#### `POST /api/team/invite`
+Invite a new team member. Triggers Clerk invite. **Permission required:** `manage_team`
+**Body:** `{ email: string, role_id: string, reporting_to?: string, department?: string }`
+
+#### `PATCH /api/team/:userId`
+Update a team member's role, department, or reporting-to.
+**Body:** `{ role_id?: string, reporting_to?: string, department?: string }`
+
+#### `DELETE /api/team/:userId`
+Deactivate a team member (soft delete — keeps audit trail).
+
+### Org Hierarchy
+
+#### `GET /api/org/hierarchy`
+Returns the org hierarchy as a tree structure.
+**Response:** `{ data: OrgNode }` — recursive tree with `children: OrgNode[]`
+
+#### `POST /api/org/sub-orgs`
+Create a sub-org. **Permission required:** `manage_settings`
+**Body:** `{ name: string, org_level: 'suborg' | 'department' | 'team', parent_org_id: string }`
+**Validation:** Max 4 levels deep.
+
+#### `PATCH /api/org/:id`
+Update an org's name, level, or parent. **Permission required:** `manage_settings`
+
+### Routing & Policy
+
+#### `GET /api/routing/policies`
+List routing policies for the org.
+**Response:** `{ data: Block[] }` — Policy blocks with `policy_type` filtering
+
+#### `POST /api/routing/resolve`
+Resolve a routing decision for a given step + context. Used internally by workflow engine.
+**Body:** `{ step_config: object, confidence: number, risk_level: string }`
+**Response:** `{ data: { route: 'human' | 'agent' | 'auto', reason: string } }`
+
+### Notifications
+
+#### `GET /api/notifications`
+List notifications for the current user. Supports `?unread=true` filter.
+**Response:** `{ data: Notification[], meta: { unread_count: number } }`
+
+#### `PATCH /api/notifications/:id/read`
+Mark a notification as read.
+
+#### `POST /api/notifications/read-all`
+Mark all notifications as read for the current user.
+
+### Document Storage & Versioning
+
+#### `POST /api/documents/upload`
+Upload a reference document (PDF/DOCX/HTML) as a document_template block.
+**Body:** `multipart/form-data` — file + metadata (name, category)
+**Response:** `{ data: { block: Block, storage_path: string } }` (201)
+
+#### `GET /api/documents/:blockId/versions`
+List all generated document versions for a block.
+**Response:** `{ data: DocumentVersion[] }` — version number, created_at, storage_path
+
+#### `GET /api/documents/:blockId/versions/:version`
+Download a specific document version.
+**Response:** File stream with appropriate Content-Type
+
+### API Key Management
+
+#### `POST /api/api-keys`
+Generate a new org API key. **Permission required:** `manage_integrations`
+**Response:** `{ data: { key: string, key_id: string, prefix: string } }` — key shown ONCE, never retrievable again
+
+#### `GET /api/api-keys`
+List API keys (shows prefix + created_at only, never the full key).
+
+#### `DELETE /api/api-keys/:keyId`
+Revoke an API key. Logged as `api_key.revoked` event.
 
 ---
 

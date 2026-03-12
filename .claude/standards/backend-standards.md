@@ -255,3 +255,63 @@ const config = z.object({
 // If parse fails: process exits with clear error — fail fast, don't silently use defaults
 ```
 Document every env var in `.env.example` with description and example (non-real) value.
+
+---
+
+## Phase 3 — New Backend Patterns
+
+### Routing Engine Service (`src/lib/routing/engine.ts`)
+```typescript
+// Pure function — no side effects, no DB calls
+interface RoutingInput {
+  stepConfig: { routing_mode: 'human' | 'agent' | 'auto' | 'policy_default' }
+  orgPolicy: { confidence_threshold: number; risk_routing_map: Record<string, string> }
+  aiConfidence: number
+  riskLevel: 'low' | 'medium' | 'high' | 'critical'
+}
+
+interface RoutingDecision {
+  route: 'human' | 'agent' | 'auto'
+  reason: string  // audit trail explanation
+}
+
+function resolveRouting(input: RoutingInput): RoutingDecision
+// Precedence: step override > org policy > system default (human)
+```
+
+### RBAC Middleware (`requirePermission`)
+```typescript
+// Replaces requireRole() — backward compatible
+export function requirePermission(permission: Permission, handler: RouteHandler): RouteHandler
+// Permission type: 'manage_blocks' | 'edit_blocks' | 'view_blocks' | ...
+// withAuth() resolves permissions into AuthContext.permissions: Set<Permission>
+// requireRole() still works internally — maps role → permission set
+```
+
+### Sub-Org Query Scoping
+```typescript
+// Utility for all org-scoped queries
+async function getOrgHierarchyIds(supabase: Client, orgId: string): Promise<string[]>
+// Returns [orgId, ...allDescendantIds] — flat array for IN clause
+// Cache per-request (not across requests — org hierarchy can change)
+```
+
+### Notification Dispatch Pattern
+```typescript
+// Fire-and-forget — never block main request
+async function dispatchNotification(params: {
+  orgId: string; userId: string; type: string;
+  title: string; body: string; blockId?: string
+}): Promise<void>
+// 1. Insert into notifications table
+// 2. Check user preferences (in-app vs email vs both)
+// 3. If email: queue via existing email action handler
+```
+
+### Document Versioning
+```typescript
+// Each generation creates a new version
+// Storage: Supabase Storage bucket 'documents'
+// Path: {org_id}/{block_id}/{version_number}.{format}
+// Metadata in events table: event_type 'document.generated', payload includes version
+```

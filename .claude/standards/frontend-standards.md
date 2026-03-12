@@ -203,3 +203,69 @@ Confirmed approach in `prd/03-system-architecture.md`. Common options:
 | `// eslint-disable` | Hides real problems | Fix the underlying issue |
 | Props drilling 3+ levels | Creates coupling | Use context or lift state |
 | Unaccessioned `useEffect` | Silent bugs | Always complete dependency arrays |
+
+---
+
+## Phase 3 — New Frontend Patterns
+
+### React Flow Custom Node Template
+```typescript
+// src/components/canvas/nodes/{NodeType}Node.tsx
+import { Handle, Position, type NodeProps } from 'reactflow'
+
+interface NodeData { label: string; config: Record<string, unknown> }
+
+export function InputNode({ data, selected }: NodeProps<NodeData>) {
+  return (
+    <div className={cn('node-base', selected && 'node-selected')}>
+      <div className="node-header">Input</div>
+      <div className="node-body">{data.label}</div>
+      <Handle type="source" position={Position.Right} />
+    </div>
+  )
+}
+// Consistent: inputs on Left handles, outputs on Right handles
+// Config panel: src/components/canvas/config/{NodeType}ConfigPanel.tsx
+```
+
+### Canvas State Management
+- React Flow state: `useReactFlow()` for viewport, `useNodesState()` + `useEdgesState()` for graph
+- Server sync: on node config panel close → PATCH workflow template's `canvas_layout` + `steps`
+- Debounce viewport/position changes — only save on user pause (500ms)
+- Optimistic updates: update React Flow state immediately, server sync in background
+
+### Settings Page Layout Pattern
+```typescript
+// src/app/(app)/settings/layout.tsx
+export default function SettingsLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex h-full">
+      <SettingsSidebar /> {/* Fixed width sidebar with nav links */}
+      <div className="flex-1 overflow-y-auto p-6">{children}</div>
+    </div>
+  )
+}
+// Each section: src/app/(app)/settings/{section}/page.tsx
+```
+
+### Task Card Component Hierarchy
+```
+TaskCard (container)
+├── TaskCardHeader (title + routing badge + confidence badge)
+├── TaskCardBody
+│   ├── ContextSummary (block info, step info, input data)
+│   └── AIRecommendation (expandable, shows reasoning)
+└── TaskCardActions
+    ├── ApproveButton (green, primary)
+    ├── RejectButton (red, secondary)
+    └── EditButton (opens inline form to modify recommendation)
+```
+Confidence badge colors: green (≥0.8), yellow (≥0.5), red (<0.5)
+Routing icons: Human (UserIcon), Agent (BotIcon), Auto (ZapIcon)
+
+### Document Preview Component
+- Artifact-like preview panel: right-side drawer or modal
+- Brand kit styling applied via CSS variables scoped to preview container
+- Inline editing: contenteditable sections with toolbar
+- Download: generate PDF client-side or via server endpoint
+- Version history: dropdown showing previous versions from events
