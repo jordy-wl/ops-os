@@ -32,6 +32,8 @@ function makeDb(...responses: { data: unknown; error: unknown }[]) {
 
   const singleFn = vi.fn().mockImplementation(() => Promise.resolve(queue[i++] ?? { data: null, error: null }))
 
+  const maybeSingleFn = vi.fn().mockImplementation(() => Promise.resolve(queue[i++] ?? { data: null, error: null }))
+
   const rpcFn = vi.fn().mockImplementation(() => Promise.resolve(queue[i++] ?? { data: null, error: null }))
 
   const chain: Record<string, unknown> = {
@@ -47,6 +49,7 @@ function makeDb(...responses: { data: unknown; error: unknown }[]) {
     update: vi.fn().mockReturnThis(),
     lt: vi.fn().mockReturnThis(),
     single: singleFn,
+    maybeSingle: maybeSingleFn,
     rpc: rpcFn,
     // Thenable for array-returning queries (awaited without .single())
     then: (resolve: (v: unknown) => void, reject: (r: unknown) => void) =>
@@ -73,7 +76,10 @@ describe('POST /api/blocks', () => {
   it('creates block and event atomically — returns 201', async () => {
     const block = { id: 'block-1', org_id: 'uuid-org-1', type: 'client', name: 'Acme Corp', state: 'active', metadata: {} }
     const event = { id: 'event-1', type: 'block.created', actor_id: 'user_111' }
-    makeDb({ data: { block, event }, error: null })
+    makeDb(
+      { data: { type_key: 'client' }, error: null },    // maybeSingle: type validation
+      { data: { block, event }, error: null },           // rpc: create_block_with_event
+    )
 
     const req = makeReq('http://localhost/api/blocks', {
       method: 'POST',
@@ -113,7 +119,10 @@ describe('POST /api/blocks', () => {
   })
 
   it('returns 500 on DB insert failure', async () => {
-    makeDb({ data: null, error: { code: 'DB_ERR' } })
+    makeDb(
+      { data: { type_key: 'deal' }, error: null },      // maybeSingle: type validation passes
+      { data: null, error: { code: 'DB_ERR' } },        // rpc: insert fails
+    )
     const req = makeReq('http://localhost/api/blocks', {
       method: 'POST',
       body: JSON.stringify({ type: 'deal', name: 'New Deal' }),

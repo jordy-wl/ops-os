@@ -45,7 +45,7 @@ const StepSchema = z.object({
 export const WorkflowTemplateSchema = z.object({
   applies_to_type: z.string().min(1).max(50),
   trigger: TriggerSchema,
-  steps: z.array(StepSchema).min(1).max(50),
+  steps: z.array(StepSchema).max(50),
   description: z.string().max(500).optional(),
   canvas_layout: z.unknown().optional(),
 })

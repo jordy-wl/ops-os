@@ -22,7 +22,7 @@ interface PageHeaderProps {
 export function PageHeader({ title, subtitle, actions, breadcrumbs }: PageHeaderProps) {
   return (
     <div className="border-b pb-4 mb-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <h1 className="text-2xl font-semibold text-foreground">{title}</h1>
         {actions && <div className="flex items-center gap-2">{actions}</div>}
       </div>

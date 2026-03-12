@@ -173,7 +173,7 @@ export function TaskListClient({ initialTasks, currentUserId }: TaskListClientPr
                 <div className="flex items-center gap-3 text-xs text-muted-foreground">
                   {task.step_name && <span>Step: {task.step_name}</span>}
                   {task.workflow_instance_name && (
-                    <span className="truncate max-w-[200px]" title={task.workflow_instance_name}>
+                    <span className="truncate max-w-[100px] sm:max-w-[160px] md:max-w-[200px]" title={task.workflow_instance_name}>
                       Workflow: {task.workflow_instance_name}
                     </span>
                   )}

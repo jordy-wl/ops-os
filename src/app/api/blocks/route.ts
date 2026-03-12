@@ -7,10 +7,8 @@ import { ok, apiError, validationError } from '@/lib/api/responses'
 import { logger } from '@/lib/logger'
 import { WorkflowTemplateSchema } from '@/lib/workflow/template-schema'
 
-const BLOCK_TYPES = ['client', 'deal', 'project', 'contact', 'contract', 'workflow_template', 'workflow_instance', 'task_queue_item'] as const
-
-const CreateBlockSchema = z.object({
-  type: z.enum(BLOCK_TYPES),
+const CreateBlockBaseSchema = z.object({
+  type: z.string().min(1).max(100),
   name: z.string().min(1).max(255),
   metadata: z.record(z.unknown()).optional().default({}),
 })
@@ -51,16 +49,34 @@ export const POST = withAuth(requireRole(['ops-admin', 'ops-user'], async (req: 
   const body = await req.json().catch(() => null)
   if (!body) return apiError('Invalid JSON body', 'validation/invalid-json', 400)
 
-  const parsed = CreateBlockSchema.safeParse(body)
+  const parsed = CreateBlockBaseSchema.safeParse(body)
   if (!parsed.success) return validationError(parsed.error.issues)
+
+  const supabase = createServerClient()
+
+  // Validate block type against block_type_definitions table (dynamic, not hardcoded)
+  const { data: typeDef, error: typeError } = await supabase
+    .from('block_type_definitions')
+    .select('type_key')
+    .or(`org_id.eq.${ctx.orgId},org_id.is.null`)
+    .eq('type_key', parsed.data.type)
+    .limit(1)
+    .maybeSingle()
+
+  if (typeError) {
+    logger.error('api-blocks', 'db.type_lookup_failed', { error_code: typeError.code })
+    return apiError('Failed to validate block type', 'db/type-lookup-failed', 500)
+  }
+
+  if (!typeDef) {
+    return apiError(`Invalid block type: ${parsed.data.type}`, 'validation/invalid-type', 400)
+  }
 
   // Validate workflow template metadata shape
   if (parsed.data.type === 'workflow_template') {
     const templateParsed = WorkflowTemplateSchema.safeParse(parsed.data.metadata)
     if (!templateParsed.success) return validationError(templateParsed.error.issues)
   }
-
-  const supabase = createServerClient()
 
   // Atomic: block + audit event in a single transaction via Postgres function
   const { data: result, error: rpcError } = await supabase.rpc('create_block_with_event', {

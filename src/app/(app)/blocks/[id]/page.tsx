@@ -141,7 +141,7 @@ export default async function BlockDetailPage({ params }: Props) {
         <ol className="flex items-center gap-1.5">
           <li><Link href="/library/blocks" className="hover:text-foreground transition-colors">Blocks</Link></li>
           <li aria-hidden="true">/</li>
-          <li className="text-foreground font-medium truncate max-w-[300px]">{block.name}</li>
+          <li className="text-foreground font-medium truncate max-w-[140px] sm:max-w-[200px] md:max-w-[300px]">{block.name}</li>
         </ol>
       </nav>
 

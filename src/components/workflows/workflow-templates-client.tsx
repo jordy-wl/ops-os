@@ -111,7 +111,7 @@ export function WorkflowTemplatesClient({ initialTemplates }: WorkflowTemplatesC
                 </span>
                 <span>{tmpl.step_count} step{tmpl.step_count !== 1 ? 's' : ''}</span>
                 {tmpl.trigger_event_pattern && (
-                  <span className="text-purple-600 truncate max-w-[120px]" title={tmpl.trigger_event_pattern}>
+                  <span className="text-purple-600 truncate max-w-[80px] sm:max-w-[120px]" title={tmpl.trigger_event_pattern}>
                     on: {tmpl.trigger_event_pattern}
                   </span>
                 )}

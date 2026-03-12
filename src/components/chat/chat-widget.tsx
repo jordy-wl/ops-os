@@ -180,7 +180,7 @@ export function ChatWidget() {
         type="button"
         onClick={toggle}
         className={cn(
-          'fixed bottom-5 left-5 z-50',
+          'fixed bottom-5 right-5 z-50',
           'flex h-12 w-12 items-center justify-center rounded-full',
           'bg-gray-900 text-white shadow-lg dark:bg-gray-100 dark:text-gray-900',
           'hover:bg-gray-700 dark:hover:bg-gray-300 transition-all hover:scale-105',
@@ -197,8 +197,8 @@ export function ChatWidget() {
   return (
     <div
       className={cn(
-        'fixed bottom-5 left-5 z-50',
-        'flex flex-col w-[480px] h-[600px] max-h-[calc(100vh-4rem)]',
+        'fixed bottom-5 right-5 z-50',
+        'flex flex-col w-[min(480px,calc(100vw-3rem))] h-[600px] max-h-[calc(100vh-4rem)]',
         'rounded-xl border border-border bg-background shadow-2xl',
         'animate-slide-up'
       )}
