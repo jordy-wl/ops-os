@@ -1,7 +1,38 @@
 'use client'
 
-import { X } from 'lucide-react'
+import { useState } from 'react'
+import { X, User, Bot, GitPullRequest, Link2, Eye, PenLine } from 'lucide-react'
 import type { Node } from '@xyflow/react'
+import { cn } from '@/lib/utils'
+import { PERMISSIONS, type Permission } from '@/lib/rbac/types'
+
+const ROUTING_MODE_OPTIONS = [
+  { value: 'policy_default', label: 'Inherit from Policy' },
+  { value: 'human_only', label: 'Human Only' },
+  { value: 'ai_only', label: 'AI Only' },
+  { value: 'hybrid', label: 'Hybrid' },
+  { value: 'escalation_chain', label: 'Escalation Chain' },
+]
+
+const ROUTING_ICONS: Record<string, React.ElementType> = {
+  human_only: User,
+  ai_only: Bot,
+  hybrid: GitPullRequest,
+  escalation_chain: Link2,
+}
+
+const PERM_LABELS: Record<Permission, string> = {
+  manage_blocks: 'Manage Blocks',
+  edit_blocks: 'Edit Blocks',
+  view_blocks: 'View Blocks',
+  manage_workflows: 'Manage Workflows',
+  execute_workflows: 'Execute Workflows',
+  approve_tasks: 'Approve Tasks',
+  manage_team: 'Manage Team',
+  manage_settings: 'Manage Settings',
+  manage_integrations: 'Manage Integrations',
+  view_audit_log: 'View Audit Log',
+}
 
 interface NodeConfigPanelProps {
   node: Node
@@ -351,6 +382,56 @@ function ActionConfig({ node, onUpdate }: Pick<NodeConfigPanelProps, 'node' | 'o
       {stepType === 'update_block' && (
         <UpdateBlockConfig node={node} onUpdate={onUpdate} />
       )}
+
+      {/* ── Routing Configuration ─────────────────────────────────────────── */}
+      <div className="mt-4 pt-4 border-t border-border">
+        <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Routing</h4>
+
+        <div className="mb-3">
+          <FieldLabel htmlFor="routing-mode">Routing Mode</FieldLabel>
+          <div className="flex items-center gap-2">
+            <SelectInput
+              id="routing-mode"
+              value={(config.routing_mode as string) ?? 'policy_default'}
+              onChange={(v) => updateConfig('routing_mode', v)}
+              options={ROUTING_MODE_OPTIONS}
+            />
+            {(() => {
+              if (!config.routing_mode || config.routing_mode === 'policy_default') return null
+              const Icon = ROUTING_ICONS[config.routing_mode as string]
+              return Icon ? <Icon className="h-4 w-4 text-muted-foreground shrink-0" /> : null
+            })()}
+          </div>
+        </div>
+
+        <div className="mb-3">
+          <FieldLabel htmlFor="required-perms">Required Permissions</FieldLabel>
+          <div className="space-y-1 max-h-40 overflow-y-auto rounded border border-border p-2">
+            {PERMISSIONS.map((perm) => {
+              const selected = ((config.required_permissions as string[]) ?? [])
+              return (
+                <label key={perm} className="flex items-center gap-2 text-xs cursor-pointer hover:bg-muted/50 rounded px-1 py-0.5">
+                  <input
+                    type="checkbox"
+                    checked={selected.includes(perm)}
+                    onChange={(e) => {
+                      const next = e.target.checked
+                        ? [...selected, perm]
+                        : selected.filter((p: string) => p !== perm)
+                      updateConfig('required_permissions', next.length > 0 ? next : undefined)
+                    }}
+                    className="h-3 w-3 rounded border-gray-300 text-primary focus:ring-primary"
+                  />
+                  <span className="text-foreground">{PERM_LABELS[perm]}</span>
+                </label>
+              )
+            })}
+          </div>
+          {!config.required_permissions && (
+            <p className="mt-1 text-xs text-muted-foreground italic">Any team member can handle this step</p>
+          )}
+        </div>
+      </div>
     </>
   )
 }
@@ -545,13 +626,241 @@ function formatDuration(seconds: number): string {
   return `${h}h ${m}m`
 }
 
-// ─── Main Config Panel ──────────────────────────────────────────────────────
+// ─── Input Config ──────────────────────────────────────────────────────────
+
+const SOURCE_TYPE_OPTIONS = [
+  { value: 'block_fields', label: 'Block Fields' },
+  { value: 'webhook', label: 'Webhook Payload' },
+  { value: 'api', label: 'API Request' },
+]
+
+function InputConfig({ node, onUpdate }: Pick<NodeConfigPanelProps, 'node' | 'onUpdate'>) {
+  const data = node.data as Record<string, unknown>
+  const config = (data.config ?? {}) as Record<string, unknown>
+
+  function updateConfig(field: string, value: unknown) {
+    onUpdate(node.id, { ...data, config: { ...config, [field]: value } })
+  }
+
+  return (
+    <>
+      <div className="mb-3">
+        <FieldLabel htmlFor="source-type">Source Type</FieldLabel>
+        <SelectInput
+          id="source-type"
+          value={(config.source_type as string) ?? 'block_fields'}
+          onChange={(v) => updateConfig('source_type', v)}
+          options={SOURCE_TYPE_OPTIONS}
+        />
+      </div>
+      {config.source_type === 'webhook' && (
+        <div className="mb-3">
+          <FieldLabel htmlFor="input-endpoint">Webhook Path</FieldLabel>
+          <TextInput
+            id="input-endpoint"
+            value={(config.endpoint as string) ?? ''}
+            onChange={(v) => updateConfig('endpoint', v)}
+            placeholder="/webhooks/my-trigger"
+          />
+        </div>
+      )}
+      {config.source_type === 'api' && (
+        <div className="mb-3">
+          <FieldLabel htmlFor="input-api-path">API Endpoint</FieldLabel>
+          <TextInput
+            id="input-api-path"
+            value={(config.endpoint as string) ?? ''}
+            onChange={(v) => updateConfig('endpoint', v)}
+            placeholder="/api/external/ingest"
+          />
+        </div>
+      )}
+      <div className="mb-3">
+        <FieldLabel htmlFor="input-description">Description</FieldLabel>
+        <textarea
+          id="input-description"
+          value={(config.description as string) ?? ''}
+          onChange={(e) => updateConfig('description', e.target.value)}
+          placeholder="Describe what data enters the workflow..."
+          rows={3}
+          className="w-full rounded-md border border-border px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-y"
+        />
+      </div>
+    </>
+  )
+}
+
+// ─── Output Config ─────────────────────────────────────────────────────────
+
+const OUTPUT_TYPE_OPTIONS = [
+  { value: 'update_fields', label: 'Update Block Fields' },
+  { value: 'api_call', label: 'API Call' },
+  { value: 'emit_event', label: 'Emit Event' },
+  { value: 'document', label: 'Generate Document' },
+]
+
+function OutputConfig({ node, onUpdate }: Pick<NodeConfigPanelProps, 'node' | 'onUpdate'>) {
+  const data = node.data as Record<string, unknown>
+  const config = (data.config ?? {}) as Record<string, unknown>
+
+  function updateConfig(field: string, value: unknown) {
+    onUpdate(node.id, { ...data, config: { ...config, [field]: value } })
+  }
+
+  return (
+    <>
+      <div className="mb-3">
+        <FieldLabel htmlFor="output-type">Output Type</FieldLabel>
+        <SelectInput
+          id="output-type"
+          value={(config.output_type as string) ?? 'update_fields'}
+          onChange={(v) => updateConfig('output_type', v)}
+          options={OUTPUT_TYPE_OPTIONS}
+        />
+      </div>
+      {config.output_type === 'api_call' && (
+        <>
+          <div className="mb-3">
+            <FieldLabel htmlFor="output-method">HTTP Method</FieldLabel>
+            <SelectInput
+              id="output-method"
+              value={(config.method as string) ?? 'POST'}
+              onChange={(v) => updateConfig('method', v)}
+              options={[
+                { value: 'GET', label: 'GET' },
+                { value: 'POST', label: 'POST' },
+                { value: 'PUT', label: 'PUT' },
+                { value: 'PATCH', label: 'PATCH' },
+              ]}
+            />
+          </div>
+          <div className="mb-3">
+            <FieldLabel htmlFor="output-endpoint">Endpoint</FieldLabel>
+            <TextInput
+              id="output-endpoint"
+              value={(config.endpoint as string) ?? ''}
+              onChange={(v) => updateConfig('endpoint', v)}
+              placeholder="https://api.example.com/resource"
+            />
+          </div>
+        </>
+      )}
+      <div className="mb-3">
+        <FieldLabel htmlFor="output-description">Description</FieldLabel>
+        <textarea
+          id="output-description"
+          value={(config.description as string) ?? ''}
+          onChange={(e) => updateConfig('description', e.target.value)}
+          placeholder="Describe what data this workflow produces..."
+          rows={3}
+          className="w-full rounded-md border border-border px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-y"
+        />
+      </div>
+    </>
+  )
+}
+
+// ─── Step Instructions Panel ────────────────────────────────────────────────
+
+function simpleMarkdown(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/^### (.+)$/gm, '<h4 class="font-semibold text-xs mt-2 mb-1">$1</h4>')
+    .replace(/^## (.+)$/gm, '<h3 class="font-semibold text-sm mt-2 mb-1">$1</h3>')
+    .replace(/^# (.+)$/gm, '<h2 class="font-bold text-sm mt-2 mb-1">$1</h2>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/^- (.+)$/gm, '<li class="ml-3 list-disc">$1</li>')
+    .replace(/^(\d+)\. (.+)$/gm, '<li class="ml-3 list-decimal">$2</li>')
+    .replace(/\n/g, '<br/>')
+}
+
+function StepInstructionsPanel({ node, onUpdate }: Pick<NodeConfigPanelProps, 'node' | 'onUpdate'>) {
+  const [previewMode, setPreviewMode] = useState(false)
+  const data = node.data as Record<string, unknown>
+  const config = (data.config ?? {}) as Record<string, unknown>
+  const instructions = (config.instructions as string) ?? ''
+
+  function updateConfig(field: string, value: unknown) {
+    onUpdate(node.id, { ...data, config: { ...config, [field]: value } })
+  }
+
+  return (
+    <div className="mt-4 pt-4 border-t border-border">
+      <div className="flex items-center justify-between mb-2">
+        <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+          Instructions
+        </h4>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => setPreviewMode(false)}
+            className={cn(
+              'rounded p-1 text-xs',
+              !previewMode ? 'bg-muted text-foreground' : 'text-muted-foreground hover:text-foreground'
+            )}
+            aria-label="Edit instructions"
+            title="Edit"
+          >
+            <PenLine className="h-3 w-3" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setPreviewMode(true)}
+            className={cn(
+              'rounded p-1 text-xs',
+              previewMode ? 'bg-muted text-foreground' : 'text-muted-foreground hover:text-foreground'
+            )}
+            aria-label="Preview instructions"
+            title="Preview"
+          >
+            <Eye className="h-3 w-3" />
+          </button>
+        </div>
+      </div>
+
+      {previewMode ? (
+        <div className="rounded-md border border-border bg-muted/30 px-2.5 py-2 text-xs min-h-[80px] overflow-y-auto max-h-60">
+          {instructions ? (
+            <div
+              className="prose prose-xs dark:prose-invert max-w-none text-foreground"
+              dangerouslySetInnerHTML={{ __html: simpleMarkdown(instructions) }}
+            />
+          ) : (
+            <p className="text-muted-foreground italic">No instructions written yet.</p>
+          )}
+        </div>
+      ) : (
+        <>
+          <textarea
+            id="step-instructions-panel"
+            value={instructions}
+            onChange={(e) => updateConfig('instructions', e.target.value)}
+            placeholder="Write step-by-step instructions for this task...&#10;&#10;Supports **bold**, *italic*, # headings, and - lists."
+            rows={6}
+            maxLength={5000}
+            className="w-full rounded-md border border-border px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-ring resize-y font-mono"
+          />
+          <p className="mt-1 text-xs text-muted-foreground">
+            {instructions.length}/5000 — Visible to humans during task execution
+          </p>
+        </>
+      )}
+    </div>
+  )
+}
+
+// ─── Main Config Panel ──────────────────────────────────────────────────────────
 
 const NODE_TYPE_LABELS: Record<string, string> = {
   trigger: 'Trigger',
   action: 'Action',
   condition: 'Condition',
   wait: 'Wait / Delay',
+  input: 'Input',
+  output: 'Output',
 }
 
 export function NodeConfigPanel({ node, onUpdate, onClose }: NodeConfigPanelProps) {
@@ -598,6 +907,13 @@ export function NodeConfigPanel({ node, onUpdate, onClose }: NodeConfigPanelProp
         {nodeType === 'action' && <ActionConfig node={node} onUpdate={onUpdate} />}
         {nodeType === 'condition' && <ConditionConfig node={node} onUpdate={onUpdate} />}
         {nodeType === 'wait' && <WaitConfig node={node} onUpdate={onUpdate} />}
+        {nodeType === 'input' && <InputConfig node={node} onUpdate={onUpdate} />}
+        {nodeType === 'output' && <OutputConfig node={node} onUpdate={onUpdate} />}
+
+        {/* Step instructions panel — shown for executable step types */}
+        {(nodeType === 'action' || nodeType === 'condition' || nodeType === 'wait') && (
+          <StepInstructionsPanel node={node} onUpdate={onUpdate} />
+        )}
       </div>
     </div>
   )

@@ -28,6 +28,8 @@ export interface BuiltSchema {
   type: 'object'
   properties: Record<string, Record<string, unknown>>
   required?: string[]
+  /** Allow top-level x-* extensions (e.g. x-field-groups) */
+  [key: string]: unknown
 }
 
 /**
@@ -100,9 +102,10 @@ export function addFieldToSchema(
   }
 
   return {
+    ...schema,
     type: 'object',
     properties,
-    ...(required.length > 0 ? { required } : {}),
+    required: required.length > 0 ? required : undefined,
   }
 }
 
@@ -126,9 +129,10 @@ export function removeFieldFromSchema(
   const required = (schema.required ?? []).filter((r) => r !== fieldName)
 
   return {
+    ...schema,
     type: 'object',
     properties: rest,
-    ...(required.length > 0 ? { required } : {}),
+    required: required.length > 0 ? required : undefined,
   }
 }
 
@@ -176,9 +180,10 @@ export function updateFieldInSchema(
   }
 
   return {
+    ...schema,
     type: 'object',
     properties,
-    ...(required.length > 0 ? { required } : {}),
+    required: required.length > 0 ? required : undefined,
   }
 }
 

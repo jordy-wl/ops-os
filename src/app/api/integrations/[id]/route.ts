@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { withAuth } from '@/lib/auth/withAuth'
-import { requireRole } from '@/lib/auth/requireRole'
+import { requirePermission } from '@/lib/rbac/middleware'
 import { createServerClient } from '@/lib/supabase/server'
 import { ok, apiError, validationError } from '@/lib/api/responses'
 import { logger } from '@/lib/logger'
@@ -56,7 +56,7 @@ export const GET = withAuth(async (req: NextRequest, ctx, params) => {
  * PATCH /api/integrations/[id]
  * Updates connector config and/or status.
  */
-export const PATCH = withAuth(requireRole(['ops-admin'], async (req: NextRequest, ctx, params) => {
+export const PATCH = withAuth(requirePermission(['manage_integrations'], async (req: NextRequest, ctx, params) => {
   const { id } = params
   const body = await req.json().catch(() => null)
   if (!body) return apiError('Invalid JSON body', 'validation/invalid-json', 400)
@@ -115,7 +115,7 @@ export const PATCH = withAuth(requireRole(['ops-admin'], async (req: NextRequest
  * DELETE /api/integrations/[id]
  * Soft-deletes a connector by setting status to 'archived'.
  */
-export const DELETE = withAuth(requireRole(['ops-admin'], async (req: NextRequest, ctx, params) => {
+export const DELETE = withAuth(requirePermission(['manage_integrations'], async (req: NextRequest, ctx, params) => {
   const { id } = params
   const supabase = createServerClient()
 

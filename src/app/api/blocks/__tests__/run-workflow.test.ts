@@ -2,8 +2,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
 import type { AuthContext } from '@/lib/auth/withAuth'
 
-// ─── Mock withAuth + requireRole ─────────────────────────────────────────────
-const mockRole = vi.hoisted(() => ({ current: 'ops-admin' as string }))
+// ─── Mock withAuth + permission context ─────────────────────────────────────
+const ALL_PERMS = new Set(['manage_blocks', 'edit_blocks', 'view_blocks', 'manage_workflows', 'execute_workflows', 'approve_tasks', 'manage_team', 'manage_settings', 'manage_integrations', 'view_audit_log'])
+const APPROVER_PERMS = new Set(['view_blocks', 'approve_tasks', 'view_audit_log'])
+
+const mockAuth = vi.hoisted(() => ({
+  role: 'ops-admin' as string,
+  permissions: null as unknown as Set<string>,
+}))
 
 vi.mock('@/lib/auth/withAuth', () => ({
   withAuth: vi.fn(
@@ -12,25 +18,9 @@ vi.mock('@/lib/auth/withAuth', () => ({
         const params = await context.params
         return handler(
           req,
-          { userId: 'user_111', clerkOrgId: 'org_abc', orgId: 'uuid-org-1', role: mockRole.current as AuthContext['role'] },
+          { userId: 'user_111', clerkOrgId: 'org_abc', orgId: 'uuid-org-1', role: mockAuth.role as AuthContext['role'], roleId: 'role-uuid', permissions: mockAuth.permissions },
           params
         )
-      }
-  ),
-}))
-
-vi.mock('@/lib/auth/requireRole', () => ({
-  requireRole: vi.fn(
-    (allowed: string[], handler: (req: NextRequest, ctx: AuthContext, params: Record<string, string>) => Promise<Response>) =>
-      async (req: NextRequest, ctx: AuthContext, params: Record<string, string>) => {
-        if (!allowed.includes(ctx.role)) {
-          const { NextResponse } = await import('next/server')
-          return NextResponse.json(
-            { data: null, error: { message: 'Forbidden: insufficient role', code: 'auth/insufficient-role' } },
-            { status: 403 }
-          )
-        }
-        return handler(req, ctx, params)
       }
   ),
 }))
@@ -88,7 +78,8 @@ const { POST } = await import('@/app/api/blocks/[id]/run-workflow/route')
 describe('POST /api/blocks/[id]/run-workflow', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockRole.current = 'ops-admin'
+    mockAuth.role = 'ops-admin'
+    mockAuth.permissions = ALL_PERMS
   })
 
   it('spawns workflow instance — returns 201', async () => {
@@ -225,8 +216,9 @@ describe('POST /api/blocks/[id]/run-workflow', () => {
     expect(res.status).toBe(500)
   })
 
-  it('returns 403 for compliance-approver role', async () => {
-    mockRole.current = 'compliance-approver'
+  it('returns 403 for compliance-approver (lacks execute_workflows)', async () => {
+    mockAuth.role = 'compliance-approver'
+    mockAuth.permissions = APPROVER_PERMS
     makeDb()
 
     const res = await POST(makeReq({ template_id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee' }), {

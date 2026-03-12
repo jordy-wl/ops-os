@@ -1,7 +1,14 @@
 'use client'
 
+import { useState } from 'react'
 import { cn } from '@/lib/utils'
-import { inferFieldType, type FieldType } from '@/lib/block-types/field-types'
+import {
+  inferFieldType,
+  getFieldGroups,
+  groupFieldsByCategory,
+  type FieldType,
+  type FieldGroup,
+} from '@/lib/block-types/field-types'
 import { DateField } from './fields/date-field'
 import { MultiSelectField } from './fields/multi-select-field'
 import { CurrencyField } from './fields/currency-field'
@@ -17,6 +24,7 @@ interface DynamicFieldRendererProps {
     type?: string
     properties?: Record<string, Record<string, unknown>>
     required?: string[]
+    'x-field-groups'?: FieldGroup[]
   }
   /** Current values keyed by field name */
   values: Record<string, unknown>
@@ -27,8 +35,9 @@ interface DynamicFieldRendererProps {
 }
 
 /**
- * DynamicFieldRenderer V2 — dispatches to per-type field components.
+ * DynamicFieldRenderer V3 — renders fields grouped by x-field-group sections.
  * Supports 12 field types via x-field-type extensions and type inference.
+ * Groups are collapsible with section headers when multiple groups exist.
  */
 export function DynamicFieldRenderer({
   fieldSchema,
@@ -37,57 +46,173 @@ export function DynamicFieldRenderer({
   readOnly = false,
 }: DynamicFieldRendererProps) {
   const properties = fieldSchema.properties ?? {}
+
+  if (Object.keys(properties).length === 0) return null
+
+  const groups = getFieldGroups(fieldSchema as Record<string, unknown>)
+  const grouped = groupFieldsByCategory(fieldSchema as Record<string, unknown>)
   const requiredSet = new Set(fieldSchema.required ?? [])
-
-  // Sort by x-display-order, then by property name as fallback
-  const fields = Object.entries(properties).sort((a, b) => {
-    const orderA = (a[1]['x-display-order'] as number) ?? 999
-    const orderB = (b[1]['x-display-order'] as number) ?? 999
-    if (orderA !== orderB) return orderA - orderB
-    return a[0].localeCompare(b[0])
-  })
-
-  if (fields.length === 0) return null
-
   const mode = readOnly ? 'view' : 'edit'
 
-  if (readOnly) {
+  // If only the default General group, render flat (backward compatible)
+  const hasMultipleGroups = groups.length > 1 || (groups.length === 1 && groups[0].id !== 'general')
+
+  if (!hasMultipleGroups) {
+    const fields = Object.entries(properties).sort((a, b) => {
+      const orderA = (a[1]['x-display-order'] as number) ?? 999
+      const orderB = (b[1]['x-display-order'] as number) ?? 999
+      if (orderA !== orderB) return orderA - orderB
+      return a[0].localeCompare(b[0])
+    })
+
+    if (readOnly) {
+      return (
+        <dl className="divide-y divide-border rounded-lg border text-sm">
+          {fields.map(([name, def]) => (
+            <div key={name} className="flex gap-4 px-4 py-2.5">
+              <dt className="w-36 shrink-0 font-medium text-muted-foreground capitalize">
+                {(def.description as string) ?? name.replace(/_/g, ' ')}
+              </dt>
+              <dd className="flex-1 text-foreground break-words">
+                <FieldDispatcher
+                  name={name}
+                  value={values[name]}
+                  onChange={() => {}}
+                  fieldDef={def}
+                  mode={mode}
+                  required={requiredSet.has(name)}
+                />
+              </dd>
+            </div>
+          ))}
+        </dl>
+      )
+    }
+
     return (
-      <dl className="divide-y divide-border rounded-lg border text-sm">
+      <div className="space-y-3">
         {fields.map(([name, def]) => (
-          <div key={name} className="flex gap-4 px-4 py-2.5">
-            <dt className="w-36 shrink-0 font-medium text-muted-foreground capitalize">
-              {(def.description as string) ?? name.replace(/_/g, ' ')}
-            </dt>
-            <dd className="flex-1 text-foreground break-words">
+          <FieldDispatcher
+            key={name}
+            name={name}
+            value={values[name]}
+            onChange={(v) => onChange?.(name, v)}
+            fieldDef={def}
+            mode={mode}
+            required={requiredSet.has(name)}
+          />
+        ))}
+      </div>
+    )
+  }
+
+  // Grouped rendering — collapsible section headers
+  return (
+    <div className="space-y-4">
+      {groups.map((group) => {
+        const groupFields = grouped.get(group.id) ?? []
+        if (groupFields.length === 0) return null
+
+        return (
+          <FieldGroupSection
+            key={group.id}
+            group={group}
+            fields={groupFields}
+            values={values}
+            onChange={onChange}
+            requiredSet={requiredSet}
+            mode={mode}
+            readOnly={readOnly}
+          />
+        )
+      })}
+    </div>
+  )
+}
+
+/** Collapsible field group section */
+function FieldGroupSection({
+  group,
+  fields,
+  values,
+  onChange,
+  requiredSet,
+  mode,
+  readOnly,
+}: {
+  group: FieldGroup
+  fields: Array<[string, Record<string, unknown>]>
+  values: Record<string, unknown>
+  onChange?: (field: string, value: unknown) => void
+  requiredSet: Set<string>
+  mode: 'view' | 'edit'
+  readOnly: boolean
+}) {
+  const [collapsed, setCollapsed] = useState(false)
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setCollapsed(!collapsed)}
+        className="flex items-center gap-2 w-full text-left mb-2 group"
+        aria-expanded={!collapsed}
+      >
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          className={cn(
+            'text-muted-foreground transition-transform',
+            collapsed ? '' : 'rotate-90'
+          )}
+          aria-hidden="true"
+        >
+          <polyline points="9 18 15 12 9 6" />
+        </svg>
+        <span className="text-sm font-semibold text-foreground">{group.label}</span>
+        <span className="text-xs text-muted-foreground">({fields.length})</span>
+      </button>
+      {!collapsed && (
+        readOnly ? (
+          <dl className="divide-y divide-border rounded-lg border text-sm">
+            {fields.map(([name, def]) => (
+              <div key={name} className="flex gap-4 px-4 py-2.5">
+                <dt className="w-36 shrink-0 font-medium text-muted-foreground capitalize">
+                  {(def.description as string) ?? name.replace(/_/g, ' ')}
+                </dt>
+                <dd className="flex-1 text-foreground break-words">
+                  <FieldDispatcher
+                    name={name}
+                    value={values[name]}
+                    onChange={() => {}}
+                    fieldDef={def}
+                    mode={mode}
+                    required={requiredSet.has(name)}
+                  />
+                </dd>
+              </div>
+            ))}
+          </dl>
+        ) : (
+          <div className="space-y-3 pl-5 border-l-2 border-border">
+            {fields.map(([name, def]) => (
               <FieldDispatcher
+                key={name}
                 name={name}
                 value={values[name]}
-                onChange={() => {}}
+                onChange={(v) => onChange?.(name, v)}
                 fieldDef={def}
                 mode={mode}
                 required={requiredSet.has(name)}
               />
-            </dd>
+            ))}
           </div>
-        ))}
-      </dl>
-    )
-  }
-
-  return (
-    <div className="space-y-3">
-      {fields.map(([name, def]) => (
-        <FieldDispatcher
-          key={name}
-          name={name}
-          value={values[name]}
-          onChange={(v) => onChange?.(name, v)}
-          fieldDef={def}
-          mode={mode}
-          required={requiredSet.has(name)}
-        />
-      ))}
+        )
+      )}
     </div>
   )
 }

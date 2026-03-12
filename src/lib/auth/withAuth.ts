@@ -2,14 +2,18 @@ import { auth, clerkClient } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { logger } from '@/lib/logger'
+import { resolvePermissions } from '@/lib/rbac/resolve'
+import type { Permission } from '@/lib/rbac/types'
 
 export type UserRole = 'ops-admin' | 'ops-user' | 'compliance-approver'
 
 export type AuthContext = {
-  userId: string     // Clerk user ID
-  clerkOrgId: string // Clerk organization ID
-  orgId: string      // Supabase internal org UUID
-  role: UserRole     // RBAC role for this user in this org
+  userId: string          // Clerk user ID
+  clerkOrgId: string      // Clerk organization ID
+  orgId: string           // Supabase internal org UUID
+  role: UserRole          // Role name (backward compat with requireRole)
+  roleId: string          // UUID from roles table ('' if fallback)
+  permissions: Set<Permission> // Resolved from permission_groups
 }
 
 type Params = Record<string, string>
@@ -21,44 +25,11 @@ export type RouteHandler = (
 ) => Promise<NextResponse>
 
 /**
- * Resolves the RBAC role for a user in an org.
- * If no role row exists, assigns defaultRole and inserts it.
- * On unexpected DB error, falls back to 'ops-user' (safe default).
- */
-async function resolveRole(
-  supabase: ReturnType<typeof createServerClient>,
-  orgId: string,
-  userId: string,
-  defaultRole: UserRole
-): Promise<UserRole> {
-  const { data: roleRow, error } = await supabase
-    .from('user_roles')
-    .select('role')
-    .eq('org_id', orgId)
-    .eq('user_id', userId)
-    .single()
-
-  if (roleRow) return roleRow.role as UserRole
-
-  if (error?.code === 'PGRST116') {
-    // No role yet — assign default and persist
-    await supabase
-      .from('user_roles')
-      .insert({ org_id: orgId, user_id: userId, role: defaultRole })
-    return defaultRole
-  }
-
-  // Unexpected DB error — fail safe with least-privileged non-read-only role
-  logger.warn('withAuth', 'auth.role_lookup_failed', { error_code: error?.code })
-  return 'ops-user'
-}
-
-/**
  * withAuth — middleware wrapper for all API route handlers.
  *
  * Validates the Clerk JWT, extracts userId + orgId, resolves the internal
  * Supabase org UUID, auto-provisions the org row on first login, and
- * resolves the user's RBAC role (defaulting ops-admin for org creators).
+ * resolves the user's permissions via the custom RBAC engine.
  *
  * Usage (static route):
  *   export const GET = withAuth(async (req, ctx) => { ... })
@@ -114,9 +85,12 @@ export function withAuth(handler: RouteHandler) {
           // Non-blocking — org name sync is best-effort
         }
       }
-      const role = await resolveRole(supabase, existing.id, userId, 'ops-user')
+      const resolved = await resolvePermissions(supabase, existing.id, userId, 'ops-user')
       const params = await context.params
-      return handler(req, { userId, clerkOrgId, orgId: existing.id, role }, params)
+      return handler(req, {
+        userId, clerkOrgId, orgId: existing.id,
+        role: resolved.role as UserRole, roleId: resolved.roleId, permissions: resolved.permissions,
+      }, params)
     }
 
     // PGRST116 = no rows found — auto-provision org on first login
@@ -151,10 +125,13 @@ export function withAuth(handler: RouteHandler) {
         )
       }
 
-      // Org creator → ops-admin
-      const role = await resolveRole(supabase, newOrg.id, userId, 'ops-admin')
+      // Org creator → ops-admin (RBAC roles seeded via DB trigger on org insert)
+      const resolved = await resolvePermissions(supabase, newOrg.id, userId, 'ops-admin')
       const params = await context.params
-      return handler(req, { userId, clerkOrgId, orgId: newOrg.id, role }, params)
+      return handler(req, {
+        userId, clerkOrgId, orgId: newOrg.id,
+        role: resolved.role as UserRole, roleId: resolved.roleId, permissions: resolved.permissions,
+      }, params)
     }
 
     // Unexpected DB error

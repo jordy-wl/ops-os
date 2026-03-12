@@ -16,6 +16,8 @@ import {
   Plug,
   FileText,
   Settings,
+  Users,
+  Shield,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -52,6 +54,8 @@ const LIBRARY_NAV: NavItem[] = [
 
 const SETTINGS_NAV: NavItem[] = [
   { href: '/settings/brand', label: 'Settings', icon: Settings },
+  { href: '/settings/team', label: 'Team', icon: Users },
+  { href: '/settings/roles', label: 'Roles', icon: Shield },
 ]
 
 export function AppSidebar() {

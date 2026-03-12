@@ -2,9 +2,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
 import type { AuthContext, UserRole } from '@/lib/auth/withAuth'
 
-// Configurable mock role — change per test to verify requireRole behavior
+// Configurable mock context — change per test to verify permission behavior
+const ALL_PERMS = new Set(['manage_blocks', 'edit_blocks', 'view_blocks', 'manage_workflows', 'execute_workflows', 'approve_tasks', 'manage_team', 'manage_settings', 'manage_integrations', 'view_audit_log'])
+const USER_PERMS = new Set(['view_blocks', 'edit_blocks', 'execute_workflows', 'approve_tasks', 'view_audit_log'])
+
 const mockCtx = vi.hoisted(() => ({
   role: 'ops-admin' as UserRole,
+  permissions: null as unknown as Set<string>,
 }))
 
 vi.mock('@/lib/auth/withAuth', () => ({
@@ -14,7 +18,7 @@ vi.mock('@/lib/auth/withAuth', () => ({
         const params = await context.params
         return handler(
           req,
-          { userId: 'user_111', clerkOrgId: 'org_abc', orgId: 'uuid-org-1', role: mockCtx.role },
+          { userId: 'user_111', clerkOrgId: 'org_abc', orgId: 'uuid-org-1', role: mockCtx.role, roleId: 'role-uuid', permissions: mockCtx.permissions },
           params
         )
       }
@@ -71,6 +75,7 @@ describe('GET /api/block-types', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockCtx.role = 'ops-admin'
+    mockCtx.permissions = ALL_PERMS
   })
 
   it('returns block types for org', async () => {
@@ -99,6 +104,7 @@ describe('POST /api/block-types', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockCtx.role = 'ops-admin'
+    mockCtx.permissions = ALL_PERMS
   })
 
   it('creates a block type — returns 201', async () => {
@@ -180,8 +186,9 @@ describe('POST /api/block-types', () => {
     expect(body.error.code).toBe('block-types/duplicate')
   })
 
-  it('returns 403 for ops-user role', async () => {
+  it('returns 403 for ops-user role (lacks manage_blocks)', async () => {
     mockCtx.role = 'ops-user'
+    mockCtx.permissions = USER_PERMS
     makeDb()
 
     const req = makeReq('http://localhost/api/block-types', {
@@ -197,6 +204,7 @@ describe('PATCH /api/block-types/:id', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockCtx.role = 'ops-admin'
+    mockCtx.permissions = ALL_PERMS
   })
 
   it('updates a block type', async () => {
@@ -244,6 +252,7 @@ describe('DELETE /api/block-types/:id', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockCtx.role = 'ops-admin'
+    mockCtx.permissions = ALL_PERMS
   })
 
   it('deletes a block type with no blocks using it', async () => {

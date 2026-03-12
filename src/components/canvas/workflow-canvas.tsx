@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import {
   ReactFlow,
   MiniMap,
@@ -21,6 +21,9 @@ import { TriggerNode } from './nodes/trigger-node'
 import { ActionNode } from './nodes/action-node'
 import { ConditionNode } from './nodes/condition-node'
 import { WaitNode } from './nodes/wait-node'
+import { InputNode } from './nodes/input-node'
+import { OutputNode } from './nodes/output-node'
+import { DataFlowEdge } from './edges/data-flow-edge'
 import { NodePalette, type PaletteItem } from './node-palette'
 import { NodeConfigPanel } from './panels/node-config-panel'
 import type { CanvasLayout } from '@/lib/workflow/canvas-layout'
@@ -30,6 +33,12 @@ const nodeTypes = {
   action: ActionNode,
   condition: ConditionNode,
   wait: WaitNode,
+  input: InputNode,
+  output: OutputNode,
+}
+
+const edgeTypes = {
+  dataFlow: DataFlowEdge,
 }
 
 interface WorkflowCanvasProps {
@@ -56,6 +65,43 @@ export function WorkflowCanvas({ initialLayout, templateName, onSave, saving }: 
     (initialLayout?.edges ?? []) as Edge[]
   )
 
+  // Determine which nodes are data flow nodes (input/output)
+  const dataFlowNodeIds = useMemo(() => {
+    const ids = new Set<string>()
+    for (const node of nodes) {
+      if (node.type === 'input' || node.type === 'output') {
+        ids.add(node.id)
+      }
+    }
+    return ids
+  }, [nodes])
+
+  // Enrich edges with data flow type and styling
+  const enrichedEdges = useMemo(() => {
+    return edges.map((edge) => {
+      const isDataFlow = dataFlowNodeIds.has(edge.source) || dataFlowNodeIds.has(edge.target)
+      if (!isDataFlow) return edge
+
+      // Find source node to get field mappings
+      const sourceNode = nodes.find((n) => n.id === edge.source)
+      const sourceData = sourceNode?.data as Record<string, unknown> | undefined
+      const sourceConfig = (sourceData?.config ?? {}) as Record<string, unknown>
+      const fieldMappings = Array.isArray(sourceConfig.field_mappings)
+        ? sourceConfig.field_mappings as Array<{ from: string; to: string }>
+        : []
+
+      return {
+        ...edge,
+        type: 'dataFlow',
+        data: {
+          isDataFlow: true,
+          fieldMappings,
+          label: edge.label ? String(edge.label) : undefined,
+        },
+      }
+    })
+  }, [edges, dataFlowNodeIds, nodes])
+
   const onConnect = useCallback(
     (params: Connection) => setEdges((eds) => addEdge({ ...params, animated: true }, eds)),
     [setEdges]
@@ -79,9 +125,22 @@ export function WorkflowCanvas({ initialLayout, templateName, onSave, saving }: 
           ? 'condition'
           : item.nodeType === 'wait'
             ? 'wait'
-            : item.stepType ?? 'emit_event'
+            : item.nodeType === 'input'
+              ? 'input'
+              : item.nodeType === 'output'
+                ? 'output'
+                : item.stepType ?? 'emit_event'
 
       const defaultStepName = `${defaultStepType}_${Date.now()}`
+
+      const defaultConfig =
+        item.nodeType === 'trigger'
+          ? { triggerType: item.label === 'Manual Start' ? 'manual' : 'event' }
+          : item.nodeType === 'input'
+            ? { source_type: 'block_fields', field_mappings: [] }
+            : item.nodeType === 'output'
+              ? { output_type: 'update_fields', field_mappings: [] }
+              : {}
 
       const newNode: Node = {
         id,
@@ -91,10 +150,7 @@ export function WorkflowCanvas({ initialLayout, templateName, onSave, saving }: 
           label: item.label,
           stepType: defaultStepType,
           stepName: defaultStepName,
-          config:
-            item.nodeType === 'trigger'
-              ? { triggerType: item.label === 'Manual Start' ? 'manual' : 'event' }
-              : {},
+          config: defaultConfig,
         },
       }
 
@@ -140,6 +196,7 @@ export function WorkflowCanvas({ initialLayout, templateName, onSave, saving }: 
         source: e.source,
         target: e.target,
         ...(e.sourceHandle ? { sourceHandle: e.sourceHandle } : {}),
+        ...(e.label ? { label: String(e.label) } : {}),
       })),
     }
     onSave(layout)
@@ -198,7 +255,7 @@ export function WorkflowCanvas({ initialLayout, templateName, onSave, saving }: 
         <div ref={reactFlowWrapper} className="flex-1">
           <ReactFlow
             nodes={nodes}
-            edges={edges}
+            edges={enrichedEdges}
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
@@ -208,6 +265,7 @@ export function WorkflowCanvas({ initialLayout, templateName, onSave, saving }: 
             onDragOver={onDragOver}
             onDrop={onDrop}
             nodeTypes={nodeTypes}
+            edgeTypes={edgeTypes}
             fitView
             snapToGrid
             snapGrid={[15, 15]}

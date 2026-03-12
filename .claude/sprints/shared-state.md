@@ -8,10 +8,10 @@
 
 ## Current Phase and Sprint
 
-**Phase:** 3 — Platform Evolution (RBAC, Routing Engine, Delta AI, Document Gen V2)
-**Phase Status:** ACTIVE. Sprints 0-2 COMPLETE. Sprint 3 ready.
-**Sprint:** 3 — Custom RBAC Engine (8 tasks)
-**Previous:** Sprint 2 DONE (7/7, 100%). Sprint 1 DONE (6/6, 100%).
+**Phase:** 3 — Platform Evolution (RBAC, Routing Engine, Delta AI, Document Gen V2, Block Configurability)
+**Phase Status:** ACTIVE. Sprints 0-6 COMPLETE. Sprint 7 READY.
+**Sprint:** 7 — AI Delta Engine + Inline Field Manager (8 tasks) — READY
+**Previous:** Sprint 6 DONE (8/8, 100%). Sprint 5 DONE (9/9, 100%).
 
 ---
 
@@ -19,9 +19,16 @@
 
 | Task ID | Title | Role | Status | Last Updated |
 |---------|-------|------|--------|-------------|
-| (none active — Sprint 3 ready to claim) | | | | |
+| P3-S7-AI-01 | Delta calculation engine | AI/ML | OPEN | 2026-03-12 |
+| P3-S7-AI-02 | AI Insights generator | AI/ML | OPEN | 2026-03-12 |
+| P3-S7-BE-01 | Auto task generation from deltas | Backend | OPEN | 2026-03-12 |
+| P3-S7-FE-01 | AI Insights panel component | Frontend | OPEN | 2026-03-12 |
+| P3-S7-FE-02 | Inline field manager on block detail page | Frontend | OPEN | 2026-03-12 |
+| P3-S7-AI-03 | Delta-aware chat context | AI/ML | OPEN | 2026-03-12 |
+| P3-S7-BE-02 | Notification system foundation | Backend | OPEN | 2026-03-12 |
+| P3-S7-QA-01 | Delta engine + field manager tests | QA | OPEN | 2026-03-12 |
 
-**Sprint metrics:** Phase 3: Sprints 0-2 DONE. 13/53 engineering tasks DONE (25%) across 8 planned sprints. 629 tests passing.
+**Sprint metrics:** Phase 3: Sprints 0-6 DONE. Sprint 7: 0/8 DONE (0%). 46/69 engineering tasks DONE (67%) across 8 planned sprints. 885 tests passing.
 
 ---
 
@@ -48,7 +55,8 @@
 | 2026-03-12 | ORCHESTRATOR | **PHASE 3 ACTIVATED** — 8 sprints planned, 53 tasks. Sprint 0 = scaffold updates (PRDs, rules, standards, agent personas, sprint task files). Sprint 1 = bug fixes + quick wins. Full plan in `.claude/plans/cozy-dancing-giraffe.md`. |
 | 2026-03-12 | ORCHESTRATOR | **Phase 2 exit conditions re-scoped** — Original exit conditions required live design partner usage. Re-scoped as Phase 3 milestones since no design partners onboarded yet. Phase 2 closed as code-complete. |
 | 2026-03-12 | ORCHESTRATOR | **Phase 3 scope confirmed with user**: 5 new block types (Solution, Product, Service, Team Member, Policy), custom RBAC (Clerk=login only), routing engine (Human/Agent/Auto), AI delta engine, document gen V2, enhanced task cards, workflow canvas I/O nodes, admin settings, bug fixes. Block-specific layouts deferred to Phase 4. |
-| 2026-03-12 | ORCHESTRATOR | **Sprint 2 retro complete** — 7/7 tasks, 100%. 0 blockers, 0 new signals. 629 tests. Phase exit: 0/5 met (expected — schema foundation sprint). Sprint 3 files ready (8 tasks, 3 HIGH). Critical path: BE-01→BE-02→BE-03→QA-01. withAuth.ts refactor is HIGH risk — backward compat required. |
+| 2026-03-12 | ORCHESTRATOR | **Block configurability scope added** — 8 new tasks woven across Sprints 5-8: field group schema, AI field suggestion engine, block config chat tools, field group UI, AI-assisted block creation, inline field manager, org page. Manual + AI-guided, applies to every block type. Total Phase 3 tasks now 69 (was 53). |
+| 2026-03-12 | ORCHESTRATOR | **Sprint 5 retro complete** — 9/9 tasks, 100%. 0 blockers, 0 new signals. 823 tests (+63). Canvas I/O nodes, data flow visualization, field group schema, AI field suggestion engine, block config chat tools all shipped. Sprint 6 tasks updated to include 2 block config UI tasks (FE-03 + FE-04). |
 
 ---
 
@@ -56,40 +64,40 @@
 
 | Date | Server | Action | Outcome | Task ID | Agent |
 |------|--------|--------|---------|---------|-------|
-| (none yet — Sprint 3) | | | | | |
+| (none yet — Sprint 7) | | | | | |
 
 ---
+
+## Recently Completed — Sprint 6 Archive
+
+Sprint 6 (2026-03-12): 8/8 DONE (100%).
+Deliverables: Reference template storage (multipart upload to Supabase Storage, AI structure extraction via Claude, document_template block creation), document storage & versioning (documents table with auto-increment version trigger, Supabase Storage bucket, 4 API endpoints, storage service), context-aware document generation (assembleDocumentContext fetches connected blocks + events, buildDocGenSystemPrompt includes Connected Blocks/Recent Activity/Reference Structure/Brand Context), template library page (/library/templates with upload, search, category filters, responsive grid), document preview component (slide-over panel with inline editing, version history, PDF download, block detail integration), field group UI (grouped field list, group management, field-to-group assignment, grouped block detail rendering), AI-assisted block creation modal (describe-what-you-need textarea, suggest_fields API, field preview with accept/reject), QA tests (27 new: template card, version history, field group utilities). Test count: 885 (+27). Lint + build clean.
+
+## Recently Completed — Sprint 5 Archive
+
+Sprint 5 (2026-03-12): 9/9 DONE (100%).
+Deliverables: Input/Output node types (InputNode indigo + OutputNode teal with specialized handles), reorganized node palette (4 categories: Triggers/Actions/Conditions/Flow with collapsible sections), step instructions panel (edit/preview toggle + simpleMarkdown renderer, 5000 char limit), canvas data flow serialization (DataInputSchema/DataOutputSchema Zod schemas, canvasToTemplate/stepsToCanvas round-trip for I/O nodes, data_inputs/data_outputs optional arrays), data flow visualization (DataFlowEdge custom edge — blue dashed for data, gray solid for control, hover tooltip for field mappings), field group schema extension (FieldGroup interface, getFieldGroups/groupFieldsByCategory utilities, x-field-group/x-field-groups schema extensions, default groups on 5 system types), AI field suggestion engine (Claude claude-sonnet-4-6, prompt versioned at field-suggestion.v1.md, field type validation, name sanitization, safe fallback), block configuration chat tools (4 new tools: suggest_fields, configure_block_type, create_block_type, create_relationship — all ops-admin RBAC), comprehensive QA (54 new tests: canvas I/O round-trip, field groups, template schema validation, RBAC enforcement). Test count: 823 (+63). Lint + build clean.
+
+## Recently Completed — Sprint 4 Archive
+
+Sprint 4 (2026-03-12): 8/8 DONE (100%).
+Deliverables: Routing type system, policy resolution, routing decision engine (6-level priority), confidence scoring via Claude claude-sonnet-4-6, enriched workflow template schema, enhanced task card data model, routing config in workflow builder, enhanced task card UI, 22 new integration tests. Test count: 760 (+22).
+
+## Recently Completed — Sprint 3 Archive
+
+Sprint 3 (2026-03-12): 8/8 DONE (100%).
+Deliverables: Custom RBAC engine (3 tables, 10 permissions, 3 system roles), withAuth refactor, Team Member CRUD, Org Hierarchy API, Roles API, Team + Roles settings pages, sidebar nav. 71 new tests. Test count: 706 (+77).
 
 ## Recently Completed — Sprint 2 Archive
 
 Sprint 2 (2026-03-12): 7/7 DONE (100%).
-Deliverables: 5 new system block types (solution, product, service, team_member, policy) in system-types.ts + seeded to production DB, contact type enriched with 6 new fields, sub-org hierarchy (parent_org_id + org_level + depth trigger + get_org_hierarchy RPC), field-level metadata validation (getFieldSchema + validateFields), all frontend TYPE_STYLES/BLOCK_TYPES updated (7 files), block-create action handler made dynamic (removed hardcoded enum). 2 Supabase migrations applied. 79 new tests. Test count: 629 (+79). Lint + build clean.
+Deliverables: 5 new system block types, contact enrichment, sub-org hierarchy, field-level validation, frontend type updates, dynamic block-create. 79 new tests. Test count: 629 (+79).
 
 ## Recently Completed — Sprint 1 Archive
 
 Sprint 1 (2026-03-12): 6/6 DONE (100%).
-Deliverables: Fixed workflow creation 400 error (removed steps.min(1), dynamic block type validation via DB query), moved chat widget to bottom-right, added dark/light mode toggle (ThemeToggle component + flash prevention + localStorage persistence), fixed 5 responsive issues (chat widget fluid width, breadcrumb truncation, header stacking, task list + workflow template truncation). 550 tests passing. Lint + build clean.
-
-## Recently Completed — Sprint 16 Archive
-
-Sprint 16 FINAL (2026-03-11): 5/5 DONE (100%).
-Deliverables: Full dark mode conversion (73 files, hardcoded gray→CSS vars), visual polish (consistent focus rings, hover states, primary buttons across all 58 components + 15 pages), dead code cleanup (41 files deleted — 39 unused shadcn components + app-nav.tsx + skeleton.jsx, ~3200 lines removed), performance audit (no pages >200kB, builder 176kB largest, shared bundle 102kB), full regression (550 tests, build clean 10.3s, lint clean). 100 files changed (+660/-3489). PR #39.
-
-## Recently Completed — Sprint 15 Archive
-
-Sprint 15 (2026-03-11): 5/5 DONE (100%).
-Deliverables: Integration onboarding wizard (4-step: select provider → configure → test → complete; routes at /integrations/connect and /integrations/connect/[provider]; Google OAuth, Webhook URL+HMAC, Custom API endpoint+key), AI entity creation tools (enhanced create_block with field validation against block_type field_schema + Dice coefficient duplicate detection at 0.85 threshold, new list_block_types tool, entity-creation.ts + research-tools.ts + entity-creation.v1.md prompt), @mention block autocomplete (@ trigger, 300ms debounced search via GET /api/blocks?q=, keyboard nav ArrowUp/Down/Enter/Escape, click-outside close, type badges, dropdown above input), block creation preview (BlockCreationPreview component for create_block tool calls — 3 states: created/duplicate_warning/error with block card + fields + warnings), blocks API q param added. 17 files changed (+550/-68). Test count: 550 (+29).
-
-## Recently Completed — Sprint 14 Archive
-
-Sprint 14 (2026-03-11): 6/6 DONE (100%).
-Deliverables: Chat widget shell (bottom-left floating, 480x600, slide-up animation, localStorage persistence), 3 AI modes (discuss/plan/execute) with mode-specific system prompts, execute mode multi-turn tool_use loop (max 3 rounds) with RBAC at tool handler layer (ops-admin only for mutations), page context endpoint + auto-tracking, full-page chat replaced with redirect. 4 chat tools. New test infra: @testing-library/react + jsdom + @vitejs/plugin-react. Test count: 521 (+35). PR #37 merged.
-
-## Recently Completed — Sprint 13 Archive
-
-Sprint 13 (2026-03-11): 5/5 DONE (100%).
-Deliverables: update_block step handler, Update Block canvas node, onboarding removal, canvas-first workflow creation. Test count: 486. PR #36 merged.
+Deliverables: Workflow 400 fix, chat widget position, dark mode toggle, responsive fixes. Test count: 550.
 
 ## Earlier Sprints
 
-Sprints 1–12 complete. Full details in `shared-state-history.md`.
+Phase 2 Sprints 1–16 complete. Phase 3 Sprint 0 complete. Full details in `shared-state-history.md`.

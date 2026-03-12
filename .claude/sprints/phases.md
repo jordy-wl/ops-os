@@ -12,7 +12,7 @@
 |-------|------|--------|--------|---------------------|
 | 1 | Foundation & Primitive Validation | COMPLETE | Sprint 4 | YES (code) — usage metrics deferred (user = test user) |
 | 2 | Composable Blocks, Visual Builder & Integrations | COMPLETE (code) | Sprint 16 | CODE DONE — usage validation re-scoped as P3 milestones |
-| 3 | Platform Evolution: RBAC, Routing, Delta AI, Doc Gen V2 | ACTIVE | Sprint 3 | 2/8 sprints complete |
+| 3 | Platform Evolution: RBAC, Routing, Delta AI, Doc Gen V2 | ACTIVE | Sprint 7 | 6/8 sprints complete |
 | 4 | Enterprise & Compliance | FUTURE | — | — |
 
 ---
@@ -173,12 +173,12 @@ If exit condition is NOT met after 12 weeks:
 - Sprint 0: Scaffold updates (PRDs, rules, standards, agents, sprint files) — **COMPLETE** (2026-03-12)
 - Sprint 1: Bug fixes & quick wins (6 tasks) — **COMPLETE** (6/6 DONE, 100%. 2026-03-12)
 - Sprint 2: New block types & schema foundation (7 tasks) — **COMPLETE** (7/7 DONE, 100%. 2026-03-12)
-- Sprint 3: Custom RBAC engine (8 tasks) — PENDING
-- Sprint 4: Routing engine & policy system (7 tasks) — PENDING
-- Sprint 5: Workflow canvas enhancements (6 tasks) — PENDING
-- Sprint 6: Document Generation V2 (6 tasks) — PENDING
-- Sprint 7: AI Delta Engine (7 tasks) — PENDING
-- Sprint 8: Core admin settings (6 tasks) — PENDING
+- Sprint 3: Custom RBAC engine (8 tasks) — **COMPLETE** (8/8 DONE, 100%. 2026-03-12)
+- Sprint 4: Routing engine & policy system (8 tasks) — **COMPLETE** (8/8 DONE, 100%. 2026-03-12)
+- Sprint 5: Workflow canvas enhancements + block config foundation (9 tasks) — **COMPLETE** (9/9 DONE, 100%. 2026-03-12)
+- Sprint 6: Document Generation V2 + block config UI (8 tasks) — **COMPLETE** (8/8 DONE, 100%. 2026-03-12)
+- Sprint 7: AI Delta Engine + inline field manager (8 tasks) — PENDING
+- Sprint 8: Core admin settings + org page (8 tasks) — PENDING
 
 ---
 

@@ -11,6 +11,7 @@ export type ActionResult = {
   actionId: string
   eventId: string | null
   workflowJobId?: string | null
+  documentId?: string | null
   status: 'completed' | 'pending' | 'failed'
 }
 

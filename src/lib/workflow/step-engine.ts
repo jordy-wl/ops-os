@@ -1,6 +1,14 @@
 import { createServerClient } from '@/lib/supabase/server'
 import { logger } from '@/lib/logger'
 import type { WorkflowStep } from './template-schema'
+import type { AuthContext } from '@/lib/auth/withAuth'
+import { PERMISSIONS } from '@/lib/rbac/types'
+
+/** System-level auth context for automated step execution (full admin permissions). */
+const SYSTEM_CTX: AuthContext = {
+  userId: 'system', clerkOrgId: '', orgId: '', role: 'ops-admin',
+  roleId: '', permissions: new Set(PERMISSIONS),
+}
 
 export type StepResult = {
   step_name: string
@@ -281,7 +289,7 @@ async function executeStep(
         body: (step as Record<string, unknown>).body as string ?? '',
         block_id: meta.source_block_id,
       }
-      const emailResult = await handler.execute(emailPayload, { orgId, userId: 'system', clerkOrgId: '', role: 'ops-admin' as const }, supabase)
+      const emailResult = await handler.execute(emailPayload, { ...SYSTEM_CTX, orgId }, supabase)
       return {
         step_name: step.name,
         step_type: step.type,
@@ -308,7 +316,7 @@ async function executeStep(
         attendees: (step as Record<string, unknown>).attendees as string[] ?? [],
         block_id: meta.source_block_id,
       }
-      const meetingResult = await handler.execute(meetingPayload, { orgId, userId: 'system', clerkOrgId: '', role: 'ops-admin' as const }, supabase)
+      const meetingResult = await handler.execute(meetingPayload, { ...SYSTEM_CTX, orgId }, supabase)
       return {
         step_name: step.name,
         step_type: step.type,
@@ -330,7 +338,7 @@ async function executeStep(
         prompt: (step as Record<string, unknown>).prompt as string | undefined,
         output_format: ((step as Record<string, unknown>).output_format as string) ?? 'html',
       }
-      const docResult = await handler.execute(docPayload, { orgId, userId: 'system', clerkOrgId: '', role: 'ops-admin' as const }, supabase)
+      const docResult = await handler.execute(docPayload, { ...SYSTEM_CTX, orgId }, supabase)
       return {
         step_name: step.name,
         step_type: step.type,

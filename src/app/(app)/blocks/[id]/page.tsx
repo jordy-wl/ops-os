@@ -8,6 +8,7 @@ import { BlockDataPanel } from '@/components/blocks/block-data-panel'
 import { EventTimeline } from '@/components/blocks/event-timeline'
 import { ConnectedBlocksPanel } from '@/components/blocks/connected-blocks-panel'
 import { ActionMenu } from '@/components/actions/action-menu'
+import { BlockDocumentsSection } from '@/components/documents/block-documents-section'
 import type { Block, Event } from '@/lib/context-assembly'
 
 interface Props {
@@ -162,6 +163,7 @@ export default async function BlockDetailPage({ params }: Props) {
             block={block as Block}
             fieldSchema={typeDef?.field_schema as Record<string, unknown> | undefined}
           />
+          <BlockDocumentsSection blockId={block.id} />
           <EventTimeline events={(events ?? []) as Event[]} />
         </div>
 

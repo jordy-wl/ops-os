@@ -33,8 +33,8 @@ export function WorkflowBuilderClient({
       setError(null)
 
       try {
-        // Convert canvas to template steps
-        const { trigger, steps } = canvasToTemplate(layout)
+        // Convert canvas to template steps + data flow
+        const { trigger, steps, data_inputs, data_outputs } = canvasToTemplate(layout)
 
         // Update the template block with name + metadata
         const res = await fetch(`/api/blocks/${templateId}`, {
@@ -46,6 +46,8 @@ export function WorkflowBuilderClient({
               applies_to_type: appliesToType,
               trigger,
               steps,
+              ...(data_inputs ? { data_inputs } : {}),
+              ...(data_outputs ? { data_outputs } : {}),
               canvas_layout: layout,
             },
           }),

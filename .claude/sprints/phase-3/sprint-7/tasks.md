@@ -18,9 +18,10 @@
 | P3-S7-FE-01 | AI Insights panel component | Frontend | HIGH | AI-02 | OPEN |
 | P3-S7-AI-03 | Delta-aware chat context | AI/ML | MEDIUM | AI-01 | OPEN |
 | P3-S7-BE-02 | Notification system foundation | Backend | HIGH | AI-01 | OPEN |
-| P3-S7-QA-01 | Delta engine tests | QA | MEDIUM | AI-01, AI-02, BE-01, FE-01, AI-03, BE-02 | OPEN |
+| P3-S7-FE-02 | Inline field manager on block detail page | Frontend | MEDIUM | S5-AI-01, S5-BE-02 (complete) | OPEN |
+| P3-S7-QA-01 | Delta engine tests | QA | MEDIUM | AI-01, AI-02, BE-01, FE-01, FE-02, AI-03, BE-02 | OPEN |
 
-**Total:** 7 tasks (2 BE, 3 AI, 1 FE, 1 QA)
+**Total:** 8 tasks (2 BE, 3 AI, 2 FE, 1 QA)
 **Critical path:** AI-01 (delta engine) --> AI-02 (insights) --> FE-01 (insights panel) --> QA-01
 
 ---
@@ -38,7 +39,10 @@ Then four tasks in parallel:
 
 Then:
 6. FE-01 (AI Insights panel) -- after AI-02
-7. QA-01 (Delta engine tests) -- after all tasks complete
+7. FE-02 (Inline field manager) -- no intra-sprint deps (S5 deps already complete), can start immediately
+
+Finally:
+8. QA-01 (Delta engine tests) -- after all tasks complete
 
 ---
 

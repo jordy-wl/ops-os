@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
 
 // ─── Mock auth middleware ────────────────────────────────────────────────────
-const MOCK_CTX = { userId: 'user_111', clerkOrgId: 'org_abc', orgId: 'uuid-org-1', role: 'ops-admin' as const }
+const MOCK_CTX = { userId: 'user_111', clerkOrgId: 'org_abc', orgId: 'uuid-org-1', role: 'ops-admin' as const, roleId: 'role-uuid-admin', permissions: new Set(['manage_blocks', 'edit_blocks', 'view_blocks', 'manage_workflows', 'execute_workflows', 'approve_tasks', 'manage_team', 'manage_settings', 'manage_integrations', 'view_audit_log']) }
 
 // vi.hoisted creates a value accessible inside vi.mock factories (which are hoisted)
 const mockState = vi.hoisted(() => ({ denyAuth: false }))

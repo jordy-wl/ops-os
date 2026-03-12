@@ -15,6 +15,13 @@ export interface TaskItem {
   step_name: string | null
   created_at: string
   updated_at: string
+  // Enhanced task card fields (Sprint 4)
+  instructions: string | null
+  ai_recommendation: Record<string, unknown> | null
+  confidence_score: number | null
+  routing_decision: 'human' | 'agent' | 'approval_chain' | null
+  routing_reason: string | null
+  decision: 'approved' | 'rejected' | 'modified' | null
 }
 
 export default async function TasksPage() {
@@ -84,6 +91,12 @@ export default async function TasksPage() {
       step_name: (meta.step_name as string) ?? null,
       created_at: b.created_at,
       updated_at: b.updated_at,
+      instructions: (meta.instructions as string) ?? null,
+      ai_recommendation: (meta.ai_recommendation as Record<string, unknown>) ?? null,
+      confidence_score: typeof meta.confidence_score === 'number' ? meta.confidence_score : null,
+      routing_decision: (meta.routing_decision as TaskItem['routing_decision']) ?? null,
+      routing_reason: (meta.routing_reason as string) ?? null,
+      decision: (meta.decision as TaskItem['decision']) ?? null,
     }
   })
 

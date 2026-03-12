@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
+import { User, Bot, Link2, ChevronDown, ChevronUp, ScrollText, CheckCircle2, XCircle, PenLine } from 'lucide-react'
 import type { TaskItem } from '@/app/(app)/tasks/page'
 
 interface TaskListClientProps {
@@ -12,13 +13,38 @@ interface TaskListClientProps {
 type FilterStatus = 'all' | 'open' | 'claimed' | 'completed'
 
 const STATUS_STYLES: Record<string, string> = {
-  open: 'bg-green-100 text-green-800',
-  claimed: 'bg-yellow-100 text-yellow-800',
-  completed: 'bg-gray-100 text-gray-600',
+  open: 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300',
+  claimed: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300',
+  completed: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
+}
+
+const ROUTING_META: Record<string, { icon: React.ElementType; label: string; color: string }> = {
+  human: { icon: User, label: 'Human', color: 'text-blue-600 bg-blue-100 dark:text-blue-300 dark:bg-blue-900/40' },
+  agent: { icon: Bot, label: 'AI Agent', color: 'text-purple-600 bg-purple-100 dark:text-purple-300 dark:bg-purple-900/40' },
+  approval_chain: { icon: Link2, label: 'Approval Chain', color: 'text-amber-600 bg-amber-100 dark:text-amber-300 dark:bg-amber-900/40' },
+}
+
+const DECISION_STYLES: Record<string, string> = {
+  approved: 'text-green-700 dark:text-green-400',
+  rejected: 'text-red-700 dark:text-red-400',
+  modified: 'text-amber-700 dark:text-amber-400',
 }
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, { dateStyle: 'medium' })
+}
+
+function ConfidenceBadge({ score }: { score: number }) {
+  const pct = Math.round(score * 100)
+  const color =
+    score >= 0.8 ? 'text-green-700 bg-green-100 dark:text-green-300 dark:bg-green-900/40' :
+    score >= 0.5 ? 'text-amber-700 bg-amber-100 dark:text-amber-300 dark:bg-amber-900/40' :
+    'text-red-700 bg-red-100 dark:text-red-300 dark:bg-red-900/40'
+  return (
+    <span className={cn('inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium', color)} title={`AI confidence: ${pct}%`}>
+      {pct}%
+    </span>
+  )
 }
 
 export function TaskListClient({ initialTasks, currentUserId }: TaskListClientProps) {
@@ -27,6 +53,7 @@ export function TaskListClient({ initialTasks, currentUserId }: TaskListClientPr
   const [showMine, setShowMine] = useState(false)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [expandedId, setExpandedId] = useState<string | null>(null)
 
   if (!tasks) {
     return (
@@ -55,7 +82,6 @@ export function TaskListClient({ initialTasks, currentUserId }: TaskListClientPr
         setError(json?.error?.message ?? 'Failed to claim task')
         return
       }
-      // Update local state
       setTasks((prev) =>
         (prev ?? []).map((t) =>
           t.id === taskId ? { ...t, status: 'claimed' as const, assigned_to: currentUserId } : t
@@ -81,6 +107,32 @@ export function TaskListClient({ initialTasks, currentUserId }: TaskListClientPr
       setTasks((prev) =>
         (prev ?? []).map((t) =>
           t.id === taskId ? { ...t, status: 'completed' as const } : t
+        )
+      )
+    } catch {
+      setError('Network error — please try again')
+    } finally {
+      setActionLoading(null)
+    }
+  }
+
+  async function handleDecision(taskId: string, decision: 'approved' | 'rejected' | 'modified') {
+    setActionLoading(taskId)
+    setError(null)
+    try {
+      const res = await fetch(`/api/tasks/${taskId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ decision }),
+      })
+      const json = await res.json()
+      if (!res.ok) {
+        setError(json?.error?.message ?? 'Failed to submit decision')
+        return
+      }
+      setTasks((prev) =>
+        (prev ?? []).map((t) =>
+          t.id === taskId ? { ...t, decision } : t
         )
       )
     } catch {
@@ -121,7 +173,7 @@ export function TaskListClient({ initialTasks, currentUserId }: TaskListClientPr
           />
           My tasks only
           {myTaskCount > 0 && (
-            <span className="inline-flex items-center justify-center rounded-full bg-yellow-100 text-yellow-800 text-xs font-medium px-1.5 min-w-[20px]">
+            <span className="inline-flex items-center justify-center rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300 text-xs font-medium px-1.5 min-w-[20px]">
               {myTaskCount}
             </span>
           )}
@@ -133,8 +185,8 @@ export function TaskListClient({ initialTasks, currentUserId }: TaskListClientPr
       </div>
 
       {error && (
-        <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3" role="alert">
-          <p className="text-xs text-red-700">{error}</p>
+        <div className="mb-4 rounded-md border border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-800 p-3" role="alert">
+          <p className="text-xs text-red-700 dark:text-red-400">{error}</p>
         </div>
       )}
 
@@ -152,71 +204,171 @@ export function TaskListClient({ initialTasks, currentUserId }: TaskListClientPr
         </div>
       ) : (
         <div className="space-y-2">
-          {filtered.map((task) => (
-            <div
-              key={task.id}
-              className="flex items-center gap-4 rounded-lg border border-border bg-background p-4 hover:border-border transition-colors"
-            >
-              {/* Task info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <h3 className="text-sm font-medium text-foreground truncate">{task.name}</h3>
-                  <span
-                    className={cn(
-                      'shrink-0 inline-flex rounded-full px-2 py-0.5 text-xs font-medium',
-                      STATUS_STYLES[task.status] ?? 'bg-gray-100 text-gray-600'
-                    )}
-                  >
-                    {task.status}
-                  </span>
-                </div>
-                <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                  {task.step_name && <span>Step: {task.step_name}</span>}
-                  {task.workflow_instance_name && (
-                    <span className="truncate max-w-[100px] sm:max-w-[160px] md:max-w-[200px]" title={task.workflow_instance_name}>
-                      Workflow: {task.workflow_instance_name}
-                    </span>
-                  )}
-                  <span>{formatDate(task.created_at)}</span>
-                </div>
-              </div>
+          {filtered.map((task) => {
+            const isExpanded = expandedId === task.id
+            const routing = task.routing_decision ? ROUTING_META[task.routing_decision] : null
+            const hasDetails = !!(task.instructions || task.ai_recommendation || task.routing_reason)
 
-              {/* Actions */}
-              <div className="shrink-0 flex gap-2">
-                {task.status === 'open' && (
-                  <button
-                    onClick={() => handleClaim(task.id)}
-                    disabled={actionLoading === task.id}
-                    className={cn(
-                      'px-3 py-1.5 rounded-md text-xs font-medium bg-primary text-primary-foreground',
-                      'hover:bg-primary/80 transition-colors',
-                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                      'disabled:opacity-50 disabled:cursor-not-allowed'
+            return (
+              <div
+                key={task.id}
+                className="rounded-lg border border-border bg-background transition-colors"
+              >
+                {/* Card header */}
+                <div className="flex items-start gap-3 p-4">
+                  {/* Task info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <h3 className="text-sm font-medium text-foreground truncate">{task.name}</h3>
+                      <span
+                        className={cn(
+                          'shrink-0 inline-flex rounded-full px-2 py-0.5 text-xs font-medium',
+                          STATUS_STYLES[task.status] ?? 'bg-gray-100 text-gray-600'
+                        )}
+                      >
+                        {task.status}
+                      </span>
+                      {routing && (
+                        <span className={cn('shrink-0 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium', routing.color)}>
+                          <routing.icon className="h-3 w-3" />
+                          {routing.label}
+                        </span>
+                      )}
+                      {task.confidence_score != null && (
+                        <ConfidenceBadge score={task.confidence_score} />
+                      )}
+                      {task.decision && (
+                        <span className={cn('shrink-0 text-xs font-medium capitalize', DECISION_STYLES[task.decision])}>
+                          {task.decision}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                      {task.step_name && <span>Step: {task.step_name}</span>}
+                      {task.workflow_instance_name && (
+                        <span className="truncate max-w-[100px] sm:max-w-[160px] md:max-w-[200px]" title={task.workflow_instance_name}>
+                          Workflow: {task.workflow_instance_name}
+                        </span>
+                      )}
+                      <span>{formatDate(task.created_at)}</span>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="shrink-0 flex items-center gap-2">
+                    {/* AI decision actions — show when claimed with an AI recommendation */}
+                    {task.status === 'claimed' && task.assigned_to === currentUserId && task.ai_recommendation && !task.decision && (
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => handleDecision(task.id, 'approved')}
+                          disabled={actionLoading === task.id}
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium text-green-700 bg-green-100 hover:bg-green-200 dark:text-green-300 dark:bg-green-900/40 dark:hover:bg-green-900/60 transition-colors disabled:opacity-50"
+                          title="Approve AI recommendation"
+                        >
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          Approve
+                        </button>
+                        <button
+                          onClick={() => handleDecision(task.id, 'rejected')}
+                          disabled={actionLoading === task.id}
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium text-red-700 bg-red-100 hover:bg-red-200 dark:text-red-300 dark:bg-red-900/40 dark:hover:bg-red-900/60 transition-colors disabled:opacity-50"
+                          title="Reject AI recommendation"
+                        >
+                          <XCircle className="h-3.5 w-3.5" />
+                          Reject
+                        </button>
+                        <button
+                          onClick={() => handleDecision(task.id, 'modified')}
+                          disabled={actionLoading === task.id}
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium text-amber-700 bg-amber-100 hover:bg-amber-200 dark:text-amber-300 dark:bg-amber-900/40 dark:hover:bg-amber-900/60 transition-colors disabled:opacity-50"
+                          title="Modify AI recommendation"
+                        >
+                          <PenLine className="h-3.5 w-3.5" />
+                          Edit
+                        </button>
+                      </div>
                     )}
-                  >
-                    {actionLoading === task.id ? 'Claiming…' : 'Claim'}
-                  </button>
-                )}
-                {task.status === 'claimed' && task.assigned_to === currentUserId && (
-                  <button
-                    onClick={() => handleComplete(task.id)}
-                    disabled={actionLoading === task.id}
-                    className={cn(
-                      'px-3 py-1.5 rounded-md text-xs font-medium bg-green-700 text-white',
-                      'hover:bg-green-600 transition-colors',
-                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700',
-                      'disabled:opacity-50 disabled:cursor-not-allowed'
+
+                    {/* Standard claim/complete actions */}
+                    {task.status === 'open' && (
+                      <button
+                        onClick={() => handleClaim(task.id)}
+                        disabled={actionLoading === task.id}
+                        className={cn(
+                          'px-3 py-1.5 rounded-md text-xs font-medium bg-primary text-primary-foreground',
+                          'hover:bg-primary/80 transition-colors',
+                          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                          'disabled:opacity-50 disabled:cursor-not-allowed'
+                        )}
+                      >
+                        {actionLoading === task.id ? 'Claiming…' : 'Claim'}
+                      </button>
                     )}
-                  >
-                    {actionLoading === task.id ? 'Completing…' : 'Complete'}
-                  </button>
-                )}
-                {task.status === 'claimed' && task.assigned_to !== currentUserId && (
-                  <span className="text-xs text-muted-foreground italic">Assigned to another user</span>
+                    {task.status === 'claimed' && task.assigned_to === currentUserId && !task.ai_recommendation && (
+                      <button
+                        onClick={() => handleComplete(task.id)}
+                        disabled={actionLoading === task.id}
+                        className={cn(
+                          'px-3 py-1.5 rounded-md text-xs font-medium bg-green-700 text-white',
+                          'hover:bg-green-600 transition-colors',
+                          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700',
+                          'disabled:opacity-50 disabled:cursor-not-allowed'
+                        )}
+                      >
+                        {actionLoading === task.id ? 'Completing…' : 'Complete'}
+                      </button>
+                    )}
+                    {task.status === 'claimed' && task.assigned_to !== currentUserId && (
+                      <span className="text-xs text-muted-foreground italic">Assigned to another user</span>
+                    )}
+
+                    {/* Expand/collapse toggle */}
+                    {hasDetails && (
+                      <button
+                        onClick={() => setExpandedId(isExpanded ? null : task.id)}
+                        className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                        aria-label={isExpanded ? 'Collapse details' : 'Expand details'}
+                      >
+                        {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Expanded details */}
+                {isExpanded && hasDetails && (
+                  <div className="border-t border-border px-4 py-3 space-y-3 bg-muted/30">
+                    {task.routing_reason && (
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground mb-0.5">Routing Reason</p>
+                        <p className="text-sm text-foreground">{task.routing_reason}</p>
+                      </div>
+                    )}
+                    {task.instructions && (
+                      <div>
+                        <div className="flex items-center gap-1 mb-0.5">
+                          <ScrollText className="h-3 w-3 text-muted-foreground" />
+                          <p className="text-xs font-medium text-muted-foreground">Instructions</p>
+                        </div>
+                        <p className="text-sm text-foreground whitespace-pre-wrap">{task.instructions}</p>
+                      </div>
+                    )}
+                    {task.ai_recommendation && (
+                      <div>
+                        <div className="flex items-center gap-1 mb-0.5">
+                          <Bot className="h-3 w-3 text-muted-foreground" />
+                          <p className="text-xs font-medium text-muted-foreground">AI Recommendation</p>
+                        </div>
+                        <pre className="text-xs text-foreground bg-background rounded border border-border p-2 overflow-x-auto whitespace-pre-wrap">
+                          {JSON.stringify(task.ai_recommendation, null, 2)}
+                        </pre>
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>

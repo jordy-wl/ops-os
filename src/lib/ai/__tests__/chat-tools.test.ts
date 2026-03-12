@@ -8,6 +8,11 @@ vi.mock('@/lib/logger', () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }))
 
+vi.mock('@/lib/ai/entity-creation', () => ({
+  validateFieldsAgainstSchema: vi.fn().mockResolvedValue({ valid: true }),
+  getBlockTypeSchemas: vi.fn().mockResolvedValue([]),
+}))
+
 import { CHAT_TOOLS, executeChatTool } from '../chat-tools'
 import { createServerClient } from '@/lib/supabase/server'
 
@@ -56,8 +61,8 @@ function makeSupabase(responses: Record<string, { data: unknown; error: unknown 
 }
 
 describe('CHAT_TOOLS', () => {
-  it('defines 5 tools', () => {
-    expect(CHAT_TOOLS).toHaveLength(5)
+  it('defines 9 tools', () => {
+    expect(CHAT_TOOLS).toHaveLength(9)
   })
 
   it('each tool has name, description, and input_schema', () => {
@@ -76,6 +81,10 @@ describe('CHAT_TOOLS', () => {
     expect(names).toContain('update_block')
     expect(names).toContain('trigger_workflow')
     expect(names).toContain('list_block_types')
+    expect(names).toContain('suggest_fields')
+    expect(names).toContain('configure_block_type')
+    expect(names).toContain('create_block_type')
+    expect(names).toContain('create_relationship')
   })
 })
 
@@ -175,5 +184,72 @@ describe('executeChatTool', () => {
     )
     expect(result.success).toBe(false)
     expect(result.error).toMatch(/name and type are required/i)
+  })
+
+  // ── Sprint 5: New chat tools RBAC ──────────────────────────────────────────
+
+  it('rejects suggest_fields for non-admin', async () => {
+    const result = await executeChatTool(
+      'suggest_fields',
+      { description: 'Client block', block_type_slug: 'client' },
+      'org-1',
+      'ops-user'
+    )
+    expect(result.success).toBe(false)
+    expect(result.error).toMatch(/permission denied/i)
+  })
+
+  it('rejects configure_block_type for non-admin', async () => {
+    const result = await executeChatTool(
+      'configure_block_type',
+      { block_type_slug: 'client', add_fields: [] },
+      'org-1',
+      'ops-user'
+    )
+    expect(result.success).toBe(false)
+    expect(result.error).toMatch(/permission denied/i)
+  })
+
+  it('rejects create_block_type for non-admin', async () => {
+    const result = await executeChatTool(
+      'create_block_type',
+      { type_name: 'custom', display_name: 'Custom' },
+      'org-1',
+      'ops-user'
+    )
+    expect(result.success).toBe(false)
+    expect(result.error).toMatch(/permission denied/i)
+  })
+
+  it('rejects create_relationship for non-admin', async () => {
+    const result = await executeChatTool(
+      'create_relationship',
+      { source_type: 'client', target_type: 'contact', field_name: 'primary_contact' },
+      'org-1',
+      'ops-user'
+    )
+    expect(result.success).toBe(false)
+    expect(result.error).toMatch(/permission denied/i)
+  })
+
+  it('rejects configure_block_type for compliance-approver', async () => {
+    const result = await executeChatTool(
+      'configure_block_type',
+      { block_type_slug: 'client', add_fields: [] },
+      'org-1',
+      'compliance-approver'
+    )
+    expect(result.success).toBe(false)
+    expect(result.error).toMatch(/permission denied/i)
+  })
+
+  it('allows list_block_types for any role', async () => {
+    const db = makeSupabase({
+      block_type_definitions: { data: [], error: null },
+    })
+    vi.mocked(createServerClient).mockReturnValue(db)
+
+    const result = await executeChatTool('list_block_types', {}, 'org-1', 'ops-user')
+    expect(result.success).toBe(true)
   })
 })
