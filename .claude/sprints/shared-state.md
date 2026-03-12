@@ -10,7 +10,7 @@
 
 **Phase:** 3 — Platform Evolution (RBAC, Routing Engine, Delta AI, Document Gen V2, Block Configurability)
 **Phase Status:** ACTIVE. Sprints 0-7 COMPLETE. Sprint 8 READY.
-**Sprint:** 8 — Core Admin Settings + Org Page (9 tasks) — READY
+**Sprint:** 8 — Core Admin Settings + Org Page (9 tasks) — ACTIVE
 **Previous:** Sprint 7 DONE (8/8, 100%). Sprint 6 DONE (8/8, 100%).
 
 ---
@@ -19,17 +19,17 @@
 
 | Task ID | Title | Role | Status | Last Updated |
 |---------|-------|------|--------|-------------|
-| P3-S8-FE-01 | Settings page restructure | Frontend | OPEN | 2026-03-12 |
-| P3-S8-BE-01 | Routing policy settings API | Backend | OPEN | 2026-03-12 |
-| P3-S8-FE-02 | Routing policy config UI | Frontend | OPEN | 2026-03-12 |
-| P3-S8-FE-03 | Notification preferences UI | Frontend | OPEN | 2026-03-12 |
-| P3-S8-BE-02 | API key management | Backend | OPEN | 2026-03-12 |
-| P3-S8-FE-04 | Audit log viewer | Frontend | OPEN | 2026-03-12 |
-| P3-S8-BE-03 | Org overview page API | Backend | OPEN | 2026-03-12 |
-| P3-S8-FE-05 | Org overview page | Frontend | OPEN | 2026-03-12 |
-| P3-S8-QA-01 | Sprint 8 integration tests | QA | OPEN | 2026-03-12 |
+| P3-S8-FE-01 | Settings page restructure | Frontend | DONE | 2026-03-12 |
+| P3-S8-BE-01 | Routing policy settings API | Backend | DONE | 2026-03-12 |
+| P3-S8-FE-02 | Routing policy config UI | Frontend | DONE | 2026-03-12 |
+| P3-S8-FE-03 | Notification preferences UI | Frontend | DONE | 2026-03-12 |
+| P3-S8-BE-02 | API key management | Backend | DONE | 2026-03-12 |
+| P3-S8-FE-04 | Audit log viewer | Frontend | DONE | 2026-03-12 |
+| P3-S8-BE-03 | Org overview page API | Backend | DONE | 2026-03-12 |
+| P3-S8-FE-05 | Org overview page | Frontend | DONE | 2026-03-12 |
+| P3-S8-QA-01 | Sprint 8 integration tests | QA | DONE | 2026-03-12 |
 
-**Sprint metrics:** Phase 3: Sprints 0-7 DONE. Sprint 8: 0/9 DONE (0%). 61/70 engineering tasks DONE (87%) across 8 planned sprints. 1074 tests passing.
+**Sprint metrics:** Phase 3: Sprints 0-7 DONE. Sprint 8: 9/9 DONE (100%). 70/70 engineering tasks DONE (100%) across 8 planned sprints. 1230 tests passing.
 
 ---
 

@@ -16,8 +16,7 @@ import {
   Plug,
   FileText,
   Settings,
-  Users,
-  Shield,
+  Building2,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -41,6 +40,7 @@ interface NavItem {
 }
 
 const MAIN_NAV: NavItem[] = [
+  { href: '/org', label: 'Organisation', icon: Building2 },
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/my-work', label: 'My Work', icon: Briefcase },
   { href: '/workflows', label: 'Workflows', icon: GitBranch },
@@ -53,9 +53,7 @@ const LIBRARY_NAV: NavItem[] = [
 ]
 
 const SETTINGS_NAV: NavItem[] = [
-  { href: '/settings/brand', label: 'Settings', icon: Settings },
-  { href: '/settings/team', label: 'Team', icon: Users },
-  { href: '/settings/roles', label: 'Roles', icon: Shield },
+  { href: '/settings', label: 'Settings', icon: Settings },
 ]
 
 export function AppSidebar() {

@@ -3,11 +3,9 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createServerClient } from '@/lib/supabase/server'
 import { resolveOrgId } from '@/lib/auth/resolve-org'
-import { PageContainer } from '@/components/shell/page-container'
-import { PageHeader } from '@/components/shell/page-header'
 import { RoleList } from '@/components/roles/role-list'
 
-export const metadata = { title: 'Roles — Ops OS' }
+export const metadata = { title: 'Roles — Settings — Ops OS' }
 
 export default async function RolesSettingsPage() {
   const { userId, orgId } = await auth()
@@ -51,23 +49,19 @@ export default async function RolesSettingsPage() {
   }))
 
   return (
-    <PageContainer maxWidth="xl">
-      <PageHeader
-        title="Roles & Permissions"
-        subtitle="Manage roles and their permission levels."
-        breadcrumbs={[
-          { label: 'Settings', href: '/settings/brand' },
-          { label: 'Roles' },
-        ]}
-        actions={
-          <Link
-            href="/settings/roles/new"
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            Create Role
-          </Link>
-        }
-      />
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-lg font-semibold text-foreground">Roles & Permissions</h2>
+          <p className="text-sm text-muted-foreground mt-0.5">Manage roles and their permission levels.</p>
+        </div>
+        <Link
+          href="/settings/roles/new"
+          className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          Create Role
+        </Link>
+      </div>
 
       {error && (
         <div
@@ -79,6 +73,6 @@ export default async function RolesSettingsPage() {
       )}
 
       <RoleList roles={enriched} />
-    </PageContainer>
+    </div>
   )
 }

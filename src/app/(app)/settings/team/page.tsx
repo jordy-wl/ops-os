@@ -3,12 +3,10 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createServerClient } from '@/lib/supabase/server'
 import { resolveOrgId } from '@/lib/auth/resolve-org'
-import { PageContainer } from '@/components/shell/page-container'
-import { PageHeader } from '@/components/shell/page-header'
 import { TeamMemberList } from '@/components/team/team-member-list'
 import { OrgHierarchyTree } from '@/components/team/org-hierarchy-tree'
 
-export const metadata = { title: 'Team — Ops OS' }
+export const metadata = { title: 'Team — Settings — Ops OS' }
 
 export default async function TeamSettingsPage() {
   const { userId, orgId } = await auth()
@@ -58,23 +56,19 @@ export default async function TeamSettingsPage() {
   )].sort()
 
   return (
-    <PageContainer maxWidth="xl">
-      <PageHeader
-        title="Team"
-        subtitle="Manage team members, roles, and org hierarchy."
-        breadcrumbs={[
-          { label: 'Settings', href: '/settings/brand' },
-          { label: 'Team' },
-        ]}
-        actions={
-          <Link
-            href="/settings/team/new"
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            Add Member
-          </Link>
-        }
-      />
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-lg font-semibold text-foreground">Team</h2>
+          <p className="text-sm text-muted-foreground mt-0.5">Manage team members and org hierarchy.</p>
+        </div>
+        <Link
+          href="/settings/team/new"
+          className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          Add Member
+        </Link>
+      </div>
 
       {membersResult.error && (
         <div
@@ -86,18 +80,16 @@ export default async function TeamSettingsPage() {
       )}
 
       <div className="space-y-8">
-        {/* Team member list */}
         <section>
-          <h2 className="text-lg font-semibold text-foreground mb-3">Team Members</h2>
+          <h3 className="text-base font-semibold text-foreground mb-3">Team Members</h3>
           <TeamMemberList members={members} departments={departments} />
         </section>
 
-        {/* Org hierarchy */}
         <section>
-          <h2 className="text-lg font-semibold text-foreground mb-3">Organisation Hierarchy</h2>
+          <h3 className="text-base font-semibold text-foreground mb-3">Organisation Hierarchy</h3>
           <OrgHierarchyTree tree={tree} />
         </section>
       </div>
-    </PageContainer>
+    </div>
   )
 }

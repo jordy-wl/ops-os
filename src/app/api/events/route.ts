@@ -26,6 +26,11 @@ export const GET = withAuth(async (req: NextRequest, ctx) => {
   const limit = Math.min(parseInt(searchParams.get('limit') ?? '50', 10), 200)
   const cursor = searchParams.get('cursor') // ISO timestamp for cursor pagination
 
+  // Filter params for audit log
+  const typeFilter = searchParams.get('type') // comma-separated event types
+  const fromDate = searchParams.get('from') // ISO date string
+  const toDate = searchParams.get('to') // ISO date string
+
   if (!blockId && !orgIdParam) {
     return apiError('block_id or org_id query param is required', 'validation/missing-param', 400)
   }
@@ -44,6 +49,25 @@ export const GET = withAuth(async (req: NextRequest, ctx) => {
 
   if (cursor) {
     query = query.lt('occurred_at', cursor)
+  }
+
+  // Event type filter: comma-separated list (e.g. "block.created,block.updated")
+  if (typeFilter) {
+    const types = typeFilter.split(',').map((t) => t.trim()).filter(Boolean)
+    if (types.length > 0) {
+      query = query.in('type', types)
+    }
+  }
+
+  // Date range filters
+  if (fromDate) {
+    query = query.gte('occurred_at', fromDate)
+  }
+  if (toDate) {
+    // Add one day to make 'to' date inclusive (end of day)
+    const toDateObj = new Date(toDate)
+    toDateObj.setDate(toDateObj.getDate() + 1)
+    query = query.lt('occurred_at', toDateObj.toISOString())
   }
 
   const { data, error } = await query

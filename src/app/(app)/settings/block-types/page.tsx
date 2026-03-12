@@ -3,10 +3,8 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createServerClient } from '@/lib/supabase/server'
 import { resolveOrgId } from '@/lib/auth/resolve-org'
-import { PageContainer } from '@/components/shell/page-container'
-import { PageHeader } from '@/components/shell/page-header'
 
-export const metadata = { title: 'Block Types — Ops OS' }
+export const metadata = { title: 'Block Types — Settings — Ops OS' }
 
 interface BlockTypeDefinition {
   id: string
@@ -74,11 +72,11 @@ export default async function BlockTypesPage() {
   const types: BlockTypeDefinition[] = blockTypes ?? []
 
   return (
-    <PageContainer maxWidth="xl">
-      <PageHeader
-        title="Block Types"
-        subtitle="Manage fields and properties for each block type."
-      />
+    <div>
+      <div className="mb-6">
+        <h2 className="text-lg font-semibold text-foreground">Block Types</h2>
+        <p className="text-sm text-muted-foreground mt-0.5">Manage fields and properties for each block type.</p>
+      </div>
 
       {error && (
         <div
@@ -137,6 +135,6 @@ export default async function BlockTypesPage() {
           )
         })}
       </div>
-    </PageContainer>
+    </div>
   )
 }
