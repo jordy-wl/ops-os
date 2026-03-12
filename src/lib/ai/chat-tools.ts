@@ -255,6 +255,52 @@ export const CHAT_TOOLS: Anthropic.Tool[] = [
       required: ['source_type', 'field_name', 'field_label', 'target_type'],
     },
   },
+  {
+    name: 'reassign_step',
+    description:
+      'Reassign a workflow step to a different team member. Updates the task_queue_item for the step and records an event. Requires execute_workflows permission (ops-admin).',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        instance_id: {
+          type: 'string',
+          description: 'Workflow instance block ID',
+        },
+        step_name: {
+          type: 'string',
+          description: 'Name of the step to reassign',
+        },
+        assignee_id: {
+          type: 'string',
+          description: 'User ID of the new assignee',
+        },
+      },
+      required: ['instance_id', 'step_name', 'assignee_id'],
+    },
+  },
+  {
+    name: 'extend_deadline',
+    description:
+      'Extend the expected completion time for a workflow step. Records an event noting the extension and updates the workflow instance metadata. Requires execute_workflows permission (ops-admin).',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        instance_id: {
+          type: 'string',
+          description: 'Workflow instance block ID',
+        },
+        step_name: {
+          type: 'string',
+          description: 'Name of the step to extend',
+        },
+        extend_hours: {
+          type: 'number',
+          description: 'Number of hours to extend the deadline by',
+        },
+      },
+      required: ['instance_id', 'step_name', 'extend_hours'],
+    },
+  },
 ]
 
 // ─── Tool Execution ──────────────────────────────────────────────────────────
@@ -282,8 +328,13 @@ export async function executeChatTool(
   // block config tools require ops-admin (manage_settings)
   const readOnlyTools = new Set(['search_blocks', 'list_block_types'])
   const configTools = new Set(['suggest_fields', 'configure_block_type', 'create_block_type', 'create_relationship'])
+  const workflowTools = new Set(['reassign_step', 'extend_deadline'])
   if (!readOnlyTools.has(toolName) && role !== 'ops-admin') {
-    const required = configTools.has(toolName) ? 'manage_settings (ops-admin)' : 'ops-admin'
+    const required = configTools.has(toolName)
+      ? 'manage_settings (ops-admin)'
+      : workflowTools.has(toolName)
+        ? 'execute_workflows (ops-admin)'
+        : 'ops-admin'
     return {
       success: false,
       error: `Permission denied: ${toolName} requires ${required} role (current: ${role})`,
@@ -312,6 +363,10 @@ export async function executeChatTool(
         return await executeCreateBlockType(supabase, orgId, input)
       case 'create_relationship':
         return await executeCreateRelationship(supabase, orgId, input)
+      case 'reassign_step':
+        return await executeReassignStep(supabase, orgId, input)
+      case 'extend_deadline':
+        return await executeExtendDeadline(supabase, orgId, input)
       default:
         return { success: false, error: `Unknown tool: ${toolName}` }
     }
@@ -915,6 +970,190 @@ async function executeCreateRelationship(
       field_name: fieldName,
       target_type: targetType,
       message: `Added relation "${fieldLabel}" from ${sourceType} → ${targetType}`,
+    },
+  }
+}
+
+// ─── Workflow Delta Tools ──────────────────────────────────────────────────
+
+async function executeReassignStep(
+  supabase: ReturnType<typeof createServerClient>,
+  orgId: string,
+  input: Record<string, unknown>
+): Promise<ToolResult> {
+  const instanceId = String(input.instance_id ?? '')
+  const stepName = String(input.step_name ?? '')
+  const assigneeId = String(input.assignee_id ?? '')
+
+  if (!instanceId || !stepName || !assigneeId) {
+    return { success: false, error: 'instance_id, step_name, and assignee_id are required' }
+  }
+
+  // Verify the workflow instance exists and belongs to this org
+  const { data: instance, error: instanceErr } = await supabase
+    .from('blocks')
+    .select('id, name, metadata')
+    .eq('id', instanceId)
+    .eq('org_id', orgId)
+    .eq('type', 'workflow_instance')
+    .single()
+
+  if (instanceErr || !instance) {
+    return { success: false, error: 'Workflow instance not found' }
+  }
+
+  // Update the task_queue_item for this step (if one exists)
+  const { data: taskItem, error: taskErr } = await supabase
+    .from('task_queue_items')
+    .select('id, assigned_to')
+    .eq('org_id', orgId)
+    .eq('block_id', instanceId)
+    .eq('step_name', stepName)
+    .single()
+
+  if (taskErr || !taskItem) {
+    // No task_queue_item — record the reassignment as metadata update + event
+    const meta = (instance.metadata as Record<string, unknown>) ?? {}
+    const reassignments = (meta.reassignments as Record<string, string>[]) ?? []
+    reassignments.push({
+      step_name: stepName,
+      assignee_id: assigneeId,
+      reassigned_at: new Date().toISOString(),
+    })
+
+    await supabase
+      .from('blocks')
+      .update({ metadata: { ...meta, reassignments } })
+      .eq('id', instanceId)
+      .eq('org_id', orgId)
+
+    // Emit event
+    await supabase.from('events').insert({
+      org_id: orgId,
+      block_id: instanceId,
+      type: 'workflow.step.reassigned',
+      actor_type: 'ai_chat',
+      actor_id: 'system',
+      payload: { step_name: stepName, new_assignee: assigneeId, source: 'delta_recommendation' },
+    })
+
+    return {
+      success: true,
+      data: {
+        instance_id: instanceId,
+        step_name: stepName,
+        assignee_id: assigneeId,
+        message: `Step "${stepName}" reassigned to ${assigneeId} (recorded in instance metadata)`,
+      },
+    }
+  }
+
+  // Update existing task_queue_item
+  const previousAssignee = taskItem.assigned_to
+  const { error: updateErr } = await supabase
+    .from('task_queue_items')
+    .update({ assigned_to: assigneeId })
+    .eq('id', taskItem.id)
+    .eq('org_id', orgId)
+
+  if (updateErr) return { success: false, error: updateErr.message }
+
+  // Emit event
+  await supabase.from('events').insert({
+    org_id: orgId,
+    block_id: instanceId,
+    type: 'workflow.step.reassigned',
+    actor_type: 'ai_chat',
+    actor_id: 'system',
+    payload: {
+      step_name: stepName,
+      previous_assignee: previousAssignee,
+      new_assignee: assigneeId,
+      task_queue_item_id: taskItem.id,
+      source: 'delta_recommendation',
+    },
+  })
+
+  return {
+    success: true,
+    data: {
+      instance_id: instanceId,
+      step_name: stepName,
+      previous_assignee: previousAssignee,
+      new_assignee: assigneeId,
+      message: `Step "${stepName}" reassigned from ${previousAssignee ?? 'unassigned'} to ${assigneeId}`,
+    },
+  }
+}
+
+async function executeExtendDeadline(
+  supabase: ReturnType<typeof createServerClient>,
+  orgId: string,
+  input: Record<string, unknown>
+): Promise<ToolResult> {
+  const instanceId = String(input.instance_id ?? '')
+  const stepName = String(input.step_name ?? '')
+  const extendHours = Number(input.extend_hours ?? 0)
+
+  if (!instanceId || !stepName) {
+    return { success: false, error: 'instance_id and step_name are required' }
+  }
+
+  if (extendHours <= 0 || extendHours > 720) {
+    return { success: false, error: 'extend_hours must be between 1 and 720 (30 days)' }
+  }
+
+  // Verify the workflow instance exists and belongs to this org
+  const { data: instance, error: instanceErr } = await supabase
+    .from('blocks')
+    .select('id, name, metadata')
+    .eq('id', instanceId)
+    .eq('org_id', orgId)
+    .eq('type', 'workflow_instance')
+    .single()
+
+  if (instanceErr || !instance) {
+    return { success: false, error: 'Workflow instance not found' }
+  }
+
+  // Record the deadline extension in instance metadata
+  const meta = (instance.metadata as Record<string, unknown>) ?? {}
+  const extensions = (meta.deadline_extensions as Record<string, unknown>[]) ?? []
+  extensions.push({
+    step_name: stepName,
+    extend_hours: extendHours,
+    extended_at: new Date().toISOString(),
+  })
+
+  const { error: updateErr } = await supabase
+    .from('blocks')
+    .update({ metadata: { ...meta, deadline_extensions: extensions } })
+    .eq('id', instanceId)
+    .eq('org_id', orgId)
+
+  if (updateErr) return { success: false, error: updateErr.message }
+
+  // Emit event
+  await supabase.from('events').insert({
+    org_id: orgId,
+    block_id: instanceId,
+    type: 'workflow.step.deadline_extended',
+    actor_type: 'ai_chat',
+    actor_id: 'system',
+    payload: {
+      step_name: stepName,
+      extend_hours: extendHours,
+      source: 'delta_recommendation',
+    },
+  })
+
+  return {
+    success: true,
+    data: {
+      instance_id: instanceId,
+      step_name: stepName,
+      extend_hours: extendHours,
+      message: `Deadline for step "${stepName}" extended by ${extendHours} hours`,
     },
   }
 }

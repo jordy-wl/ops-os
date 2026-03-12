@@ -61,8 +61,8 @@ function makeSupabase(responses: Record<string, { data: unknown; error: unknown 
 }
 
 describe('CHAT_TOOLS', () => {
-  it('defines 9 tools', () => {
-    expect(CHAT_TOOLS).toHaveLength(9)
+  it('defines 11 tools', () => {
+    expect(CHAT_TOOLS).toHaveLength(11)
   })
 
   it('each tool has name, description, and input_schema', () => {
@@ -85,6 +85,8 @@ describe('CHAT_TOOLS', () => {
     expect(names).toContain('configure_block_type')
     expect(names).toContain('create_block_type')
     expect(names).toContain('create_relationship')
+    expect(names).toContain('reassign_step')
+    expect(names).toContain('extend_deadline')
   })
 })
 
@@ -251,5 +253,94 @@ describe('executeChatTool', () => {
 
     const result = await executeChatTool('list_block_types', {}, 'org-1', 'ops-user')
     expect(result.success).toBe(true)
+  })
+
+  // ── Sprint 7: Delta workflow tool RBAC ─────────────────────────────────────
+
+  it('rejects reassign_step for non-admin', async () => {
+    const result = await executeChatTool(
+      'reassign_step',
+      { instance_id: 'inst-1', step_name: 'step_one', assignee_id: 'user-2' },
+      'org-1',
+      'ops-user'
+    )
+    expect(result.success).toBe(false)
+    expect(result.error).toMatch(/permission denied/i)
+    expect(result.error).toContain('execute_workflows')
+  })
+
+  it('rejects extend_deadline for non-admin', async () => {
+    const result = await executeChatTool(
+      'extend_deadline',
+      { instance_id: 'inst-1', step_name: 'step_one', extend_hours: 24 },
+      'org-1',
+      'ops-user'
+    )
+    expect(result.success).toBe(false)
+    expect(result.error).toMatch(/permission denied/i)
+    expect(result.error).toContain('execute_workflows')
+  })
+
+  it('rejects reassign_step for compliance-approver', async () => {
+    const result = await executeChatTool(
+      'reassign_step',
+      { instance_id: 'inst-1', step_name: 'step_one', assignee_id: 'user-2' },
+      'org-1',
+      'compliance-approver'
+    )
+    expect(result.success).toBe(false)
+    expect(result.error).toMatch(/permission denied/i)
+  })
+
+  it('rejects extend_deadline with invalid hours', async () => {
+    const db = makeSupabase({
+      blocks: {
+        data: { id: 'inst-1', name: 'Test Instance', metadata: { template_id: 't1' } },
+        error: null,
+      },
+    })
+    vi.mocked(createServerClient).mockReturnValue(db)
+
+    const result = await executeChatTool(
+      'extend_deadline',
+      { instance_id: 'inst-1', step_name: 'step_one', extend_hours: 0 },
+      'org-1',
+      'ops-admin'
+    )
+    expect(result.success).toBe(false)
+    expect(result.error).toContain('extend_hours must be between 1 and 720')
+  })
+
+  it('rejects extend_deadline with hours exceeding maximum', async () => {
+    const db = makeSupabase({
+      blocks: {
+        data: { id: 'inst-1', name: 'Test Instance', metadata: { template_id: 't1' } },
+        error: null,
+      },
+    })
+    vi.mocked(createServerClient).mockReturnValue(db)
+
+    const result = await executeChatTool(
+      'extend_deadline',
+      { instance_id: 'inst-1', step_name: 'step_one', extend_hours: 800 },
+      'org-1',
+      'ops-admin'
+    )
+    expect(result.success).toBe(false)
+    expect(result.error).toContain('extend_hours must be between 1 and 720')
+  })
+
+  it('rejects reassign_step with missing parameters', async () => {
+    const db = makeSupabase({})
+    vi.mocked(createServerClient).mockReturnValue(db)
+
+    const result = await executeChatTool(
+      'reassign_step',
+      { instance_id: 'inst-1' },
+      'org-1',
+      'ops-admin'
+    )
+    expect(result.success).toBe(false)
+    expect(result.error).toContain('required')
   })
 })

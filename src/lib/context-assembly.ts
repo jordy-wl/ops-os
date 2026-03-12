@@ -43,6 +43,7 @@ export type ContextObject = {
   userRole: string
   orgSummary?: string      // org-level factual summary (block counts, active workflows, recent events)
   graphContext?: string     // block-level relationship summary (neighbour names+types with direction)
+  deltaContext?: string     // workflow delta summary (only for workflow_instance blocks)
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -360,6 +361,11 @@ export function contextToPromptString(context: ContextObject): string {
     }
   } else {
     lines.push('Scope: org-level (no specific block)')
+  }
+
+  if (context.deltaContext) {
+    lines.push('')
+    lines.push(context.deltaContext)
   }
 
   lines.push('')

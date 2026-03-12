@@ -9,9 +9,9 @@
 ## Current Phase and Sprint
 
 **Phase:** 3 — Platform Evolution (RBAC, Routing Engine, Delta AI, Document Gen V2, Block Configurability)
-**Phase Status:** ACTIVE. Sprints 0-6 COMPLETE. Sprint 7 READY.
-**Sprint:** 7 — AI Delta Engine + Inline Field Manager (8 tasks) — READY
-**Previous:** Sprint 6 DONE (8/8, 100%). Sprint 5 DONE (9/9, 100%).
+**Phase Status:** ACTIVE. Sprints 0-7 COMPLETE. Sprint 8 READY.
+**Sprint:** 8 — Core Admin Settings + Org Page (9 tasks) — READY
+**Previous:** Sprint 7 DONE (8/8, 100%). Sprint 6 DONE (8/8, 100%).
 
 ---
 
@@ -19,16 +19,17 @@
 
 | Task ID | Title | Role | Status | Last Updated |
 |---------|-------|------|--------|-------------|
-| P3-S7-AI-01 | Delta calculation engine | AI/ML | OPEN | 2026-03-12 |
-| P3-S7-AI-02 | AI Insights generator | AI/ML | OPEN | 2026-03-12 |
-| P3-S7-BE-01 | Auto task generation from deltas | Backend | OPEN | 2026-03-12 |
-| P3-S7-FE-01 | AI Insights panel component | Frontend | OPEN | 2026-03-12 |
-| P3-S7-FE-02 | Inline field manager on block detail page | Frontend | OPEN | 2026-03-12 |
-| P3-S7-AI-03 | Delta-aware chat context | AI/ML | OPEN | 2026-03-12 |
-| P3-S7-BE-02 | Notification system foundation | Backend | OPEN | 2026-03-12 |
-| P3-S7-QA-01 | Delta engine + field manager tests | QA | OPEN | 2026-03-12 |
+| P3-S8-FE-01 | Settings page restructure | Frontend | OPEN | 2026-03-12 |
+| P3-S8-BE-01 | Routing policy settings API | Backend | OPEN | 2026-03-12 |
+| P3-S8-FE-02 | Routing policy config UI | Frontend | OPEN | 2026-03-12 |
+| P3-S8-FE-03 | Notification preferences UI | Frontend | OPEN | 2026-03-12 |
+| P3-S8-BE-02 | API key management | Backend | OPEN | 2026-03-12 |
+| P3-S8-FE-04 | Audit log viewer | Frontend | OPEN | 2026-03-12 |
+| P3-S8-BE-03 | Org overview page API | Backend | OPEN | 2026-03-12 |
+| P3-S8-FE-05 | Org overview page | Frontend | OPEN | 2026-03-12 |
+| P3-S8-QA-01 | Sprint 8 integration tests | QA | OPEN | 2026-03-12 |
 
-**Sprint metrics:** Phase 3: Sprints 0-6 DONE. Sprint 7: 0/8 DONE (0%). 46/69 engineering tasks DONE (67%) across 8 planned sprints. 885 tests passing.
+**Sprint metrics:** Phase 3: Sprints 0-7 DONE. Sprint 8: 0/9 DONE (0%). 61/70 engineering tasks DONE (87%) across 8 planned sprints. 1074 tests passing.
 
 ---
 
@@ -57,6 +58,7 @@
 | 2026-03-12 | ORCHESTRATOR | **Phase 3 scope confirmed with user**: 5 new block types (Solution, Product, Service, Team Member, Policy), custom RBAC (Clerk=login only), routing engine (Human/Agent/Auto), AI delta engine, document gen V2, enhanced task cards, workflow canvas I/O nodes, admin settings, bug fixes. Block-specific layouts deferred to Phase 4. |
 | 2026-03-12 | ORCHESTRATOR | **Block configurability scope added** — 8 new tasks woven across Sprints 5-8: field group schema, AI field suggestion engine, block config chat tools, field group UI, AI-assisted block creation, inline field manager, org page. Manual + AI-guided, applies to every block type. Total Phase 3 tasks now 69 (was 53). |
 | 2026-03-12 | ORCHESTRATOR | **Sprint 5 retro complete** — 9/9 tasks, 100%. 0 blockers, 0 new signals. 823 tests (+63). Canvas I/O nodes, data flow visualization, field group schema, AI field suggestion engine, block config chat tools all shipped. Sprint 6 tasks updated to include 2 block config UI tasks (FE-03 + FE-04). |
+| 2026-03-12 | ORCHESTRATOR | **Sprint 7 retro complete** — 8/8 tasks, 100%. 0 blockers, 0 new signals. 1074 tests (+189). Delta engine, AI insights, auto tasks, notifications, inline field manager, delta-aware chat all shipped. Sprint 8 tasks updated: added BE-03 (org overview API), FE-05 (org overview page), QA-01 (integration tests). Total Sprint 8: 9 tasks. |
 
 ---
 
@@ -64,9 +66,14 @@
 
 | Date | Server | Action | Outcome | Task ID | Agent |
 |------|--------|--------|---------|---------|-------|
-| (none yet — Sprint 7) | | | | | |
+| (none yet — Sprint 8) | | | | | |
 
 ---
+
+## Recently Completed — Sprint 7 Archive
+
+Sprint 7 (2026-03-12): 8/8 DONE (100%).
+Deliverables: Delta calculation engine (pure function, health score 0-100, gap analysis: overdue/skipped/out-of-order, timeline deltas), AI insights generator (Claude claude-sonnet-4-6, 4-section insights with 5-min cache, fallback to delta-derived insights), auto task generation (4 trigger types: health_critical, step_overdue, workflow_failed, workflow_stalled, configurable thresholds, deduplication keys), AI insights panel (right-side panel on workflow_instance block detail, progress bar, risk indicators, collapsible sections, 30s auto-refresh), inline field manager (permission-gated, grouped field list, add/delete/suggest fields, AI suggest via suggest_fields API, group management), delta-aware chat context (buildDeltaContextString formatter, 2 new chat tools: reassign_step + extend_deadline, context assembly integration), notification system (notifications table with RLS, service CRUD, 3 API endpoints, delta threshold triggers), QA integration tests (pipeline end-to-end, notification service). MCP: 1 migration applied (notifications table). Test count: 1074 (+189). Lint + build clean.
 
 ## Recently Completed — Sprint 6 Archive
 

@@ -3,12 +3,15 @@ import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import { createServerClient } from '@/lib/supabase/server'
 import { resolveOrgId } from '@/lib/auth/resolve-org'
+import { resolvePermissions } from '@/lib/rbac/resolve'
 import { BlockHeader } from '@/components/blocks/block-header'
 import { BlockDataPanel } from '@/components/blocks/block-data-panel'
 import { EventTimeline } from '@/components/blocks/event-timeline'
 import { ConnectedBlocksPanel } from '@/components/blocks/connected-blocks-panel'
 import { ActionMenu } from '@/components/actions/action-menu'
 import { BlockDocumentsSection } from '@/components/documents/block-documents-section'
+import { InsightsPanel } from '@/components/blocks/insights-panel'
+import { InlineFieldManagerWrapper } from '@/components/blocks/inline-field-manager-wrapper'
 import type { Block, Event } from '@/lib/context-assembly'
 
 interface Props {
@@ -84,13 +87,22 @@ export default async function BlockDetailPage({ params }: Props) {
     )
   }
 
-  // Fetch block type definition for structured display
+  // Fetch block type definition for structured display + inline field manager
   const { data: typeDef } = await supabase
     .from('block_type_definitions')
-    .select('field_schema')
+    .select('id, type_name, display_name, field_schema')
     .eq('org_id', internalOrgId)
     .eq('type_name', block.type)
     .maybeSingle()
+
+  // Resolve user permissions for permission-gated UI (e.g. inline field manager)
+  const { permissions } = await resolvePermissions(
+    supabase,
+    internalOrgId,
+    userId,
+    'ops-user'
+  )
+  const canManageSettings = permissions.has('manage_settings')
 
   // Fetch events (newest first)
   const { data: events } = await supabase
@@ -156,7 +168,7 @@ export default async function BlockDetailPage({ params }: Props) {
         />
       </div>
 
-      {/* Two-column layout on desktop: main content left, connections right */}
+      {/* Two-column layout on desktop: main content left, sidebar right */}
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">
           <BlockDataPanel
@@ -165,10 +177,25 @@ export default async function BlockDetailPage({ params }: Props) {
           />
           <BlockDocumentsSection blockId={block.id} />
           <EventTimeline events={(events ?? []) as Event[]} />
+          {canManageSettings && typeDef && typeDef.field_schema && (
+            <InlineFieldManagerWrapper
+              blockTypeId={typeDef.id as string}
+              blockTypeName={(typeDef.display_name as string) ?? block.type}
+              blockTypeSlug={typeDef.type_name as string}
+              fieldSchema={typeDef.field_schema as Record<string, unknown>}
+            />
+          )}
         </div>
 
-        <div className="rounded-lg border p-4">
-          <ConnectedBlocksPanel neighbours={neighbours} />
+        <div className="space-y-6">
+          {/* AI Insights panel — workflow_instance blocks only */}
+          {block.type === 'workflow_instance' && (
+            <InsightsPanel blockId={block.id} />
+          )}
+
+          <div className="rounded-lg border p-4">
+            <ConnectedBlocksPanel neighbours={neighbours} />
+          </div>
         </div>
       </div>
     </div>
