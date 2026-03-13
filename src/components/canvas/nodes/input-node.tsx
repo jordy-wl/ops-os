@@ -19,10 +19,10 @@ function InputNodeComponent({ data, selected }: NodeProps & { data: InputNodeDat
   return (
     <div
       className={cn(
-        'min-w-[180px] rounded-lg border-2 bg-indigo-50 px-4 py-3 shadow-sm dark:bg-indigo-950/30',
+        'min-w-[180px] rounded-md border bg-card px-4 py-3 shadow-elevation-1',
         selected
-          ? 'border-indigo-600 ring-2 ring-indigo-200 dark:ring-indigo-800'
-          : 'border-indigo-300 dark:border-indigo-700'
+          ? 'border-indigo-600 ring-2 ring-ring'
+          : 'border-border'
       )}
     >
       <div className="flex items-center gap-2">
@@ -37,7 +37,7 @@ function InputNodeComponent({ data, selected }: NodeProps & { data: InputNodeDat
         </div>
       </div>
       {sourceLabel && (
-        <div className="mt-2 pt-2 border-t border-indigo-200 dark:border-indigo-800">
+        <div className="mt-2 pt-2 border-t border-border">
           <span className="inline-flex items-center rounded-full bg-indigo-100 dark:bg-indigo-900 px-2 py-0.5 text-[10px] font-medium text-indigo-700 dark:text-indigo-300">
             {sourceLabel}
           </span>

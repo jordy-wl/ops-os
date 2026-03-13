@@ -87,12 +87,12 @@ function formatBlockType(type: string): string {
 
 function MetricCard({ icon: Icon, value, label }: MetricCardProps) {
   return (
-    <div className="rounded-lg border bg-background p-4 shadow-sm">
+    <div className="rounded-md border border-border bg-card p-4">
       <div className="flex items-center gap-3">
-        <Icon className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
+        <Icon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
         <div>
-          <p className="text-2xl font-bold text-foreground">{value}</p>
-          <p className="text-xs text-muted-foreground">{label}</p>
+          <p className="text-lg font-semibold text-foreground">{value}</p>
+          <p className="text-[12px] text-muted-foreground">{label}</p>
         </div>
       </div>
     </div>
@@ -106,7 +106,7 @@ function QuickActionsBar() {
         <Link
           key={action.href + action.label}
           href={action.href}
-          className="inline-flex items-center gap-1.5 rounded-md border bg-background px-3 py-1.5 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+          className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-[13px] font-medium text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
           <action.icon className="h-4 w-4" aria-hidden="true" />
           {action.label}
@@ -135,8 +135,8 @@ function HierarchySection({ hierarchy }: { hierarchy: HierarchyNode[] }) {
       <li key={node.id} style={{ paddingLeft: `${depth * 16}px` }}>
         <div className="flex items-center gap-2 py-1">
           <Building2 className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-          <span className="text-sm font-medium text-foreground">{node.name}</span>
-          <span className="text-xs text-muted-foreground rounded bg-muted px-1.5 py-0.5">
+          <span className="text-[13px] font-medium text-foreground">{node.name}</span>
+          <span className="text-[11px] text-muted-foreground rounded bg-muted px-1.5 py-0.5">
             {node.level}
           </span>
         </div>
@@ -157,10 +157,10 @@ function HierarchySection({ hierarchy }: { hierarchy: HierarchyNode[] }) {
 
   return (
     <section aria-labelledby="hierarchy-heading">
-      <h2 id="hierarchy-heading" className="text-lg font-semibold text-foreground mb-3">
+      <h2 id="hierarchy-heading" className="text-[13px] font-semibold text-foreground mb-3">
         Organisation Hierarchy
       </h2>
-      <div className="rounded-lg border bg-background p-4">
+      <div className="rounded-md border border-border bg-card p-4">
         <ul role="tree" aria-label="Organisation hierarchy">
           {rootNodes.map((root) => renderNode(root, 0))}
         </ul>
@@ -176,19 +176,19 @@ function TeamSection({ team }: { team: TeamStats }) {
   return (
     <section aria-labelledby="team-heading">
       <div className="flex items-center justify-between mb-3">
-        <h2 id="team-heading" className="text-lg font-semibold text-foreground">
+        <h2 id="team-heading" className="text-[13px] font-semibold text-foreground">
           Team Summary
         </h2>
         <Link
           href="/settings/team"
-          className="text-sm text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded"
+          className="text-[13px] text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
         >
           View all
         </Link>
       </div>
-      <div className="rounded-lg border bg-background p-4 space-y-4">
-        <p className="text-sm text-muted-foreground">
-          <span className="text-xl font-bold text-foreground">{team.total}</span>{' '}
+      <div className="rounded-md border border-border bg-card p-4 space-y-4">
+        <p className="text-[13px] text-muted-foreground">
+          <span className="text-lg font-semibold text-foreground">{team.total}</span>{' '}
           team members
         </p>
 
@@ -196,7 +196,7 @@ function TeamSection({ team }: { team: TeamStats }) {
           <div className="space-y-2" aria-label="Role distribution">
             {sortedRoles.map(([role, count]) => (
               <div key={role} className="space-y-1">
-                <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center justify-between text-[13px]">
                   <span className="text-foreground">{formatRoleName(role)}</span>
                   <span className="text-muted-foreground">{count}</span>
                 </div>
@@ -220,15 +220,15 @@ function TeamSection({ team }: { team: TeamStats }) {
 
         {team.recent.length > 0 && (
           <div>
-            <h3 className="text-sm font-medium text-foreground mb-2">Recent Additions</h3>
+            <h3 className="text-[13px] font-medium text-foreground mb-2">Recent Additions</h3>
             <ul className="space-y-1">
               {team.recent.map((member) => (
                 <li
                   key={member.id}
-                  className="flex items-center justify-between text-sm py-1"
+                  className="flex items-center justify-between text-[13px] py-1"
                 >
                   <span className="text-foreground">{member.name}</span>
-                  <span className="text-xs text-muted-foreground rounded bg-muted px-1.5 py-0.5">
+                  <span className="text-[11px] text-muted-foreground rounded bg-muted px-1.5 py-0.5">
                     {formatRoleName(member.role)}
                   </span>
                 </li>
@@ -248,19 +248,19 @@ function BlocksSection({ blocks }: { blocks: BlockStats }) {
   return (
     <section aria-labelledby="blocks-heading">
       <div className="flex items-center justify-between mb-3">
-        <h2 id="blocks-heading" className="text-lg font-semibold text-foreground">
+        <h2 id="blocks-heading" className="text-[13px] font-semibold text-foreground">
           Block Distribution
         </h2>
         <Link
           href="/library/blocks"
-          className="text-sm text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded"
+          className="text-[13px] text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
         >
           View all
         </Link>
       </div>
-      <div className="rounded-lg border bg-background p-4 space-y-4">
-        <p className="text-sm text-muted-foreground">
-          <span className="text-xl font-bold text-foreground">{blocks.total}</span>{' '}
+      <div className="rounded-md border border-border bg-card p-4 space-y-4">
+        <p className="text-[13px] text-muted-foreground">
+          <span className="text-lg font-semibold text-foreground">{blocks.total}</span>{' '}
           total blocks
         </p>
 
@@ -268,7 +268,7 @@ function BlocksSection({ blocks }: { blocks: BlockStats }) {
           <div className="space-y-2" aria-label="Block type distribution">
             {sortedTypes.map(([type, count]) => (
               <div key={type} className="space-y-1">
-                <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center justify-between text-[13px]">
                   <span className="text-foreground">{formatBlockType(type)}</span>
                   <span className="text-muted-foreground">{count}</span>
                 </div>
@@ -289,7 +289,7 @@ function BlocksSection({ blocks }: { blocks: BlockStats }) {
             ))}
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground">No blocks created yet.</p>
+          <p className="text-[13px] text-muted-foreground">No blocks created yet.</p>
         )}
       </div>
     </section>
@@ -299,22 +299,22 @@ function BlocksSection({ blocks }: { blocks: BlockStats }) {
 function RecentActivitySection({ events }: { events: RecentEvent[] }) {
   return (
     <section aria-labelledby="activity-heading">
-      <h2 id="activity-heading" className="text-lg font-semibold text-foreground mb-3">
+      <h2 id="activity-heading" className="text-[13px] font-semibold text-foreground mb-3">
         Recent Activity
       </h2>
-      <div className="rounded-lg border bg-background p-4">
+      <div className="rounded-md border border-border bg-card p-4">
         {events.length > 0 ? (
-          <ul className="space-y-3" aria-label="Recent events timeline">
+          <ul className="space-y-2.5" aria-label="Recent events timeline">
             {events.map((event) => (
               <li key={event.id} className="flex items-start gap-3">
-                <div className="mt-1.5 h-2 w-2 rounded-full bg-primary shrink-0" aria-hidden="true" />
+                <div className="mt-1.5 h-1.5 w-1.5 rounded-full bg-muted-foreground shrink-0" aria-hidden="true" />
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="inline-flex items-center rounded bg-muted px-2 py-0.5 text-xs font-medium text-foreground">
+                    <span className="inline-flex items-center rounded bg-muted px-2 py-0.5 text-[11px] font-medium text-foreground">
                       {formatEventType(event.event_type)}
                     </span>
                     <time
-                      className="text-xs text-muted-foreground"
+                      className="text-[12px] text-muted-foreground"
                       dateTime={event.created_at}
                     >
                       {formatRelativeTime(event.created_at)}
@@ -325,7 +325,7 @@ function RecentActivitySection({ events }: { events: RecentEvent[] }) {
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-muted-foreground">No recent events recorded.</p>
+          <p className="text-[13px] text-muted-foreground">No recent events recorded.</p>
         )}
       </div>
     </section>
@@ -352,11 +352,11 @@ function LoadingSkeleton() {
         {/* Metric cards skeleton */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="rounded-lg border bg-background p-4">
+            <div key={i} className="rounded-md border border-border bg-card p-4">
               <div className="flex items-center gap-3">
-                <div className="h-5 w-5 bg-muted rounded" />
+                <div className="h-4 w-4 bg-muted rounded" />
                 <div>
-                  <div className="h-7 w-12 bg-muted rounded" />
+                  <div className="h-6 w-12 bg-muted rounded" />
                   <div className="h-3 w-20 bg-muted rounded mt-1" />
                 </div>
               </div>
@@ -366,10 +366,10 @@ function LoadingSkeleton() {
 
         {/* Sections skeleton */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="rounded-lg border bg-background p-4 h-48" />
-          <div className="rounded-lg border bg-background p-4 h-48" />
+          <div className="rounded-md border border-border bg-card p-4 h-48" />
+          <div className="rounded-md border border-border bg-card p-4 h-48" />
         </div>
-        <div className="rounded-lg border bg-background p-4 h-40" />
+        <div className="rounded-md border border-border bg-card p-4 h-40" />
       </div>
     </PageContainer>
   )
@@ -380,14 +380,14 @@ function ErrorState({ message, onRetry }: { message: string; onRetry: () => void
     <PageContainer maxWidth="xl">
       <div className="flex flex-col items-center justify-center py-16 text-center">
         <AlertCircle className="h-10 w-10 text-destructive mb-4" aria-hidden="true" />
-        <h2 className="text-lg font-semibold text-foreground mb-1">
+        <h2 className="text-[15px] font-semibold text-foreground mb-1">
           Failed to load organisation
         </h2>
-        <p className="text-sm text-muted-foreground mb-4">{message}</p>
+        <p className="text-[13px] text-muted-foreground mb-4">{message}</p>
         <button
           type="button"
           onClick={onRetry}
-          className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+          className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-1.5 text-[13px] font-medium text-primary-foreground hover:bg-primary/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
           <RefreshCw className="h-4 w-4" aria-hidden="true" />
           Retry
@@ -402,15 +402,15 @@ function EmptyState() {
     <PageContainer maxWidth="xl">
       <div className="flex flex-col items-center justify-center py-16 text-center">
         <Building2 className="h-10 w-10 text-muted-foreground mb-4" aria-hidden="true" />
-        <h2 className="text-lg font-semibold text-foreground mb-1">
+        <h2 className="text-[15px] font-semibold text-foreground mb-1">
           No organisation data
         </h2>
-        <p className="text-sm text-muted-foreground mb-4">
+        <p className="text-[13px] text-muted-foreground mb-4">
           Your organisation has not been set up yet. Configure your org profile to get started.
         </p>
         <Link
           href="/settings/org-profile"
-          className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+          className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-1.5 text-[13px] font-medium text-primary-foreground hover:bg-primary/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
           <Settings className="h-4 w-4" aria-hidden="true" />
           Configure Org
@@ -476,7 +476,7 @@ export default function OrgOverviewPage() {
       />
 
       {/* Org meta info */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-6 text-sm text-muted-foreground">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-6 text-[13px] text-muted-foreground">
         {data.org.slug && (
           <span>
             Slug: <span className="font-medium text-foreground">{data.org.slug}</span>

@@ -142,11 +142,11 @@ export function NotificationPreferencesPanel() {
 
   if (error && !preferences) {
     return (
-      <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-6 text-center">
-        <p className="text-sm text-destructive mb-3">{error}</p>
+      <div className="rounded-md border border-destructive/50 bg-destructive/10 p-6 text-center">
+        <p className="text-[13px] text-destructive mb-3">{error}</p>
         <button
           onClick={fetchPreferences}
-          className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-1.5 text-[13px] font-medium text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           Retry
         </button>
@@ -168,19 +168,19 @@ export function NotificationPreferencesPanel() {
         <button
           onClick={handleSave}
           disabled={saving || !dirty}
-          className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+          className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-1.5 text-[13px] font-medium text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
         >
           {saving ? 'Saving...' : 'Save Preferences'}
         </button>
 
         {saved && (
-          <span role="status" className="text-sm text-green-600 dark:text-green-400">
+          <span role="status" className="text-[13px] text-green-600 dark:text-green-400">
             Preferences saved
           </span>
         )}
 
         {error && !loading && (
-          <span role="alert" className="text-sm text-destructive">
+          <span role="alert" className="text-[13px] text-destructive">
             {error}
           </span>
         )}

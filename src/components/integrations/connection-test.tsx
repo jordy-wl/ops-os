@@ -53,13 +53,13 @@ export function ConnectionTest({ connectorId, onSuccess }: ConnectionTestProps) 
       </button>
 
       {status === 'success' && (
-        <span className="inline-flex items-center gap-1 text-sm text-green-700" role="status">
+        <span className="inline-flex items-center gap-1 text-sm text-success" role="status">
           <CheckCircle className="h-4 w-4" aria-hidden="true" />
           Connected
         </span>
       )}
       {status === 'error' && (
-        <span className="inline-flex items-center gap-1 text-sm text-red-700" role="alert">
+        <span className="inline-flex items-center gap-1 text-sm text-destructive" role="alert">
           <XCircle className="h-4 w-4" aria-hidden="true" />
           {error ?? 'Failed'}
         </span>

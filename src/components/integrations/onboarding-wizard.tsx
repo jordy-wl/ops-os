@@ -343,8 +343,8 @@ export function OnboardingWizard({ initialProvider }: OnboardingWizardProps) {
           <div
             className={cn(
               'rounded-lg border p-6 text-center',
-              testStatus === 'success' && 'border-green-200 bg-green-50',
-              testStatus === 'error' && 'border-red-200 bg-red-50',
+              testStatus === 'success' && 'border-success/20 bg-success/5',
+              testStatus === 'error' && 'border-destructive/20 bg-destructive/5',
               (testStatus === 'idle' || testStatus === 'testing') && 'border-border bg-muted'
             )}
           >
@@ -361,19 +361,19 @@ export function OnboardingWizard({ initialProvider }: OnboardingWizardProps) {
             )}
             {testStatus === 'success' && (
               <>
-                <CheckCircle className="h-8 w-8 text-green-600 mx-auto mb-3" aria-hidden="true" />
-                <p className="text-sm font-medium text-green-800" role="status">
+                <CheckCircle className="h-8 w-8 text-success mx-auto mb-3" aria-hidden="true" />
+                <p className="text-sm font-medium text-success" role="status">
                   Connection successful!
                 </p>
               </>
             )}
             {testStatus === 'error' && (
               <>
-                <XCircle className="h-8 w-8 text-red-600 mx-auto mb-3" aria-hidden="true" />
-                <p className="text-sm font-medium text-red-800" role="alert">
+                <XCircle className="h-8 w-8 text-destructive mx-auto mb-3" aria-hidden="true" />
+                <p className="text-sm font-medium text-destructive" role="alert">
                   Connection failed
                 </p>
-                {testError && <p className="text-xs text-red-600 mt-1">{testError}</p>}
+                {testError && <p className="text-xs text-destructive mt-1">{testError}</p>}
               </>
             )}
           </div>
@@ -487,7 +487,7 @@ export function OnboardingWizard({ initialProvider }: OnboardingWizardProps) {
       {/* Step 4: Complete */}
       {step === 'complete' && (
         <div className="text-center py-8">
-          <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-4" aria-hidden="true" />
+          <CheckCircle className="h-12 w-12 text-success mx-auto mb-4" aria-hidden="true" />
           <h2 className="text-lg font-semibold text-foreground mb-1">Integration Connected!</h2>
           <p className="text-sm text-muted-foreground mb-6">
             Your {PROVIDERS.find((p) => p.value === provider)?.label} integration is ready to use.

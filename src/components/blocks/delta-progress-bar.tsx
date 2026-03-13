@@ -9,12 +9,12 @@ interface DeltaProgressBarProps {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  completed: 'bg-green-500',
-  in_progress: 'bg-blue-500',
+  completed: 'bg-success',
+  in_progress: 'bg-primary',
   pending: 'bg-muted',
-  failed: 'bg-red-500',
-  overdue: 'bg-amber-500',
-  skipped: 'bg-gray-400',
+  failed: 'bg-destructive',
+  overdue: 'bg-warning',
+  skipped: 'bg-muted-foreground/40',
 }
 
 const STATUS_LABELS: Record<string, string> = {

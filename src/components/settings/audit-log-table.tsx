@@ -48,7 +48,7 @@ const EVENT_TYPE_BADGES: Record<string, { label: string; className: string }> = 
   },
   'api_key.revoked': {
     label: 'Key Revoked',
-    className: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+    className: 'bg-destructive/10 text-destructive',
   },
 }
 
@@ -117,7 +117,7 @@ function EventTypeBadge({ type }: { type: string }) {
     return (
       <span
         className={cn(
-          'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium',
+          'inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium',
           config.className
         )}
       >
@@ -127,7 +127,7 @@ function EventTypeBadge({ type }: { type: string }) {
   }
 
   return (
-    <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-800 dark:bg-gray-800 dark:text-gray-300">
+    <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-800 dark:bg-gray-800 dark:text-gray-300">
       {type}
     </span>
   )
@@ -164,8 +164,8 @@ export function AuditLogTable({
   // Empty state
   if (events.length === 0) {
     return (
-      <div className="rounded-lg border border-border bg-muted/50 p-8 text-center">
-        <p className="text-sm text-muted-foreground">
+      <div className="rounded-md border border-border bg-muted/50 p-8 text-center">
+        <p className="text-[13px] text-muted-foreground">
           No events found matching your filters.
         </p>
       </div>
@@ -175,15 +175,15 @@ export function AuditLogTable({
   return (
     <div>
       {/* Horizontal scroll wrapper for mobile */}
-      <div className="overflow-x-auto rounded-lg border border-border">
-        <table className="w-full min-w-[700px] text-sm">
+      <div className="overflow-x-auto border border-border rounded-md">
+        <table className="w-full min-w-[700px] text-[13px]">
           <thead>
             <tr className="border-b border-border bg-muted/50">
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground">Timestamp</th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground">Actor</th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground">Event Type</th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground">Block</th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground">Summary</th>
+              <th className="px-3 py-2 text-left text-[11px] uppercase tracking-wider font-medium text-muted-foreground">Timestamp</th>
+              <th className="px-3 py-2 text-left text-[11px] uppercase tracking-wider font-medium text-muted-foreground">Actor</th>
+              <th className="px-3 py-2 text-left text-[11px] uppercase tracking-wider font-medium text-muted-foreground">Event Type</th>
+              <th className="px-3 py-2 text-left text-[11px] uppercase tracking-wider font-medium text-muted-foreground">Block</th>
+              <th className="px-3 py-2 text-left text-[11px] uppercase tracking-wider font-medium text-muted-foreground">Summary</th>
             </tr>
           </thead>
           <tbody>
@@ -192,23 +192,23 @@ export function AuditLogTable({
                 key={event.id}
                 className="border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors"
               >
-                <td className="whitespace-nowrap px-4 py-3 text-foreground">
+                <td className="whitespace-nowrap px-3 py-2 text-foreground">
                   {formatTimestamp(event.occurred_at)}
                 </td>
-                <td className="whitespace-nowrap px-4 py-3 text-foreground">
-                  <span className="font-mono text-xs" title={event.actor_id}>
+                <td className="whitespace-nowrap px-3 py-2 text-foreground">
+                  <span className="font-mono text-[12px]" title={event.actor_id}>
                     {event.actor_id.slice(0, 12)}...
                   </span>
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-3 py-2">
                   <EventTypeBadge type={event.type} />
                 </td>
-                <td className="whitespace-nowrap px-4 py-3">
-                  <span className="font-mono text-xs text-muted-foreground" title={event.block_id}>
+                <td className="whitespace-nowrap px-3 py-2">
+                  <span className="font-mono text-[12px] text-muted-foreground" title={event.block_id}>
                     {event.block_id.slice(0, 8)}...
                   </span>
                 </td>
-                <td className="px-4 py-3 text-muted-foreground max-w-xs truncate">
+                <td className="px-3 py-2 text-muted-foreground max-w-xs truncate">
                   {extractSummary(event.payload)}
                 </td>
               </tr>
@@ -225,8 +225,8 @@ export function AuditLogTable({
             onClick={onLoadMore}
             disabled={isLoadingMore}
             className={cn(
-              'rounded-md border border-input px-6 py-2 text-sm font-medium transition-colors',
-              'focus:outline-none focus:ring-2 focus:ring-ring',
+              'rounded-md border border-input px-6 py-1.5 text-[13px] font-medium transition-colors',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
               isLoadingMore
                 ? 'bg-muted text-muted-foreground cursor-not-allowed'
                 : 'bg-background text-foreground hover:bg-muted cursor-pointer'

@@ -61,7 +61,7 @@ export function TemplateLibraryBrowser({
         <p className="text-sm text-muted-foreground">
           {templates.length} template{templates.length !== 1 ? 's' : ''}
           {!hasBrandKit && (
-            <span className="ml-2 text-amber-600 dark:text-amber-400">
+            <span className="ml-2 text-warning">
               — Set up a{' '}
               <a href="/settings/brand" className="underline">
                 brand kit

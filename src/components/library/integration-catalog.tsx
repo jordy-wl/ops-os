@@ -108,8 +108,8 @@ export function IntegrationCatalog({ connectors }: IntegrationCatalogProps) {
     <div>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Integration Library</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <h1 className="text-page text-foreground">Integration Library</h1>
+          <p className="mt-1 text-[13px] text-muted-foreground">
             Connect services and use their capabilities in workflows and actions.
           </p>
         </div>
@@ -121,14 +121,14 @@ export function IntegrationCatalog({ connectors }: IntegrationCatalogProps) {
             onChange={(e) => setSearch(e.target.value)}
             aria-label="Search integrations"
             placeholder="Search integrations..."
-            className="h-9 w-64 rounded-md border border-border pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            className="h-8 w-64 rounded-md border border-border pl-9 pr-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-ring"
           />
         </div>
       </div>
 
       {/* Google Workspace connection card */}
       <section className="mb-8">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+        <h2 className="text-title text-muted-foreground mb-3">
           Google Workspace
         </h2>
         <GoogleConnect
@@ -142,7 +142,7 @@ export function IntegrationCatalog({ connectors }: IntegrationCatalogProps) {
       {/* Connected capabilities */}
       {connected.length > 0 && (
         <section className="mb-8">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+          <h2 className="text-title text-muted-foreground mb-3">
             Active Capabilities ({connected.length})
           </h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -156,7 +156,7 @@ export function IntegrationCatalog({ connectors }: IntegrationCatalogProps) {
       {/* Available capabilities */}
       {available.length > 0 && (
         <section className="mb-8">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+          <h2 className="text-title text-muted-foreground mb-3">
             Available Capabilities ({available.length})
           </h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -170,7 +170,7 @@ export function IntegrationCatalog({ connectors }: IntegrationCatalogProps) {
       {/* Existing connectors */}
       {connectors.length > 0 && (
         <section>
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+          <h2 className="text-title text-muted-foreground mb-3">
             All Connectors ({connectors.length})
           </h2>
           <div className="rounded-lg border divide-y">
@@ -183,9 +183,9 @@ export function IntegrationCatalog({ connectors }: IntegrationCatalogProps) {
                 </div>
                 <span className={cn(
                   'inline-flex rounded-full px-2 py-0.5 text-xs font-medium capitalize',
-                  c.status === 'active' ? 'bg-green-50 text-green-700' :
-                  c.status === 'error' ? 'bg-red-50 text-red-700' :
-                  'bg-yellow-50 text-yellow-700'
+                  c.status === 'active' ? 'bg-success/10 text-success' :
+                  c.status === 'error' ? 'bg-destructive/10 text-destructive' :
+                  'bg-warning/10 text-warning'
                 )}>
                   {c.status}
                 </span>
@@ -213,20 +213,20 @@ export function IntegrationCatalog({ connectors }: IntegrationCatalogProps) {
 function CapabilityCard({ capability, connected }: { capability: Capability; connected: boolean }) {
   return (
     <div className={cn(
-      'rounded-lg border p-4 transition-all',
-      connected ? 'border-green-200 bg-green-50/30' : 'hover:border-ring hover:shadow-sm'
+      'rounded-md border border-border p-4 bg-card hover:border-foreground/10 transition-colors duration-150',
+      connected ? '' : ''
     )}>
       <div className="flex items-center gap-2.5 mb-2">
         <div className={cn(
           'flex h-8 w-8 items-center justify-center rounded-md',
-          connected ? 'bg-green-100 text-green-700' : 'bg-muted text-muted-foreground'
+          connected ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'
         )}>
           {capability.icon}
         </div>
         <div>
           <h3 className="text-sm font-semibold text-foreground">{capability.label}</h3>
           {connected && (
-            <span className="text-xs text-green-600">Connected</span>
+            <span className="text-xs text-success">Connected</span>
           )}
         </div>
       </div>

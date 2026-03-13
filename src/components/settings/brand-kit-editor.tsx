@@ -143,7 +143,7 @@ export function BrandKitEditor({
       </div>
 
       {error && (
-        <div className="mb-4 rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700" role="alert">
+        <div className="mb-4 rounded-md bg-destructive/5 border border-destructive/20 px-4 py-3 text-[13px] text-destructive" role="alert">
           {error}
         </div>
       )}

@@ -40,8 +40,8 @@ function ActionNodeComponent({ data, selected }: NodeProps & { data: ActionNodeD
   return (
     <div
       className={cn(
-        'min-w-[180px] rounded-lg border-2 bg-green-50 px-4 py-3 shadow-sm',
-        selected ? 'border-green-600 ring-2 ring-green-200' : 'border-green-300'
+        'min-w-[180px] rounded-md border bg-card px-4 py-3 shadow-elevation-1',
+        selected ? 'border-green-600 ring-2 ring-ring' : 'border-border'
       )}
     >
       <Handle type="target" position={Position.Top} className="!bg-green-500 !w-3 !h-3 !border-2 !border-white" />
@@ -55,7 +55,7 @@ function ActionNodeComponent({ data, selected }: NodeProps & { data: ActionNodeD
         </div>
       </div>
       {(badge || hasInstructions || hasPermissions) && (
-        <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-green-200">
+        <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-border">
           {badge && (
             <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-1.5 py-0.5 text-[10px] font-medium text-green-700" title={`Routing: ${badge.label}`}>
               <badge.icon className="h-3 w-3" />

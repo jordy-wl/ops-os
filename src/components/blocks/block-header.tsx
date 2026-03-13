@@ -1,21 +1,8 @@
-import { cn } from '@/lib/utils'
+import { BlockTypeBadge } from '@/lib/ui/block-type-badge'
 import type { Block } from '@/lib/context-assembly'
 
 interface BlockHeaderProps {
   block: Block
-}
-
-const TYPE_STYLES: Record<string, string> = {
-  client:      'bg-blue-100 text-blue-800',
-  deal:        'bg-green-100 text-green-800',
-  project:     'bg-yellow-100 text-yellow-800',
-  contract:    'bg-purple-100 text-purple-800',
-  contact:     'bg-gray-100 text-gray-800',
-  solution:    'bg-indigo-100 text-indigo-800',
-  product:     'bg-emerald-100 text-emerald-800',
-  service:     'bg-violet-100 text-violet-800',
-  team_member: 'bg-orange-100 text-orange-800',
-  policy:      'bg-red-100 text-red-800',
 }
 
 /**
@@ -25,41 +12,31 @@ const TYPE_STYLES: Record<string, string> = {
  * @param block - The block to display header information for
  */
 export function BlockHeader({ block }: BlockHeaderProps) {
-  const typeStyle = TYPE_STYLES[block.type] ?? 'bg-gray-100 text-gray-800'
   const jurisdiction = block.metadata?.jurisdiction as string | undefined
 
   return (
-    <div className="flex flex-wrap items-start gap-3">
-      {/* Type badge */}
-      <span
-        className={cn(
-          'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize shrink-0 mt-1',
-          typeStyle
+    <div className="flex-1 min-w-0">
+      {/* Block name + inline badges */}
+      <div className="flex flex-wrap items-center gap-2.5">
+        <h1 className="text-page font-semibold text-foreground truncate">{block.name}</h1>
+        <BlockTypeBadge type={block.type} className="shrink-0" />
+        <span className="inline-flex items-center rounded-full bg-muted text-foreground px-2 py-0.5 text-[11px] font-medium capitalize">
+          {block.state}
+        </span>
+      </div>
+
+      {/* Metadata line */}
+      <div className="mt-1 flex flex-wrap items-center gap-2 text-[13px] text-muted-foreground">
+        {jurisdiction && (
+          <span className="text-[12px]">{jurisdiction}</span>
         )}
-      >
-        {block.type}
-      </span>
-
-      <div className="flex-1 min-w-0">
-        {/* Block name */}
-        <h1 className="text-2xl font-semibold text-foreground truncate">{block.name}</h1>
-
-        {/* Jurisdiction tag + state */}
-        <div className="mt-1 flex flex-wrap gap-2 text-sm text-muted-foreground">
-          {jurisdiction && (
-            <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-              {jurisdiction}
-            </span>
-          )}
-          <span className="capitalize">{block.state}</span>
-          <span className="text-muted-foreground" aria-hidden="true">·</span>
-          <span>
-            Updated{' '}
-            <time dateTime={block.updated_at}>
-              {new Date(block.updated_at).toLocaleDateString()}
-            </time>
-          </span>
-        </div>
+        {jurisdiction && <span aria-hidden="true">&middot;</span>}
+        <span>
+          Updated{' '}
+          <time dateTime={block.updated_at}>
+            {new Date(block.updated_at).toLocaleDateString()}
+          </time>
+        </span>
       </div>
     </div>
   )

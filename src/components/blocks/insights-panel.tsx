@@ -77,8 +77,8 @@ export function InsightsPanel({ blockId }: InsightsPanelProps) {
 
   if (error) {
     return (
-      <div className="rounded-lg border border-red-200 dark:border-red-800 p-4">
-        <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+      <div className="rounded-md border border-destructive/20 bg-destructive/5 p-4">
+        <p className="text-[13px] text-destructive">{error}</p>
       </div>
     )
   }
@@ -88,8 +88,8 @@ export function InsightsPanel({ blockId }: InsightsPanelProps) {
   const { delta, insights } = data
 
   return (
-    <div className="rounded-lg border p-4 space-y-4">
-      <h3 className="text-sm font-semibold text-foreground">Workflow Insights</h3>
+    <div className="rounded-md border border-border p-4 space-y-4">
+      <h3 className="text-headline text-foreground">Workflow Insights</h3>
 
       {/* Progress bar */}
       <DeltaProgressBar
@@ -168,15 +168,15 @@ function InsightSection({
 }: InsightSectionProps) {
   const variantClasses = {
     default: '',
-    warning: items.length > 0 ? 'border-l-2 border-l-amber-400 pl-2' : '',
-    info: items.length > 0 ? 'border-l-2 border-l-blue-400 pl-2' : '',
+    warning: items.length > 0 ? 'border-l-2 border-l-warning pl-2' : '',
+    info: items.length > 0 ? 'border-l-2 border-l-primary pl-2' : '',
   }
 
   return (
     <div className={cn('rounded', variantClasses[variant])}>
       <button
         onClick={onToggle}
-        className="flex items-center justify-between w-full text-left py-1.5 text-sm font-medium text-foreground hover:text-foreground/80 transition-colors"
+        className="flex items-center justify-between w-full text-left py-1.5 text-sm font-medium text-foreground hover:text-foreground/80 transition-colors rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         aria-expanded={!collapsed}
       >
         <span>{title}</span>

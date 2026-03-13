@@ -71,7 +71,7 @@ export function SettingsSidebar() {
       >
         {SETTINGS_SECTIONS.map((section) => (
           <div key={section.label}>
-            <h3 className="mb-1.5 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <h3 className="mb-1.5 px-3 text-[11px] uppercase tracking-wider font-medium text-muted-foreground">
               {section.label}
             </h3>
             <ul className="space-y-0.5">
@@ -80,10 +80,10 @@ export function SettingsSidebar() {
                   <Link
                     href={item.href}
                     className={cn(
-                      'flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                      'flex items-center gap-2.5 px-3 py-1.5 text-[13px] font-medium transition-colors border-l-2',
                       isActive(item.href)
-                        ? 'bg-accent text-accent-foreground'
-                        : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
+                        ? 'border-primary text-foreground'
+                        : 'border-transparent text-muted-foreground hover:text-foreground'
                     )}
                     aria-current={isActive(item.href) ? 'page' : undefined}
                   >
@@ -116,7 +116,7 @@ function MobileSettingsNav({ pathname }: { pathname: string }) {
       </label>
       <select
         id="settings-nav-select"
-        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
+        className="w-full rounded-md border border-input bg-background px-3 py-2 text-[13px] text-foreground"
         value={current?.href ?? '/settings/org-profile'}
         onChange={(e) => {
           window.location.href = e.target.value

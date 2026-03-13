@@ -19,8 +19,8 @@ export function RiskIndicators({ gapAnalysis, healthScore }: RiskIndicatorsProps
 
   if (!hasRisks && healthScore >= 80) {
     return (
-      <span className="inline-flex items-center gap-1.5 text-xs text-green-700 dark:text-green-400">
-        <span className="w-2 h-2 rounded-full bg-green-500" />
+      <span className="inline-flex items-center gap-1.5 text-[11px] text-success">
+        <span className="w-2 h-2 rounded-full bg-success" />
         On track
       </span>
     )
@@ -36,12 +36,12 @@ export function RiskIndicators({ gapAnalysis, healthScore }: RiskIndicatorsProps
         <span
           key={`overdue-${step.stepIndex}`}
           className={cn(
-            'inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full',
-            'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'
+            'inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full',
+            'bg-destructive/10 text-destructive'
           )}
           title={`Overdue by ${Math.round(step.overdueByHours)}h`}
         >
-          <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+          <span className="w-1.5 h-1.5 rounded-full bg-destructive" />
           {step.stepName.replace(/_/g, ' ')} overdue
         </span>
       ))}
@@ -51,11 +51,11 @@ export function RiskIndicators({ gapAnalysis, healthScore }: RiskIndicatorsProps
         <span
           key={`skipped-${step.stepIndex}`}
           className={cn(
-            'inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full',
-            'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+            'inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full',
+            'bg-muted text-muted-foreground'
           )}
         >
-          <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
+          <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground" />
           {step.stepName.replace(/_/g, ' ')} skipped
         </span>
       ))}
@@ -65,11 +65,11 @@ export function RiskIndicators({ gapAnalysis, healthScore }: RiskIndicatorsProps
         <span
           key={`ooo-${step.stepIndex}`}
           className={cn(
-            'inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full',
-            'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'
+            'inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full',
+            'bg-warning/10 text-warning'
           )}
         >
-          <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+          <span className="w-1.5 h-1.5 rounded-full bg-warning" />
           {step.stepName.replace(/_/g, ' ')} out of order
         </span>
       ))}
@@ -80,15 +80,15 @@ export function RiskIndicators({ gapAnalysis, healthScore }: RiskIndicatorsProps
 function HealthBadge({ score }: { score: number }) {
   const color =
     score >= 80
-      ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
+      ? 'bg-success/10 text-success'
       : score >= 50
-        ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'
-        : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'
+        ? 'bg-warning/10 text-warning'
+        : 'bg-destructive/10 text-destructive'
 
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full',
+        'inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full',
         color
       )}
     >

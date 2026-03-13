@@ -13,20 +13,20 @@ interface TaskListClientProps {
 type FilterStatus = 'all' | 'open' | 'claimed' | 'completed'
 
 const STATUS_STYLES: Record<string, string> = {
-  open: 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300',
-  claimed: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300',
-  completed: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
+  open: 'bg-success/10 text-success',
+  claimed: 'bg-warning/10 text-warning',
+  completed: 'bg-muted text-muted-foreground',
 }
 
 const ROUTING_META: Record<string, { icon: React.ElementType; label: string; color: string }> = {
-  human: { icon: User, label: 'Human', color: 'text-blue-600 bg-blue-100 dark:text-blue-300 dark:bg-blue-900/40' },
-  agent: { icon: Bot, label: 'AI Agent', color: 'text-purple-600 bg-purple-100 dark:text-purple-300 dark:bg-purple-900/40' },
-  approval_chain: { icon: Link2, label: 'Approval Chain', color: 'text-amber-600 bg-amber-100 dark:text-amber-300 dark:bg-amber-900/40' },
+  human: { icon: User, label: 'Human', color: 'text-muted-foreground bg-muted' },
+  agent: { icon: Bot, label: 'AI Agent', color: 'text-muted-foreground bg-muted' },
+  approval_chain: { icon: Link2, label: 'Approval Chain', color: 'text-muted-foreground bg-muted' },
 }
 
 const DECISION_STYLES: Record<string, string> = {
   approved: 'text-green-700 dark:text-green-400',
-  rejected: 'text-red-700 dark:text-red-400',
+  rejected: 'text-destructive',
   modified: 'text-amber-700 dark:text-amber-400',
 }
 
@@ -37,9 +37,9 @@ function formatDate(iso: string): string {
 function ConfidenceBadge({ score }: { score: number }) {
   const pct = Math.round(score * 100)
   const color =
-    score >= 0.8 ? 'text-green-700 bg-green-100 dark:text-green-300 dark:bg-green-900/40' :
-    score >= 0.5 ? 'text-amber-700 bg-amber-100 dark:text-amber-300 dark:bg-amber-900/40' :
-    'text-red-700 bg-red-100 dark:text-red-300 dark:bg-red-900/40'
+    score >= 0.8 ? 'text-success bg-success/10' :
+    score >= 0.5 ? 'text-warning bg-warning/10' :
+    'text-destructive bg-destructive/10'
   return (
     <span className={cn('inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium', color)} title={`AI confidence: ${pct}%`}>
       {pct}%
@@ -57,9 +57,9 @@ export function TaskListClient({ initialTasks, currentUserId }: TaskListClientPr
 
   if (!tasks) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center" role="alert">
-        <p className="text-sm font-medium text-red-800">Failed to load tasks.</p>
-        <p className="mt-1 text-sm text-red-600">Refresh the page to try again.</p>
+      <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-6 text-center" role="alert">
+        <p className="text-sm font-medium text-destructive">Failed to load tasks.</p>
+        <p className="mt-1 text-[13px] text-destructive">Refresh the page to try again.</p>
       </div>
     )
   }
@@ -185,15 +185,15 @@ export function TaskListClient({ initialTasks, currentUserId }: TaskListClientPr
       </div>
 
       {error && (
-        <div className="mb-4 rounded-md border border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-800 p-3" role="alert">
-          <p className="text-xs text-red-700 dark:text-red-400">{error}</p>
+        <div className="mb-4 rounded-md border border-destructive/20 bg-destructive/5 p-3" role="alert">
+          <p className="text-[13px] text-destructive">{error}</p>
         </div>
       )}
 
       {/* Empty state */}
       {filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <p className="text-lg font-semibold text-foreground mb-2">
+          <p className="text-title text-foreground mb-2">
             {tasks.length === 0 ? 'No tasks yet' : 'No matching tasks'}
           </p>
           <p className="text-sm text-muted-foreground">
@@ -212,7 +212,7 @@ export function TaskListClient({ initialTasks, currentUserId }: TaskListClientPr
             return (
               <div
                 key={task.id}
-                className="rounded-lg border border-border bg-background transition-colors"
+                className="border-b border-border bg-background hover:bg-accent/50 transition-colors duration-150"
               >
                 {/* Card header */}
                 <div className="flex items-start gap-3 p-4">
@@ -262,7 +262,7 @@ export function TaskListClient({ initialTasks, currentUserId }: TaskListClientPr
                         <button
                           onClick={() => handleDecision(task.id, 'approved')}
                           disabled={actionLoading === task.id}
-                          className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium text-green-700 bg-green-100 hover:bg-green-200 dark:text-green-300 dark:bg-green-900/40 dark:hover:bg-green-900/60 transition-colors disabled:opacity-50"
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium text-success bg-success/10 hover:bg-success/20 transition-colors disabled:opacity-50"
                           title="Approve AI recommendation"
                         >
                           <CheckCircle2 className="h-3.5 w-3.5" />
@@ -271,7 +271,7 @@ export function TaskListClient({ initialTasks, currentUserId }: TaskListClientPr
                         <button
                           onClick={() => handleDecision(task.id, 'rejected')}
                           disabled={actionLoading === task.id}
-                          className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium text-red-700 bg-red-100 hover:bg-red-200 dark:text-red-300 dark:bg-red-900/40 dark:hover:bg-red-900/60 transition-colors disabled:opacity-50"
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium text-destructive bg-destructive/10 hover:bg-destructive/20 transition-colors disabled:opacity-50"
                           title="Reject AI recommendation"
                         >
                           <XCircle className="h-3.5 w-3.5" />
@@ -309,9 +309,9 @@ export function TaskListClient({ initialTasks, currentUserId }: TaskListClientPr
                         onClick={() => handleComplete(task.id)}
                         disabled={actionLoading === task.id}
                         className={cn(
-                          'px-3 py-1.5 rounded-md text-xs font-medium bg-green-700 text-white',
-                          'hover:bg-green-600 transition-colors',
-                          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700',
+                          'px-3 py-1.5 rounded-md text-xs font-medium bg-success text-success-foreground',
+                          'hover:bg-success/90 transition-colors',
+                          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                           'disabled:opacity-50 disabled:cursor-not-allowed'
                         )}
                       >

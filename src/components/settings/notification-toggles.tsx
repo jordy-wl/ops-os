@@ -91,19 +91,19 @@ export function NotificationToggles({
     <div className="space-y-8">
       {/* Event type toggles grid */}
       <section>
-        <h3 className="text-sm font-medium text-foreground mb-4">
+        <h3 className="text-[13px] font-medium text-foreground mb-4">
           Event Types
         </h3>
 
         {/* Table header */}
-        <div className="hidden sm:grid sm:grid-cols-[1fr_80px_80px] gap-4 px-4 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+        <div className="hidden sm:grid sm:grid-cols-[1fr_80px_80px] gap-4 px-4 py-2 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
           <span>Event</span>
           <span className="text-center">In-App</span>
           <span className="text-center">Email</span>
         </div>
 
         {/* Event type rows */}
-        <div className="divide-y divide-border rounded-lg border">
+        <div className="divide-y divide-border rounded-md border">
           {EVENT_TYPE_ORDER.map((eventType) => {
             const config = preferences.event_types[eventType]
             return (
@@ -113,10 +113,10 @@ export function NotificationToggles({
               >
                 {/* Label and description */}
                 <div>
-                  <p className="text-sm font-medium text-foreground">
+                  <p className="text-[13px] font-medium text-foreground">
                     {EVENT_TYPE_LABELS[eventType]}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
+                  <p className="text-[12px] text-muted-foreground mt-0.5">
                     {EVENT_TYPE_DESCRIPTIONS[eventType]}
                   </p>
                 </div>
@@ -135,7 +135,7 @@ export function NotificationToggles({
                       tabIndex={0}
                       className="relative inline-flex h-5 w-9 flex-shrink-0 cursor-not-allowed rounded-full bg-primary opacity-60 transition-colors"
                     >
-                      <span className="pointer-events-none inline-block h-4 w-4 translate-x-4 translate-y-0.5 transform rounded-full bg-white shadow transition-transform" />
+                      <span className="pointer-events-none inline-block h-4 w-4 translate-x-4 translate-y-0.5 transform rounded-full bg-white transition-transform" />
                     </div>
                   </div>
 
@@ -155,7 +155,7 @@ export function NotificationToggles({
                       }`}
                     >
                       <span
-                        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
                           config.email ? 'translate-x-4' : 'translate-x-0'
                         } translate-y-0`}
                       />
@@ -170,10 +170,10 @@ export function NotificationToggles({
 
       {/* Frequency selector */}
       <section>
-        <h3 className="text-sm font-medium text-foreground mb-1">
+        <h3 className="text-[13px] font-medium text-foreground mb-1">
           Email Frequency
         </h3>
-        <p className="text-xs text-muted-foreground mb-4">
+        <p className="text-[12px] text-muted-foreground mb-4">
           Choose how often email notifications are delivered.
         </p>
 
@@ -194,10 +194,10 @@ export function NotificationToggles({
                 className="mt-0.5 h-4 w-4 border-input text-primary focus:ring-ring"
               />
               <div>
-                <p className="text-sm font-medium text-foreground">
+                <p className="text-[13px] font-medium text-foreground">
                   Immediate
                 </p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-[12px] text-muted-foreground">
                   Receive emails as soon as events occur.
                 </p>
               </div>
@@ -217,10 +217,10 @@ export function NotificationToggles({
                 className="mt-0.5 h-4 w-4 border-input text-primary focus:ring-ring"
               />
               <div>
-                <p className="text-sm font-medium text-foreground">
+                <p className="text-[13px] font-medium text-foreground">
                   Daily Digest
                 </p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-[12px] text-muted-foreground">
                   Receive a single daily email summarising all events.
                 </p>
               </div>

@@ -25,10 +25,10 @@ function OutputNodeComponent({ data, selected }: NodeProps & { data: OutputNodeD
   return (
     <div
       className={cn(
-        'min-w-[180px] rounded-lg border-2 bg-teal-50 px-4 py-3 shadow-sm dark:bg-teal-950/30',
+        'min-w-[180px] rounded-md border bg-card px-4 py-3 shadow-elevation-1',
         selected
-          ? 'border-teal-600 ring-2 ring-teal-200 dark:ring-teal-800'
-          : 'border-teal-300 dark:border-teal-700'
+          ? 'border-teal-600 ring-2 ring-ring'
+          : 'border-border'
       )}
     >
       <Handle
@@ -48,7 +48,7 @@ function OutputNodeComponent({ data, selected }: NodeProps & { data: OutputNodeD
         </div>
       </div>
       {outputLabel && (
-        <div className="mt-2 pt-2 border-t border-teal-200 dark:border-teal-800">
+        <div className="mt-2 pt-2 border-t border-border">
           <span className="inline-flex items-center rounded-full bg-teal-100 dark:bg-teal-900 px-2 py-0.5 text-[10px] font-medium text-teal-700 dark:text-teal-300">
             {outputLabel}
           </span>

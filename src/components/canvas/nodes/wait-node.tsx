@@ -15,8 +15,8 @@ function WaitNodeComponent({ data, selected }: NodeProps & { data: WaitNodeData 
   return (
     <div
       className={cn(
-        'min-w-[180px] rounded-lg border-2 bg-gray-50 px-4 py-3 shadow-sm',
-        selected ? 'border-gray-600 ring-2 ring-gray-200' : 'border-gray-300'
+        'min-w-[180px] rounded-md border bg-card px-4 py-3 shadow-elevation-1',
+        selected ? 'border-gray-600 ring-2 ring-ring' : 'border-border'
       )}
     >
       <Handle type="target" position={Position.Top} className="!bg-gray-500 !w-3 !h-3 !border-2 !border-white" />

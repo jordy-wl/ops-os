@@ -82,14 +82,14 @@ export function TeamMemberForm({ initialData, teamMembers, departments }: TeamMe
   return (
     <form onSubmit={handleSubmit} className="space-y-5 max-w-lg">
       {error && (
-        <div className="rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400" role="alert">
+        <div className="rounded-md bg-destructive/5 border border-destructive/20 px-4 py-3 text-[13px] text-destructive" role="alert">
           {error}
         </div>
       )}
 
       <div>
         <label htmlFor="name" className="block text-sm font-medium text-foreground mb-1">
-          Full Name <span className="text-red-500">*</span>
+          Full Name <span className="text-destructive">*</span>
         </label>
         <input id="name" type="text" required value={name} onChange={(e) => setName(e.target.value)} className={inputClass} placeholder="Jane Smith" />
       </div>

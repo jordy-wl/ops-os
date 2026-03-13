@@ -5,29 +5,12 @@ interface EventTimelineProps {
   events: Event[]
 }
 
-// ─── Badge colours by event category ────────────────────────────────────────
+// ─── Actor labels ────────────────────────────────────────────────────────────
 
-const BADGE_STYLES: Record<string, string> = {
-  workflow: 'bg-blue-100 text-blue-800',
-  onboarding: 'bg-blue-100 text-blue-800',
-  action: 'bg-green-100 text-green-800',
-  block: 'bg-green-100 text-green-800',
-  ai: 'bg-purple-100 text-purple-800',
-  system: 'bg-gray-100 text-gray-700',
-}
-
-function getBadgeStyle(event: Event): string {
-  if (event.actor_type === 'ai') return BADGE_STYLES.ai
-  const prefix = event.type.split('.')[0]
-  return BADGE_STYLES[prefix] ?? BADGE_STYLES.system
-}
-
-// ─── Actor icons ────────────────────────────────────────────────────────────
-
-const ACTOR_ICONS: Record<string, { icon: string; label: string }> = {
-  human:  { icon: '\u{1F464}', label: 'User action' },
-  ai:     { icon: '\u2726',    label: 'AI action' },
-  system: { icon: '\u2699\uFE0F',    label: 'System action' },
+const ACTOR_LABELS: Record<string, string> = {
+  human:  'User',
+  ai:     'AI',
+  system: 'System',
 }
 
 // ─── Date grouping helpers ──────────────────────────────────────────────────
@@ -79,8 +62,8 @@ export function EventTimeline({ events }: EventTimelineProps) {
   if (!events || events.length === 0) {
     return (
       <section aria-label="Event timeline">
-        <h2 className="text-sm font-semibold text-foreground mb-3">Event Timeline</h2>
-        <p className="text-sm text-muted-foreground italic py-4 text-center">
+        <h2 className="text-[13px] font-medium text-foreground mb-3">Event Timeline</h2>
+        <p className="text-[13px] text-muted-foreground py-6 text-center">
           No events recorded yet.
         </p>
       </section>
@@ -91,75 +74,55 @@ export function EventTimeline({ events }: EventTimelineProps) {
 
   return (
     <section aria-label="Event timeline">
-      <h2 className="text-sm font-semibold text-foreground mb-3">Event Timeline</h2>
+      <h2 className="text-[13px] font-medium text-foreground mb-3">Event Timeline</h2>
 
-      <div className="space-y-4">
+      <div className="max-h-[500px] overflow-y-auto">
         {[...groups.entries()].map(([label, groupEvents]) => (
-          <div key={label}>
+          <div key={label} className="mb-4 last:mb-0">
             {/* Date divider */}
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-xs font-medium text-muted-foreground">{label}</span>
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">{label}</span>
               <div className="flex-1 h-px bg-border" />
             </div>
 
-            <ol className="relative border-l border-border ml-3 space-y-3">
+            <div className="divide-y divide-border">
               {groupEvents.map((event) => {
                 const summary = payloadOneLiner(event.payload)
-                const badgeStyle = getBadgeStyle(event)
-                const actorInfo = ACTOR_ICONS[event.actor_type] ?? ACTOR_ICONS.system
+                const actorLabel = ACTOR_LABELS[event.actor_type] ?? 'System'
 
                 return (
-                  <li key={event.id} className="ml-4 pl-4">
-                    {/* Timeline dot — coloured by category */}
-                    <span
-                      className={cn(
-                        'absolute -left-1.5 mt-1.5 h-3 w-3 rounded-full border-2 border-background',
-                        event.actor_type === 'ai' ? 'bg-purple-400' :
-                        event.type.startsWith('workflow') || event.type.startsWith('onboarding') ? 'bg-blue-400' :
-                        event.type.startsWith('block') || event.type.startsWith('action') ? 'bg-green-400' :
-                        'bg-muted-foreground'
+                  <div key={event.id} className="flex items-start gap-3 py-2 px-1">
+                    {/* Time gutter */}
+                    <time
+                      dateTime={event.occurred_at}
+                      title={event.occurred_at}
+                      className="shrink-0 w-12 text-[12px] text-muted-foreground tabular-nums pt-0.5"
+                    >
+                      {formatTime(event.occurred_at)}
+                    </time>
+
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className={cn(
+                          'inline-flex items-center rounded-full bg-muted text-foreground px-2 py-0.5 text-[11px] font-medium'
+                        )}>
+                          {event.type}
+                        </span>
+                        <span className="text-[11px] text-muted-foreground">{actorLabel}</span>
+                      </div>
+
+                      {/* Payload summary */}
+                      {summary && (
+                        <p className="mt-0.5 text-[12px] text-muted-foreground truncate">
+                          {summary}
+                        </p>
                       )}
-                      aria-hidden="true"
-                    />
-
-                    <div className="flex flex-wrap items-center gap-2">
-                      {/* Type badge */}
-                      <span className={cn(
-                        'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium',
-                        badgeStyle
-                      )}>
-                        {event.type}
-                      </span>
-
-                      {/* Actor icon */}
-                      <span
-                        className="text-xs"
-                        title={actorInfo.label}
-                        aria-label={actorInfo.label}
-                      >
-                        {actorInfo.icon}
-                      </span>
-
-                      {/* Timestamp */}
-                      <time
-                        dateTime={event.occurred_at}
-                        title={event.occurred_at}
-                        className="ml-auto text-xs text-muted-foreground shrink-0"
-                      >
-                        {formatTime(event.occurred_at)}
-                      </time>
                     </div>
-
-                    {/* Payload summary */}
-                    {summary && (
-                      <p className="mt-1 text-xs text-muted-foreground truncate">
-                        {summary}
-                      </p>
-                    )}
-                  </li>
+                  </div>
                 )
               })}
-            </ol>
+            </div>
           </div>
         ))}
       </div>

@@ -15,7 +15,7 @@ export function DateField({ name, value, onChange, fieldDef, mode, required }: F
   return (
     <div>
       <label htmlFor={id} className="block text-sm font-medium text-muted-foreground mb-1 capitalize">
-        {label}{required && <span className="text-red-500 ml-0.5">*</span>}
+        {label}{required && <span className="text-destructive ml-0.5">*</span>}
       </label>
       <input
         id={id}

@@ -38,16 +38,16 @@ interface InstanceDetail {
 type StatusFilter = 'all' | 'pending' | 'running' | 'done' | 'failed'
 
 const STATUS_STYLES: Record<WorkflowJob['status'], string> = {
-  pending: 'bg-yellow-100 text-yellow-800',
-  running: 'bg-blue-100 text-blue-800',
-  done:    'bg-green-100 text-green-800',
-  failed:  'bg-red-100 text-red-800',
+  pending: 'bg-warning/10 text-warning',
+  running: 'bg-primary/10 text-primary',
+  done:    'bg-success/10 text-success',
+  failed:  'bg-destructive/10 text-destructive',
 }
 
 const STEP_STATUS_STYLES: Record<string, string> = {
-  completed: 'bg-green-100 text-green-800',
-  failed:    'bg-red-100 text-red-800',
-  waiting:   'bg-yellow-100 text-yellow-800',
+  completed: 'bg-success/10 text-success',
+  failed:    'bg-destructive/10 text-destructive',
+  waiting:   'bg-warning/10 text-warning',
 }
 
 const FILTERS: StatusFilter[] = ['all', 'pending', 'running', 'done', 'failed']
@@ -127,12 +127,12 @@ export function WorkflowJobsClient({ initialJobs }: WorkflowJobsClientProps) {
   if (!jobs) {
     return (
       <div
-        className="rounded-lg border border-red-200 bg-red-50 p-6 text-center"
+        className="rounded-lg border border-destructive/20 bg-destructive/5 p-6 text-center"
         role="alert"
         aria-live="assertive"
       >
-        <p className="text-sm font-medium text-red-800">Failed to load workflows.</p>
-        <p className="mt-1 text-sm text-red-600">Refresh the page to try again.</p>
+        <p className="text-sm font-medium text-destructive">Failed to load workflows.</p>
+        <p className="mt-1 text-[13px] text-destructive">Refresh the page to try again.</p>
       </div>
     )
   }
@@ -158,7 +158,7 @@ export function WorkflowJobsClient({ initialJobs }: WorkflowJobsClientProps) {
               onClick={() => setActiveFilter(f)}
               aria-pressed={activeFilter === f}
               className={cn(
-                'h-9 px-3 rounded-md text-sm font-medium capitalize transition-colors',
+                'h-8 px-3 rounded-md text-[13px] font-medium capitalize transition-colors',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                 activeFilter === f
                   ? 'bg-primary text-primary-foreground'
@@ -186,8 +186,8 @@ export function WorkflowJobsClient({ initialJobs }: WorkflowJobsClientProps) {
         <div className="flex flex-col items-center justify-center py-16 text-center">
           {jobs.length === 0 ? (
             <>
-              <p className="text-lg font-semibold text-foreground mb-2">No workflows yet</p>
-              <p className="text-sm text-muted-foreground mb-6">
+              <p className="text-title text-foreground mb-2">No workflows yet</p>
+              <p className="text-[13px] text-muted-foreground mb-6">
                 Trigger an onboarding workflow from any block to get started.
               </p>
               <Link
@@ -215,28 +215,28 @@ export function WorkflowJobsClient({ initialJobs }: WorkflowJobsClientProps) {
         </div>
       ) : (
         <div className="overflow-x-auto rounded-lg border border-border">
-          <table className="w-full text-sm" aria-label="Workflow jobs">
-            <thead className="bg-muted border-b border-border">
+          <table className="w-full min-w-[700px] text-sm" aria-label="Workflow jobs">
+            <thead className="bg-muted/50 border-b border-border">
               <tr>
-                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide w-8" />
-                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide w-8" />
+                <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">
                   Workflow
                 </th>
-                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">
                   Block
                 </th>
-                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">
                   Status
                 </th>
-                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">
                   Created
                 </th>
-                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">
                   Completed
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border bg-background">
+            <tbody className="divide-y divide-border bg-card">
               {filtered.map((job) => {
                 const isExpanded = expandedJobId === job.id
                 const detail = instanceDetails[job.id]
@@ -277,25 +277,25 @@ function JobRow({ job, isExpanded, detail, onToggle }: JobRowProps) {
         aria-expanded={isExpanded}
       >
         {/* Expand toggle */}
-        <td className="px-4 py-3 text-muted-foreground">
+        <td className="px-4 py-2 text-muted-foreground">
           <span className={cn('inline-block transition-transform', isExpanded && 'rotate-90')} aria-hidden="true">
             &#9654;
           </span>
         </td>
 
         {/* Workflow type */}
-        <td className="px-4 py-3 font-medium text-foreground whitespace-nowrap">
+        <td className="px-4 py-2 text-[13px] font-medium text-foreground whitespace-nowrap">
           {formatWorkflowType(job.workflow_type)}
         </td>
 
         {/* Block link */}
-        <td className="px-4 py-3">
+        <td className="px-4 py-2 text-[13px]">
           {job.block_id ? (
             <Link
               href={`/blocks/${job.block_id}`}
               onClick={(e) => e.stopPropagation()}
               className={cn(
-                'text-blue-700 hover:underline',
+                'text-blue-700 dark:text-blue-400 hover:underline',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded'
               )}
               aria-label={`View block: ${job.block_name ?? job.block_id}`}
@@ -308,7 +308,7 @@ function JobRow({ job, isExpanded, detail, onToggle }: JobRowProps) {
         </td>
 
         {/* Status badge + failure details */}
-        <td className="px-4 py-3">
+        <td className="px-4 py-2">
           <div className="flex flex-col gap-1">
             <span className={cn(
               'inline-flex self-start rounded-full px-2 py-0.5 text-xs font-medium capitalize',
@@ -317,10 +317,10 @@ function JobRow({ job, isExpanded, detail, onToggle }: JobRowProps) {
               {job.status}
             </span>
             {job.status === 'failed' && (
-              <div className="text-xs text-red-700 space-y-0.5">
+              <div className="text-xs text-destructive space-y-0.5">
                 <span>Attempts: {job.attempts}</span>
                 {job.last_error && (
-                  <p className="text-red-600 max-w-xs truncate" title={job.last_error}>
+                  <p className="text-destructive max-w-xs truncate" title={job.last_error}>
                     {job.last_error}
                   </p>
                 )}
@@ -330,12 +330,12 @@ function JobRow({ job, isExpanded, detail, onToggle }: JobRowProps) {
         </td>
 
         {/* Created at */}
-        <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
+        <td className="px-4 py-2 text-[13px] text-muted-foreground whitespace-nowrap">
           <time dateTime={job.created_at}>{formatDate(job.created_at)}</time>
         </td>
 
         {/* Completed at */}
-        <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
+        <td className="px-4 py-2 text-[13px] text-muted-foreground whitespace-nowrap">
           {job.completed_at ? (
             <time dateTime={job.completed_at}>{formatDate(job.completed_at)}</time>
           ) : (
@@ -374,10 +374,10 @@ function StepTimeline({ detail }: { detail: InstanceDetail }) {
       <div className="flex items-center gap-2 mb-3">
         <span className={cn(
           'inline-flex rounded-full px-2 py-0.5 text-xs font-medium capitalize',
-          detail.status === 'done' ? 'bg-green-100 text-green-800'
-            : detail.status === 'failed' ? 'bg-red-100 text-red-800'
-            : detail.status === 'running' ? 'bg-blue-100 text-blue-800'
-            : 'bg-yellow-100 text-yellow-800'
+          detail.status === 'done' ? 'bg-success/10 text-success'
+            : detail.status === 'failed' ? 'bg-destructive/10 text-destructive'
+            : detail.status === 'running' ? 'bg-primary/10 text-primary'
+            : 'bg-warning/10 text-warning'
         )}>
           {detail.status}
         </span>
@@ -395,10 +395,10 @@ function StepTimeline({ detail }: { detail: InstanceDetail }) {
         {detail.step_results.map((step, i) => (
           <li key={i} className="ml-4">
             <div className={cn(
-              'absolute -left-1.5 mt-1.5 h-3 w-3 rounded-full border-2 border-white',
-              step.status === 'completed' ? 'bg-green-400'
-                : step.status === 'failed' ? 'bg-red-400'
-                : 'bg-yellow-400'
+              'absolute -left-1.5 mt-1.5 h-3 w-3 rounded-full border-2 border-white dark:border-gray-900',
+              step.status === 'completed' ? 'bg-success'
+                : step.status === 'failed' ? 'bg-destructive'
+                : 'bg-warning'
             )} />
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium text-foreground">
@@ -413,7 +413,7 @@ function StepTimeline({ detail }: { detail: InstanceDetail }) {
               <span className="text-[10px] text-muted-foreground">{step.step_type}</span>
             </div>
             {step.error && (
-              <p className="text-xs text-red-600 mt-0.5">{step.error}</p>
+              <p className="text-xs text-destructive mt-0.5">{step.error}</p>
             )}
             {step.output && Object.keys(step.output).length > 0 && (
               <p className="text-xs text-muted-foreground mt-0.5">

@@ -24,13 +24,13 @@ const CATEGORY_LABELS: Record<string, string> = {
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
-  contract: 'bg-blue-100 text-blue-800',
-  proposal: 'bg-green-100 text-green-800',
-  nda: 'bg-purple-100 text-purple-800',
-  report: 'bg-amber-100 text-amber-800',
-  letter: 'bg-gray-100 text-gray-800',
-  invoice: 'bg-cyan-100 text-cyan-800',
-  other: 'bg-gray-100 text-gray-600',
+  contract: 'bg-muted text-foreground',
+  proposal: 'bg-muted text-foreground',
+  nda: 'bg-muted text-foreground',
+  report: 'bg-muted text-foreground',
+  letter: 'bg-muted text-foreground',
+  invoice: 'bg-muted text-foreground',
+  other: 'bg-muted text-muted-foreground',
 }
 
 export function DocumentBrowser({
@@ -66,11 +66,11 @@ export function DocumentBrowser({
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">Document Library</h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <h1 className="text-page text-foreground">Document Library</h1>
+          <p className="text-[13px] text-muted-foreground mt-1">
             {templates.length} template{templates.length !== 1 ? 's' : ''}
             {!hasBrandKit && (
-              <span className="ml-2 text-amber-600">
+              <span className="ml-2 text-warning">
                 — <Link href="/settings/brand" className="underline">Set up brand kit</Link> for branded documents
               </span>
             )}
@@ -126,12 +126,12 @@ export function DocumentBrowser({
         <div className="text-center py-16 text-muted-foreground">
           {templates.length === 0 ? (
             <div>
-              <p className="text-lg font-medium mb-2">No templates yet</p>
+              <p className="text-title mb-2">No templates yet</p>
               <p className="text-sm">Create your first document template to start generating documents.</p>
             </div>
           ) : (
             <div>
-              <p className="text-lg font-medium mb-2">No matches</p>
+              <p className="text-title mb-2">No matches</p>
               <button
                 onClick={() => { setSearch(''); setCategoryFilter(null) }}
                 className="text-sm text-muted-foreground underline"
@@ -152,7 +152,7 @@ export function DocumentBrowser({
               <Link
                 key={t.id}
                 href={`/blocks/${t.id}`}
-                className="block border border-border rounded-lg p-4 hover:border-ring hover:shadow-sm transition group"
+                className="block border border-border rounded-md p-4 bg-card hover:border-foreground/10 transition-colors duration-150 group"
                 role="listitem"
               >
                 <div className="flex items-start justify-between mb-2">

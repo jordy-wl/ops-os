@@ -141,14 +141,14 @@ export default function AuditLogSettingsPage() {
       {/* Error state with retry */}
       {error && !isLoading && (
         <div
-          className="mb-4 rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400"
+          className="mb-4 rounded-md bg-destructive/5 border border-destructive/20 px-4 py-3 text-[13px] text-destructive"
           role="alert"
         >
           <p>{error}</p>
           <button
             type="button"
             onClick={() => fetchEvents()}
-            className="mt-2 text-sm font-medium text-red-800 underline hover:no-underline dark:text-red-300 focus:outline-none focus:ring-2 focus:ring-ring rounded"
+            className="mt-2 text-[13px] font-medium text-destructive underline hover:no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
           >
             Try again
           </button>

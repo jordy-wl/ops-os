@@ -5,6 +5,14 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Pencil } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 
 export interface WorkflowTemplateItem {
   id: string
@@ -36,9 +44,9 @@ export function WorkflowTemplatesClient({ initialTemplates }: WorkflowTemplatesC
 
   if (!templates) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center" role="alert">
-        <p className="text-sm font-medium text-red-800">Failed to load templates.</p>
-        <p className="mt-1 text-sm text-red-600">Refresh the page to try again.</p>
+      <div className="rounded-md border border-destructive/20 bg-destructive/5 p-6 text-center" role="alert">
+        <p className="text-[13px] font-medium text-destructive">Failed to load templates.</p>
+        <p className="mt-1 text-[13px] text-muted-foreground">Refresh the page to try again.</p>
       </div>
     )
   }
@@ -47,7 +55,7 @@ export function WorkflowTemplatesClient({ initialTemplates }: WorkflowTemplatesC
     <div>
       {/* Header with create button */}
       <div className="flex items-center justify-between mb-6">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-[13px] text-muted-foreground">
           {templates.length} template{templates.length !== 1 ? 's' : ''}
         </p>
         <button
@@ -65,8 +73,8 @@ export function WorkflowTemplatesClient({ initialTemplates }: WorkflowTemplatesC
       {/* Empty state */}
       {templates.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <p className="text-lg font-semibold text-foreground mb-2">No workflow templates yet</p>
-          <p className="text-sm text-muted-foreground mb-6">
+          <p className="text-title text-foreground mb-2">No workflow templates yet</p>
+          <p className="text-[13px] text-muted-foreground mb-6">
             Create a template to define reusable workflows with triggers, steps, and conditions.
           </p>
           <button
@@ -85,39 +93,34 @@ export function WorkflowTemplatesClient({ initialTemplates }: WorkflowTemplatesC
           {templates.map((tmpl) => (
             <div
               key={tmpl.id}
-              className="rounded-lg border border-border bg-background p-4 hover:border-ring transition-colors"
+              className="rounded-md border border-border bg-card p-4 hover-card"
             >
               <div className="flex items-start justify-between mb-2">
-                <h3 className="text-sm font-semibold text-foreground line-clamp-1">{tmpl.name}</h3>
+                <h3 className="text-sm font-medium text-foreground line-clamp-1">{tmpl.name}</h3>
                 <span
-                  className={cn(
-                    'shrink-0 ml-2 inline-flex rounded-full px-2 py-0.5 text-xs font-medium',
-                    tmpl.trigger_type === 'event'
-                      ? 'bg-purple-100 text-purple-800'
-                      : 'bg-blue-100 text-blue-800'
-                  )}
+                  className="shrink-0 ml-2 inline-flex rounded-full border border-border bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
                 >
                   {TRIGGER_LABELS[tmpl.trigger_type] ?? tmpl.trigger_type}
                 </span>
               </div>
 
               {tmpl.description && (
-                <p className="text-xs text-muted-foreground mb-3 line-clamp-2">{tmpl.description}</p>
+                <p className="text-[13px] text-muted-foreground mb-3 line-clamp-2">{tmpl.description}</p>
               )}
 
-              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+              <div className="flex items-center gap-3 text-[13px] text-muted-foreground">
                 <span className="inline-flex items-center gap-1">
                   <span className="font-medium text-foreground">{tmpl.applies_to_type}</span>
                 </span>
                 <span>{tmpl.step_count} step{tmpl.step_count !== 1 ? 's' : ''}</span>
                 {tmpl.trigger_event_pattern && (
-                  <span className="text-purple-600 truncate max-w-[80px] sm:max-w-[120px]" title={tmpl.trigger_event_pattern}>
+                  <span className="text-muted-foreground truncate max-w-[80px] sm:max-w-[120px]" title={tmpl.trigger_event_pattern}>
                     on: {tmpl.trigger_event_pattern}
                   </span>
                 )}
               </div>
 
-              <div className="mt-3 pt-3 border-t border-border flex items-center justify-between text-xs text-muted-foreground">
+              <div className="mt-3 pt-3 border-t border-border flex items-center justify-between text-[13px] text-muted-foreground">
                 <span>Created {formatDate(tmpl.created_at)}</span>
                 <Link
                   href={`/workflows/${tmpl.id}/builder`}
@@ -175,14 +178,6 @@ function CreateTemplateModal({ onClose }: CreateTemplateModalProps) {
     nameRef.current?.focus()
   }, [])
 
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') onClose()
-    }
-    document.addEventListener('keydown', onKey)
-    return () => document.removeEventListener('keydown', onKey)
-  }, [onClose])
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     const trimmed = name.trim()
@@ -225,21 +220,14 @@ function CreateTemplateModal({ onClose }: CreateTemplateModalProps) {
   }
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="create-template-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-    >
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} aria-hidden="true" />
-
-      <div className="relative w-full max-w-sm rounded-lg bg-background p-6 shadow-lg">
-        <h2 id="create-template-title" className="text-lg font-semibold text-foreground mb-1">
-          New Workflow
-        </h2>
-        <p className="text-sm text-muted-foreground mb-4">
-          Give it a name, then build it on the canvas.
-        </p>
+    <Dialog open onOpenChange={(v) => { if (!v) onClose() }}>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>New Workflow</DialogTitle>
+          <DialogDescription>
+            Give it a name, then build it on the canvas.
+          </DialogDescription>
+        </DialogHeader>
 
         <form onSubmit={handleSubmit} noValidate>
           <label htmlFor="tmpl-name" className="block text-sm font-medium text-foreground mb-1">
@@ -258,12 +246,12 @@ function CreateTemplateModal({ onClose }: CreateTemplateModalProps) {
           />
 
           {error && (
-            <p role="alert" className="mb-4 text-xs text-red-600">
+            <p role="alert" className="mb-4 text-[12px] text-destructive">
               {error}
             </p>
           )}
 
-          <div className="flex gap-3 justify-end">
+          <DialogFooter>
             <button
               type="button"
               onClick={onClose}
@@ -285,9 +273,9 @@ function CreateTemplateModal({ onClose }: CreateTemplateModalProps) {
             >
               {submitting ? 'Creating…' : 'Create & Open Builder'}
             </button>
-          </div>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   )
 }

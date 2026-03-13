@@ -56,14 +56,14 @@ export function RoleForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-5 max-w-lg">
       {error && (
-        <div className="rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400" role="alert">
+        <div className="rounded-md bg-destructive/5 border border-destructive/20 px-4 py-3 text-[13px] text-destructive" role="alert">
           {error}
         </div>
       )}
 
       <div>
         <label htmlFor="display_name" className="block text-sm font-medium text-foreground mb-1">
-          Role Name <span className="text-red-500">*</span>
+          Role Name <span className="text-destructive">*</span>
         </label>
         <input
           id="display_name"
@@ -88,7 +88,7 @@ export function RoleForm() {
 
       <div>
         <h3 className="text-sm font-medium text-foreground mb-2">
-          Permissions <span className="text-red-500">*</span>
+          Permissions <span className="text-destructive">*</span>
         </h3>
         <div className="rounded-lg border border-border p-3">
           <PermissionMatrix selected={permissions} onChange={setPermissions} />

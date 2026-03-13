@@ -13,10 +13,10 @@ interface OrgHierarchyTreeProps {
 }
 
 const LEVEL_BADGE: Record<string, string> = {
-  org: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-  suborg: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
-  department: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-  team: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+  org: 'bg-muted text-foreground',
+  suborg: 'bg-muted text-foreground',
+  department: 'bg-muted text-foreground',
+  team: 'bg-muted text-muted-foreground',
 }
 
 function TreeNode({ node, depth }: { node: OrgNode; depth: number }) {

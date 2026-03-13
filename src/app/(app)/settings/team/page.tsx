@@ -72,7 +72,7 @@ export default async function TeamSettingsPage() {
 
       {membersResult.error && (
         <div
-          className="mb-6 rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400"
+          className="mb-6 rounded-md bg-destructive/5 border border-destructive/20 px-4 py-3 text-[13px] text-destructive"
           role="alert"
         >
           Failed to load team members. Please refresh the page.

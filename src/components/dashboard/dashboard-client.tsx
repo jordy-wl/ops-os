@@ -13,7 +13,9 @@ import {
   Cable,
 } from 'lucide-react'
 import { CreateBlockModal } from './create-block-modal'
+import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { getBlockTypeLabel } from '@/lib/ui/block-type-badge'
 import type { DashboardSummary, RecentEvent } from '@/app/api/dashboard/summary/route'
 
 /* -------------------------------------------------------------------------- */
@@ -49,9 +51,22 @@ function humanizeEventType(type: string): string {
     .replace(/\b\w/g, (c) => c.toUpperCase())
 }
 
-/** Capitalize a single word. */
-function capitalize(s: string): string {
-  return s.charAt(0).toUpperCase() + s.slice(1)
+/** Map block type key to a Tailwind progress bar color. */
+const BLOCK_TYPE_BAR_COLORS: Record<string, string> = {
+  client: 'bg-blue-500',
+  deal: 'bg-emerald-500',
+  project: 'bg-amber-500',
+  contract: 'bg-purple-500',
+  contact: 'bg-slate-500',
+  solution: 'bg-indigo-500',
+  product: 'bg-teal-500',
+  service: 'bg-violet-500',
+  team_member: 'bg-orange-500',
+  policy: 'bg-rose-500',
+}
+
+function getBarColor(type: string): string {
+  return BLOCK_TYPE_BAR_COLORS[type] ?? 'bg-primary'
 }
 
 /* -------------------------------------------------------------------------- */
@@ -161,12 +176,12 @@ export function DashboardClient({ initialData }: DashboardClientProps) {
   if (!data) {
     return (
       <div className="p-6 lg:p-8">
-        <p className="text-sm text-red-600" role="alert">
+        <p className="text-[13px] text-destructive" role="alert">
           {fetchError ?? 'Could not load dashboard data.'}
         </p>
         <button
           onClick={fetchSummary}
-          className="mt-3 text-sm font-medium text-foreground underline hover:no-underline"
+          className="mt-3 text-[13px] font-medium text-foreground underline hover:no-underline"
         >
           Try again
         </button>
@@ -212,25 +227,18 @@ export function DashboardClient({ initialData }: DashboardClientProps) {
       {/* ---- Page Header ---- */}
       <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">Dashboard</h1>
-          <p className="text-sm text-muted-foreground mt-1">Your workspace at a glance</p>
+          <h1 className="text-headline text-foreground">Dashboard</h1>
+          <p className="text-[13px] text-muted-foreground mt-1">Your workspace at a glance</p>
         </div>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className={cn(
-            'inline-flex items-center gap-1.5 px-4 py-2 rounded-md text-sm font-medium',
-            'bg-primary text-primary-foreground',
-            'hover:bg-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
-          )}
-        >
+        <Button onClick={() => setShowCreateModal(true)} size="default">
           <Plus className="h-4 w-4" aria-hidden="true" />
           Create Block
-        </button>
+        </Button>
       </div>
 
       {/* ---- Stale data warning ---- */}
       {fetchError && (
-        <p role="status" className="mb-4 text-xs text-amber-600">
+        <p role="status" className="mb-4 text-xs text-amber-600 dark:text-amber-400">
           {fetchError}
         </p>
       )}
@@ -238,25 +246,17 @@ export function DashboardClient({ initialData }: DashboardClientProps) {
       {/* ---- Empty state CTA (zero blocks) ---- */}
       {block_counts.total === 0 && (
         <div className="rounded-lg border-2 border-dashed border-border bg-muted p-8 text-center mb-8">
-          <div className="mx-auto mb-3 text-3xl" aria-hidden="true">
-            +
-          </div>
-          <h2 className="text-lg font-semibold text-foreground mb-1">
+          <LayoutGrid className="h-10 w-10 text-muted-foreground mx-auto mb-3 animate-list-item-in" aria-hidden="true" />
+          <h2 className="text-title text-foreground mb-1">
             Create your first Block
           </h2>
-          <p className="text-sm text-muted-foreground mb-4 max-w-md mx-auto">
+          <p className="text-[13px] text-muted-foreground mb-4 max-w-md mx-auto">
             Blocks are the core entities in your workspace -- clients, deals,
             projects, and more. Start by creating one.
           </p>
-          <Link
-            href="/library/blocks"
-            className={cn(
-              'inline-flex px-5 py-2.5 rounded-md text-sm font-medium bg-primary text-primary-foreground',
-              'hover:bg-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
-            )}
-          >
-            Go to Blocks
-          </Link>
+          <Button asChild>
+            <Link href="/library/blocks">Go to Blocks</Link>
+          </Button>
         </div>
       )}
 
@@ -272,10 +272,10 @@ export function DashboardClient({ initialData }: DashboardClientProps) {
           const cardContent = (
             <div
               className={cn(
-                'rounded-lg border bg-background p-4',
-                'hover:border-border hover:shadow-sm transition-all cursor-pointer',
+                'rounded-lg border border-border bg-card p-4 hover-card',
+                'flex flex-col justify-between h-full',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
-                'flex flex-col justify-between h-full'
+                'cursor-pointer transition-all'
               )}
             >
               <div className="flex items-start justify-between">
@@ -285,8 +285,8 @@ export function DashboardClient({ initialData }: DashboardClientProps) {
                 )}
               </div>
               <div className="mt-3">
-                <p className="text-3xl font-bold text-foreground tabular-nums">{value}</p>
-                <p className="text-sm text-muted-foreground mt-1">{card.label}</p>
+                <p className="text-display text-foreground tabular-nums">{value}</p>
+                <p className="text-[13px] text-muted-foreground mt-1">{card.label}</p>
               </div>
             </div>
           )
@@ -321,18 +321,18 @@ export function DashboardClient({ initialData }: DashboardClientProps) {
 
       {/* ---- Recent Activity Feed ---- */}
       <section ref={activityRef} aria-label="Recent activity" className="mb-8">
-        <h2 className="text-lg font-semibold text-foreground mb-3">Recent Activity</h2>
+        <h2 className="text-title text-foreground mb-3">Recent Activity</h2>
 
         {displayEvents.length === 0 ? (
           <div className="rounded-lg border bg-background px-6 py-10 text-center">
             <Activity className="h-10 w-10 text-muted-foreground mx-auto mb-3" aria-hidden="true" />
-            <p className="text-sm text-muted-foreground">No events recorded yet.</p>
-            <p className="mt-1 text-xs text-muted-foreground">
+            <p className="text-[13px] text-muted-foreground">No events recorded yet.</p>
+            <p className="mt-1 text-[11px] text-muted-foreground">
               Events appear here when blocks are created or workflows run.
             </p>
           </div>
         ) : (
-          <div className="rounded-lg border bg-background divide-y">
+          <div className="rounded-lg border border-border bg-card divide-y max-h-[400px] overflow-y-auto">
             {displayEvents.map((event: RecentEvent) => {
               const dotColor = getEventColor(event.type)
               const relative = formatRelativeTime(event.occurred_at)
@@ -345,10 +345,10 @@ export function DashboardClient({ initialData }: DashboardClientProps) {
                     aria-hidden="true"
                   />
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-foreground truncate">
+                    <p className="text-[13px] font-medium text-foreground truncate">
                       {humanType}
                     </p>
-                    <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                    <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
                       {event.block_name ?? 'Org-level'}
                     </p>
                   </div>
@@ -386,66 +386,56 @@ export function DashboardClient({ initialData }: DashboardClientProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Quick Actions */}
         <section aria-label="Quick actions">
-          <h2 className="text-lg font-semibold text-foreground mb-3">Quick Actions</h2>
-          <div className="rounded-lg border bg-background p-4">
-            <div className="flex flex-col gap-2">
-              {QUICK_ACTIONS.map((action) => {
-                const Icon = action.icon
-                return (
-                  <Link
-                    key={action.label}
-                    href={action.href}
-                    className={cn(
-                      'flex items-center gap-2 px-3 py-2 rounded-md text-sm text-foreground',
-                      'hover:bg-muted border transition-colors',
-                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
-                    )}
-                  >
-                    <Icon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-                    {action.label}
+          <h2 className="text-title text-foreground mb-3">Quick Actions</h2>
+          <div className="flex flex-wrap gap-2">
+            {QUICK_ACTIONS.map((action) => {
+              const Icon = action.icon
+              return (
+                <Button
+                  key={action.label}
+                  variant="secondary"
+                  size="sm"
+                  asChild
+                >
+                  <Link href={action.href}>
+                    <Icon className="h-4 w-4" aria-hidden="true" />
+                    <span className="text-[13px]">{action.label}</span>
                   </Link>
-                )
-              })}
-            </div>
+                </Button>
+              )
+            })}
           </div>
         </section>
 
         {/* Block Types Breakdown */}
         <section aria-label="Block type breakdown">
-          <h2 className="text-lg font-semibold text-foreground mb-3">Block Types</h2>
-          <div className="rounded-lg border bg-background p-4">
-            {activeBlockTypes.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-4 text-center">
-                No blocks created yet.
-              </p>
-            ) : (
-              <dl className="space-y-3">
-                {activeBlockTypes.map(({ key, count }) => {
-                  const maxCount = Math.max(...activeBlockTypes.map((t) => t.count), 1)
-                  const widthPercent = Math.round((count / maxCount) * 100)
-
-                  return (
-                    <div key={key}>
-                      <div className="flex items-center justify-between mb-1">
-                        <dt className="text-sm text-foreground">
-                          {capitalize(key)}s
-                        </dt>
-                        <dd className="text-sm font-medium text-foreground tabular-nums">
-                          {count}
-                        </dd>
-                      </div>
-                      <div className="h-2 w-full rounded-full bg-muted" aria-hidden="true">
-                        <div
-                          className="h-2 rounded-full bg-primary transition-all"
-                          style={{ width: `${widthPercent}%` }}
-                        />
-                      </div>
-                    </div>
-                  )
-                })}
-              </dl>
-            )}
-          </div>
+          <h2 className="text-title text-foreground mb-3">Block Types</h2>
+          {activeBlockTypes.length === 0 ? (
+            <p className="text-[13px] text-muted-foreground">
+              No blocks created yet.
+            </p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {activeBlockTypes.map(({ key, count }) => (
+                <Link
+                  key={key}
+                  href={`/library/blocks?type=${key}`}
+                  className={cn(
+                    'inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-1',
+                    'text-[13px] text-foreground hover:bg-muted transition-colors',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+                  )}
+                >
+                  <span
+                    className={cn('h-2 w-2 rounded-full shrink-0', getBarColor(key))}
+                    aria-hidden="true"
+                  />
+                  {getBlockTypeLabel(key)}
+                  <span className="text-muted-foreground tabular-nums">{count}</span>
+                </Link>
+              ))}
+            </div>
+          )}
         </section>
       </div>
 
@@ -471,10 +461,10 @@ function DashboardSkeleton() {
       {/* Header skeleton */}
       <div className="flex items-start justify-between mb-6">
         <div>
-          <div className="h-8 w-28 rounded-md bg-muted animate-pulse" />
-          <div className="h-4 w-48 rounded-md bg-muted animate-pulse mt-2" />
+          <div className="h-8 w-28 rounded-md animate-pulse bg-muted" />
+          <div className="h-4 w-48 rounded-md animate-pulse bg-muted mt-2" />
         </div>
-        <div className="h-9 w-32 rounded-md bg-muted animate-pulse" />
+        <div className="h-9 w-32 rounded-md animate-pulse bg-muted" />
       </div>
 
       {/* Stat card skeletons */}
@@ -482,12 +472,12 @@ function DashboardSkeleton() {
         {Array.from({ length: 4 }).map((_, i) => (
           <div key={i} className="rounded-lg border bg-background p-4">
             <div className="flex items-start justify-between">
-              <div className="h-5 w-5 rounded bg-muted animate-pulse" />
-              <div className="h-4 w-4 rounded bg-muted animate-pulse" />
+              <div className="h-5 w-5 rounded animate-pulse bg-muted" />
+              <div className="h-4 w-4 rounded animate-pulse bg-muted" />
             </div>
             <div className="mt-3">
-              <div className="h-9 w-16 rounded bg-muted animate-pulse" />
-              <div className="h-4 w-24 rounded bg-muted animate-pulse mt-2" />
+              <div className="h-9 w-16 rounded animate-pulse bg-muted" />
+              <div className="h-4 w-24 rounded animate-pulse bg-muted mt-2" />
             </div>
           </div>
         ))}
@@ -495,16 +485,16 @@ function DashboardSkeleton() {
 
       {/* Activity feed skeleton */}
       <div className="mb-8">
-        <div className="h-6 w-36 rounded bg-muted animate-pulse mb-3" />
+        <div className="h-6 w-36 rounded animate-pulse bg-muted mb-3" />
         <div className="rounded-lg border bg-background divide-y">
           {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="flex items-center gap-3 px-4 py-3">
-              <div className="h-2.5 w-2.5 rounded-full bg-muted animate-pulse shrink-0" />
+              <div className="h-2.5 w-2.5 rounded-full animate-pulse bg-muted shrink-0" />
               <div className="flex-1 space-y-1.5">
-                <div className="h-4 w-40 rounded bg-muted animate-pulse" />
-                <div className="h-3 w-28 rounded bg-muted animate-pulse" />
+                <div className="h-4 w-40 rounded animate-pulse bg-muted" />
+                <div className="h-3 w-28 rounded animate-pulse bg-muted" />
               </div>
-              <div className="h-3 w-14 rounded bg-muted animate-pulse shrink-0" />
+              <div className="h-3 w-14 rounded animate-pulse bg-muted shrink-0" />
             </div>
           ))}
         </div>
@@ -513,24 +503,18 @@ function DashboardSkeleton() {
       {/* Quick actions + block types skeleton */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <div className="h-6 w-32 rounded bg-muted animate-pulse mb-3" />
-          <div className="rounded-lg border bg-background p-4 space-y-2">
+          <div className="h-6 w-32 rounded animate-pulse bg-muted mb-3" />
+          <div className="flex flex-wrap gap-2">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="h-10 w-full rounded-md bg-muted animate-pulse" />
+              <div key={i} className="h-8 w-28 rounded-md animate-pulse bg-muted" />
             ))}
           </div>
         </div>
         <div>
-          <div className="h-6 w-28 rounded bg-muted animate-pulse mb-3" />
-          <div className="rounded-lg border bg-background p-4 space-y-3">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i}>
-                <div className="flex justify-between mb-1">
-                  <div className="h-4 w-20 rounded bg-muted animate-pulse" />
-                  <div className="h-4 w-8 rounded bg-muted animate-pulse" />
-                </div>
-                <div className="h-2 w-full rounded-full bg-muted animate-pulse" />
-              </div>
+          <div className="h-6 w-28 rounded animate-pulse bg-muted mb-3" />
+          <div className="flex flex-wrap gap-2">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="h-7 w-20 rounded-md animate-pulse bg-muted" />
             ))}
           </div>
         </div>

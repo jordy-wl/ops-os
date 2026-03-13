@@ -515,7 +515,7 @@ function UpdateBlockConfig({ node, onUpdate }: Pick<NodeConfigPanelProps, 'node'
                 <button
                   type="button"
                   onClick={() => removeField(key)}
-                  className="text-xs text-red-500 hover:text-red-700 px-1"
+                  className="text-xs text-destructive hover:text-destructive/80 px-1"
                   aria-label={`Remove field ${key}`}
                 >
                   x

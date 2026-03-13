@@ -132,7 +132,7 @@ export function AppSidebar() {
         <SidebarSeparator />
 
         <SidebarGroup>
-          <SidebarGroupLabel>Library</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-[11px] uppercase tracking-wider text-muted-foreground">Library</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {LIBRARY_NAV.map((item) => (

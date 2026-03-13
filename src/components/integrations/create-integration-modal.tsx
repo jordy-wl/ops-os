@@ -178,7 +178,7 @@ export function CreateIntegrationModal({ onClose, onCreated }: Props) {
             </select>
 
             {error && (
-              <p role="alert" className="mb-4 text-xs text-red-600">{error}</p>
+              <p role="alert" className="mb-4 text-[13px] text-destructive">{error}</p>
             )}
 
             <div className="flex gap-3 justify-end">

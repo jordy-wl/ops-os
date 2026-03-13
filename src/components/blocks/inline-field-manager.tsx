@@ -482,7 +482,7 @@ export function InlineFieldManager({
         <div className="flex items-center gap-1.5">
           <span className="font-medium text-foreground truncate">{field.name}</span>
           {field.isRequired && (
-            <span className="text-red-500 text-xs flex-shrink-0" aria-label="Required field">*</span>
+            <span className="text-destructive text-xs flex-shrink-0" aria-label="Required field">*</span>
           )}
           {field.isSystem && (
             <span
@@ -515,7 +515,7 @@ export function InlineFieldManager({
         <button
           onClick={() => handleDeleteField(field.name)}
           disabled={isDeleting === field.name}
-          className="flex-shrink-0 p-1 text-muted-foreground hover:text-red-500 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+          className="flex-shrink-0 p-1 text-muted-foreground hover:text-destructive transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
           aria-label={`Delete field ${field.name}`}
           title="Delete field"
         >
@@ -874,7 +874,7 @@ export function InlineFieldManager({
                             {field.name}
                           </span>
                           {field.required && (
-                            <span className="text-red-500 text-xs">*</span>
+                            <span className="text-destructive text-xs">*</span>
                           )}
                           {alreadyExists && (
                             <span className="text-xs text-muted-foreground">

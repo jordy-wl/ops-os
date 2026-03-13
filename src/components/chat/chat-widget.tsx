@@ -180,27 +180,27 @@ export function ChatWidget() {
         type="button"
         onClick={toggle}
         className={cn(
-          'fixed bottom-5 right-5 z-50',
-          'flex h-12 w-12 items-center justify-center rounded-full',
-          'bg-gray-900 text-white shadow-lg dark:bg-gray-100 dark:text-gray-900',
-          'hover:bg-gray-700 dark:hover:bg-gray-300 transition-all hover:scale-105',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 dark:focus-visible:ring-gray-100 focus-visible:ring-offset-2'
+          'fixed z-50 bottom-16 right-4 md:bottom-4',
+          'flex h-9 w-9 items-center justify-center rounded-md',
+          'bg-card text-foreground border border-border shadow-elevation-2',
+          'hover:bg-accent transition-all duration-150',
+          'focus-ring'
         )}
         aria-label="Open chat"
       >
-        <MessageCircle className="h-5 w-5" />
+        <MessageCircle className="h-4 w-4" />
       </button>
     )
   }
 
-  // ── Expanded state: widget card ─────────────────────────────────────
+  // ── Expanded state: widget card (full-screen on mobile) ───────────
   return (
     <div
       className={cn(
-        'fixed bottom-5 right-5 z-50',
-        'flex flex-col w-[min(480px,calc(100vw-3rem))] h-[600px] max-h-[calc(100vh-4rem)]',
-        'rounded-xl border border-border bg-background shadow-2xl',
-        'animate-slide-up'
+        'fixed z-50 flex flex-col bg-background animate-slide-up',
+        'inset-0 rounded-none',
+        'md:inset-auto md:bottom-5 md:right-5 md:w-[min(480px,calc(100vw-3rem))] md:h-[600px] md:max-h-[calc(100vh-4rem)]',
+        'md:rounded-lg md:border md:border-border md:shadow-elevation-3'
       )}
     >
       {/* Header */}
@@ -209,7 +209,7 @@ export function ChatWidget() {
         <button
           type="button"
           onClick={close}
-          className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           aria-label="Close chat"
         >
           <X className="h-4 w-4" />
@@ -218,7 +218,7 @@ export function ChatWidget() {
 
       {/* Messages */}
       <div
-        className="flex-1 overflow-y-auto px-3 py-3 space-y-3 bg-muted"
+        className="flex-1 overflow-y-auto px-3 py-3 space-y-3 bg-muted/50"
         role="log"
         aria-label="Chat messages"
       >
@@ -263,8 +263,8 @@ export function ChatWidget() {
                         className={cn(
                           'flex items-center gap-1.5 text-xs rounded-md px-2.5 py-1 max-w-[85%]',
                           tc.result.success
-                            ? 'bg-green-50 text-green-700 border border-green-200'
-                            : 'bg-red-50 text-red-700 border border-red-200'
+                            ? 'bg-success/5 text-success border border-success/20'
+                            : 'bg-destructive/5 text-destructive border border-destructive/20'
                         )}
                       >
                         <Wrench className="h-3 w-3 shrink-0" />

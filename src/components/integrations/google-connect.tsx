@@ -31,22 +31,22 @@ export function GoogleConnect({ connectorId, connectorStatus, connectedBy, conne
       <div className="flex items-start gap-3">
         <div className={cn(
           'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg',
-          isConnected ? 'bg-green-50' : 'bg-muted'
+          isConnected ? 'bg-success/10' : 'bg-muted'
         )}>
-          <Chrome className={cn('h-5 w-5', isConnected ? 'text-green-600' : 'text-muted-foreground')} aria-hidden="true" />
+          <Chrome className={cn('h-5 w-5', isConnected ? 'text-success' : 'text-muted-foreground')} aria-hidden="true" />
         </div>
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <h3 className="text-sm font-semibold text-foreground">Google Workspace</h3>
             {isConnected && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
+              <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-xs font-medium text-success">
                 <CheckCircle className="h-3 w-3" aria-hidden="true" />
                 Connected
               </span>
             )}
             {connectorStatus === 'error' && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">
+              <span className="inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
                 <AlertCircle className="h-3 w-3" aria-hidden="true" />
                 Error
               </span>

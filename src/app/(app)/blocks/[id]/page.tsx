@@ -56,12 +56,12 @@ export default async function BlockDetailPage({ params }: Props) {
           <h1 className="text-xl font-semibold text-foreground mb-2">
             You don&apos;t have access to this block
           </h1>
-          <p className="text-sm text-muted-foreground mb-6">
+          <p className="text-[13px] text-muted-foreground mb-6">
             This block belongs to a different organisation.
           </p>
           <Link
             href="/blocks"
-            className="text-sm font-medium text-foreground underline hover:no-underline"
+            className="text-[13px] font-medium text-foreground underline hover:no-underline"
           >
             ← Back to blocks
           </Link>
@@ -74,12 +74,12 @@ export default async function BlockDetailPage({ params }: Props) {
       <div className="flex flex-col items-center justify-center min-h-[60vh] p-6 text-center">
         <p className="text-4xl font-bold text-muted-foreground mb-4" aria-hidden="true">404</p>
         <h1 className="text-xl font-semibold text-foreground mb-2">Block not found</h1>
-        <p className="text-sm text-muted-foreground mb-6">
+        <p className="text-[13px] text-muted-foreground mb-6">
           This block may have been deleted or the link is incorrect.
         </p>
         <Link
           href="/blocks"
-          className="text-sm font-medium text-foreground underline hover:no-underline"
+          className="text-[13px] font-medium text-foreground underline hover:no-underline"
         >
           ← Back to blocks
         </Link>
@@ -150,7 +150,7 @@ export default async function BlockDetailPage({ params }: Props) {
 
   return (
     <div className="p-6 lg:p-8 max-w-5xl animate-page-in">
-      <nav aria-label="Breadcrumb" className="mb-4 text-sm text-muted-foreground">
+      <nav aria-label="Breadcrumb" className="mb-4 text-[13px] text-muted-foreground">
         <ol className="flex items-center gap-1.5">
           <li><Link href="/library/blocks" className="hover:text-foreground transition-colors">Blocks</Link></li>
           <li aria-hidden="true">/</li>
@@ -193,7 +193,7 @@ export default async function BlockDetailPage({ params }: Props) {
             <InsightsPanel blockId={block.id} />
           )}
 
-          <div className="rounded-lg border p-4">
+          <div className="rounded-md border border-border bg-card p-4">
             <ConnectedBlocksPanel neighbours={neighbours} />
           </div>
         </div>

@@ -13,12 +13,12 @@ const CATEGORY_LABELS: Record<string, string> = {
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
-  contract: 'bg-blue-500/10 text-blue-700 dark:text-blue-400',
-  proposal: 'bg-green-500/10 text-green-700 dark:text-green-400',
-  nda: 'bg-purple-500/10 text-purple-700 dark:text-purple-400',
-  report: 'bg-amber-500/10 text-amber-700 dark:text-amber-400',
+  contract: 'bg-muted text-foreground',
+  proposal: 'bg-muted text-foreground',
+  nda: 'bg-muted text-foreground',
+  report: 'bg-muted text-foreground',
   letter: 'bg-muted text-muted-foreground',
-  invoice: 'bg-cyan-500/10 text-cyan-700 dark:text-cyan-400',
+  invoice: 'bg-muted text-foreground',
   other: 'bg-muted text-muted-foreground',
 }
 

@@ -229,13 +229,13 @@ export function WorkflowCanvas({ initialLayout, templateName, onSave, saving }: 
       <div className="flex-1 flex flex-col">
         {/* Toolbar */}
         <div className="flex items-center justify-between border-b bg-background px-4 py-2">
-          <h2 className="text-sm font-semibold text-foreground truncate">{templateName}</h2>
+          <h2 className="text-sm font-medium text-foreground truncate">{templateName}</h2>
           <div className="flex items-center gap-2">
             {selectedNode && (
               <button
                 type="button"
                 onClick={handleDeleteSelected}
-                className="rounded-md border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-100"
+                className="rounded-md border border-destructive/20 bg-destructive/5 px-3 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/10"
               >
                 Delete Node
               </button>
@@ -277,7 +277,7 @@ export function WorkflowCanvas({ initialLayout, templateName, onSave, saving }: 
               nodeStrokeWidth={3}
               zoomable
               pannable
-              className="!bg-background !border !rounded-lg !shadow-sm"
+              className="!bg-background !border !border-border !rounded-lg"
             />
             <Background variant={BackgroundVariant.Dots} gap={15} size={1} color="hsl(var(--border))" />
           </ReactFlow>

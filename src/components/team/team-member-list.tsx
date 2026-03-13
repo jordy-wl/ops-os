@@ -21,10 +21,10 @@ interface TeamMemberListProps {
 }
 
 const STATUS_BADGE: Record<string, string> = {
-  active: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-  on_leave: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-  offboarding: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
-  inactive: 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400',
+  active: 'bg-success/10 text-success',
+  on_leave: 'bg-warning/10 text-warning',
+  offboarding: 'bg-warning/10 text-warning',
+  inactive: 'bg-muted text-muted-foreground',
 }
 
 export function TeamMemberList({ members, departments }: TeamMemberListProps) {

@@ -1,9 +1,16 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { cn } from '@/lib/utils'
 import { DynamicFieldRenderer } from '@/components/blocks/dynamic-field-renderer'
 import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 
 interface BlockTypeDefinition {
   id: string
@@ -92,15 +99,6 @@ export function CreateBlockModal({ onClose, onCreated }: CreateBlockModalProps) 
   useEffect(() => {
     if (!typesLoading) nameRef.current?.focus()
   }, [typesLoading])
-
-  // Close on Escape
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') onClose()
-    }
-    document.addEventListener('keydown', onKey)
-    return () => document.removeEventListener('keydown', onKey)
-  }, [onClose])
 
   const selectedType = blockTypes.find((t) => t.type_name === type)
 
@@ -304,29 +302,18 @@ export function CreateBlockModal({ onClose, onCreated }: CreateBlockModalProps) 
       : FALLBACK_TYPES.map((t) => ({ value: t, label: t }))
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="create-block-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-    >
-      <div
-        className="absolute inset-0 bg-black/40"
-        onClick={onClose}
-        aria-hidden="true"
-      />
-
-      <div className="relative w-full max-w-lg rounded-lg bg-background p-6 shadow-lg max-h-[85vh] overflow-y-auto">
-        <h2
-          id="create-block-title"
-          className="text-lg font-semibold text-foreground mb-4"
-        >
-          Create Block
-        </h2>
+    <Dialog open onOpenChange={(v) => { if (!v) onClose() }}>
+      <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Create Block</DialogTitle>
+          <DialogDescription className="sr-only">
+            Fill out the form below to create a new block.
+          </DialogDescription>
+        </DialogHeader>
 
         {typesLoading ? (
           <div
-            className="py-8 text-center text-sm text-muted-foreground"
+            className="py-8 text-center text-[13px] text-muted-foreground"
             aria-busy="true"
           >
             Loading types…
@@ -336,7 +323,7 @@ export function CreateBlockModal({ onClose, onCreated }: CreateBlockModalProps) 
             {/* Block type */}
             <label
               htmlFor="block-type"
-              className="block text-sm font-medium text-foreground mb-1"
+              className="block text-[13px] font-medium text-foreground mb-1"
             >
               Type
             </label>
@@ -344,7 +331,7 @@ export function CreateBlockModal({ onClose, onCreated }: CreateBlockModalProps) 
               id="block-type"
               value={type}
               onChange={(e) => handleTypeChange(e.target.value)}
-              className="mb-4 w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              className="mb-4 w-full h-8 rounded-md border border-border bg-background px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-ring"
             >
               {typeOptions.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -356,7 +343,7 @@ export function CreateBlockModal({ onClose, onCreated }: CreateBlockModalProps) 
             {/* Block name */}
             <label
               htmlFor="block-name"
-              className="block text-sm font-medium text-foreground mb-1"
+              className="block text-[13px] font-medium text-foreground mb-1"
             >
               Name
             </label>
@@ -369,7 +356,7 @@ export function CreateBlockModal({ onClose, onCreated }: CreateBlockModalProps) 
               placeholder="e.g. Thornfield Capital Partners"
               maxLength={255}
               required
-              className="mb-4 w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              className="mb-4 w-full h-8 rounded-md border border-border bg-background px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-ring"
             />
 
             {/* AI-assisted field suggestion toggle */}
@@ -377,7 +364,7 @@ export function CreateBlockModal({ onClose, onCreated }: CreateBlockModalProps) 
               <button
                 type="button"
                 onClick={() => setShowAiPanel(!showAiPanel)}
-                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                className="flex items-center gap-2 text-[13px] text-muted-foreground hover:text-foreground transition-colors rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <svg
                   width="14"
@@ -410,7 +397,7 @@ export function CreateBlockModal({ onClose, onCreated }: CreateBlockModalProps) 
                   placeholder="e.g. Financial services client with compliance tracking, risk assessment, and revenue data"
                   rows={2}
                   maxLength={500}
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none mb-2"
+                  className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-[13px] focus:outline-none focus:ring-2 focus:ring-ring resize-none mb-2"
                 />
                 <Button
                   type="button"
@@ -587,37 +574,31 @@ export function CreateBlockModal({ onClose, onCreated }: CreateBlockModalProps) 
               </p>
             )}
 
-            <div className="flex gap-3 justify-end">
-              <button
+            <DialogFooter>
+              <Button
                 type="button"
+                variant="outline"
+                size="sm"
                 onClick={onClose}
-                className={cn(
-                  'px-4 py-2 rounded-md text-sm font-medium border border-border text-foreground',
-                  'hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
-                )}
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 type="submit"
+                size="sm"
                 disabled={submitting || !name.trim() || !type}
-                className={cn(
-                  'px-4 py-2 rounded-md text-sm font-medium bg-primary text-primary-foreground',
-                  'hover:bg-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                  'disabled:opacity-50 disabled:cursor-not-allowed'
-                )}
               >
                 {submitting
                   ? 'Creating…'
                   : aiResult && acceptedFields.size > 0
                     ? `Create + Apply ${acceptedFields.size} Fields`
                     : 'Create'}
-              </button>
-            </div>
+              </Button>
+            </DialogFooter>
           </form>
         )}
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   )
 }
 

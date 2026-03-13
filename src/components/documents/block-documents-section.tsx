@@ -82,7 +82,8 @@ export function BlockDocumentsSection({ blockId }: BlockDocumentsSectionProps) {
             <button
               key={doc.id}
               onClick={() => setPreviewDocId(doc.id)}
-              className="w-full text-left flex items-center justify-between gap-2 px-3 py-2 rounded-md hover:bg-muted transition text-sm"
+              aria-label={`Preview document: ${doc.title}`}
+              className="w-full text-left flex items-center justify-between gap-2 px-3 py-2 rounded-md hover:bg-muted transition text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <div className="flex items-center gap-2 min-w-0">
                 <span className="text-muted-foreground shrink-0" aria-hidden="true">

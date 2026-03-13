@@ -412,7 +412,7 @@ export function FieldManager({
               handleDeleteField(field.name)
             }}
             disabled={isDeleting === field.name}
-            className="flex-shrink-0 p-1 text-muted-foreground hover:text-red-500 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+            className="flex-shrink-0 p-1 text-muted-foreground hover:text-destructive transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
             aria-label={`Delete field ${field.name}`}
             title="Delete field"
           >
@@ -574,7 +574,7 @@ export function FieldManager({
                         <button
                           onClick={() => handleDeleteGroup(group.id)}
                           disabled={isDeletingGroup === group.id}
-                          className="p-1 text-muted-foreground hover:text-red-500 rounded transition-colors"
+                          className="p-1 text-muted-foreground hover:text-destructive rounded transition-colors"
                           aria-label={`Delete group ${group.label}`}
                           title="Delete group (moves fields to General)"
                         >

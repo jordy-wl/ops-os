@@ -15,8 +15,8 @@ function TriggerNodeComponent({ data, selected }: NodeProps & { data: TriggerNod
   return (
     <div
       className={cn(
-        'min-w-[180px] rounded-lg border-2 bg-blue-50 px-4 py-3 shadow-sm',
-        selected ? 'border-blue-600 ring-2 ring-blue-200' : 'border-blue-300'
+        'min-w-[180px] rounded-md border bg-card px-4 py-3 shadow-elevation-1',
+        selected ? 'border-blue-600 ring-2 ring-ring' : 'border-border'
       )}
     >
       <div className="flex items-center gap-2">

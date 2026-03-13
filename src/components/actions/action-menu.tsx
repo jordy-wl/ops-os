@@ -264,7 +264,7 @@ export function ActionMenu({ blockId, blockName, blockType, googleConnectorId }:
                 <div key={field.name}>
                   <label htmlFor={`action-${field.name}`} className="block text-sm font-medium text-foreground mb-1">
                     {field.label}
-                    {field.required && <span className="text-red-500 ml-0.5">*</span>}
+                    {field.required && <span className="text-destructive ml-0.5">*</span>}
                   </label>
                   {field.type === 'textarea' ? (
                     <textarea
@@ -291,7 +291,7 @@ export function ActionMenu({ blockId, blockName, blockType, googleConnectorId }:
               ))}
 
               {result && (
-                <p role="alert" className={cn('text-sm', result.ok ? 'text-green-600' : 'text-red-600')}>
+                <p role="alert" className={cn('text-[13px]', result.ok ? 'text-success' : 'text-destructive')}>
                   {result.message}
                 </p>
               )}

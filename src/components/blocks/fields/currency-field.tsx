@@ -26,7 +26,7 @@ export function CurrencyField({ name, value, onChange, fieldDef, mode, required 
   return (
     <div>
       <label htmlFor={id} className="block text-sm font-medium text-muted-foreground mb-1 capitalize">
-        {label}{required && <span className="text-red-500 ml-0.5">*</span>}
+        {label}{required && <span className="text-destructive ml-0.5">*</span>}
       </label>
       <div className="relative">
         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">{symbol}</span>

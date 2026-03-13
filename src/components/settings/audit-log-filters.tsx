@@ -149,7 +149,7 @@ export function AuditLogFilters({
             disabled={!hasActiveFilters}
             className={cn(
               'rounded-md border border-input px-4 py-1.5 text-sm font-medium transition-colors',
-              'focus:outline-none focus:ring-2 focus:ring-ring',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
               hasActiveFilters
                 ? 'bg-background text-foreground hover:bg-muted cursor-pointer'
                 : 'bg-muted text-muted-foreground cursor-not-allowed'

@@ -4,6 +4,14 @@ import { useState, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 
 const CATEGORIES = [
   { value: 'contract', label: 'Contract' },
@@ -124,23 +132,15 @@ export function TemplateUploadDialog({ open, onClose }: TemplateUploadDialogProp
     }
   }, [file, name, category, router, resetForm, onClose])
 
-  if (!open) return null
-
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-      onClick={handleClose}
-      role="dialog"
-      aria-modal="true"
-      aria-label="Upload template"
-    >
-      <div
-        className="bg-background border border-border rounded-lg shadow-lg w-full max-w-md mx-4 p-6"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h2 className="text-lg font-semibold text-foreground mb-4">
-          Upload Reference Template
-        </h2>
+    <Dialog open={open} onOpenChange={(v) => { if (!v) handleClose() }}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Upload Reference Template</DialogTitle>
+          <DialogDescription className="sr-only">
+            Upload a reference file to create a new document template.
+          </DialogDescription>
+        </DialogHeader>
 
         {error && (
           <div className="mb-4 rounded-md bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive" role="alert">
@@ -149,7 +149,7 @@ export function TemplateUploadDialog({ open, onClose }: TemplateUploadDialogProp
         )}
 
         {progress === 'done' && (
-          <div className="mb-4 rounded-md bg-green-500/10 border border-green-500/20 px-4 py-3 text-sm text-green-700 dark:text-green-400" role="status">
+          <div className="mb-4 rounded-md bg-success/10 border border-success/20 px-4 py-3 text-[13px] text-success" role="status">
             Template uploaded and analyzed successfully.
           </div>
         )}
@@ -225,7 +225,7 @@ export function TemplateUploadDialog({ open, onClose }: TemplateUploadDialogProp
         )}
 
         {/* Actions */}
-        <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-border">
+        <DialogFooter className="mt-6 pt-4 border-t border-border">
           <Button
             variant="outline"
             size="sm"
@@ -241,8 +241,8 @@ export function TemplateUploadDialog({ open, onClose }: TemplateUploadDialogProp
           >
             {uploading ? 'Uploading...' : 'Upload Template'}
           </Button>
-        </div>
-      </div>
-    </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
