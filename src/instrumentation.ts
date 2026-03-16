@@ -7,8 +7,12 @@
  *   Configure the cron schedule in vercel.json (DevOps task: P1-S2-OPS-01).
  */
 export async function register() {
-  // Only start the polling loop in the Node.js runtime (not edge)
+  // Only run in Node.js runtime (not edge)
   if (process.env.NEXT_RUNTIME !== 'nodejs') return
+
+  // Validate environment variables on server startup (all environments)
+  await import('@/lib/env')
+
   // Only poll in development — production uses Vercel Cron
   if (process.env.NODE_ENV !== 'development') return
 
