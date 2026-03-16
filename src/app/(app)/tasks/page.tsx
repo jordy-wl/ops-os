@@ -5,6 +5,28 @@ import { resolveOrgId } from '@/lib/auth/resolve-org'
 import { TaskListClient } from '@/components/tasks/task-list-client'
 import { logger } from '@/lib/logger'
 
+export interface TaskFormField {
+  type: 'text' | 'textarea' | 'select' | 'number' | 'date' | 'checkbox'
+  name: string
+  label: string
+  required?: boolean
+  options?: string[]
+  max_length?: number
+  source?: string
+}
+
+export interface TaskFormAction {
+  label: string
+  value: string
+  style?: 'primary' | 'destructive' | 'outline' | 'secondary'
+}
+
+export interface TaskFormSchema {
+  title?: string
+  fields?: TaskFormField[]
+  actions?: TaskFormAction[]
+}
+
 export interface TaskItem {
   id: string
   name: string
@@ -22,6 +44,9 @@ export interface TaskItem {
   routing_decision: 'human' | 'agent' | 'approval_chain' | null
   routing_reason: string | null
   decision: 'approved' | 'rejected' | 'modified' | null
+  // Task form schema (Phase 4)
+  task_form_schema: TaskFormSchema | null
+  priority: 'low' | 'medium' | 'high' | 'urgent' | null
 }
 
 export default async function TasksPage() {
@@ -49,7 +74,7 @@ export default async function TasksPage() {
       org_id: internalOrgId,
     })
     return (
-      <div className="p-6 lg:p-8">
+      <div className="p-6 lg:p-8 max-w-7xl mx-auto">
         <h1 className="text-2xl font-semibold text-foreground mb-6">My Tasks</h1>
         <TaskListClient initialTasks={null} currentUserId={userId} />
       </div>
@@ -97,11 +122,13 @@ export default async function TasksPage() {
       routing_decision: (meta.routing_decision as TaskItem['routing_decision']) ?? null,
       routing_reason: (meta.routing_reason as string) ?? null,
       decision: (meta.decision as TaskItem['decision']) ?? null,
+      task_form_schema: (meta.task_form_schema as TaskFormSchema) ?? null,
+      priority: (meta.priority as TaskItem['priority']) ?? null,
     }
   })
 
   return (
-    <div className="p-6 lg:p-8">
+    <div className="p-6 lg:p-8 max-w-7xl mx-auto">
       <h1 className="text-2xl font-semibold text-foreground mb-6">My Tasks</h1>
       <TaskListClient initialTasks={initialTasks} currentUserId={userId} />
     </div>

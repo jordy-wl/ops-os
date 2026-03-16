@@ -101,13 +101,23 @@ export const POST = withAuth(requirePermission(['manage_integrations'], async (r
     return apiError('Failed to create integration', 'db/insert-failed', 500)
   }
 
-  // Emit integration.connector.created event (fire-and-forget via a block-less event is not ideal,
-  // so we create a lightweight log — connectors aren't Blocks, so no block_id)
   logger.info('api-integrations', 'connector.created', {
     connector_id: connector.id,
     provider: connector.provider,
     direction: connector.direction,
   })
+
+  // Auto-register known actions for this provider (fire-and-forget)
+  import('@/lib/integrations/auto-register-actions')
+    .then(({ autoRegisterIntegrationActions }) =>
+      autoRegisterIntegrationActions(supabase, ctx.orgId, {
+        id: connector.id,
+        provider: connector.provider,
+        name: parsed.data.name,
+        config: parsed.data.config ?? {},
+      }, ctx.userId)
+    )
+    .catch(() => { /* non-blocking */ })
 
   // Build response with webhook URL for inbound connectors
   const response: Record<string, unknown> = { ...connector }

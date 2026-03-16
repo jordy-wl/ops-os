@@ -26,7 +26,7 @@ export default async function IntegrationLibraryPage() {
     .limit(100)
 
   return (
-    <div className="p-6 lg:p-8">
+    <div className="p-6 lg:p-8 max-w-7xl mx-auto">
       <PageHeader
         title="Integration Library"
         subtitle="Available capabilities and connections"

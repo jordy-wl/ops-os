@@ -32,7 +32,7 @@ export function GenerateDocumentModal({
   const [templates, setTemplates] = useState<Template[]>([])
   const [selectedTemplateId, setSelectedTemplateId] = useState('')
   const [prompt, setPrompt] = useState('')
-  const [outputFormat, setOutputFormat] = useState<'html' | 'pdf'>('html')
+  const [outputFormat, setOutputFormat] = useState<'html' | 'pdf' | 'docx'>('html')
   const [generating, setGenerating] = useState(false)
   const [result, setResult] = useState<{ success: boolean; message: string } | null>(null)
 
@@ -79,18 +79,49 @@ export function GenerateDocumentModal({
         payload.prompt = prompt
       }
 
-      const res = await fetch('/api/actions/document.generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
+      // DOCX generation uses a different endpoint
+      if (outputFormat === 'docx' && mode === 'template') {
+        const docxRes = await fetch('/api/documents/docx/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            template_id: selectedTemplateId,
+            source_block_id: blockId,
+            store: true,
+          }),
+        })
 
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        throw new Error(data.error?.message ?? `Generation failed (${res.status})`)
+        if (!docxRes.ok) {
+          const data = await docxRes.json().catch(() => ({}))
+          throw new Error(data.error?.message ?? `DOCX generation failed (${docxRes.status})`)
+        }
+
+        // Trigger download
+        const blob = await docxRes.blob()
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = docxRes.headers.get('Content-Disposition')?.split('filename="')[1]?.replace('"', '') ?? 'document.docx'
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
+
+        setResult({ success: true, message: 'DOCX generated and downloaded!' })
+      } else {
+        const res = await fetch('/api/actions/document.generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
+
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}))
+          throw new Error(data.error?.message ?? `Generation failed (${res.status})`)
+        }
+
+        setResult({ success: true, message: 'Document generated successfully!' })
       }
-
-      setResult({ success: true, message: 'Document generated successfully!' })
     } catch (err) {
       setResult({
         success: false,
@@ -196,11 +227,12 @@ export function GenerateDocumentModal({
             <select
               id="output-format"
               value={outputFormat}
-              onChange={(e) => setOutputFormat(e.target.value as 'html' | 'pdf')}
+              onChange={(e) => setOutputFormat(e.target.value as 'html' | 'pdf' | 'docx')}
               className="w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="html">HTML (preview in browser)</option>
               <option value="pdf">PDF (download)</option>
+              <option value="docx">Word (.docx) — from template</option>
             </select>
           </div>
 

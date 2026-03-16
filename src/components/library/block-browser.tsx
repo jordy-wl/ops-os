@@ -172,11 +172,11 @@ export function BlockBrowser({ blocks, typeDefinitions }: BlockBrowserProps) {
                   href={`/blocks/${block.id}`}
                   aria-label={`${block.name} — ${block.type}`}
                   className={cn(
-                    'block rounded-md border border-border bg-card hover:bg-muted/50 transition-colors',
+                    'block rounded-xl border border-border bg-card hover:bg-muted/50 transition-colors',
                     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
                   )}
                 >
-                  <div className="p-4">
+                  <div className="p-6">
                     <h3 className="text-[13px] font-medium text-foreground truncate">{block.name}</h3>
                     <div className="flex items-center gap-2 mt-2">
                       <span className="inline-flex rounded-full bg-muted text-foreground px-2 py-0.5 text-[11px] font-medium">

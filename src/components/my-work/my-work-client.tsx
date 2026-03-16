@@ -224,7 +224,7 @@ export function MyWorkClient({ initialData, currentUserId }: MyWorkClientProps) 
 
   if (!initialData) {
     return (
-      <div className="p-6 lg:p-8">
+      <div className="p-6 lg:p-8 max-w-7xl mx-auto">
         <h1 className="text-page font-semibold text-foreground mb-6">My Work</h1>
         <div className="rounded-md border border-destructive/20 bg-destructive/5 p-6 text-center" role="alert">
           <p className="text-[13px] font-medium text-destructive">Failed to load data.</p>
@@ -235,7 +235,7 @@ export function MyWorkClient({ initialData, currentUserId }: MyWorkClientProps) 
   }
 
   return (
-    <div className="p-6 lg:p-8">
+    <div className="p-6 lg:p-8 max-w-7xl mx-auto">
       <h1 className="text-page font-semibold text-foreground mb-6">My Work</h1>
 
       {/* Tab bar */}

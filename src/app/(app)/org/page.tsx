@@ -87,7 +87,7 @@ function formatBlockType(type: string): string {
 
 function MetricCard({ icon: Icon, value, label }: MetricCardProps) {
   return (
-    <div className="rounded-md border border-border bg-card p-4">
+    <div className="rounded-xl border border-border bg-card p-6">
       <div className="flex items-center gap-3">
         <Icon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
         <div>
@@ -350,9 +350,9 @@ function LoadingSkeleton() {
         </div>
 
         {/* Metric cards skeleton */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="rounded-md border border-border bg-card p-4">
+            <div key={i} className="rounded-xl border border-border bg-card p-6">
               <div className="flex items-center gap-3">
                 <div className="h-4 w-4 bg-muted rounded" />
                 <div>
@@ -491,7 +491,7 @@ export default function OrgOverviewPage() {
       </div>
 
       {/* Metric cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <MetricCard icon={Boxes} value={data.blocks.total} label="Total Blocks" />
         <MetricCard icon={Users} value={data.team.total} label="Team Size" />
         <MetricCard icon={GitBranch} value={data.workflows.active} label="Active Workflows" />

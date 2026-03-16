@@ -152,7 +152,7 @@ export function DocumentBrowser({
               <Link
                 key={t.id}
                 href={`/blocks/${t.id}`}
-                className="block border border-border rounded-md p-4 bg-card hover:border-foreground/10 transition-colors duration-150 group"
+                className="block border border-border rounded-xl p-6 bg-card hover:border-foreground/10 transition-colors duration-150 group"
                 role="listitem"
               >
                 <div className="flex items-start justify-between mb-2">

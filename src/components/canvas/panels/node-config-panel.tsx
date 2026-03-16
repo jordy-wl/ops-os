@@ -1,10 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { X, User, Bot, GitPullRequest, Link2, Eye, PenLine } from 'lucide-react'
+import { X, User, Bot, GitPullRequest, Link2, Eye, PenLine, Plus, Trash2 } from 'lucide-react'
 import type { Node } from '@xyflow/react'
 import { cn } from '@/lib/utils'
 import { PERMISSIONS, type Permission } from '@/lib/rbac/types'
+import type { OrgEntities } from '../hooks/use-org-entities'
 
 const ROUTING_MODE_OPTIONS = [
   { value: 'policy_default', label: 'Inherit from Policy' },
@@ -38,6 +39,7 @@ interface NodeConfigPanelProps {
   node: Node
   onUpdate: (nodeId: string, data: Record<string, unknown>) => void
   onClose: () => void
+  entities?: OrgEntities
 }
 
 function FieldLabel({ htmlFor, children }: { htmlFor: string; children: React.ReactNode }) {
@@ -124,9 +126,61 @@ function NumberInput({
   )
 }
 
+// ─── Entity-aware Select ────────────────────────────────────────────────────
+
+function EntitySelect({
+  id,
+  value,
+  onChange,
+  options,
+  placeholder,
+  allowFreeText,
+}: {
+  id: string
+  value: string
+  onChange: (v: string) => void
+  options: { value: string; label: string }[]
+  placeholder?: string
+  allowFreeText?: boolean
+}) {
+  const hasMatch = options.some((o) => o.value === value)
+  const showFreeText = allowFreeText && value && !hasMatch
+
+  return (
+    <div>
+      <select
+        id={id}
+        value={hasMatch ? value : '__custom__'}
+        onChange={(e) => {
+          if (e.target.value === '__custom__') return
+          onChange(e.target.value)
+        }}
+        className="w-full rounded-md border border-border px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+      >
+        <option value="">{placeholder ?? 'Select…'}</option>
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+        {allowFreeText && <option value="__custom__">Enter manually…</option>}
+      </select>
+      {showFreeText && (
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="Enter ID manually"
+          className="mt-1 w-full rounded-md border border-border px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+        />
+      )}
+    </div>
+  )
+}
+
 // ─── Trigger Config ─────────────────────────────────────────────────────────
 
-function TriggerConfig({ node, onUpdate }: Pick<NodeConfigPanelProps, 'node' | 'onUpdate'>) {
+function TriggerConfig({ node, onUpdate, entities }: Pick<NodeConfigPanelProps, 'node' | 'onUpdate' | 'entities'>) {
   const data = node.data as Record<string, unknown>
   const config = (data.config ?? {}) as Record<string, unknown>
   const triggerType = (config.triggerType as string) ?? 'manual'
@@ -139,6 +193,10 @@ function TriggerConfig({ node, onUpdate }: Pick<NodeConfigPanelProps, 'node' | '
     })
   }
 
+  const connectorOptions = (entities?.connectors ?? [])
+    .filter((c) => c.status === 'active')
+    .map((c) => ({ value: c.id, label: c.label }))
+
   return (
     <>
       <div className="mb-3">
@@ -149,7 +207,7 @@ function TriggerConfig({ node, onUpdate }: Pick<NodeConfigPanelProps, 'node' | '
           onChange={(v) => update('triggerType', v)}
           options={[
             { value: 'manual', label: 'Manual Start' },
-            { value: 'event', label: 'Event Trigger' },
+            { value: 'event', label: 'When Event Occurs' },
             { value: 'webhook', label: 'Webhook' },
           ]}
         />
@@ -163,17 +221,29 @@ function TriggerConfig({ node, onUpdate }: Pick<NodeConfigPanelProps, 'node' | '
             onChange={(v) => update('event_pattern', v)}
             placeholder="e.g. block.created"
           />
+          <p className="mt-1 text-xs text-muted-foreground">The activity type that starts this workflow</p>
         </div>
       )}
       {triggerType === 'webhook' && (
         <div className="mb-3">
-          <FieldLabel htmlFor="connector-id">Connector ID</FieldLabel>
-          <TextInput
-            id="connector-id"
-            value={(config.connector_id as string) ?? ''}
-            onChange={(v) => update('connector_id', v)}
-            placeholder="UUID of integration connector"
-          />
+          <FieldLabel htmlFor="connector-id">Integration</FieldLabel>
+          {connectorOptions.length > 0 ? (
+            <EntitySelect
+              id="connector-id"
+              value={(config.connector_id as string) ?? ''}
+              onChange={(v) => update('connector_id', v)}
+              options={connectorOptions}
+              placeholder="Select integration…"
+              allowFreeText
+            />
+          ) : (
+            <TextInput
+              id="connector-id"
+              value={(config.connector_id as string) ?? ''}
+              onChange={(v) => update('connector_id', v)}
+              placeholder="Integration connector ID"
+            />
+          )}
         </div>
       )}
     </>
@@ -182,7 +252,7 @@ function TriggerConfig({ node, onUpdate }: Pick<NodeConfigPanelProps, 'node' | '
 
 // ─── Action Config ──────────────────────────────────────────────────────────
 
-function ActionConfig({ node, onUpdate }: Pick<NodeConfigPanelProps, 'node' | 'onUpdate'>) {
+function ActionConfig({ node, onUpdate, entities }: Pick<NodeConfigPanelProps, 'node' | 'onUpdate' | 'entities'>) {
   const data = node.data as Record<string, unknown>
   const config = (data.config ?? {}) as Record<string, unknown>
   const stepType = (data.stepType as string) ?? 'emit_event'
@@ -194,6 +264,14 @@ function ActionConfig({ node, onUpdate }: Pick<NodeConfigPanelProps, 'node' | 'o
   function updateConfig(field: string, value: unknown) {
     onUpdate(node.id, { ...data, config: { ...config, [field]: value } })
   }
+
+  const connectorOptions = (entities?.connectors ?? [])
+    .filter((c) => c.status === 'active')
+    .map((c) => ({ value: c.id, label: c.label }))
+
+  const docTemplateOptions = (entities?.blocks ?? [])
+    .filter((b) => b.type === 'document_template')
+    .map((b) => ({ value: b.id, label: b.name }))
 
   return (
     <>
@@ -213,26 +291,27 @@ function ActionConfig({ node, onUpdate }: Pick<NodeConfigPanelProps, 'node' | 'o
           value={stepType}
           onChange={(v) => updateData('stepType', v)}
           options={[
-            { value: 'emit_event', label: 'Emit Event' },
+            { value: 'emit_event', label: 'Log Activity' },
             { value: 'run_action', label: 'Run Action' },
-            { value: 'call_api', label: 'Call API' },
+            { value: 'call_api', label: 'Call External API' },
             { value: 'send_email', label: 'Send Email' },
             { value: 'generate_document', label: 'Generate Document' },
             { value: 'book_meeting', label: 'Book Meeting' },
-            { value: 'update_block', label: 'Update Block' },
+            { value: 'update_block', label: 'Update Record' },
           ]}
         />
       </div>
 
       {stepType === 'emit_event' && (
         <div className="mb-3">
-          <FieldLabel htmlFor="event-type">Event Type</FieldLabel>
+          <FieldLabel htmlFor="event-type">Activity Type</FieldLabel>
           <TextInput
             id="event-type"
             value={(config.event_type as string) ?? ''}
             onChange={(v) => updateConfig('event_type', v)}
             placeholder="e.g. onboarding.started"
           />
+          <p className="mt-1 text-xs text-muted-foreground">Appears on the block&apos;s timeline</p>
         </div>
       )}
       {stepType === 'run_action' && (
@@ -249,13 +328,24 @@ function ActionConfig({ node, onUpdate }: Pick<NodeConfigPanelProps, 'node' | 'o
       {stepType === 'call_api' && (
         <>
           <div className="mb-3">
-            <FieldLabel htmlFor="api-connector">Connector ID</FieldLabel>
-            <TextInput
-              id="api-connector"
-              value={(config.connector_id as string) ?? ''}
-              onChange={(v) => updateConfig('connector_id', v)}
-              placeholder="UUID of integration connector"
-            />
+            <FieldLabel htmlFor="api-connector">Integration</FieldLabel>
+            {connectorOptions.length > 0 ? (
+              <EntitySelect
+                id="api-connector"
+                value={(config.connector_id as string) ?? ''}
+                onChange={(v) => updateConfig('connector_id', v)}
+                options={connectorOptions}
+                placeholder="Select integration…"
+                allowFreeText
+              />
+            ) : (
+              <TextInput
+                id="api-connector"
+                value={(config.connector_id as string) ?? ''}
+                onChange={(v) => updateConfig('connector_id', v)}
+                placeholder="Integration connector ID"
+              />
+            )}
           </div>
           <div className="mb-3">
             <FieldLabel htmlFor="api-method">HTTP Method</FieldLabel>
@@ -286,13 +376,24 @@ function ActionConfig({ node, onUpdate }: Pick<NodeConfigPanelProps, 'node' | 'o
       {stepType === 'send_email' && (
         <>
           <div className="mb-3">
-            <FieldLabel htmlFor="email-connector">Google Connector ID</FieldLabel>
-            <TextInput
-              id="email-connector"
-              value={(config.connector_id as string) ?? ''}
-              onChange={(v) => updateConfig('connector_id', v)}
-              placeholder="UUID of Google connector"
-            />
+            <FieldLabel htmlFor="email-connector">Email Integration</FieldLabel>
+            {connectorOptions.length > 0 ? (
+              <EntitySelect
+                id="email-connector"
+                value={(config.connector_id as string) ?? ''}
+                onChange={(v) => updateConfig('connector_id', v)}
+                options={connectorOptions}
+                placeholder="Select email integration…"
+                allowFreeText
+              />
+            ) : (
+              <TextInput
+                id="email-connector"
+                value={(config.connector_id as string) ?? ''}
+                onChange={(v) => updateConfig('connector_id', v)}
+                placeholder="Google connector ID"
+              />
+            )}
           </div>
           <div className="mb-3">
             <FieldLabel htmlFor="email-to">To</FieldLabel>
@@ -317,13 +418,24 @@ function ActionConfig({ node, onUpdate }: Pick<NodeConfigPanelProps, 'node' | 'o
       {stepType === 'generate_document' && (
         <>
           <div className="mb-3">
-            <FieldLabel htmlFor="doc-template">Template ID (optional)</FieldLabel>
-            <TextInput
-              id="doc-template"
-              value={(config.template_id as string) ?? ''}
-              onChange={(v) => updateConfig('template_id', v)}
-              placeholder="UUID of document template (or leave blank for AI)"
-            />
+            <FieldLabel htmlFor="doc-template">Document Template</FieldLabel>
+            {docTemplateOptions.length > 0 ? (
+              <EntitySelect
+                id="doc-template"
+                value={(config.template_id as string) ?? ''}
+                onChange={(v) => updateConfig('template_id', v)}
+                options={[{ value: '', label: 'None — use AI generation' }, ...docTemplateOptions]}
+                placeholder="Select template…"
+                allowFreeText
+              />
+            ) : (
+              <TextInput
+                id="doc-template"
+                value={(config.template_id as string) ?? ''}
+                onChange={(v) => updateConfig('template_id', v)}
+                placeholder="Template ID (leave blank for AI)"
+              />
+            )}
           </div>
           <div className="mb-3">
             <FieldLabel htmlFor="doc-prompt">AI Prompt (if no template)</FieldLabel>
@@ -351,13 +463,24 @@ function ActionConfig({ node, onUpdate }: Pick<NodeConfigPanelProps, 'node' | 'o
       {stepType === 'book_meeting' && (
         <>
           <div className="mb-3">
-            <FieldLabel htmlFor="meeting-connector">Google Connector ID</FieldLabel>
-            <TextInput
-              id="meeting-connector"
-              value={(config.connector_id as string) ?? ''}
-              onChange={(v) => updateConfig('connector_id', v)}
-              placeholder="UUID of Google connector"
-            />
+            <FieldLabel htmlFor="meeting-connector">Calendar Integration</FieldLabel>
+            {connectorOptions.length > 0 ? (
+              <EntitySelect
+                id="meeting-connector"
+                value={(config.connector_id as string) ?? ''}
+                onChange={(v) => updateConfig('connector_id', v)}
+                options={connectorOptions}
+                placeholder="Select calendar integration…"
+                allowFreeText
+              />
+            ) : (
+              <TextInput
+                id="meeting-connector"
+                value={(config.connector_id as string) ?? ''}
+                onChange={(v) => updateConfig('connector_id', v)}
+                placeholder="Google connector ID"
+              />
+            )}
           </div>
           <div className="mb-3">
             <FieldLabel htmlFor="meeting-title">Meeting Title</FieldLabel>
@@ -380,7 +503,7 @@ function ActionConfig({ node, onUpdate }: Pick<NodeConfigPanelProps, 'node' | 'o
         </>
       )}
       {stepType === 'update_block' && (
-        <UpdateBlockConfig node={node} onUpdate={onUpdate} />
+        <UpdateBlockConfig node={node} onUpdate={onUpdate} entities={entities} />
       )}
 
       {/* ── Routing Configuration ─────────────────────────────────────────── */}
@@ -438,7 +561,7 @@ function ActionConfig({ node, onUpdate }: Pick<NodeConfigPanelProps, 'node' | 'o
 
 // ─── Update Block Config ────────────────────────────────────────────────────
 
-function UpdateBlockConfig({ node, onUpdate }: Pick<NodeConfigPanelProps, 'node' | 'onUpdate'>) {
+function UpdateBlockConfig({ node, onUpdate, entities }: Pick<NodeConfigPanelProps, 'node' | 'onUpdate' | 'entities'>) {
   const data = node.data as Record<string, unknown>
   const config = (data.config ?? {}) as Record<string, unknown>
   const fields = (config.fields ?? {}) as Record<string, string>
@@ -475,15 +598,29 @@ function UpdateBlockConfig({ node, onUpdate }: Pick<NodeConfigPanelProps, 'node'
   return (
     <>
       <div className="mb-3">
-        <FieldLabel htmlFor="ub-block-id">Target Block ID</FieldLabel>
-        <TextInput
-          id="ub-block-id"
-          value={(config.block_id as string) ?? ''}
-          onChange={(v) => updateConfig('block_id', v)}
-          placeholder="UUID or {{context.source_block_id}}"
-        />
+        <FieldLabel htmlFor="ub-block-id">Target Record</FieldLabel>
+        {(entities?.blocks ?? []).length > 0 ? (
+          <EntitySelect
+            id="ub-block-id"
+            value={(config.block_id as string) ?? ''}
+            onChange={(v) => updateConfig('block_id', v)}
+            options={[
+              { value: '{{context.source_block_id}}', label: 'Trigger block (current record)' },
+              ...(entities?.blocks ?? []).map((b) => ({ value: b.id, label: `${b.name} (${b.type})` })),
+            ]}
+            placeholder="Select target record…"
+            allowFreeText
+          />
+        ) : (
+          <TextInput
+            id="ub-block-id"
+            value={(config.block_id as string) ?? ''}
+            onChange={(v) => updateConfig('block_id', v)}
+            placeholder="UUID or {{context.source_block_id}}"
+          />
+        )}
         <p className="mt-1 text-xs text-muted-foreground">
-          Use {'{{context.source_block_id}}'} for the trigger block, or a literal UUID.
+          Choose which record to update when this step runs
         </p>
       </div>
 
@@ -693,10 +830,9 @@ function InputConfig({ node, onUpdate }: Pick<NodeConfigPanelProps, 'node' | 'on
 // ─── Output Config ─────────────────────────────────────────────────────────
 
 const OUTPUT_TYPE_OPTIONS = [
-  { value: 'update_fields', label: 'Update Block Fields' },
-  { value: 'api_call', label: 'API Call' },
-  { value: 'emit_event', label: 'Emit Event' },
-  { value: 'document', label: 'Generate Document' },
+  { value: 'update_fields', label: 'Save to Record' },
+  { value: 'api_call', label: 'Send to External System' },
+  { value: 'emit_event', label: 'Log Completion Activity' },
 ]
 
 function OutputConfig({ node, onUpdate }: Pick<NodeConfigPanelProps, 'node' | 'onUpdate'>) {
@@ -755,6 +891,287 @@ function OutputConfig({ node, onUpdate }: Pick<NodeConfigPanelProps, 'node' | 'o
           rows={3}
           className="w-full rounded-md border border-border px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-y"
         />
+      </div>
+    </>
+  )
+}
+
+// ─── Task Config (Generate/Route Task node) ─────────────────────────────────
+
+const TASK_FIELD_TYPES = [
+  { value: 'text', label: 'Text' },
+  { value: 'textarea', label: 'Long Text' },
+  { value: 'select', label: 'Dropdown' },
+  { value: 'number', label: 'Number' },
+  { value: 'date', label: 'Date' },
+  { value: 'checkbox', label: 'Checkbox' },
+]
+
+const TASK_ACTION_STYLES = [
+  { value: 'primary', label: 'Primary' },
+  { value: 'destructive', label: 'Destructive' },
+  { value: 'outline', label: 'Outline' },
+  { value: 'secondary', label: 'Secondary' },
+]
+
+interface TaskFormField {
+  type: string
+  name: string
+  label: string
+  required?: boolean
+  options?: string[]
+  max_length?: number
+  source?: string
+}
+
+interface TaskFormAction {
+  label: string
+  value: string
+  style?: string
+}
+
+interface TaskFormSchema {
+  title?: string
+  fields?: TaskFormField[]
+  actions?: TaskFormAction[]
+}
+
+function TaskConfig({ node, onUpdate }: Pick<NodeConfigPanelProps, 'node' | 'onUpdate'>) {
+  const data = node.data as Record<string, unknown>
+  const config = (data.config ?? {}) as Record<string, unknown>
+  const schema = (config.task_form_schema ?? { title: '', fields: [], actions: [] }) as TaskFormSchema
+  const fields = schema.fields ?? []
+  const actions = schema.actions ?? []
+
+  function updateData(field: string, value: unknown) {
+    onUpdate(node.id, { ...data, [field]: value })
+  }
+
+  function updateConfig(field: string, value: unknown) {
+    onUpdate(node.id, { ...data, config: { ...config, [field]: value } })
+  }
+
+  function updateSchema(patch: Partial<TaskFormSchema>) {
+    updateConfig('task_form_schema', { ...schema, ...patch })
+  }
+
+  function addField() {
+    const name = `field_${fields.length + 1}`
+    updateSchema({ fields: [...fields, { type: 'text', name, label: '', required: false }] })
+  }
+
+  function updateField(index: number, patch: Partial<TaskFormField>) {
+    const next = fields.map((f, i) => (i === index ? { ...f, ...patch } : f))
+    updateSchema({ fields: next })
+  }
+
+  function removeField(index: number) {
+    updateSchema({ fields: fields.filter((_, i) => i !== index) })
+  }
+
+  function addAction() {
+    updateSchema({ actions: [...actions, { label: '', value: '', style: 'primary' }] })
+  }
+
+  function updateAction(index: number, patch: Partial<TaskFormAction>) {
+    const next = actions.map((a, i) => (i === index ? { ...a, ...patch } : a))
+    updateSchema({ actions: next })
+  }
+
+  function removeAction(index: number) {
+    updateSchema({ actions: actions.filter((_, i) => i !== index) })
+  }
+
+  return (
+    <>
+      <div className="mb-3">
+        <FieldLabel htmlFor="task-step-name">Step Name</FieldLabel>
+        <TextInput
+          id="task-step-name"
+          value={(data.stepName as string) ?? ''}
+          onChange={(v) => updateData('stepName', v)}
+          placeholder="e.g. review_onboarding"
+        />
+      </div>
+
+      <div className="mb-3">
+        <FieldLabel htmlFor="task-assign">Assign To</FieldLabel>
+        <SelectInput
+          id="task-assign"
+          value={(config.task_assign_to as string) ?? 'routing_engine'}
+          onChange={(v) => updateConfig('task_assign_to', v)}
+          options={[
+            { value: 'routing_engine', label: 'Routing Engine (auto)' },
+            { value: 'specific_user', label: 'Specific User' },
+            { value: 'role', label: 'By Role' },
+          ]}
+        />
+      </div>
+
+      <div className="mb-3">
+        <FieldLabel htmlFor="task-priority">Priority</FieldLabel>
+        <SelectInput
+          id="task-priority"
+          value={(config.task_priority as string) ?? 'medium'}
+          onChange={(v) => updateConfig('task_priority', v)}
+          options={[
+            { value: 'low', label: 'Low' },
+            { value: 'medium', label: 'Medium' },
+            { value: 'high', label: 'High' },
+            { value: 'urgent', label: 'Urgent' },
+          ]}
+        />
+      </div>
+
+      {/* Task Form Schema */}
+      <div className="mt-4 pt-4 border-t border-border">
+        <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Task Form</h4>
+
+        <div className="mb-3">
+          <FieldLabel htmlFor="task-title">Form Title</FieldLabel>
+          <TextInput
+            id="task-title"
+            value={schema.title ?? ''}
+            onChange={(v) => updateSchema({ title: v })}
+            placeholder="e.g. Review Client Onboarding"
+          />
+          <p className="mt-1 text-xs text-muted-foreground">Shown at the top of the task card</p>
+        </div>
+
+        {/* Fields */}
+        <div className="mb-3">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs font-medium text-foreground">Form Fields</span>
+            <button
+              type="button"
+              onClick={addField}
+              className="inline-flex items-center gap-0.5 text-xs text-blue-700 hover:underline"
+            >
+              <Plus className="h-3 w-3" /> Add
+            </button>
+          </div>
+          {fields.length === 0 && (
+            <p className="text-xs text-muted-foreground italic">No fields yet — AI will generate defaults if left empty.</p>
+          )}
+          <div className="space-y-2">
+            {fields.map((field, i) => (
+              <div key={i} className="rounded border border-border p-2 bg-muted/30">
+                <div className="flex items-center gap-1 mb-1">
+                  <select
+                    value={field.type}
+                    onChange={(e) => updateField(i, { type: e.target.value })}
+                    className="flex-1 rounded border border-border px-1.5 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+                  >
+                    {TASK_FIELD_TYPES.map((t) => (
+                      <option key={t.value} value={t.value}>{t.label}</option>
+                    ))}
+                  </select>
+                  <label className="flex items-center gap-1 text-xs">
+                    <input
+                      type="checkbox"
+                      checked={field.required ?? false}
+                      onChange={(e) => updateField(i, { required: e.target.checked })}
+                      className="h-3 w-3"
+                    />
+                    Req
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => removeField(i)}
+                    className="text-destructive hover:text-destructive/80 p-0.5"
+                    aria-label={`Remove field ${field.name}`}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  value={field.label}
+                  onChange={(e) => updateField(i, { label: e.target.value, name: e.target.value.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '') || field.name })}
+                  placeholder="Field label"
+                  className="w-full rounded border border-border px-1.5 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-ring mb-1"
+                />
+                {field.type === 'select' && (
+                  <input
+                    type="text"
+                    value={(field.options ?? []).join(', ')}
+                    onChange={(e) => updateField(i, { options: e.target.value.split(',').map((s) => s.trim()).filter(Boolean) })}
+                    placeholder="Options (comma-separated)"
+                    className="w-full rounded border border-border px-1.5 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="mb-3">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs font-medium text-foreground">Decision Buttons</span>
+            <button
+              type="button"
+              onClick={addAction}
+              className="inline-flex items-center gap-0.5 text-xs text-blue-700 hover:underline"
+            >
+              <Plus className="h-3 w-3" /> Add
+            </button>
+          </div>
+          {actions.length === 0 && (
+            <p className="text-xs text-muted-foreground italic">No buttons yet — AI will generate defaults if left empty.</p>
+          )}
+          <div className="space-y-2">
+            {actions.map((action, i) => (
+              <div key={i} className="flex items-center gap-1">
+                <input
+                  type="text"
+                  value={action.label}
+                  onChange={(e) => updateAction(i, { label: e.target.value, value: e.target.value.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '') || action.value })}
+                  placeholder="Button label"
+                  className="flex-1 rounded border border-border px-1.5 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+                />
+                <select
+                  value={action.style ?? 'primary'}
+                  onChange={(e) => updateAction(i, { style: e.target.value })}
+                  className="rounded border border-border px-1 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+                >
+                  {TASK_ACTION_STYLES.map((s) => (
+                    <option key={s.value} value={s.value}>{s.label}</option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => removeAction(i)}
+                  className="text-destructive hover:text-destructive/80 p-0.5"
+                  aria-label={`Remove action ${action.label}`}
+                >
+                  <Trash2 className="h-3 w-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Routing */}
+      <div className="mt-4 pt-4 border-t border-border">
+        <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Routing</h4>
+        <div className="mb-3">
+          <FieldLabel htmlFor="task-routing-mode">Routing Mode</FieldLabel>
+          <div className="flex items-center gap-2">
+            <SelectInput
+              id="task-routing-mode"
+              value={(config.routing_mode as string) ?? 'policy_default'}
+              onChange={(v) => updateConfig('routing_mode', v)}
+              options={ROUTING_MODE_OPTIONS}
+            />
+            {(() => {
+              if (!config.routing_mode || config.routing_mode === 'policy_default') return null
+              const Icon = ROUTING_ICONS[config.routing_mode as string]
+              return Icon ? <Icon className="h-4 w-4 text-muted-foreground shrink-0" /> : null
+            })()}
+          </div>
+        </div>
       </div>
     </>
   )
@@ -861,9 +1278,10 @@ const NODE_TYPE_LABELS: Record<string, string> = {
   wait: 'Wait / Delay',
   input: 'Input',
   output: 'Output',
+  task: 'Task',
 }
 
-export function NodeConfigPanel({ node, onUpdate, onClose }: NodeConfigPanelProps) {
+export function NodeConfigPanel({ node, onUpdate, onClose, entities }: NodeConfigPanelProps) {
   const nodeType = node.type ?? 'action'
   const data = node.data as Record<string, unknown>
 
@@ -903,15 +1321,16 @@ export function NodeConfigPanel({ node, onUpdate, onClose }: NodeConfigPanelProp
         </div>
 
         {/* Type-specific config */}
-        {nodeType === 'trigger' && <TriggerConfig node={node} onUpdate={onUpdate} />}
-        {nodeType === 'action' && <ActionConfig node={node} onUpdate={onUpdate} />}
+        {nodeType === 'trigger' && <TriggerConfig node={node} onUpdate={onUpdate} entities={entities} />}
+        {nodeType === 'action' && <ActionConfig node={node} onUpdate={onUpdate} entities={entities} />}
         {nodeType === 'condition' && <ConditionConfig node={node} onUpdate={onUpdate} />}
         {nodeType === 'wait' && <WaitConfig node={node} onUpdate={onUpdate} />}
         {nodeType === 'input' && <InputConfig node={node} onUpdate={onUpdate} />}
         {nodeType === 'output' && <OutputConfig node={node} onUpdate={onUpdate} />}
+        {nodeType === 'task' && <TaskConfig node={node} onUpdate={onUpdate} />}
 
         {/* Step instructions panel — shown for executable step types */}
-        {(nodeType === 'action' || nodeType === 'condition' || nodeType === 'wait') && (
+        {(nodeType === 'action' || nodeType === 'condition' || nodeType === 'wait' || nodeType === 'task') && (
           <StepInstructionsPanel node={node} onUpdate={onUpdate} />
         )}
       </div>

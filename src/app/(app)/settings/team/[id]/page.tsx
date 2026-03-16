@@ -23,24 +23,47 @@ export default async function EditTeamMemberPage({
 
   const supabase = createServerClient()
 
-  // Fetch the team member
-  const { data: member, error } = await supabase
-    .from('blocks')
-    .select('id, name, metadata')
-    .eq('id', id)
-    .eq('org_id', internalOrgId)
-    .eq('type', 'team_member')
-    .single()
+  // Fetch the team member, other members, and roles in parallel
+  const [memberResult, membersResult, rolesResult] = await Promise.all([
+    supabase
+      .from('blocks')
+      .select('id, name, metadata')
+      .eq('id', id)
+      .eq('org_id', internalOrgId)
+      .eq('type', 'team_member')
+      .single(),
+    supabase
+      .from('blocks')
+      .select('id, name, metadata')
+      .eq('org_id', internalOrgId)
+      .eq('type', 'team_member')
+      .order('name', { ascending: true }),
+    supabase
+      .from('roles')
+      .select('id, name, display_name, is_system')
+      .eq('org_id', internalOrgId)
+      .order('is_system', { ascending: false })
+      .order('display_name', { ascending: true }),
+  ])
 
-  if (error || !member) notFound()
+  const member = memberResult.data
+  if (memberResult.error || !member) notFound()
 
-  // Fetch other active team members for reporting-to picker
-  const { data: members } = await supabase
-    .from('blocks')
-    .select('id, name, metadata')
-    .eq('org_id', internalOrgId)
-    .eq('type', 'team_member')
-    .order('name', { ascending: true })
+  const members = membersResult.data
+  const roles = rolesResult.data ?? []
+
+  // Fetch current role assignment if this member has a linked Clerk user
+  let currentRoleId: string | null = null
+  const clerkUserId = (member.metadata as { clerk_user_id?: string | null })?.clerk_user_id
+  if (clerkUserId) {
+    const { data: assignment } = await supabase
+      .from('user_permissions')
+      .select('role_id')
+      .eq('org_id', internalOrgId)
+      .eq('user_id', clerkUserId)
+      .maybeSingle()
+    currentRoleId = assignment?.role_id ?? null
+  }
 
   const activeMembers = (members ?? [])
     .filter((m: { id: string; metadata: { status?: string } }) => m.metadata?.status === 'active')
@@ -66,6 +89,8 @@ export default async function EditTeamMemberPage({
         initialData={member}
         teamMembers={activeMembers}
         departments={departments}
+        roles={roles}
+        currentRoleId={currentRoleId}
       />
     </PageContainer>
   )

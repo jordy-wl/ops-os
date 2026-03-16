@@ -14,16 +14,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 
-export interface WorkflowTemplateItem {
-  id: string
-  name: string
-  applies_to_type: string
-  trigger_type: string
-  trigger_event_pattern?: string
-  step_count: number
-  description?: string
-  created_at: string
-}
+export { type WorkflowTemplateItem, mapBlockToTemplate } from '@/lib/workflows/template-mapper'
+import type { WorkflowTemplateItem } from '@/lib/workflows/template-mapper'
 
 interface WorkflowTemplatesClientProps {
   initialTemplates: WorkflowTemplateItem[] | null
@@ -93,7 +85,7 @@ export function WorkflowTemplatesClient({ initialTemplates }: WorkflowTemplatesC
           {templates.map((tmpl) => (
             <div
               key={tmpl.id}
-              className="rounded-md border border-border bg-card p-4 hover-card"
+              className="rounded-xl border border-border bg-card p-6 hover-card"
             >
               <div className="flex items-start justify-between mb-2">
                 <h3 className="text-sm font-medium text-foreground line-clamp-1">{tmpl.name}</h3>
@@ -143,24 +135,6 @@ export function WorkflowTemplatesClient({ initialTemplates }: WorkflowTemplatesC
   )
 }
 
-// ─── Map block to template item ──────────────────────────────────────────────
-
-export function mapBlockToTemplate(block: Record<string, unknown>): WorkflowTemplateItem {
-  const meta = (block.metadata ?? {}) as Record<string, unknown>
-  const trigger = (meta.trigger ?? {}) as Record<string, unknown>
-  const steps = (meta.steps ?? []) as unknown[]
-  return {
-    id: block.id as string,
-    name: block.name as string,
-    applies_to_type: (meta.applies_to_type as string) ?? 'unknown',
-    trigger_type: (trigger.type as string) ?? 'manual',
-    trigger_event_pattern: trigger.event_pattern as string | undefined,
-    step_count: steps.length,
-    description: (meta.description as string) ?? undefined,
-    created_at: block.created_at as string,
-  }
-}
-
 // ─── Create Template Modal (Canvas-first: name only → redirect to builder) ──
 
 interface CreateTemplateModalProps {
@@ -208,7 +182,7 @@ function CreateTemplateModal({ onClose }: CreateTemplateModalProps) {
       }
 
       // Redirect to canvas builder immediately
-      const blockId = json.data?.id
+      const blockId = json.data?.block?.id
       if (blockId) {
         router.push(`/workflows/${blockId}/builder`)
       }

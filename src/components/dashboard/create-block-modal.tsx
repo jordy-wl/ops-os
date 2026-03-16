@@ -386,7 +386,7 @@ export function CreateBlockModal({ onClose, onCreated }: CreateBlockModalProps) 
 
             {/* AI suggestion panel */}
             {showAiPanel && (
-              <div className="mb-4 rounded-lg border bg-muted/50 p-4">
+              <div className="mb-4 rounded-lg border bg-muted p-4">
                 <p className="text-xs text-muted-foreground mb-2">
                   Describe what fields this block type needs and AI will suggest
                   a configuration.

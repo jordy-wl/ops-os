@@ -12,6 +12,8 @@ import { ActionMenu } from '@/components/actions/action-menu'
 import { BlockDocumentsSection } from '@/components/documents/block-documents-section'
 import { InsightsPanel } from '@/components/blocks/insights-panel'
 import { InlineFieldManagerWrapper } from '@/components/blocks/inline-field-manager-wrapper'
+import { FormSubmissionsPanel } from '@/components/blocks/form-submissions-panel'
+import { ShareLinkButton } from '@/components/blocks/share-link-dialog'
 import type { Block, Event } from '@/lib/context-assembly'
 
 interface Props {
@@ -149,7 +151,7 @@ export default async function BlockDetailPage({ params }: Props) {
   }
 
   return (
-    <div className="p-6 lg:p-8 max-w-5xl animate-page-in">
+    <div className="p-6 lg:p-8 max-w-5xl mx-auto animate-page-in">
       <nav aria-label="Breadcrumb" className="mb-4 text-[13px] text-muted-foreground">
         <ol className="flex items-center gap-1.5">
           <li><Link href="/library/blocks" className="hover:text-foreground transition-colors">Blocks</Link></li>
@@ -160,12 +162,15 @@ export default async function BlockDetailPage({ params }: Props) {
 
       <div className="flex items-start justify-between gap-4">
         <BlockHeader block={block as Block} />
-        <ActionMenu
-          blockId={block.id}
-          blockName={block.name}
-          blockType={block.type}
-          googleConnectorId={googleConnector?.id ?? null}
-        />
+        <div className="flex items-center gap-2">
+          <ShareLinkButton blockId={block.id} blockName={block.name} />
+          <ActionMenu
+            blockId={block.id}
+            blockName={block.name}
+            blockType={block.type}
+            googleConnectorId={googleConnector?.id ?? null}
+          />
+        </div>
       </div>
 
       {/* Two-column layout on desktop: main content left, sidebar right */}
@@ -176,6 +181,7 @@ export default async function BlockDetailPage({ params }: Props) {
             fieldSchema={typeDef?.field_schema as Record<string, unknown> | undefined}
           />
           <BlockDocumentsSection blockId={block.id} />
+          <FormSubmissionsPanel blockId={block.id} />
           <EventTimeline events={(events ?? []) as Event[]} />
           {canManageSettings && typeDef && typeDef.field_schema && (
             <InlineFieldManagerWrapper

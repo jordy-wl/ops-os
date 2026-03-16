@@ -15,15 +15,20 @@ interface TeamMemberFormProps {
       reporting_to: string | null
       start_date: string | null
       status: string
+      clerk_user_id?: string | null
     }
   }
   /** Active team members for reporting-to picker */
   teamMembers: { id: string; name: string }[]
   /** Departments in the org for suggestions */
   departments: string[]
+  /** Available RBAC roles for system role assignment */
+  roles?: { id: string; name: string; display_name: string; is_system: boolean }[]
+  /** Current RBAC role assignment (edit mode only) */
+  currentRoleId?: string | null
 }
 
-export function TeamMemberForm({ initialData, teamMembers, departments }: TeamMemberFormProps) {
+export function TeamMemberForm({ initialData, teamMembers, departments, roles, currentRoleId }: TeamMemberFormProps) {
   const router = useRouter()
   const isEdit = !!initialData
 
@@ -33,8 +38,11 @@ export function TeamMemberForm({ initialData, teamMembers, departments }: TeamMe
   const [department, setDepartment] = useState(initialData?.metadata.department ?? '')
   const [reportingTo, setReportingTo] = useState(initialData?.metadata.reporting_to ?? '')
   const [startDate, setStartDate] = useState(initialData?.metadata.start_date ?? '')
+  const [selectedRoleId, setSelectedRoleId] = useState(currentRoleId ?? '')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+
+  const hasClerkUser = !!initialData?.metadata.clerk_user_id
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -65,6 +73,21 @@ export function TeamMemberForm({ initialData, teamMembers, departments }: TeamMe
       if (!res.ok) {
         setError(json.error?.message ?? 'Something went wrong')
         return
+      }
+
+      // Assign role if changed and member has a linked Clerk user
+      const memberId = isEdit ? initialData.id : json.data?.id
+      if (memberId && selectedRoleId && selectedRoleId !== (currentRoleId ?? '')) {
+        const roleRes = await fetch(`/api/team/${memberId}/role`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ role_id: selectedRoleId }),
+        })
+        if (!roleRes.ok) {
+          const roleJson = await roleRes.json()
+          setError(roleJson.error?.message ?? 'Team member saved but role assignment failed')
+          return
+        }
       }
 
       router.push('/settings/team')
@@ -125,6 +148,31 @@ export function TeamMemberForm({ initialData, teamMembers, departments }: TeamMe
             ))}
         </select>
       </div>
+
+      {roles && roles.length > 0 && (
+        <div>
+          <label htmlFor="system_role" className="block text-sm font-medium text-foreground mb-1">System Role</label>
+          <select
+            id="system_role"
+            value={selectedRoleId}
+            onChange={(e) => setSelectedRoleId(e.target.value)}
+            className={inputClass}
+            disabled={isEdit && !hasClerkUser}
+          >
+            <option value="">No system role</option>
+            {roles.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.display_name}{r.is_system ? ' (System)' : ''}
+              </option>
+            ))}
+          </select>
+          {isEdit && !hasClerkUser && (
+            <p className="mt-1 text-xs text-muted-foreground">
+              Link a Clerk user ID to this member before assigning a system role.
+            </p>
+          )}
+        </div>
+      )}
 
       <div>
         <label htmlFor="start_date" className="block text-sm font-medium text-foreground mb-1">Start Date</label>

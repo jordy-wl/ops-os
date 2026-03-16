@@ -8,7 +8,7 @@ import type { Permission } from '@/lib/rbac/types'
 
 export interface CanvasNode {
   id: string
-  type: 'trigger' | 'action' | 'condition' | 'wait' | 'input' | 'output' | 'end'
+  type: 'trigger' | 'action' | 'condition' | 'wait' | 'input' | 'output' | 'task' | 'end'
   position: { x: number; y: number }
   data: {
     stepName?: string
@@ -224,6 +224,8 @@ function stepTypeToNodeType(stepType: WorkflowStep['type']): CanvasNode['type'] 
       return 'input'
     case 'output':
       return 'output'
+    case 'generate_task':
+      return 'task'
     default:
       return 'action'
   }
@@ -247,6 +249,8 @@ function stepToLabel(step: WorkflowStep): string {
       return `Input: ${step.source_type ?? 'block_fields'}`
     case 'output':
       return `Output: ${step.output_type ?? 'update_fields'}`
+    case 'generate_task':
+      return step.task_form_schema?.title ?? 'Create Task'
     default:
       return step.name
   }
@@ -275,6 +279,10 @@ function stepToConfig(step: WorkflowStep): Record<string, unknown> {
   if (step.output_type) config.output_type = step.output_type
   if (step.field_mappings) config.field_mappings = step.field_mappings
   if (step.payload_schema) config.payload_schema = step.payload_schema
+  // Task fields (Phase 4)
+  if (step.task_form_schema) config.task_form_schema = step.task_form_schema
+  if (step.task_assign_to) config.task_assign_to = step.task_assign_to
+  if (step.task_priority) config.task_priority = step.task_priority
   return config
 }
 
@@ -312,5 +320,9 @@ function configToStep(data: CanvasNode['data']): WorkflowStep {
     ...(config.output_type ? { output_type: config.output_type as 'update_fields' | 'api_call' | 'emit_event' | 'document' } : {}),
     ...(Array.isArray(config.field_mappings) ? { field_mappings: config.field_mappings as Array<{ from: string; to: string }> } : {}),
     ...(config.payload_schema ? { payload_schema: config.payload_schema as Record<string, unknown> } : {}),
+    // Task fields (Phase 4)
+    ...(config.task_form_schema ? { task_form_schema: config.task_form_schema } : {}),
+    ...(config.task_assign_to ? { task_assign_to: config.task_assign_to as 'routing_engine' | 'specific_user' | 'role' } : {}),
+    ...(config.task_priority ? { task_priority: config.task_priority as 'low' | 'medium' | 'high' | 'urgent' } : {}),
   }
 }

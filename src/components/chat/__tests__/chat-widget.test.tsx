@@ -2,16 +2,26 @@
 import React from 'react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
-// Mock lucide-react icons
-vi.mock('lucide-react', () => ({
-  MessageCircle: (props: Record<string, unknown>) => React.createElement('svg', { 'data-testid': 'icon-message-circle', ...props }),
-  MessageSquare: (props: Record<string, unknown>) => React.createElement('svg', { 'data-testid': 'icon-message-square', ...props }),
-  ListChecks: (props: Record<string, unknown>) => React.createElement('svg', { 'data-testid': 'icon-list-checks', ...props }),
-  Zap: (props: Record<string, unknown>) => React.createElement('svg', { 'data-testid': 'icon-zap', ...props }),
-  X: (props: Record<string, unknown>) => React.createElement('svg', { 'data-testid': 'icon-x', ...props }),
-  Wrench: (props: Record<string, unknown>) => React.createElement('svg', { 'data-testid': 'icon-wrench', ...props }),
-  Send: (props: Record<string, unknown>) => React.createElement('svg', { 'data-testid': 'icon-send', ...props }),
-}))
+// Mock lucide-react icons — return simple SVG stubs for all used icons
+vi.mock('lucide-react', () => {
+  const icon = (name: string) => (props: Record<string, unknown>) =>
+    React.createElement('svg', { 'data-testid': `icon-${name}`, ...props })
+  return {
+    MessageCircle: icon('message-circle'),
+    MessageSquare: icon('message-square'),
+    ListChecks: icon('list-checks'),
+    Zap: icon('zap'),
+    X: icon('x'),
+    Wrench: icon('wrench'),
+    Send: icon('send'),
+    History: icon('history'),
+    PanelRightOpen: icon('panel-right-open'),
+    PanelRightClose: icon('panel-right-close'),
+    Plus: icon('plus'),
+    Clock: icon('clock'),
+    Trash2: icon('trash-2'),
+  }
+})
 
 import { ChatWidgetProvider, useChatWidget } from '../chat-widget-provider'
 import { ChatWidget } from '../chat-widget'

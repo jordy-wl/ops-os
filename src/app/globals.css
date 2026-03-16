@@ -1,5 +1,358 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
-body {
-  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+@custom-variant dark (&:is(.dark *));
+
+/* ═══════════════════════════════════════════════════════════════
+   Tailwind v4 Theme Registration
+   Maps CSS variables → Tailwind utility classes (bg-*, text-*, etc.)
+   ═══════════════════════════════════════════════════════════════ */
+@theme inline {
+  /* ── Colors ── */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-ai-accent: var(--ai-accent);
+  --color-ai-accent-foreground: var(--ai-accent-foreground);
+  --color-system-accent: var(--system-accent);
+  --color-system-accent-foreground: var(--system-accent-foreground);
+  --color-elevated: var(--elevated);
+  --color-elevated-foreground: var(--elevated-foreground);
+  --color-tertiary-foreground: var(--tertiary-foreground);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar-background);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* ── Border Radius ── */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  /* ── Fonts ── */
+  --font-sans: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  /* ── Box Shadows ── */
+  --shadow-elevation-0: none;
+  --shadow-elevation-1: 0 1px 2px 0 rgb(0 0 0 / 0.03);
+  --shadow-elevation-2: 0 1px 3px 0 rgb(0 0 0 / 0.05), 0 1px 2px -1px rgb(0 0 0 / 0.04);
+  --shadow-elevation-3: 0 4px 6px -1px rgb(0 0 0 / 0.06), 0 2px 4px -2px rgb(0 0 0 / 0.04);
+
+  /* ── 8px Grid Spacing ── */
+  --spacing-grid-1: 8px;
+  --spacing-grid-2: 16px;
+  --spacing-grid-3: 24px;
+  --spacing-grid-4: 32px;
+  --spacing-grid-5: 40px;
+  --spacing-grid-6: 48px;
+  --spacing-grid-7: 56px;
+  --spacing-grid-8: 64px;
+
+  /* ── Custom Animations ── */
+  --animate-accordion-down: accordion-down 0.15s ease-out;
+  --animate-accordion-up: accordion-up 0.15s ease-out;
+  --animate-fade-in: fade-in 0.15s ease-out;
+  --animate-fade-out: fade-out 0.1s ease-out;
+  --animate-slide-in-from-left: slide-in-from-left 0.15s ease-out;
+  --animate-slide-in-from-bottom: slide-in-from-bottom 0.15s ease-out;
+  --animate-slide-in-from-top: slide-in-from-top 0.15s ease-out;
+  --animate-scale-in: scale-in 0.12s ease-out;
+  --animate-slide-up: slide-up 0.15s ease-out;
+  --animate-slide-in-right: slide-in-right 0.15s ease-out;
+  --animate-list-item-in: list-item-in 0.15s ease-out both;
+  --animate-modal-in: modal-in 0.12s ease-out;
+  --animate-modal-out: modal-out 0.1s ease-out;
+  --animate-toast-in: toast-in 0.15s ease-out;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Ops OS Design System — Preset aJNqUZW (Indigo/Zinc)
+   Near-monochrome base, purposeful color, 8px grid
+   ═══════════════════════════════════════════════════════════════ */
+@layer base {
+  :root {
+    /* ── Brand (deep indigo) ── */
+    --primary: hsl(248 68% 51%);
+    --primary-foreground: hsl(226 100% 97%);
+
+    /* ── Surfaces ── */
+    --background: hsl(0 0% 100%);
+    --foreground: hsl(240 11% 4%);
+    --card: hsl(0 0% 100%);
+    --card-foreground: hsl(240 11% 4%);
+    --popover: hsl(0 0% 100%);
+    --popover-foreground: hsl(240 11% 4%);
+
+    /* ── Secondary / Muted / Accent ── */
+    --secondary: hsl(240 4% 96%);
+    --secondary-foreground: hsl(240 6% 10%);
+    --muted: hsl(240 4% 96%);
+    --muted-foreground: hsl(240 4% 46%);
+    --accent: hsl(240 4% 96%);
+    --accent-foreground: hsl(240 6% 10%);
+
+    /* ── Borders & Input ── */
+    --border: hsl(240 6% 90%);
+    --input: hsl(240 6% 90%);
+    --ring: hsl(240 6% 64%);
+
+    /* ── Destructive ── */
+    --destructive: hsl(357 100% 45%);
+    --destructive-foreground: hsl(0 0% 100%);
+
+    /* ── Semantic Status ── */
+    --success: hsl(152 55% 34%);
+    --success-foreground: hsl(0 0% 100%);
+    --warning: hsl(38 75% 50%);
+    --warning-foreground: hsl(38 75% 10%);
+    --info: hsl(248 68% 51%);
+    --info-foreground: hsl(0 0% 100%);
+
+    /* ── AI / System Indicators ── */
+    --ai-accent: hsl(270 45% 58%);
+    --ai-accent-foreground: hsl(0 0% 100%);
+    --system-accent: hsl(180 45% 44%);
+    --system-accent-foreground: hsl(0 0% 100%);
+
+    /* ── Elevated surfaces (flyouts, panels) ── */
+    --elevated: hsl(0 0% 100%);
+    --elevated-foreground: hsl(240 11% 4%);
+    --tertiary-foreground: hsl(240 4% 60%);
+
+    /* ── Charts (indigo spectrum) ── */
+    --chart-1: hsl(250 70% 60%);
+    --chart-2: hsl(248 68% 51%);
+    --chart-3: hsl(245 92% 48%);
+    --chart-4: hsl(240 60% 42%);
+    --chart-5: hsl(235 50% 35%);
+
+    /* ── Layout ── */
+    --radius: 0.45rem;
+
+    /* ── Sidebar ── */
+    --sidebar-background: hsl(0 0% 98%);
+    --sidebar-foreground: hsl(240 11% 4%);
+    --sidebar-primary: hsl(247 92% 60%);
+    --sidebar-primary-foreground: hsl(226 100% 97%);
+    --sidebar-accent: hsl(240 4% 96%);
+    --sidebar-accent-foreground: hsl(240 6% 10%);
+    --sidebar-border: hsl(240 6% 90%);
+    --sidebar-ring: hsl(248 68% 51%);
+  }
+
+  .dark {
+    /* ── Brand ── */
+    --primary: hsl(246 61% 42%);
+    --primary-foreground: hsl(226 100% 97%);
+
+    /* ── Surfaces ── */
+    --background: hsl(240 11% 4%);
+    --foreground: hsl(0 0% 98%);
+    --card: hsl(240 6% 10%);
+    --card-foreground: hsl(0 0% 98%);
+    --popover: hsl(240 6% 10%);
+    --popover-foreground: hsl(0 0% 98%);
+
+    /* ── Secondary / Muted / Accent ── */
+    --secondary: hsl(240 4% 16%);
+    --secondary-foreground: hsl(0 0% 98%);
+    --muted: hsl(240 4% 16%);
+    --muted-foreground: hsl(240 6% 64%);
+    --accent: hsl(240 4% 16%);
+    --accent-foreground: hsl(0 0% 98%);
+
+    /* ── Borders & Input ── */
+    --border: hsl(240 4% 18%);
+    --input: hsl(240 4% 20%);
+    --ring: hsl(240 4% 46%);
+
+    /* ── Destructive ── */
+    --destructive: hsl(359 100% 70%);
+    --destructive-foreground: hsl(0 0% 100%);
+
+    /* ── Semantic Status ── */
+    --success: hsl(152 55% 42%);
+    --success-foreground: hsl(0 0% 100%);
+    --warning: hsl(38 75% 60%);
+    --warning-foreground: hsl(38 75% 10%);
+    --info: hsl(246 61% 42%);
+    --info-foreground: hsl(0 0% 100%);
+
+    /* ── AI / System Indicators ── */
+    --ai-accent: hsl(270 45% 68%);
+    --ai-accent-foreground: hsl(0 0% 100%);
+    --system-accent: hsl(180 45% 54%);
+    --system-accent-foreground: hsl(0 0% 100%);
+
+    /* ── Elevated surfaces ── */
+    --elevated: hsl(240 6% 10%);
+    --elevated-foreground: hsl(0 0% 92%);
+    --tertiary-foreground: hsl(240 4% 48%);
+
+    /* ── Charts ── */
+    --chart-1: hsl(250 70% 60%);
+    --chart-2: hsl(241 100% 69%);
+    --chart-3: hsl(245 92% 48%);
+    --chart-4: hsl(246 61% 42%);
+    --chart-5: hsl(235 50% 35%);
+
+    /* ── Sidebar ── */
+    --sidebar-background: hsl(240 6% 10%);
+    --sidebar-foreground: hsl(0 0% 98%);
+    --sidebar-primary: hsl(241 100% 69%);
+    --sidebar-primary-foreground: hsl(226 100% 97%);
+    --sidebar-accent: hsl(240 4% 16%);
+    --sidebar-accent-foreground: hsl(0 0% 98%);
+    --sidebar-border: hsl(240 4% 16%);
+    --sidebar-ring: hsl(240 4% 46%);
+  }
+}
+
+/* ── Global Resets ── */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-size: 13px;
+    line-height: 1.5;
+    letter-spacing: -0.01em;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Typography Scale — Linear-inspired, tight tracking
+   ═══════════════════════════════════════════════════════════════ */
+@layer base {
+  .text-display  { font-size: 28px; font-weight: 700; letter-spacing: -0.025em; line-height: 1.15; }
+  .text-page     { font-size: 20px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.2; }
+  .text-headline { font-size: 14px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.3; }
+  .text-title    { font-size: 16px; font-weight: 600; letter-spacing: -0.015em; line-height: 1.3; }
+  .text-body-lg  { font-size: 14px; line-height: 1.5; }
+  .text-body     { font-size: 13px; line-height: 1.5; }
+  .text-caption  { font-size: 12px; line-height: 1.4; }
+  .text-overline { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; line-height: 1.4; }
+  .text-mono     { font-family: var(--font-geist-mono), ui-monospace, monospace; font-size: 12px; line-height: 1.4; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Custom Keyframes
+   ═══════════════════════════════════════════════════════════════ */
+@keyframes accordion-down {
+  from { height: 0; }
+  to { height: var(--radix-accordion-content-height); }
+}
+@keyframes accordion-up {
+  from { height: var(--radix-accordion-content-height); }
+  to { height: 0; }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@keyframes slide-in-from-left {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+@keyframes slide-in-from-bottom {
+  from { transform: translateY(4px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+@keyframes slide-in-from-top {
+  from { transform: translateY(-4px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+@keyframes scale-in {
+  from { transform: scale(0.97); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+@keyframes slide-up {
+  from { transform: translateY(4px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+@keyframes slide-in-right {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+@keyframes list-item-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes modal-in {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes modal-out {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.97); }
+}
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Utility Classes
+   ═══════════════════════════════════════════════════════════════ */
+@layer utilities {
+  .transition-interactive {
+    @apply transition-all duration-150 ease-out;
+  }
+
+  .hover-card {
+    @apply transition-all duration-150 ease-out hover:border-foreground/10;
+  }
+
+  .active-press {
+    @apply active:scale-[0.99] transition-transform duration-75;
+  }
+
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2
+      focus-visible:ring-primary/50 focus-visible:ring-offset-2
+      focus-visible:ring-offset-background;
+  }
+
+  .animate-page-in {
+    @apply animate-fade-in;
+  }
 }

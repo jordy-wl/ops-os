@@ -20,7 +20,8 @@
       "Bash(echo *)",
       "Bash(git commit:*)",
       "Bash(gh pr:*)",
-      "Bash(npm install googleapis)"
+      "Bash(npm install googleapis)",
+      "mcp__browserbase__browserbase_session_create"
     ],
     "deny": [
       "Read(.env*)",

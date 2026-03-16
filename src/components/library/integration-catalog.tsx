@@ -213,7 +213,7 @@ export function IntegrationCatalog({ connectors }: IntegrationCatalogProps) {
 function CapabilityCard({ capability, connected }: { capability: Capability; connected: boolean }) {
   return (
     <div className={cn(
-      'rounded-md border border-border p-4 bg-card hover:border-foreground/10 transition-colors duration-150',
+      'rounded-xl border border-border p-6 bg-card hover:border-foreground/10 transition-colors duration-150',
       connected ? '' : ''
     )}>
       <div className="flex items-center gap-2.5 mb-2">

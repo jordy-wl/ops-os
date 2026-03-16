@@ -262,7 +262,7 @@ export function DashboardClient({ initialData }: DashboardClientProps) {
 
       {/* ---- Stat Cards ---- */}
       <div
-        className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8"
         aria-label="Operational metrics"
       >
         {STAT_CARDS.map((card) => {
@@ -272,7 +272,7 @@ export function DashboardClient({ initialData }: DashboardClientProps) {
           const cardContent = (
             <div
               className={cn(
-                'rounded-lg border border-border bg-card p-4 hover-card',
+                'rounded-xl border border-border bg-card p-6 hover-card',
                 'flex flex-col justify-between h-full',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
                 'cursor-pointer transition-all'
@@ -468,9 +468,9 @@ function DashboardSkeleton() {
       </div>
 
       {/* Stat card skeletons */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="rounded-lg border bg-background p-4">
+          <div key={i} className="rounded-xl border bg-background p-6">
             <div className="flex items-start justify-between">
               <div className="h-5 w-5 rounded animate-pulse bg-muted" />
               <div className="h-4 w-4 rounded animate-pulse bg-muted" />

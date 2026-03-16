@@ -41,7 +41,7 @@ function DataFlowEdgeComponent({
 
   const strokeColor = isDataFlow
     ? 'hsl(217, 91%, 60%)' // blue-500
-    : 'hsl(var(--border))'
+    : 'var(--border)'
 
   const strokeWidth = isDataFlow ? 2.5 : 1.5
 

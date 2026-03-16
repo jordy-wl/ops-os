@@ -25,10 +25,10 @@ function OutputNodeComponent({ data, selected }: NodeProps & { data: OutputNodeD
   return (
     <div
       className={cn(
-        'min-w-[180px] rounded-md border bg-card px-4 py-3 shadow-elevation-1',
+        'min-w-[180px] rounded-xl border bg-card/80 backdrop-blur-sm px-4 py-3 shadow-lg transition-shadow hover:shadow-xl',
         selected
-          ? 'border-teal-600 ring-2 ring-ring'
-          : 'border-border'
+          ? 'border-teal-500/60 ring-2 ring-teal-500/30'
+          : 'border-border/50'
       )}
     >
       <Handle
@@ -37,11 +37,11 @@ function OutputNodeComponent({ data, selected }: NodeProps & { data: OutputNodeD
         className="!bg-teal-500 !w-3 !h-3 !border-2 !border-white"
       />
       <div className="flex items-center gap-2">
-        <div className="flex h-7 w-7 items-center justify-center rounded-md bg-teal-100 dark:bg-teal-900">
-          <ArrowUpFromLine className="h-4 w-4 text-teal-600 dark:text-teal-400" />
+        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-teal-500/15">
+          <ArrowUpFromLine className="h-4 w-4 text-teal-500" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-xs font-medium text-teal-600 dark:text-teal-400 uppercase tracking-wide">
+          <p className="text-xs font-medium text-teal-500 uppercase tracking-wide">
             Output
           </p>
           <p className="text-sm font-medium text-foreground truncate">{data.label}</p>
@@ -49,7 +49,7 @@ function OutputNodeComponent({ data, selected }: NodeProps & { data: OutputNodeD
       </div>
       {outputLabel && (
         <div className="mt-2 pt-2 border-t border-border">
-          <span className="inline-flex items-center rounded-full bg-teal-100 dark:bg-teal-900 px-2 py-0.5 text-[10px] font-medium text-teal-700 dark:text-teal-300">
+          <span className="inline-flex items-center rounded-full bg-teal-500/15 px-2 py-0.5 text-[10px] font-medium text-teal-600 dark:text-teal-400">
             {outputLabel}
           </span>
         </div>

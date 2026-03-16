@@ -26,7 +26,7 @@ const TriggerSchema = z.discriminatedUnion('type', [
 
 const StepSchema = z.object({
   name: z.string().min(1).max(100).regex(/^[a-z][a-z0-9_]*$/, 'Step name must be lowercase snake_case'),
-  type: z.enum(['emit_event', 'run_action', 'wait', 'condition', 'call_api', 'send_email', 'book_meeting', 'generate_document', 'update_block', 'input', 'output']),
+  type: z.enum(['emit_event', 'run_action', 'wait', 'condition', 'call_api', 'send_email', 'book_meeting', 'generate_document', 'update_block', 'generate_task', 'run_sub_workflow', 'input', 'output']),
   event_type: z.string().min(1).max(100).optional(),
   action_type: z.string().min(1).max(100).optional(),
   wait_seconds: z.number().int().positive().optional(),
@@ -50,6 +50,29 @@ const StepSchema = z.object({
   output_type: z.enum(['update_fields', 'api_call', 'emit_event', 'document']).optional(),
   field_mappings: z.array(z.object({ from: z.string(), to: z.string() })).optional(),
   payload_schema: z.record(z.unknown()).optional(),
+  // generate_task step fields (Phase 4)
+  task_form_schema: z.object({
+    title: z.string().max(200).optional(),
+    fields: z.array(z.object({
+      type: z.enum(['text', 'textarea', 'select', 'number', 'date', 'checkbox']),
+      name: z.string().min(1).max(100),
+      label: z.string().max(200),
+      required: z.boolean().optional(),
+      options: z.array(z.string()).optional(),
+      max_length: z.number().int().positive().optional(),
+      source: z.string().max(200).optional(),
+    })).max(20).optional(),
+    actions: z.array(z.object({
+      label: z.string().max(100),
+      value: z.string().max(100),
+      style: z.enum(['primary', 'destructive', 'outline', 'secondary']).optional(),
+    })).max(10).optional(),
+  }).optional(),
+  task_assign_to: z.enum(['routing_engine', 'specific_user', 'role']).optional(),
+  task_priority: z.enum(['low', 'medium', 'high', 'urgent']).optional(),
+  // run_sub_workflow step fields (Phase 4)
+  sub_workflow_template_id: z.string().uuid().optional(),
+  wait_for_completion: z.boolean().optional(),
 })
 
 const DataInputSchema = z.object({

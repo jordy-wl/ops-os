@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
-import { User, Bot, Link2, ChevronDown, ChevronUp, ScrollText, CheckCircle2, XCircle, PenLine } from 'lucide-react'
-import type { TaskItem } from '@/app/(app)/tasks/page'
+import { User, Bot, Link2, ChevronDown, ChevronUp, ScrollText, CheckCircle2, XCircle, PenLine, AlertCircle } from 'lucide-react'
+import type { TaskItem, TaskFormSchema, TaskFormField, TaskFormAction } from '@/app/(app)/tasks/page'
 
 interface TaskListClientProps {
   initialTasks: TaskItem[] | null
@@ -44,6 +44,195 @@ function ConfidenceBadge({ score }: { score: number }) {
     <span className={cn('inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium', color)} title={`AI confidence: ${pct}%`}>
       {pct}%
     </span>
+  )
+}
+
+const PRIORITY_STYLES: Record<string, string> = {
+  low: 'bg-muted text-muted-foreground',
+  medium: 'bg-blue-500/10 text-blue-700 dark:text-blue-400',
+  high: 'bg-amber-500/10 text-amber-700 dark:text-amber-400',
+  urgent: 'bg-destructive/10 text-destructive',
+}
+
+// ─── Dynamic Task Form Renderer ─────────────────────────────────────────────
+
+function TaskFormRenderer({
+  schema,
+  taskId,
+  disabled,
+  onSubmit,
+}: {
+  schema: TaskFormSchema
+  taskId: string
+  disabled: boolean
+  onSubmit: (taskId: string, action: string, formData: Record<string, unknown>) => void
+}) {
+  const [formData, setFormData] = useState<Record<string, unknown>>({})
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
+
+  const fields = schema.fields ?? []
+  const actions = schema.actions ?? []
+
+  function setField(name: string, value: unknown) {
+    setFormData((prev) => ({ ...prev, [name]: value }))
+    setValidationErrors((prev) => {
+      const next = { ...prev }
+      delete next[name]
+      return next
+    })
+  }
+
+  function validate(): boolean {
+    const errors: Record<string, string> = {}
+    for (const field of fields) {
+      if (field.required) {
+        const val = formData[field.name]
+        if (val === undefined || val === null || val === '') {
+          errors[field.name] = `${field.label || field.name} is required`
+        }
+      }
+      if (field.max_length && typeof formData[field.name] === 'string') {
+        if ((formData[field.name] as string).length > field.max_length) {
+          errors[field.name] = `Max ${field.max_length} characters`
+        }
+      }
+    }
+    setValidationErrors(errors)
+    return Object.keys(errors).length === 0
+  }
+
+  function handleAction(action: TaskFormAction) {
+    if (!validate()) return
+    onSubmit(taskId, action.value, formData)
+  }
+
+  const ACTION_BTN_STYLES: Record<string, string> = {
+    primary: 'bg-primary text-primary-foreground hover:bg-primary/80',
+    destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/80',
+    outline: 'border border-border bg-background text-foreground hover:bg-muted',
+    secondary: 'bg-muted text-foreground hover:bg-muted/80',
+  }
+
+  return (
+    <div className="space-y-3">
+      {schema.title && (
+        <h4 className="text-sm font-semibold text-foreground">{schema.title}</h4>
+      )}
+
+      {/* Form fields */}
+      {fields.map((field) => (
+        <div key={field.name}>
+          <label htmlFor={`${taskId}-${field.name}`} className="block text-xs font-medium text-foreground mb-1">
+            {field.label || field.name}
+            {field.required && <span className="text-destructive ml-0.5">*</span>}
+          </label>
+
+          {field.type === 'text' && (
+            <input
+              id={`${taskId}-${field.name}`}
+              type="text"
+              value={(formData[field.name] as string) ?? ''}
+              onChange={(e) => setField(field.name, e.target.value)}
+              disabled={disabled}
+              maxLength={field.max_length}
+              className="w-full rounded-md border border-border px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
+            />
+          )}
+
+          {field.type === 'textarea' && (
+            <textarea
+              id={`${taskId}-${field.name}`}
+              value={(formData[field.name] as string) ?? ''}
+              onChange={(e) => setField(field.name, e.target.value)}
+              disabled={disabled}
+              maxLength={field.max_length}
+              rows={3}
+              className="w-full rounded-md border border-border px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-y disabled:opacity-50"
+            />
+          )}
+
+          {field.type === 'select' && (
+            <select
+              id={`${taskId}-${field.name}`}
+              value={(formData[field.name] as string) ?? ''}
+              onChange={(e) => setField(field.name, e.target.value)}
+              disabled={disabled}
+              className="w-full rounded-md border border-border px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
+            >
+              <option value="">Select…</option>
+              {(field.options ?? []).map((opt) => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
+            </select>
+          )}
+
+          {field.type === 'number' && (
+            <input
+              id={`${taskId}-${field.name}`}
+              type="number"
+              value={(formData[field.name] as number) ?? ''}
+              onChange={(e) => setField(field.name, e.target.value ? Number(e.target.value) : '')}
+              disabled={disabled}
+              className="w-full rounded-md border border-border px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
+            />
+          )}
+
+          {field.type === 'date' && (
+            <input
+              id={`${taskId}-${field.name}`}
+              type="date"
+              value={(formData[field.name] as string) ?? ''}
+              onChange={(e) => setField(field.name, e.target.value)}
+              disabled={disabled}
+              className="w-full rounded-md border border-border px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
+            />
+          )}
+
+          {field.type === 'checkbox' && (
+            <label className="flex items-center gap-2 mt-1">
+              <input
+                id={`${taskId}-${field.name}`}
+                type="checkbox"
+                checked={!!formData[field.name]}
+                onChange={(e) => setField(field.name, e.target.checked)}
+                disabled={disabled}
+                className="h-4 w-4 rounded border-border text-primary focus:ring-ring"
+              />
+              <span className="text-sm text-foreground">{field.label}</span>
+            </label>
+          )}
+
+          {validationErrors[field.name] && (
+            <p className="mt-0.5 text-xs text-destructive flex items-center gap-1">
+              <AlertCircle className="h-3 w-3" />
+              {validationErrors[field.name]}
+            </p>
+          )}
+        </div>
+      ))}
+
+      {/* Action buttons */}
+      {actions.length > 0 && (
+        <div className="flex flex-wrap gap-2 pt-2">
+          {actions.map((action) => (
+            <button
+              key={action.value}
+              type="button"
+              onClick={() => handleAction(action)}
+              disabled={disabled}
+              className={cn(
+                'px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                'disabled:opacity-50 disabled:cursor-not-allowed',
+                ACTION_BTN_STYLES[action.style ?? 'primary'] ?? ACTION_BTN_STYLES.primary
+              )}
+            >
+              {action.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -107,6 +296,32 @@ export function TaskListClient({ initialTasks, currentUserId }: TaskListClientPr
       setTasks((prev) =>
         (prev ?? []).map((t) =>
           t.id === taskId ? { ...t, status: 'completed' as const } : t
+        )
+      )
+    } catch {
+      setError('Network error — please try again')
+    } finally {
+      setActionLoading(null)
+    }
+  }
+
+  async function handleFormAction(taskId: string, action: string, formData: Record<string, unknown>) {
+    setActionLoading(taskId)
+    setError(null)
+    try {
+      const res = await fetch(`/api/tasks/${taskId}/complete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, form_data: formData }),
+      })
+      const json = await res.json()
+      if (!res.ok) {
+        setError(json?.error?.message ?? 'Failed to submit task')
+        return
+      }
+      setTasks((prev) =>
+        (prev ?? []).map((t) =>
+          t.id === taskId ? { ...t, status: 'completed' as const, decision: action as TaskItem['decision'] } : t
         )
       )
     } catch {
@@ -207,7 +422,8 @@ export function TaskListClient({ initialTasks, currentUserId }: TaskListClientPr
           {filtered.map((task) => {
             const isExpanded = expandedId === task.id
             const routing = task.routing_decision ? ROUTING_META[task.routing_decision] : null
-            const hasDetails = !!(task.instructions || task.ai_recommendation || task.routing_reason)
+            const hasForm = !!task.task_form_schema && ((task.task_form_schema.fields?.length ?? 0) > 0 || (task.task_form_schema.actions?.length ?? 0) > 0)
+            const hasDetails = !!(task.instructions || task.ai_recommendation || task.routing_reason || hasForm)
 
             return (
               <div
@@ -228,6 +444,11 @@ export function TaskListClient({ initialTasks, currentUserId }: TaskListClientPr
                       >
                         {task.status}
                       </span>
+                      {task.priority && task.priority !== 'medium' && (
+                        <span className={cn('shrink-0 inline-flex rounded-full px-2 py-0.5 text-xs font-medium capitalize', PRIORITY_STYLES[task.priority])}>
+                          {task.priority}
+                        </span>
+                      )}
                       {routing && (
                         <span className={cn('shrink-0 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium', routing.color)}>
                           <routing.icon className="h-3 w-3" />
@@ -304,7 +525,7 @@ export function TaskListClient({ initialTasks, currentUserId }: TaskListClientPr
                         {actionLoading === task.id ? 'Claiming…' : 'Claim'}
                       </button>
                     )}
-                    {task.status === 'claimed' && task.assigned_to === currentUserId && !task.ai_recommendation && (
+                    {task.status === 'claimed' && task.assigned_to === currentUserId && !task.ai_recommendation && !hasForm && (
                       <button
                         onClick={() => handleComplete(task.id)}
                         disabled={actionLoading === task.id}
@@ -362,6 +583,16 @@ export function TaskListClient({ initialTasks, currentUserId }: TaskListClientPr
                         <pre className="text-xs text-foreground bg-background rounded border border-border p-2 overflow-x-auto whitespace-pre-wrap">
                           {JSON.stringify(task.ai_recommendation, null, 2)}
                         </pre>
+                      </div>
+                    )}
+                    {hasForm && task.task_form_schema && task.status !== 'completed' && (
+                      <div className="pt-2 border-t border-border">
+                        <TaskFormRenderer
+                          schema={task.task_form_schema}
+                          taskId={task.id}
+                          disabled={actionLoading === task.id || (task.status === 'claimed' && task.assigned_to !== currentUserId)}
+                          onSubmit={handleFormAction}
+                        />
                       </div>
                     )}
                   </div>

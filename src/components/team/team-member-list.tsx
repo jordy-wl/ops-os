@@ -12,6 +12,7 @@ interface TeamMember {
     department: string | null
     status: string
     reporting_to: string | null
+    system_role?: string | null
   }
 }
 
@@ -105,6 +106,7 @@ export function TeamMemberList({ members, departments }: TeamMemberListProps) {
                 <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Name</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider hidden sm:table-cell">Role</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider hidden md:table-cell">Department</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider hidden lg:table-cell">System Role</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
               </tr>
             </thead>
@@ -131,6 +133,9 @@ export function TeamMemberList({ members, departments }: TeamMemberListProps) {
                   </td>
                   <td className="px-4 py-3 text-sm text-muted-foreground hidden md:table-cell">
                     {m.metadata.department ?? '—'}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground hidden lg:table-cell">
+                    {m.metadata.system_role ?? '—'}
                   </td>
                   <td className="px-4 py-3">
                     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_BADGE[m.metadata.status] ?? STATUS_BADGE.active}`}>

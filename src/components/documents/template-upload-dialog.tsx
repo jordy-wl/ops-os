@@ -35,6 +35,8 @@ const ACCEPTED_EXTENSIONS = '.pdf,.html,.htm,.md,.txt,.docx'
 const MAX_SIZE_MB = 50
 const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024
 
+const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+
 interface TemplateUploadDialogProps {
   open: boolean
   onClose: () => void
@@ -50,6 +52,8 @@ export function TemplateUploadDialog({ open, onClose }: TemplateUploadDialogProp
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [progress, setProgress] = useState<'idle' | 'uploading' | 'extracting' | 'done'>('idle')
+  const [docxTags, setDocxTags] = useState<string[]>([])
+  const [isDocx, setIsDocx] = useState(false)
 
   const resetForm = useCallback(() => {
     setName('')
@@ -57,6 +61,8 @@ export function TemplateUploadDialog({ open, onClose }: TemplateUploadDialogProp
     setFile(null)
     setError(null)
     setProgress('idle')
+    setDocxTags([])
+    setIsDocx(false)
     if (fileInputRef.current) fileInputRef.current.value = ''
   }, [])
 
@@ -84,10 +90,25 @@ export function TemplateUploadDialog({ open, onClose }: TemplateUploadDialogProp
     }
 
     setFile(selected)
+    setIsDocx(selected.type === DOCX_MIME)
+    setDocxTags([])
+
     // Auto-fill name from filename if empty
     if (!name) {
       const baseName = selected.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ')
       setName(baseName.charAt(0).toUpperCase() + baseName.slice(1))
+    }
+
+    // Extract {tags} from .docx template for preview
+    if (selected.type === DOCX_MIME) {
+      const formData = new FormData()
+      formData.append('file', selected)
+      fetch('/api/documents/docx/tags', { method: 'POST', body: formData })
+        .then((r) => r.json())
+        .then((data) => {
+          if (Array.isArray(data.data?.tags)) setDocxTags(data.data.tags)
+        })
+        .catch(() => { /* tag extraction is best-effort */ })
     }
   }, [name])
 
@@ -189,6 +210,34 @@ export function TemplateUploadDialog({ open, onClose }: TemplateUploadDialogProp
               className="text-sm"
             />
           </div>
+
+          {/* DOCX Tag Preview */}
+          {isDocx && docxTags.length > 0 && (
+            <div>
+              <p className="block text-sm font-medium text-foreground mb-1">
+                Detected Placeholders ({docxTags.length})
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {docxTags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary"
+                  >
+                    {'{' + tag + '}'}
+                  </span>
+                ))}
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                These tags will be auto-filled from block data when generating documents.
+              </p>
+            </div>
+          )}
+
+          {isDocx && file && docxTags.length === 0 && (
+            <p className="text-xs text-muted-foreground">
+              No {'{'} tags {'}'} detected. Add placeholders like {'{client_name}'} to your .docx template for auto-fill.
+            </p>
+          )}
 
           {/* Category */}
           <div>

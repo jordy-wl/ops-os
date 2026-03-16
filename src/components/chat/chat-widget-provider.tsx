@@ -5,11 +5,14 @@ import { usePathname } from 'next/navigation'
 import type { PageContext } from '@/app/api/ai/page-context/route'
 
 export type ChatMode = 'discuss' | 'plan' | 'execute'
+export type ChatLayout = 'float' | 'panel'
 
 interface ChatWidgetState {
   isOpen: boolean
   mode: ChatMode
   setMode: (mode: ChatMode) => void
+  layout: ChatLayout
+  setLayout: (layout: ChatLayout) => void
   toggle: () => void
   open: () => void
   close: () => void
@@ -20,6 +23,7 @@ interface ChatWidgetState {
 const ChatWidgetContext = createContext<ChatWidgetState | null>(null)
 
 const STORAGE_KEY = 'ops-os-chat-widget-open'
+const LAYOUT_STORAGE_KEY = 'ops-os-chat-layout'
 
 /** Extract block ID from pathname like /blocks/UUID or /library/blocks/UUID */
 function extractBlockId(pathname: string): string | null {
@@ -31,20 +35,28 @@ export function ChatWidgetProvider({ children }: { children: React.ReactNode }) 
   const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
   const [mode, setMode] = useState<ChatMode>('discuss')
+  const [layout, setLayoutState] = useState<ChatLayout>('float')
   const [pageContext, setPageContext] = useState<PageContext | null>(null)
 
   const currentBlockId = extractBlockId(pathname)
 
-  // Restore open state from localStorage on mount
+  // Restore open state + layout from localStorage on mount
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY)
     if (saved === 'true') setIsOpen(true)
+    const savedLayout = localStorage.getItem(LAYOUT_STORAGE_KEY)
+    if (savedLayout === 'panel') setLayoutState('panel')
   }, [])
 
   // Persist open state
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, String(isOpen))
   }, [isOpen])
+
+  const setLayout = useCallback((l: ChatLayout) => {
+    setLayoutState(l)
+    localStorage.setItem(LAYOUT_STORAGE_KEY, l)
+  }, [])
 
   // Fetch page context on route change
   useEffect(() => {
@@ -75,7 +87,7 @@ export function ChatWidgetProvider({ children }: { children: React.ReactNode }) 
 
   return (
     <ChatWidgetContext.Provider
-      value={{ isOpen, mode, setMode, toggle, open, close, pageContext, currentBlockId }}
+      value={{ isOpen, mode, setMode, layout, setLayout, toggle, open, close, pageContext, currentBlockId }}
     >
       {children}
     </ChatWidgetContext.Provider>

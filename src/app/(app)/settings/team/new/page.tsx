@@ -18,20 +18,31 @@ export default async function NewTeamMemberPage() {
 
   const supabase = createServerClient()
 
-  // Fetch active team members for reporting-to picker
-  const { data: members } = await supabase
-    .from('blocks')
-    .select('id, name, metadata')
-    .eq('org_id', internalOrgId)
-    .eq('type', 'team_member')
-    .order('name', { ascending: true })
+  // Fetch active team members and available roles in parallel
+  const [membersResult, rolesResult] = await Promise.all([
+    supabase
+      .from('blocks')
+      .select('id, name, metadata')
+      .eq('org_id', internalOrgId)
+      .eq('type', 'team_member')
+      .order('name', { ascending: true }),
+    supabase
+      .from('roles')
+      .select('id, name, display_name, is_system')
+      .eq('org_id', internalOrgId)
+      .order('is_system', { ascending: false })
+      .order('display_name', { ascending: true }),
+  ])
 
-  const activeMembers = (members ?? [])
+  const members = membersResult.data ?? []
+  const roles = rolesResult.data ?? []
+
+  const activeMembers = members
     .filter((m: { metadata: { status?: string } }) => m.metadata?.status === 'active')
     .map((m: { id: string; name: string }) => ({ id: m.id, name: m.name }))
 
   const departments = [...new Set(
-    (members ?? [])
+    members
       .map((m: { metadata: { department?: string | null } }) => m.metadata?.department)
       .filter((d): d is string => !!d)
   )].sort()
@@ -46,7 +57,7 @@ export default async function NewTeamMemberPage() {
           { label: 'New' },
         ]}
       />
-      <TeamMemberForm teamMembers={activeMembers} departments={departments} />
+      <TeamMemberForm teamMembers={activeMembers} departments={departments} roles={roles} />
     </PageContainer>
   )
 }

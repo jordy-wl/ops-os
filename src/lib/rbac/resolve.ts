@@ -40,21 +40,29 @@ export async function resolvePermissions(
   if (assignment) {
     roleId = assignment.role_id
   } else {
-    // No assignment — look up the default role for auto-assignment
+    // No assignment — check if this is the first user in the org
+    const { count } = await supabase
+      .from('user_permissions')
+      .select('id', { count: 'exact', head: true })
+      .eq('org_id', orgId)
+
+    // First user in an org gets ops-admin regardless of the passed-in default
+    const effectiveDefault = (count === 0) ? 'ops-admin' : defaultRoleName
+
     const { data: defaultRole } = await supabase
       .from('roles')
       .select('id')
       .eq('org_id', orgId)
-      .eq('name', defaultRoleName)
+      .eq('name', effectiveDefault)
       .maybeSingle()
 
     if (!defaultRole) {
       // RBAC not seeded for this org — fall back to static permissions
       logger.warn('rbac', 'rbac.fallback_to_static', { org_id: orgId })
       return {
-        role: defaultRoleName,
+        role: effectiveDefault,
         roleId: '',
-        permissions: new Set(permissionsForRole(defaultRoleName)),
+        permissions: new Set(permissionsForRole(effectiveDefault)),
       }
     }
 

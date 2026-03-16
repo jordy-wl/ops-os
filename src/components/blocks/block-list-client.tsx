@@ -126,12 +126,12 @@ export function BlockListClient({ blocks }: BlockListClientProps) {
                 <Link
                   href={`/blocks/${block.id}`}
                   className={cn(
-                    'block rounded-md border border-border bg-card hover:bg-muted/50 transition-colors',
+                    'block rounded-xl border border-border bg-card hover:bg-muted/50 transition-colors',
                     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
                   )}
                   aria-label={`${block.name} — ${block.type}`}
                 >
-                  <div className="p-4">
+                  <div className="p-6">
                     <p className="text-[13px] font-medium text-foreground truncate">{block.name}</p>
 
                     <div className="flex items-center gap-2 mt-2">

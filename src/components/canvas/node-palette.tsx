@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Zap,
   Play,
@@ -17,52 +17,61 @@ import {
   Timer,
   Split,
   ChevronDown,
+  Info,
+  Search,
+  ClipboardCheck,
+  Workflow,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface PaletteItem {
-  nodeType: 'trigger' | 'action' | 'condition' | 'wait' | 'input' | 'output'
+  nodeType: 'trigger' | 'action' | 'condition' | 'wait' | 'input' | 'output' | 'task'
   stepType?: string
   label: string
   icon: React.ElementType
   color: string
+  description?: string
+  /** For custom actions: pre-filled config */
+  customActionConfig?: Record<string, unknown>
 }
 
 const PALETTE_ITEMS: { category: string; items: PaletteItem[] }[] = [
   {
     category: 'Triggers',
     items: [
-      { nodeType: 'trigger', label: 'Manual Start', icon: Zap, color: 'text-primary bg-primary/10' },
-      { nodeType: 'trigger', label: 'Event Trigger', icon: Zap, color: 'text-primary bg-primary/10' },
-      { nodeType: 'trigger', label: 'Webhook', icon: Webhook, color: 'text-primary bg-primary/10' },
-      { nodeType: 'trigger', label: 'Schedule', icon: Timer, color: 'text-primary bg-primary/10' },
+      { nodeType: 'trigger', label: 'Manual Start', icon: Zap, color: 'text-primary bg-primary/10', description: 'Run this workflow by clicking a button on a block' },
+      { nodeType: 'trigger', label: 'When Event Occurs', icon: Zap, color: 'text-primary bg-primary/10', description: 'Automatically start when a specific activity happens (e.g. block created, status changed)' },
+      { nodeType: 'trigger', label: 'Webhook', icon: Webhook, color: 'text-primary bg-primary/10', description: 'Start when an external system sends data to your endpoint' },
+      { nodeType: 'trigger', label: 'Schedule', icon: Timer, color: 'text-primary bg-primary/10', description: 'Run on a recurring schedule (daily, weekly, etc.)' },
     ],
   },
   {
     category: 'Actions',
     items: [
-      { nodeType: 'action', stepType: 'emit_event', label: 'Emit Event', icon: Play, color: 'text-success bg-success/10' },
-      { nodeType: 'action', stepType: 'run_action', label: 'Run Action', icon: Play, color: 'text-success bg-success/10' },
-      { nodeType: 'action', stepType: 'call_api', label: 'Call API', icon: Globe, color: 'text-success bg-success/10' },
-      { nodeType: 'action', stepType: 'send_email', label: 'Send Email', icon: Mail, color: 'text-success bg-success/10' },
-      { nodeType: 'action', stepType: 'generate_document', label: 'Generate Doc', icon: FileText, color: 'text-success bg-success/10' },
-      { nodeType: 'action', stepType: 'book_meeting', label: 'Book Meeting', icon: Calendar, color: 'text-success bg-success/10' },
-      { nodeType: 'action', stepType: 'update_block', label: 'Update Block', icon: Pencil, color: 'text-success bg-success/10' },
+      { nodeType: 'action', stepType: 'emit_event', label: 'Log Activity', icon: Play, color: 'text-success bg-success/10', description: 'Record an activity on the timeline for tracking and audit' },
+      { nodeType: 'action', stepType: 'run_action', label: 'Run Action', icon: Play, color: 'text-success bg-success/10', description: 'Execute a registered action (e.g. onboarding, approval)' },
+      { nodeType: 'action', stepType: 'call_api', label: 'Call External API', icon: Globe, color: 'text-success bg-success/10', description: 'Send a request to an external service via a configured integration' },
+      { nodeType: 'action', stepType: 'send_email', label: 'Send Email', icon: Mail, color: 'text-success bg-success/10', description: 'Send an email via your connected email integration' },
+      { nodeType: 'action', stepType: 'generate_document', label: 'Generate Document', icon: FileText, color: 'text-success bg-success/10', description: 'Create a document from a template or AI prompt' },
+      { nodeType: 'action', stepType: 'book_meeting', label: 'Book Meeting', icon: Calendar, color: 'text-success bg-success/10', description: 'Schedule a calendar event via your connected calendar' },
+      { nodeType: 'action', stepType: 'update_block', label: 'Update Record', icon: Pencil, color: 'text-success bg-success/10', description: 'Change fields on a block (e.g. update status, assign owner)' },
+      { nodeType: 'task', stepType: 'generate_task', label: 'Create Task', icon: ClipboardCheck, color: 'text-violet-500 bg-violet-500/10', description: 'Generate a human task with a custom form — appears in My Work for review/approval' },
     ],
   },
   {
     category: 'Conditions',
     items: [
-      { nodeType: 'condition', label: 'If / Else', icon: GitBranch, color: 'text-warning bg-warning/10' },
-      { nodeType: 'condition', stepType: 'switch', label: 'Switch', icon: Split, color: 'text-warning bg-warning/10' },
+      { nodeType: 'condition', label: 'If / Else', icon: GitBranch, color: 'text-warning bg-warning/10', description: 'Branch the workflow based on a true/false condition' },
+      { nodeType: 'condition', stepType: 'switch', label: 'Switch', icon: Split, color: 'text-warning bg-warning/10', description: 'Branch into multiple paths based on a value' },
     ],
   },
   {
     category: 'Flow',
     items: [
-      { nodeType: 'wait', label: 'Wait / Delay', icon: Clock, color: 'text-muted-foreground bg-muted' },
-      { nodeType: 'input', label: 'Input', icon: ArrowDownToLine, color: 'text-foreground bg-muted' },
-      { nodeType: 'output', label: 'Output', icon: ArrowUpFromLine, color: 'text-foreground bg-muted' },
+      { nodeType: 'wait', label: 'Wait / Delay', icon: Clock, color: 'text-muted-foreground bg-muted', description: 'Pause the workflow for a set amount of time' },
+      { nodeType: 'action', stepType: 'run_sub_workflow', label: 'Run Sub-Workflow', icon: Workflow, color: 'text-blue-500 bg-blue-500/10', description: 'Trigger another workflow and optionally wait for it to complete' },
+      { nodeType: 'input', label: 'Data Input', icon: ArrowDownToLine, color: 'text-foreground bg-muted', description: 'Define what data this workflow receives when it starts' },
+      { nodeType: 'output', label: 'Data Output', icon: ArrowUpFromLine, color: 'text-foreground bg-muted', description: 'Define what data this workflow sends out when it completes' },
     ],
   },
 ]
@@ -73,6 +82,43 @@ interface NodePaletteProps {
 
 export function NodePalette({ onAddNode }: NodePaletteProps) {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
+  const [search, setSearch] = useState('')
+  const [customActions, setCustomActions] = useState<PaletteItem[]>([])
+
+  // Fetch custom actions for this org
+  useEffect(() => {
+    fetch('/api/custom-actions')
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data.data)) {
+          const items: PaletteItem[] = data.data.map((a: Record<string, unknown>) => {
+            const meta = a.metadata as Record<string, unknown> | undefined
+            return {
+              nodeType: 'action' as const,
+              stepType: 'call_api',
+              label: a.name as string,
+              icon: Globe,
+              color: 'text-orange-500 bg-orange-500/10',
+              description: (meta?.description as string) || 'Custom saved action',
+              customActionConfig: {
+                connector_id: meta?.connector_id,
+                method: meta?.method,
+                path: meta?.path,
+                body_template: meta?.body_template,
+                timeout_ms: meta?.timeout_ms,
+                max_retries: meta?.max_retries,
+              },
+            }
+          })
+          setCustomActions(items)
+        }
+      })
+      .catch(() => {})
+  }, [])
+
+  const allGroups = customActions.length > 0
+    ? [...PALETTE_ITEMS, { category: 'Custom Actions', items: customActions }]
+    : PALETTE_ITEMS
 
   const toggleCategory = (category: string) => {
     setCollapsed((prev) => ({ ...prev, [category]: !prev[category] }))
@@ -83,12 +129,38 @@ export function NodePalette({ onAddNode }: NodePaletteProps) {
     event.dataTransfer.effectAllowed = 'move'
   }
 
+  const query = search.trim().toLowerCase()
+  const filteredGroups = query
+    ? allGroups.map((g) => ({
+        ...g,
+        items: g.items.filter(
+          (i) =>
+            i.label.toLowerCase().includes(query) ||
+            i.description?.toLowerCase().includes(query) ||
+            i.stepType?.toLowerCase().includes(query)
+        ),
+      })).filter((g) => g.items.length > 0)
+    : allGroups
+
   return (
     <div className="w-52 shrink-0 border-r bg-background overflow-y-auto">
       <div className="p-3">
-        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Node Palette</h3>
-        {PALETTE_ITEMS.map((group) => {
-          const isCollapsed = collapsed[group.category] ?? false
+        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Node Palette</h3>
+        <div className="relative mb-3">
+          <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search nodes…"
+            className="w-full rounded-md border border-border bg-background pl-7 pr-2 py-1.5 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+          />
+        </div>
+        {filteredGroups.length === 0 && (
+          <p className="text-xs text-muted-foreground text-center py-4">No nodes match &ldquo;{search}&rdquo;</p>
+        )}
+        {filteredGroups.map((group) => {
+          const isCollapsed = !query && (collapsed[group.category] ?? false)
           return (
             <div key={group.category} className="mb-3">
               <button
@@ -97,35 +169,50 @@ export function NodePalette({ onAddNode }: NodePaletteProps) {
                 className="flex w-full items-center justify-between text-xs font-medium text-muted-foreground mb-1.5 hover:text-foreground transition-colors"
               >
                 <span>{group.category}</span>
-                <ChevronDown
-                  className={cn(
-                    'h-3 w-3 transition-transform',
-                    isCollapsed && '-rotate-90'
-                  )}
-                />
+                {!query && (
+                  <ChevronDown
+                    className={cn(
+                      'h-3 w-3 transition-transform',
+                      isCollapsed && '-rotate-90'
+                    )}
+                  />
+                )}
               </button>
               {!isCollapsed && (
                 <div className="space-y-1">
                   {group.items.map((item) => {
                     const Icon = item.icon
                     return (
-                      <button
+                      <div
                         key={`${item.nodeType}-${item.stepType ?? item.label}`}
-                        type="button"
-                        draggable
-                        onDragStart={(e) => onDragStart(e, item)}
-                        onClick={() => onAddNode(item)}
-                        className={cn(
-                          'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm',
-                          'hover:bg-muted active:bg-muted cursor-grab active:cursor-grabbing',
-                          'transition-colors'
-                        )}
+                        className="group/node relative"
                       >
-                        <div className={cn('flex h-6 w-6 items-center justify-center rounded', item.color)}>
-                          <Icon className="h-3.5 w-3.5" />
-                        </div>
-                        <span className="text-foreground text-xs font-medium">{item.label}</span>
-                      </button>
+                        <button
+                          type="button"
+                          draggable
+                          onDragStart={(e) => onDragStart(e, item)}
+                          onClick={() => onAddNode(item)}
+                          className={cn(
+                            'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm',
+                            'hover:bg-muted active:bg-muted cursor-grab active:cursor-grabbing',
+                            'transition-colors'
+                          )}
+                        >
+                          <div className={cn('flex h-6 w-6 shrink-0 items-center justify-center rounded', item.color)}>
+                            <Icon className="h-3.5 w-3.5" />
+                          </div>
+                          <span className="text-foreground text-xs font-medium truncate">{item.label}</span>
+                          {item.description && (
+                            <Info className="ml-auto h-3 w-3 shrink-0 text-muted-foreground opacity-0 group-hover/node:opacity-100 transition-opacity" />
+                          )}
+                        </button>
+                        {item.description && (
+                          <div className="absolute left-full top-0 z-50 ml-2 hidden group-hover/node:block w-56 rounded-md border bg-popover p-2.5 text-xs text-popover-foreground shadow-md">
+                            <p className="font-medium mb-0.5">{item.label}</p>
+                            <p className="text-muted-foreground leading-relaxed">{item.description}</p>
+                          </div>
+                        )}
+                      </div>
                     )
                   })}
                 </div>

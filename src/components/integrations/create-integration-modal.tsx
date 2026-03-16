@@ -86,7 +86,7 @@ export function CreateIntegrationModal({ onClose, onCreated }: Props) {
       aria-labelledby="create-connector-title"
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
     >
-      <div className="absolute inset-0 bg-black/40" onClick={webhookUrl ? handleDone : onClose} aria-hidden="true" />
+      <div className="absolute inset-0 bg-black/80" onClick={webhookUrl ? handleDone : onClose} aria-hidden="true" />
 
       <div className="relative w-full max-w-sm rounded-lg bg-background p-6 shadow-lg max-h-[85vh] overflow-y-auto">
         <h2 id="create-connector-title" className="text-lg font-semibold text-foreground mb-4">

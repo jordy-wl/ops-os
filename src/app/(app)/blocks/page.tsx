@@ -23,7 +23,7 @@ export default async function BlockListPage() {
     .order('updated_at', { ascending: false })
 
   return (
-    <div className="p-6 lg:p-8">
+    <div className="p-6 lg:p-8 max-w-7xl mx-auto">
       <h1 className="text-2xl font-semibold text-foreground mb-6">Blocks</h1>
       <BlockListClient blocks={(blocks ?? []) as Block[]} />
     </div>

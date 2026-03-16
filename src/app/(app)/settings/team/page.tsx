@@ -18,8 +18,8 @@ export default async function TeamSettingsPage() {
 
   const supabase = createServerClient()
 
-  // Fetch team members and org hierarchy in parallel
-  const [membersResult, hierarchyResult] = await Promise.all([
+  // Fetch team members, org hierarchy, and roles in parallel
+  const [membersResult, hierarchyResult, rolesResult] = await Promise.all([
     supabase
       .from('blocks')
       .select('id, name, metadata')
@@ -27,10 +27,45 @@ export default async function TeamSettingsPage() {
       .eq('type', 'team_member')
       .order('name', { ascending: true }),
     supabase.rpc('get_org_hierarchy', { root_org_id: internalOrgId }),
+    supabase
+      .from('roles')
+      .select('id, name, display_name')
+      .eq('org_id', internalOrgId),
   ])
 
   const members = membersResult.data ?? []
   const hierarchyRows = hierarchyResult.data ?? []
+  const rolesMap = new Map((rolesResult.data ?? []).map((r: { id: string; display_name: string }) => [r.id, r.display_name]))
+
+  // Bulk-fetch role assignments for members with linked Clerk users
+  const clerkUserIds = members
+    .map((m: { metadata: { clerk_user_id?: string | null } }) => m.metadata?.clerk_user_id)
+    .filter((id): id is string => !!id)
+
+  let roleAssignments = new Map<string, string>()
+  if (clerkUserIds.length > 0) {
+    const { data: assignments } = await supabase
+      .from('user_permissions')
+      .select('user_id, role_id')
+      .eq('org_id', internalOrgId)
+      .in('user_id', clerkUserIds)
+    for (const a of assignments ?? []) {
+      roleAssignments.set(a.user_id, rolesMap.get(a.role_id) ?? 'Unknown')
+    }
+  }
+
+  // Enrich members with system role display name
+  type MemberMeta = { email: string | null; role_title: string | null; department: string | null; status: string; reporting_to: string | null; clerk_user_id?: string | null }
+  const enrichedMembers = members.map((m: { id: string; name: string; metadata: MemberMeta }) => {
+    const clerkId = m.metadata?.clerk_user_id
+    return {
+      ...m,
+      metadata: {
+        ...m.metadata,
+        system_role: clerkId ? (roleAssignments.get(clerkId) ?? null) : null,
+      },
+    }
+  })
 
   // Build hierarchy tree from flat rows
   type OrgNode = { id: string; name: string; slug: string | null; level: string; children: OrgNode[] }
@@ -82,7 +117,7 @@ export default async function TeamSettingsPage() {
       <div className="space-y-8">
         <section>
           <h3 className="text-base font-semibold text-foreground mb-3">Team Members</h3>
-          <TeamMemberList members={members} departments={departments} />
+          <TeamMemberList members={enrichedMembers} departments={departments} />
         </section>
 
         <section>
