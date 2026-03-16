@@ -69,18 +69,8 @@ function blockTypeLabel(type: string): string {
 /**
  * Maps a block type key to a Tailwind badge color class.
  */
-function blockTypeBadgeClass(type: string): string {
-  const colors: Record<string, string> = {
-    client: 'bg-blue-100 text-blue-700',
-    deal: 'bg-green-100 text-green-700',
-    project: 'bg-purple-100 text-purple-700',
-    contact: 'bg-amber-100 text-amber-700',
-    contract: 'bg-rose-100 text-rose-700',
-    workflow_template: 'bg-indigo-100 text-indigo-700',
-    workflow_instance: 'bg-cyan-100 text-cyan-700',
-    task_queue_item: 'bg-orange-100 text-orange-700',
-  }
-  return colors[type] ?? 'bg-gray-100 text-gray-700'
+function blockTypeBadgeClass(_type: string): string {
+  return 'bg-muted text-foreground'
 }
 
 // ─── Component ──────────────────────────────────────────────────────────────

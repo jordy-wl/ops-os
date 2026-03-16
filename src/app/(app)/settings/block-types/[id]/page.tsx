@@ -35,7 +35,12 @@ export default async function BlockTypeDetailPage({ params }: BlockTypeDetailPag
   const fieldSchema = (typeDef.field_schema ?? {
     type: 'object',
     properties: {},
-  }) as { type: string; properties: Record<string, Record<string, unknown>>; required?: string[] }
+  }) as {
+    type: string
+    properties: Record<string, Record<string, unknown>>
+    required?: string[]
+    'x-field-groups'?: Array<{ id: string; label: string; order: number }>
+  }
 
   // Fetch all block types for relation target selector
   const { data: allTypes } = await supabase

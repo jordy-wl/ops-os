@@ -3,7 +3,8 @@ import { redirect } from 'next/navigation'
 import { createServerClient } from '@/lib/supabase/server'
 import { resolveOrgId } from '@/lib/auth/resolve-org'
 import { WorkflowJobsClient } from '@/components/workflows/workflow-jobs-client'
-import { WorkflowTemplatesClient, mapBlockToTemplate } from '@/components/workflows/workflow-templates-client'
+import { WorkflowTemplatesClient } from '@/components/workflows/workflow-templates-client'
+import { mapBlockToTemplate } from '@/lib/workflows/template-mapper'
 import { WorkflowTabShell } from '@/components/workflows/workflow-tab-shell'
 import { logger } from '@/lib/logger'
 import type { WorkflowJob } from '@/components/workflows/workflow-jobs-client'
@@ -124,11 +125,12 @@ export default async function WorkflowsPage() {
   }
 
   return (
-    <div className="p-6 lg:p-8">
+    <div className="p-6 lg:p-8 max-w-7xl mx-auto">
       <h1 className="text-2xl font-semibold text-foreground mb-6">Workflows</h1>
       <WorkflowTabShell
         templatesPanel={<WorkflowTemplatesClient initialTemplates={initialTemplates} />}
         jobsPanel={<WorkflowJobsClient initialJobs={initialJobs} />}
+        templateIds={(templateBlocks ?? []).map((b) => b.id)}
       />
     </div>
   )

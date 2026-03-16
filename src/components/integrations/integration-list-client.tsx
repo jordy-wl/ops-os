@@ -17,9 +17,9 @@ export interface Connector {
 }
 
 const STATUS_STYLES: Record<string, string> = {
-  active: 'bg-green-50 text-green-700',
-  paused: 'bg-yellow-50 text-yellow-700',
-  error: 'bg-red-50 text-red-700',
+  active: 'bg-success/10 text-success',
+  paused: 'bg-warning/10 text-warning',
+  error: 'bg-destructive/10 text-destructive',
 }
 
 const PROVIDER_LABELS: Record<string, string> = {

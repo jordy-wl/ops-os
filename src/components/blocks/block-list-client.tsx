@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { Search } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Block } from '@/lib/context-assembly'
 
@@ -9,16 +10,11 @@ interface BlockListClientProps {
   blocks: Block[]
 }
 
-const BLOCK_TYPES = ['client', 'deal', 'project', 'contract', 'contact'] as const
+const BLOCK_TYPES = [
+  'client', 'deal', 'project', 'contract', 'contact',
+  'solution', 'product', 'service', 'team_member', 'policy',
+] as const
 type BlockType = (typeof BLOCK_TYPES)[number]
-
-const TYPE_STYLES: Record<string, string> = {
-  client:   'bg-blue-100 text-blue-800',
-  deal:     'bg-green-100 text-green-800',
-  project:  'bg-yellow-100 text-yellow-800',
-  contract: 'bg-purple-100 text-purple-800',
-  contact:  'bg-gray-100 text-gray-800',
-}
 
 /**
  * BlockListClient — client component handling type filter + text search.
@@ -42,25 +38,28 @@ export function BlockListClient({ blocks }: BlockListClientProps) {
     <div>
       {/* Search + filter controls */}
       <div className="flex flex-wrap gap-3 mb-6">
-        <input
-          type="search"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search blocks…"
-          aria-label="Search blocks by name"
-          className="h-9 rounded-md border border-border px-3 text-sm w-full sm:w-80 focus:outline-none focus:ring-2 focus:ring-ring"
-        />
+        <div className="relative w-full sm:w-80">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search blocks…"
+            aria-label="Search blocks by name"
+            className="h-8 w-full rounded-md border border-border bg-background pl-9 pr-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-ring"
+          />
+        </div>
 
-        {/* Type filter buttons */}
-        <div className="flex flex-wrap gap-2" role="group" aria-label="Filter by block type">
+        {/* Type filter pills */}
+        <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filter by block type">
           <button
             onClick={() => setActiveType('all')}
             className={cn(
-              'h-9 px-3 rounded-md text-sm font-medium transition-colors',
+              'h-7 px-3 rounded-full text-[13px] font-medium transition-colors',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
               activeType === 'all'
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-background border border-border text-foreground hover:bg-muted'
+                ? 'bg-foreground text-background'
+                : 'bg-muted text-muted-foreground hover:text-foreground'
             )}
             aria-pressed={activeType === 'all'}
           >
@@ -71,15 +70,15 @@ export function BlockListClient({ blocks }: BlockListClientProps) {
               key={type}
               onClick={() => setActiveType(type)}
               className={cn(
-                'h-9 px-3 rounded-md text-sm font-medium capitalize transition-colors',
+                'h-7 px-3 rounded-full text-[13px] font-medium capitalize transition-colors',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                 activeType === type
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-background border border-border text-foreground hover:bg-muted'
+                  ? 'bg-foreground text-background'
+                  : 'bg-muted text-muted-foreground hover:text-foreground'
               )}
               aria-pressed={activeType === type}
             >
-              {type}
+              {type.replace(/_/g, ' ')}
             </button>
           ))}
         </div>
@@ -90,8 +89,8 @@ export function BlockListClient({ blocks }: BlockListClientProps) {
         <div className="flex flex-col items-center justify-center py-16 text-center">
           {blocks.length === 0 ? (
             <>
-              <p className="text-lg font-semibold text-foreground mb-2">No blocks yet</p>
-              <p className="text-sm text-muted-foreground mb-6">
+              <p className="text-title text-foreground mb-2">No blocks yet</p>
+              <p className="text-[13px] text-muted-foreground mb-6">
                 Create your first block from the dashboard.
               </p>
               <Link
@@ -102,7 +101,7 @@ export function BlockListClient({ blocks }: BlockListClientProps) {
               </Link>
             </>
           ) : (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-[13px] text-muted-foreground">
               No blocks match your filter.{' '}
               <button
                 onClick={() => { setSearch(''); setActiveType('all') }}
@@ -120,7 +119,6 @@ export function BlockListClient({ blocks }: BlockListClientProps) {
           aria-label={`${filtered.length} block${filtered.length !== 1 ? 's' : ''}`}
         >
           {filtered.map((block) => {
-            const typeStyle = TYPE_STYLES[block.type] ?? 'bg-gray-100 text-gray-800'
             const jurisdiction = block.metadata?.jurisdiction as string | undefined
 
             return (
@@ -128,36 +126,32 @@ export function BlockListClient({ blocks }: BlockListClientProps) {
                 <Link
                   href={`/blocks/${block.id}`}
                   className={cn(
-                    'block rounded-lg border p-4 hover:border-ring hover:shadow-sm transition-all',
+                    'block rounded-xl border border-border bg-card hover:bg-muted/50 transition-colors',
                     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
                   )}
                   aria-label={`${block.name} — ${block.type}`}
                 >
-                  {/* Type badge + name */}
-                  <div className="flex items-center gap-2 mb-2">
-                    <span
-                      className={cn(
-                        'inline-flex rounded-full px-2 py-0.5 text-xs font-medium capitalize shrink-0',
-                        typeStyle
-                      )}
-                    >
-                      {block.type}
-                    </span>
-                    {jurisdiction && (
-                      <span className="text-xs text-muted-foreground bg-muted rounded-full px-2 py-0.5">
-                        {jurisdiction}
+                  <div className="p-6">
+                    <p className="text-[13px] font-medium text-foreground truncate">{block.name}</p>
+
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className="inline-flex rounded-full bg-muted text-foreground px-2 py-0.5 text-[11px] font-medium">
+                        {block.type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
                       </span>
-                    )}
+                      {jurisdiction && (
+                        <span className="text-[11px] text-muted-foreground bg-muted rounded-full px-2 py-0.5">
+                          {jurisdiction}
+                        </span>
+                      )}
+                    </div>
+
+                    <p className="mt-2 text-muted-foreground text-[12px]">
+                      Updated{' '}
+                      <time dateTime={block.updated_at}>
+                        {new Date(block.updated_at).toLocaleDateString()}
+                      </time>
+                    </p>
                   </div>
-
-                  <p className="font-medium text-foreground truncate">{block.name}</p>
-
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Updated{' '}
-                    <time dateTime={block.updated_at}>
-                      {new Date(block.updated_at).toLocaleDateString()}
-                    </time>
-                  </p>
                 </Link>
               </li>
             )

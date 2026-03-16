@@ -15,6 +15,8 @@ interface FieldConfigPanelProps {
   isSystem: boolean
   isRequired: boolean
   allBlockTypes: Array<{ type_name: string; display_name: string }>
+  /** Available field groups for the block type */
+  fieldGroups?: Array<{ id: string; label: string }>
 }
 
 const CURRENCY_CODES = ['AUD', 'USD', 'GBP', 'EUR', 'SGD', 'HKD', 'NZD', 'JPY', 'CAD', 'CHF']
@@ -28,6 +30,7 @@ export function FieldConfigPanel({
   isSystem,
   isRequired,
   allBlockTypes,
+  fieldGroups = [],
 }: FieldConfigPanelProps) {
   const router = useRouter()
   const typeDef = FIELD_TYPE_DEFINITIONS[fieldType]
@@ -56,6 +59,9 @@ export function FieldConfigPanel({
   const [currencyCode, setCurrencyCode] = useState(
     (property['x-currency-code'] as string) ?? 'AUD'
   )
+  const [fieldGroup, setFieldGroup] = useState(
+    (property['x-field-group'] as string) ?? ''
+  )
   const [isSaving, setIsSaving] = useState(false)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saved' | 'error'>(
     'idle'
@@ -81,6 +87,7 @@ export function FieldConfigPanel({
 
     setRelationTarget((property['x-relation-target'] as string) ?? '')
     setCurrencyCode((property['x-currency-code'] as string) ?? 'AUD')
+    setFieldGroup((property['x-field-group'] as string) ?? '')
   }, [fieldName, fieldType, property, isRequired])
 
   const handleSave = useCallback(async () => {
@@ -122,6 +129,10 @@ export function FieldConfigPanel({
         config['x-currency-code'] = currencyCode
       }
 
+      if (fieldGroup) {
+        config['x-field-group'] = fieldGroup
+      }
+
       if (Object.keys(config).length > 0) {
         body.config = config
       }
@@ -160,6 +171,7 @@ export function FieldConfigPanel({
     enumValues,
     relationTarget,
     currencyCode,
+    fieldGroup,
     router,
   ])
 
@@ -229,7 +241,7 @@ export function FieldConfigPanel({
 
       {error && (
         <div
-          className="mb-4 rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700"
+          className="mb-4 rounded-md bg-destructive/5 border border-destructive/20 px-4 py-3 text-[13px] text-destructive"
           role="alert"
         >
           {error}
@@ -307,6 +319,37 @@ export function FieldConfigPanel({
             className="text-sm"
           />
         </div>
+
+        {/* Field Group assignment */}
+        {fieldGroups.length > 0 && (
+          <div>
+            <label
+              htmlFor={`field-group-${fieldName}`}
+              className="block text-sm font-medium text-foreground mb-1"
+            >
+              Field Group
+            </label>
+            <select
+              id={`field-group-${fieldName}`}
+              value={fieldGroup}
+              onChange={(e) => {
+                setFieldGroup(e.target.value)
+                setSaveStatus('idle')
+              }}
+              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            >
+              <option value="">General (default)</option>
+              {fieldGroups.map((g) => (
+                <option key={g.id} value={g.id}>
+                  {g.label}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Group this field under a section on the block detail page.
+            </p>
+          </div>
+        )}
 
         {/* Type-specific config: Select / Multi-Select enum values */}
         {(fieldType === 'select' || fieldType === 'multi-select') && (

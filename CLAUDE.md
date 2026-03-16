@@ -52,9 +52,9 @@ Role codes: `ORC` `RES` `PM` `FE` `BE` `AI` `OPS` `DE` `QA` `UI`
 | Orchestrator | `sprints/phases.md`, sprint task files, `roadmap/` | Application code |
 | Researcher | `research/`, `prd/` (edits with changelog) | Code, sprint tasks |
 | Product Manager | `roadmap/ROADMAP.md`, `roadmap/north-star.md` | Code, PRD directly |
-| Frontend Engineer | `src/frontend/`, `src/components/`, `src/styles/` | Backend, infra, DB schema |
-| Backend Engineer | `src/api/`, `src/services/`, `src/middleware/`, `src/db/migrations/` | Frontend, infra |
-| AI/ML Engineer | `src/ai/`, `src/ml/`, `src/prompts/`, `src/evaluations/` | Infra, frontend |
+| Frontend Engineer | `src/frontend/`, `src/components/`, `src/styles/`, `src/app/(app)/` | Backend, infra, DB schema |
+| Backend Engineer | `src/api/`, `src/services/`, `src/middleware/`, `src/db/migrations/`, `src/lib/routing/`, `src/lib/notifications/`, `src/app/api/org/`, `src/app/api/notifications/` | Frontend, infra |
+| AI/ML Engineer | `src/ai/`, `src/ml/`, `src/prompts/`, `src/evaluations/`, `src/lib/ai/delta-engine.ts`, `src/lib/ai/insights-generator.ts` | Infra, frontend |
 | DevOps Engineer | `infra/`, `terraform/`, `.github/workflows/`, `docker/`, `k8s/` | Application code |
 | Data Engineer | `src/pipelines/`, `src/etl/`, `db/schema/`, `db/migrations/`, `src/analytics/` | Frontend, API routes |
 | QA Engineer | `tests/`, `**/*.test.*`, `**/*.spec.*` | Feature code |

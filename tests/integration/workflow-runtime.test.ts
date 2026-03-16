@@ -44,13 +44,13 @@ describe('WorkflowTemplateSchema — validation', () => {
     expect(result.success).toBe(true)
   })
 
-  it('rejects template with no steps', () => {
+  it('accepts template with empty steps (canvas-first creation)', () => {
     const result = WorkflowTemplateSchema.safeParse({
       applies_to_type: 'client',
       trigger: { type: 'manual' },
       steps: [],
     })
-    expect(result.success).toBe(false)
+    expect(result.success).toBe(true)
   })
 
   it('rejects template with missing applies_to_type', () => {

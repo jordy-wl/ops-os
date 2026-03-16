@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { stepsToCanvas, canvasToTemplate, type CanvasLayout } from '../canvas-layout'
-import type { WorkflowTemplate } from '../template-schema'
+import type { WorkflowTemplate, WorkflowStep } from '../template-schema'
 
 // ─── stepsToCanvas ──────────────────────────────────────────────────────────
 
@@ -512,5 +512,453 @@ describe('round-trip: stepsToCanvas → canvasToTemplate', () => {
       block_id: '{{context.source_block_id}}',
       fields: { status: 'onboarded', onboarded_at: '2026-01-01' },
     })
+  })
+
+  it('preserves routing fields through round-trip', () => {
+    const original: WorkflowTemplate = {
+      applies_to_type: 'client',
+      trigger: { type: 'manual' },
+      steps: [
+        {
+          name: 'review_step',
+          type: 'emit_event',
+          event_type: 'review.needed',
+          routing_mode: 'human_only',
+          instructions: 'Review the compliance document carefully',
+          required_permissions: ['approve_tasks', 'view_blocks'],
+        } as WorkflowStep,
+      ],
+    }
+
+    const layout = stepsToCanvas(original)
+
+    // Verify routing fields are in the canvas node config
+    const stepNode = layout.nodes[1]
+    expect(stepNode.data.config.routing_mode).toBe('human_only')
+    expect(stepNode.data.config.instructions).toBe('Review the compliance document carefully')
+    expect(stepNode.data.config.required_permissions).toEqual(['approve_tasks', 'view_blocks'])
+
+    const result = canvasToTemplate(layout)
+
+    expect(result.steps[0].routing_mode).toBe('human_only')
+    expect(result.steps[0].instructions).toBe('Review the compliance document carefully')
+    expect(result.steps[0].required_permissions).toEqual(['approve_tasks', 'view_blocks'])
+  })
+
+  it('excludes policy_default routing mode from serialized step', () => {
+    const layout: CanvasLayout = {
+      nodes: [
+        {
+          id: 'trigger-0',
+          type: 'trigger',
+          position: { x: 300, y: 50 },
+          data: { label: 'Manual', config: { triggerType: 'manual' } },
+        },
+        {
+          id: 'step-0',
+          type: 'action',
+          position: { x: 300, y: 170 },
+          data: {
+            stepName: 'default_routing',
+            stepType: 'emit_event',
+            label: 'Event',
+            config: {
+              event_type: 'test',
+              routing_mode: 'policy_default',
+              instructions: 'Some instructions',
+            },
+          },
+        },
+      ],
+      edges: [{ id: 'e-1', source: 'trigger-0', target: 'step-0' }],
+    }
+
+    const result = canvasToTemplate(layout)
+
+    // policy_default should NOT be serialized — it means "no override"
+    expect(result.steps[0].routing_mode).toBeUndefined()
+    // instructions should still be present
+    expect(result.steps[0].instructions).toBe('Some instructions')
+  })
+
+  it('omits empty required_permissions array', () => {
+    const layout: CanvasLayout = {
+      nodes: [
+        {
+          id: 'trigger-0',
+          type: 'trigger',
+          position: { x: 300, y: 50 },
+          data: { label: 'Manual', config: { triggerType: 'manual' } },
+        },
+        {
+          id: 'step-0',
+          type: 'action',
+          position: { x: 300, y: 170 },
+          data: {
+            stepName: 'no_perms',
+            stepType: 'emit_event',
+            label: 'Event',
+            config: { event_type: 'test', required_permissions: [] },
+          },
+        },
+      ],
+      edges: [{ id: 'e-1', source: 'trigger-0', target: 'step-0' }],
+    }
+
+    const result = canvasToTemplate(layout)
+
+    expect(result.steps[0].required_permissions).toBeUndefined()
+  })
+})
+
+// ─── Input/Output node serialization (Sprint 5) ──────────────────────────
+
+describe('stepsToCanvas — data input/output nodes', () => {
+  it('creates input nodes from data_inputs', () => {
+    const template: WorkflowTemplate = {
+      applies_to_type: 'client',
+      trigger: { type: 'manual' },
+      steps: [],
+      data_inputs: [
+        { name: 'client_data', source_type: 'block_fields', description: 'Client fields' },
+      ],
+    }
+
+    const layout = stepsToCanvas(template)
+
+    const inputNodes = layout.nodes.filter((n) => n.type === 'input')
+    expect(inputNodes).toHaveLength(1)
+    expect(inputNodes[0].data.stepName).toBe('client_data')
+    expect(inputNodes[0].data.stepType).toBe('input')
+    expect(inputNodes[0].data.label).toBe('Input: block_fields')
+    expect(inputNodes[0].data.config.source_type).toBe('block_fields')
+    expect(inputNodes[0].data.config.description).toBe('Client fields')
+  })
+
+  it('creates output nodes from data_outputs', () => {
+    const template: WorkflowTemplate = {
+      applies_to_type: 'client',
+      trigger: { type: 'manual' },
+      steps: [],
+      data_outputs: [
+        { name: 'result', output_type: 'api_call', description: 'Send result to API' },
+      ],
+    }
+
+    const layout = stepsToCanvas(template)
+
+    const outputNodes = layout.nodes.filter((n) => n.type === 'output')
+    expect(outputNodes).toHaveLength(1)
+    expect(outputNodes[0].data.stepName).toBe('result')
+    expect(outputNodes[0].data.stepType).toBe('output')
+    expect(outputNodes[0].data.label).toBe('Output: api_call')
+    expect(outputNodes[0].data.config.output_type).toBe('api_call')
+  })
+
+  it('positions input nodes to the left of main flow', () => {
+    const template: WorkflowTemplate = {
+      applies_to_type: 'client',
+      trigger: { type: 'manual' },
+      steps: [{ name: 's1', type: 'emit_event', event_type: 'a' }],
+      data_inputs: [
+        { name: 'input_1', source_type: 'webhook' },
+      ],
+    }
+
+    const layout = stepsToCanvas(template)
+
+    const triggerNode = layout.nodes.find((n) => n.type === 'trigger')!
+    const inputNode = layout.nodes.find((n) => n.type === 'input')!
+    expect(inputNode.position.x).toBeLessThan(triggerNode.position.x)
+  })
+
+  it('positions output nodes to the right of main flow', () => {
+    const template: WorkflowTemplate = {
+      applies_to_type: 'client',
+      trigger: { type: 'manual' },
+      steps: [{ name: 's1', type: 'emit_event', event_type: 'a' }],
+      data_outputs: [
+        { name: 'out_1', output_type: 'emit_event' },
+      ],
+    }
+
+    const layout = stepsToCanvas(template)
+
+    const triggerNode = layout.nodes.find((n) => n.type === 'trigger')!
+    const outputNode = layout.nodes.find((n) => n.type === 'output')!
+    expect(outputNode.position.x).toBeGreaterThan(triggerNode.position.x)
+  })
+
+  it('creates multiple input and output nodes', () => {
+    const template: WorkflowTemplate = {
+      applies_to_type: 'client',
+      trigger: { type: 'manual' },
+      steps: [],
+      data_inputs: [
+        { name: 'i1', source_type: 'block_fields' },
+        { name: 'i2', source_type: 'webhook' },
+      ],
+      data_outputs: [
+        { name: 'o1', output_type: 'update_fields' },
+        { name: 'o2', output_type: 'document' },
+      ],
+    }
+
+    const layout = stepsToCanvas(template)
+
+    expect(layout.nodes.filter((n) => n.type === 'input')).toHaveLength(2)
+    expect(layout.nodes.filter((n) => n.type === 'output')).toHaveLength(2)
+  })
+
+  it('handles template without data_inputs/data_outputs (backward compat)', () => {
+    const template: WorkflowTemplate = {
+      applies_to_type: 'client',
+      trigger: { type: 'manual' },
+      steps: [{ name: 's1', type: 'emit_event', event_type: 'a' }],
+    }
+
+    const layout = stepsToCanvas(template)
+
+    expect(layout.nodes.filter((n) => n.type === 'input')).toHaveLength(0)
+    expect(layout.nodes.filter((n) => n.type === 'output')).toHaveLength(0)
+  })
+
+  it('preserves field_mappings in input node config', () => {
+    const template: WorkflowTemplate = {
+      applies_to_type: 'client',
+      trigger: { type: 'manual' },
+      steps: [],
+      data_inputs: [
+        {
+          name: 'mapped',
+          source_type: 'api',
+          field_mappings: [{ from: 'ext_id', to: 'block_id' }],
+          payload_schema: { type: 'object' },
+        },
+      ],
+    }
+
+    const layout = stepsToCanvas(template)
+
+    const inputNode = layout.nodes.find((n) => n.type === 'input')!
+    expect(inputNode.data.config.field_mappings).toEqual([{ from: 'ext_id', to: 'block_id' }])
+    expect(inputNode.data.config.payload_schema).toEqual({ type: 'object' })
+  })
+})
+
+describe('canvasToTemplate — data input/output extraction', () => {
+  it('extracts input nodes into data_inputs', () => {
+    const layout: CanvasLayout = {
+      nodes: [
+        {
+          id: 'trigger-0',
+          type: 'trigger',
+          position: { x: 300, y: 50 },
+          data: { label: 'Manual', config: { triggerType: 'manual' } },
+        },
+        {
+          id: 'input-0',
+          type: 'input',
+          position: { x: 50, y: 170 },
+          data: {
+            stepName: 'webhook_data',
+            stepType: 'input',
+            label: 'Input: webhook',
+            config: { source_type: 'webhook', description: 'Incoming webhook' },
+          },
+        },
+      ],
+      edges: [],
+    }
+
+    const result = canvasToTemplate(layout)
+
+    expect(result.data_inputs).toBeDefined()
+    expect(result.data_inputs).toHaveLength(1)
+    expect(result.data_inputs![0].name).toBe('webhook_data')
+    expect(result.data_inputs![0].source_type).toBe('webhook')
+    expect(result.data_inputs![0].description).toBe('Incoming webhook')
+  })
+
+  it('extracts output nodes into data_outputs', () => {
+    const layout: CanvasLayout = {
+      nodes: [
+        {
+          id: 'trigger-0',
+          type: 'trigger',
+          position: { x: 300, y: 50 },
+          data: { label: 'Manual', config: { triggerType: 'manual' } },
+        },
+        {
+          id: 'output-0',
+          type: 'output',
+          position: { x: 550, y: 170 },
+          data: {
+            stepName: 'api_output',
+            stepType: 'output',
+            label: 'Output: api_call',
+            config: {
+              output_type: 'api_call',
+              description: 'Send to external API',
+              field_mappings: [{ from: 'name', to: 'full_name' }],
+            },
+          },
+        },
+      ],
+      edges: [],
+    }
+
+    const result = canvasToTemplate(layout)
+
+    expect(result.data_outputs).toBeDefined()
+    expect(result.data_outputs).toHaveLength(1)
+    expect(result.data_outputs![0].name).toBe('api_output')
+    expect(result.data_outputs![0].output_type).toBe('api_call')
+    expect(result.data_outputs![0].field_mappings).toEqual([{ from: 'name', to: 'full_name' }])
+  })
+
+  it('excludes input/output nodes from steps array', () => {
+    const layout: CanvasLayout = {
+      nodes: [
+        {
+          id: 'trigger-0',
+          type: 'trigger',
+          position: { x: 300, y: 50 },
+          data: { label: 'Manual', config: { triggerType: 'manual' } },
+        },
+        {
+          id: 'step-0',
+          type: 'action',
+          position: { x: 300, y: 170 },
+          data: { stepName: 'do_thing', stepType: 'emit_event', label: 'Do', config: { event_type: 'done' } },
+        },
+        {
+          id: 'input-0',
+          type: 'input',
+          position: { x: 50, y: 170 },
+          data: { stepName: 'in', stepType: 'input', label: 'Input', config: { source_type: 'block_fields' } },
+        },
+        {
+          id: 'output-0',
+          type: 'output',
+          position: { x: 550, y: 170 },
+          data: { stepName: 'out', stepType: 'output', label: 'Output', config: { output_type: 'update_fields' } },
+        },
+      ],
+      edges: [
+        { id: 'e-1', source: 'trigger-0', target: 'step-0' },
+        { id: 'e-2', source: 'input-0', target: 'step-0' },
+        { id: 'e-3', source: 'step-0', target: 'output-0' },
+      ],
+    }
+
+    const result = canvasToTemplate(layout)
+
+    // Only the action step, not input/output
+    expect(result.steps).toHaveLength(1)
+    expect(result.steps[0].name).toBe('do_thing')
+    // But data_inputs and data_outputs are present
+    expect(result.data_inputs).toHaveLength(1)
+    expect(result.data_outputs).toHaveLength(1)
+  })
+
+  it('omits data_inputs/data_outputs when none exist', () => {
+    const layout: CanvasLayout = {
+      nodes: [
+        {
+          id: 'trigger-0',
+          type: 'trigger',
+          position: { x: 300, y: 50 },
+          data: { label: 'Manual', config: { triggerType: 'manual' } },
+        },
+      ],
+      edges: [],
+    }
+
+    const result = canvasToTemplate(layout)
+
+    expect(result.data_inputs).toBeUndefined()
+    expect(result.data_outputs).toBeUndefined()
+  })
+})
+
+describe('round-trip: input/output nodes', () => {
+  it('preserves data_inputs through round-trip', () => {
+    const original: WorkflowTemplate = {
+      applies_to_type: 'client',
+      trigger: { type: 'manual' },
+      steps: [{ name: 'step_1', type: 'emit_event', event_type: 'test' }],
+      data_inputs: [
+        {
+          name: 'webhook_input',
+          source_type: 'webhook',
+          description: 'Incoming webhook data',
+          field_mappings: [{ from: 'payload.id', to: 'block_id' }],
+        },
+      ],
+    }
+
+    const layout = stepsToCanvas(original)
+    const result = canvasToTemplate(layout)
+
+    expect(result.data_inputs).toHaveLength(1)
+    expect(result.data_inputs![0].name).toBe('webhook_input')
+    expect(result.data_inputs![0].source_type).toBe('webhook')
+    expect(result.data_inputs![0].description).toBe('Incoming webhook data')
+    expect(result.data_inputs![0].field_mappings).toEqual([{ from: 'payload.id', to: 'block_id' }])
+  })
+
+  it('preserves data_outputs through round-trip', () => {
+    const original: WorkflowTemplate = {
+      applies_to_type: 'deal',
+      trigger: { type: 'manual' },
+      steps: [],
+      data_outputs: [
+        {
+          name: 'doc_output',
+          output_type: 'document',
+          description: 'Generate contract document',
+          field_mappings: [{ from: 'deal_name', to: 'title' }],
+        },
+      ],
+    }
+
+    const layout = stepsToCanvas(original)
+    const result = canvasToTemplate(layout)
+
+    expect(result.data_outputs).toHaveLength(1)
+    expect(result.data_outputs![0].name).toBe('doc_output')
+    expect(result.data_outputs![0].output_type).toBe('document')
+    expect(result.data_outputs![0].description).toBe('Generate contract document')
+    expect(result.data_outputs![0].field_mappings).toEqual([{ from: 'deal_name', to: 'title' }])
+  })
+
+  it('preserves mixed steps + inputs + outputs through round-trip', () => {
+    const original: WorkflowTemplate = {
+      applies_to_type: 'client',
+      trigger: { type: 'event', event_pattern: 'block.created' },
+      steps: [
+        { name: 'process', type: 'run_action', action_type: 'validate' },
+        { name: 'notify', type: 'emit_event', event_type: 'done' },
+      ],
+      data_inputs: [
+        { name: 'api_in', source_type: 'api' },
+      ],
+      data_outputs: [
+        { name: 'field_out', output_type: 'update_fields' },
+      ],
+    }
+
+    const layout = stepsToCanvas(original)
+    const result = canvasToTemplate(layout)
+
+    expect(result.trigger).toEqual({ type: 'event', event_pattern: 'block.created' })
+    expect(result.steps).toHaveLength(2)
+    expect(result.steps[0].name).toBe('process')
+    expect(result.steps[1].name).toBe('notify')
+    expect(result.data_inputs).toHaveLength(1)
+    expect(result.data_inputs![0].source_type).toBe('api')
+    expect(result.data_outputs).toHaveLength(1)
+    expect(result.data_outputs![0].output_type).toBe('update_fields')
   })
 })

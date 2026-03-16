@@ -5,6 +5,9 @@ import { AppSidebar } from '@/components/shell/app-sidebar'
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
 import { Separator } from '@/components/ui/separator'
 import { ChatWidgetShell } from '@/components/chat/chat-widget-shell'
+import { BottomTabBar } from '@/components/shell/bottom-tab-bar'
+import { ThemeToggle } from '@/components/ui/theme-toggle'
+import { CommandPalette } from '@/components/shell/command-palette'
 
 /**
  * Authenticated app layout — wraps all routes under (app)/.
@@ -35,15 +38,23 @@ export default async function AppLayout({
     <SidebarProvider defaultOpen={defaultOpen}>
       <AppSidebar />
       <SidebarInset>
-        <header className="flex h-12 shrink-0 items-center gap-2 border-b px-4">
+        <header className="sticky top-0 z-30 flex h-11 shrink-0 items-center gap-2 border-b bg-background px-4">
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mr-2 h-4" />
+          <div className="flex items-center gap-1 text-[13px] text-muted-foreground">
+            <span>Ops OS</span>
+          </div>
+          <div className="ml-auto flex items-center gap-2">
+            <CommandPalette />
+            <ThemeToggle />
+          </div>
         </header>
-        <main id="main-content" className="flex-1 animate-page-in">
+        <main id="main-content" className="flex-1 overflow-x-hidden animate-page-in pb-16 md:pb-0">
           {children}
         </main>
       </SidebarInset>
       <ChatWidgetShell />
+      <BottomTabBar />
     </SidebarProvider>
   )
 }

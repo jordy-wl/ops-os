@@ -9,7 +9,7 @@ vi.mock('@/lib/auth/withAuth', () => ({
         const params = await context.params
         return handler(
           req,
-          { userId: 'user_111', clerkOrgId: 'org_abc', orgId: 'uuid-org-1', role: 'ops-admin' as const },
+          { userId: 'user_111', clerkOrgId: 'org_abc', orgId: 'uuid-org-1', role: 'ops-admin' as const, roleId: 'role-uuid-admin', permissions: new Set(['manage_blocks', 'edit_blocks', 'view_blocks', 'manage_workflows', 'execute_workflows', 'approve_tasks', 'manage_team', 'manage_settings', 'manage_integrations', 'view_audit_log']) },
           params
         )
       }

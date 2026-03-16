@@ -33,7 +33,7 @@ export function MultiSelectField({ name, value, onChange, fieldDef, mode, requir
   return (
     <div>
       <label className="block text-sm font-medium text-muted-foreground mb-1 capitalize">
-        {label}{required && <span className="text-red-500 ml-0.5">*</span>}
+        {label}{required && <span className="text-destructive ml-0.5">*</span>}
       </label>
       <div className="flex flex-wrap gap-1.5" role="group" aria-labelledby={id}>
         {options.map((opt) => (

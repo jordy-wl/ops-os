@@ -9,11 +9,18 @@ vi.mock('@/lib/supabase/server', () => ({
   createServerClient: vi.fn(),
 }))
 
+vi.mock('@/lib/rbac/resolve', () => ({
+  resolvePermissions: vi.fn(),
+}))
+
 import { auth } from '@clerk/nextjs/server'
 import { createServerClient } from '@/lib/supabase/server'
+import { resolvePermissions } from '@/lib/rbac/resolve'
 import { withAuth, AuthContext } from '@/lib/auth/withAuth'
+import type { Permission } from '@/lib/rbac/types'
 
-// Helpers
+// ─── Helpers ────────────────────────────────────────────────────────────────
+
 const makeReq = () => new NextRequest('http://localhost/api/test')
 const makeCtx = (params: Record<string, string> = {}) => ({ params: Promise.resolve(params) })
 const makeHandler = () =>
@@ -21,21 +28,23 @@ const makeHandler = () =>
     NextResponse.json({ data: 'ok' }, { status: 200 })
   )
 
+const ALL_PERMS = new Set<Permission>([
+  'manage_blocks', 'edit_blocks', 'view_blocks', 'manage_workflows',
+  'execute_workflows', 'approve_tasks', 'manage_team', 'manage_settings',
+  'manage_integrations', 'view_audit_log',
+])
+
+const USER_PERMS = new Set<Permission>([
+  'view_blocks', 'edit_blocks', 'execute_workflows', 'approve_tasks', 'view_audit_log',
+])
+
 type MockResult = { data: unknown; error: unknown }
 
 /**
- * Build a Supabase mock that routes queries by table name.
- * - orgsResult: response(s) for from('orgs') queries (single or sequential array)
- * - userRolesResult: response for from('user_roles') .select().single()
- *   Defaults to { data: { role: 'ops-admin' }, error: null }
+ * Build a Supabase mock for org lookup/insert only.
+ * Role resolution is handled by the mocked resolvePermissions module.
  */
-function makeSupabaseMock({
-  orgsResult,
-  userRolesResult = { data: { role: 'ops-admin' }, error: null },
-}: {
-  orgsResult: MockResult | MockResult[]
-  userRolesResult?: MockResult | MockResult[]
-}) {
+function makeSupabaseMock({ orgsResult }: { orgsResult: MockResult | MockResult[] }) {
   const orgsSingle = vi.fn()
   if (Array.isArray(orgsResult)) {
     orgsResult.forEach(r => orgsSingle.mockResolvedValueOnce(r))
@@ -47,38 +56,25 @@ function makeSupabaseMock({
     select: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
     insert: vi.fn().mockReturnThis(),
+    update: vi.fn().mockReturnThis(),
     single: orgsSingle,
   }
 
-  const rolesSingle = vi.fn()
-  if (Array.isArray(userRolesResult)) {
-    userRolesResult.forEach(r => rolesSingle.mockResolvedValueOnce(r))
-  } else {
-    rolesSingle.mockResolvedValue(userRolesResult)
-  }
-
-  // insert on user_roles is terminal (awaited directly, no .select().single() chaining)
-  const rolesChain = {
-    select: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
-    insert: vi.fn().mockResolvedValue({ data: null, error: null }),
-    single: rolesSingle,
-  }
-
-  const mock = {
-    from: vi.fn().mockImplementation((table: string) => {
-      if (table === 'user_roles') return rolesChain
-      return orgsChain
-    }),
-  }
+  const mock = { from: vi.fn().mockReturnValue(orgsChain) }
 
   vi.mocked(createServerClient).mockReturnValue(mock as unknown as ReturnType<typeof createServerClient>)
-  return { orgsChain, rolesChain, mock }
+  return { orgsChain, mock }
 }
 
 describe('withAuth', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    // Default: resolvePermissions returns ops-admin with all permissions
+    vi.mocked(resolvePermissions).mockResolvedValue({
+      role: 'ops-admin',
+      roleId: 'role-uuid-admin',
+      permissions: ALL_PERMS,
+    })
   })
 
   describe('401 — missing or invalid JWT', () => {
@@ -121,12 +117,9 @@ describe('withAuth', () => {
   })
 
   describe('200 — valid JWT + known org', () => {
-    it('calls handler with correct AuthContext including role when org exists', async () => {
+    it('calls handler with correct AuthContext including permissions when org exists', async () => {
       vi.mocked(auth).mockResolvedValue({ userId: 'user_111', orgId: 'org_abc' } as unknown as (ReturnType<typeof auth> extends Promise<infer T> ? T : never))
-      makeSupabaseMock({
-        orgsResult: { data: { id: 'uuid-org-1' }, error: null },
-        userRolesResult: { data: { role: 'ops-admin' }, error: null },
-      })
+      makeSupabaseMock({ orgsResult: { data: { id: 'uuid-org-1', name: 'Test Org' }, error: null } })
 
       const innerHandler = makeHandler()
       const handler = withAuth(innerHandler)
@@ -134,18 +127,22 @@ describe('withAuth', () => {
       const res = await handler(req, makeCtx())
 
       expect(res.status).toBe(200)
+      expect(resolvePermissions).toHaveBeenCalledWith(
+        expect.anything(), 'uuid-org-1', 'user_111', 'ops-user'
+      )
       expect(innerHandler).toHaveBeenCalledWith(
         req,
-        { userId: 'user_111', clerkOrgId: 'org_abc', orgId: 'uuid-org-1', role: 'ops-admin' },
+        {
+          userId: 'user_111', clerkOrgId: 'org_abc', orgId: 'uuid-org-1',
+          role: 'ops-admin', roleId: 'role-uuid-admin', permissions: ALL_PERMS,
+        },
         {}
       )
     })
 
     it('passes awaited params to handler for dynamic routes', async () => {
       vi.mocked(auth).mockResolvedValue({ userId: 'user_111', orgId: 'org_abc' } as unknown as (ReturnType<typeof auth> extends Promise<infer T> ? T : never))
-      makeSupabaseMock({
-        orgsResult: { data: { id: 'uuid-org-1' }, error: null },
-      })
+      makeSupabaseMock({ orgsResult: { data: { id: 'uuid-org-1', name: 'Test Org' }, error: null } })
 
       const innerHandler = makeHandler()
       const handler = withAuth(innerHandler)
@@ -154,22 +151,21 @@ describe('withAuth', () => {
 
       expect(innerHandler).toHaveBeenCalledWith(
         req,
-        expect.objectContaining({ orgId: 'uuid-org-1', role: 'ops-admin' }),
+        expect.objectContaining({ orgId: 'uuid-org-1', role: 'ops-admin', permissions: ALL_PERMS }),
         { id: 'block-xyz' }
       )
     })
   })
 
   describe('org auto-provisioning', () => {
-    it('creates org row on first login and calls handler with ops-admin role', async () => {
+    it('creates org row on first login and calls handler with ops-admin permissions', async () => {
       vi.mocked(auth).mockResolvedValue({ userId: 'user_new', orgId: 'org_new' } as unknown as (ReturnType<typeof auth> extends Promise<infer T> ? T : never))
 
-      const { orgsChain, rolesChain } = makeSupabaseMock({
+      const { orgsChain } = makeSupabaseMock({
         orgsResult: [
           { data: null, error: { code: 'PGRST116', message: 'not found' } }, // org lookup → not found
           { data: { id: 'uuid-org-new' }, error: null },                      // org insert → success
         ],
-        userRolesResult: { data: null, error: { code: 'PGRST116', message: 'not found' } }, // no role yet
       })
 
       const innerHandler = makeHandler()
@@ -178,13 +174,15 @@ describe('withAuth', () => {
       const res = await handler(req, makeCtx())
 
       expect(res.status).toBe(200)
+      expect(orgsChain.insert).toHaveBeenCalledWith({ clerk_org_id: 'org_new' })
+      expect(resolvePermissions).toHaveBeenCalledWith(
+        expect.anything(), 'uuid-org-new', 'user_new', 'ops-admin'
+      )
       expect(innerHandler).toHaveBeenCalledWith(
         req,
-        { userId: 'user_new', clerkOrgId: 'org_new', orgId: 'uuid-org-new', role: 'ops-admin' },
+        expect.objectContaining({ userId: 'user_new', orgId: 'uuid-org-new', role: 'ops-admin' }),
         {}
       )
-      expect(orgsChain.insert).toHaveBeenCalledWith({ clerk_org_id: 'org_new' })
-      expect(rolesChain.insert).toHaveBeenCalledWith({ org_id: 'uuid-org-new', user_id: 'user_new', role: 'ops-admin' })
     })
 
     it('returns 403 when org auto-provision insert fails', async () => {
@@ -206,12 +204,13 @@ describe('withAuth', () => {
     })
   })
 
-  describe('RBAC role resolution', () => {
-    it('returns ops-user role when user has ops-user in user_roles', async () => {
+  describe('RBAC permission resolution', () => {
+    it('passes ops-user permissions when resolvePermissions returns ops-user', async () => {
       vi.mocked(auth).mockResolvedValue({ userId: 'user_111', orgId: 'org_abc' } as unknown as (ReturnType<typeof auth> extends Promise<infer T> ? T : never))
-      makeSupabaseMock({
-        orgsResult: { data: { id: 'uuid-org-1' }, error: null },
-        userRolesResult: { data: { role: 'ops-user' }, error: null },
+      makeSupabaseMock({ orgsResult: { data: { id: 'uuid-org-1', name: 'Test Org' }, error: null } })
+
+      vi.mocked(resolvePermissions).mockResolvedValueOnce({
+        role: 'ops-user', roleId: 'role-uuid-user', permissions: USER_PERMS,
       })
 
       const innerHandler = makeHandler()
@@ -219,16 +218,18 @@ describe('withAuth', () => {
 
       expect(innerHandler).toHaveBeenCalledWith(
         expect.anything(),
-        expect.objectContaining({ role: 'ops-user' }),
+        expect.objectContaining({ role: 'ops-user', roleId: 'role-uuid-user', permissions: USER_PERMS }),
         expect.anything()
       )
     })
 
-    it('returns compliance-approver role when user has compliance-approver in user_roles', async () => {
+    it('passes compliance-approver permissions when resolvePermissions returns compliance-approver', async () => {
       vi.mocked(auth).mockResolvedValue({ userId: 'user_111', orgId: 'org_abc' } as unknown as (ReturnType<typeof auth> extends Promise<infer T> ? T : never))
-      makeSupabaseMock({
-        orgsResult: { data: { id: 'uuid-org-1' }, error: null },
-        userRolesResult: { data: { role: 'compliance-approver' }, error: null },
+      makeSupabaseMock({ orgsResult: { data: { id: 'uuid-org-1', name: 'Test Org' }, error: null } })
+
+      const approverPerms = new Set<Permission>(['view_blocks', 'approve_tasks', 'view_audit_log'])
+      vi.mocked(resolvePermissions).mockResolvedValueOnce({
+        role: 'compliance-approver', roleId: 'role-uuid-approver', permissions: approverPerms,
       })
 
       const innerHandler = makeHandler()
@@ -236,49 +237,36 @@ describe('withAuth', () => {
 
       expect(innerHandler).toHaveBeenCalledWith(
         expect.anything(),
-        expect.objectContaining({ role: 'compliance-approver' }),
+        expect.objectContaining({ role: 'compliance-approver', permissions: approverPerms }),
         expect.anything()
       )
     })
 
-    it('assigns ops-user default and inserts row when existing org has no role for this user', async () => {
+    it('uses ops-user as default role for existing orgs', async () => {
       vi.mocked(auth).mockResolvedValue({ userId: 'user_new', orgId: 'org_abc' } as unknown as (ReturnType<typeof auth> extends Promise<infer T> ? T : never))
-      const { rolesChain } = makeSupabaseMock({
-        orgsResult: { data: { id: 'uuid-org-1' }, error: null },
-        userRolesResult: { data: null, error: { code: 'PGRST116', message: 'not found' } },
-      })
+      makeSupabaseMock({ orgsResult: { data: { id: 'uuid-org-1', name: 'Test Org' }, error: null } })
 
-      const innerHandler = makeHandler()
-      const res = await withAuth(innerHandler)(makeReq(), makeCtx())
+      await withAuth(makeHandler())(makeReq(), makeCtx())
 
-      expect(res.status).toBe(200)
-      expect(innerHandler).toHaveBeenCalledWith(
-        expect.anything(),
-        expect.objectContaining({ role: 'ops-user' }),
-        expect.anything()
+      expect(resolvePermissions).toHaveBeenCalledWith(
+        expect.anything(), 'uuid-org-1', 'user_new', 'ops-user'
       )
-      expect(rolesChain.insert).toHaveBeenCalledWith({ org_id: 'uuid-org-1', user_id: 'user_new', role: 'ops-user' })
     })
 
-    it('assigns ops-admin default when org is newly created (org creator)', async () => {
+    it('uses ops-admin as default role for newly created orgs', async () => {
       vi.mocked(auth).mockResolvedValue({ userId: 'user_creator', orgId: 'org_new' } as unknown as (ReturnType<typeof auth> extends Promise<infer T> ? T : never))
-      const { rolesChain } = makeSupabaseMock({
+      makeSupabaseMock({
         orgsResult: [
           { data: null, error: { code: 'PGRST116', message: 'not found' } },
           { data: { id: 'uuid-org-new' }, error: null },
         ],
-        userRolesResult: { data: null, error: { code: 'PGRST116', message: 'not found' } },
       })
 
-      const innerHandler = makeHandler()
-      await withAuth(innerHandler)(makeReq(), makeCtx())
+      await withAuth(makeHandler())(makeReq(), makeCtx())
 
-      expect(innerHandler).toHaveBeenCalledWith(
-        expect.anything(),
-        expect.objectContaining({ role: 'ops-admin' }),
-        expect.anything()
+      expect(resolvePermissions).toHaveBeenCalledWith(
+        expect.anything(), 'uuid-org-new', 'user_creator', 'ops-admin'
       )
-      expect(rolesChain.insert).toHaveBeenCalledWith({ org_id: 'uuid-org-new', user_id: 'user_creator', role: 'ops-admin' })
     })
   })
 })

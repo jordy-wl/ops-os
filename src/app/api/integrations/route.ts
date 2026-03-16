@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { withAuth } from '@/lib/auth/withAuth'
-import { requireRole } from '@/lib/auth/requireRole'
+import { requirePermission } from '@/lib/rbac/middleware'
 import { createServerClient } from '@/lib/supabase/server'
 import { ok, apiError, validationError } from '@/lib/api/responses'
 import { logger } from '@/lib/logger'
@@ -56,7 +56,7 @@ export const GET = withAuth(async (req: NextRequest, ctx) => {
  * POST /api/integrations
  * Creates an integration connector. For inbound webhook type, generates a webhook URL.
  */
-export const POST = withAuth(requireRole(['ops-admin'], async (req: NextRequest, ctx) => {
+export const POST = withAuth(requirePermission(['manage_integrations'], async (req: NextRequest, ctx) => {
   const body = await req.json().catch(() => null)
   if (!body) return apiError('Invalid JSON body', 'validation/invalid-json', 400)
 
@@ -101,13 +101,23 @@ export const POST = withAuth(requireRole(['ops-admin'], async (req: NextRequest,
     return apiError('Failed to create integration', 'db/insert-failed', 500)
   }
 
-  // Emit integration.connector.created event (fire-and-forget via a block-less event is not ideal,
-  // so we create a lightweight log — connectors aren't Blocks, so no block_id)
   logger.info('api-integrations', 'connector.created', {
     connector_id: connector.id,
     provider: connector.provider,
     direction: connector.direction,
   })
+
+  // Auto-register known actions for this provider (fire-and-forget)
+  import('@/lib/integrations/auto-register-actions')
+    .then(({ autoRegisterIntegrationActions }) =>
+      autoRegisterIntegrationActions(supabase, ctx.orgId, {
+        id: connector.id,
+        provider: connector.provider,
+        name: parsed.data.name,
+        config: parsed.data.config ?? {},
+      }, ctx.userId)
+    )
+    .catch(() => { /* non-blocking */ })
 
   // Build response with webhook URL for inbound connectors
   const response: Record<string, unknown> = { ...connector }

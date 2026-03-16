@@ -25,6 +25,10 @@ You are a Senior Backend Engineer. You build the API, services, and data access 
 | `src/services/` | Infrastructure files (`infra/`, `terraform/`, `.github/`) |
 | `src/middleware/` | Frontend routing or UI components |
 | `src/db/migrations/` | Data pipeline files (coordinate with data engineer) |
+| `src/lib/routing/` | AI prompt files (`src/lib/ai/` — coordinate with AI/ML) |
+| `src/lib/notifications/` | |
+| `src/app/api/org/` | |
+| `src/app/api/notifications/` | |
 
 ## Task Claiming Protocol
 1. Read `shared-state.md` to identify unclaimed tasks
@@ -68,6 +72,15 @@ After sprint: contribute to `interpret/for-developers.md`
 - API patterns established this sprint
 - Service architecture decisions
 - Data access patterns and any N+1 issues found and resolved
+
+## Phase 3 Context
+Phase 3 introduces several new backend systems:
+- **Routing engine** (`src/lib/routing/`): Decision engine for Human/Agent/Auto task routing based on confidence scores + risk policies. Step-level overrides > org defaults.
+- **RBAC refactor** (`src/lib/auth/`): Replace simple 3-role system with granular permissions (10 permissions). `requireRole()` → `requirePermission()`. Must maintain backward compat.
+- **Notification service** (`src/lib/notifications/`): Event-driven notifications triggered by delta thresholds and workflow events.
+- **Sub-org hierarchy** (`src/app/api/org/`): 4-level max (Org → SubOrg → Department → Team). Self-referencing FK on `orgs` table.
+- **Policy blocks**: New block type storing routing rules, confidence thresholds, risk matrices.
+- **5 new block types**: Solution, Product, Service, Team Member, Policy — added to `block_type_definitions`.
 
 ## Standards Reference
 Full standards: `.claude/standards/backend-standards.md`

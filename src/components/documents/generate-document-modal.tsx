@@ -1,6 +1,15 @@
 'use client'
 
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect } from 'react'
+import { cn } from '@/lib/utils'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 
 type Template = {
   id: string
@@ -23,12 +32,11 @@ export function GenerateDocumentModal({
   const [templates, setTemplates] = useState<Template[]>([])
   const [selectedTemplateId, setSelectedTemplateId] = useState('')
   const [prompt, setPrompt] = useState('')
-  const [outputFormat, setOutputFormat] = useState<'html' | 'pdf'>('html')
+  const [outputFormat, setOutputFormat] = useState<'html' | 'pdf' | 'docx'>('html')
   const [generating, setGenerating] = useState(false)
   const [result, setResult] = useState<{ success: boolean; message: string } | null>(null)
-  const dialogRef = useRef<HTMLDivElement>(null)
 
-  // Fetch templates on mount
+  // Fetch templates when dialog opens
   useEffect(() => {
     if (!open) return
 
@@ -43,24 +51,6 @@ export function GenerateDocumentModal({
         // Silently fail — user can still use AI mode
       })
   }, [open])
-
-  // Close on Escape
-  useEffect(() => {
-    if (!open) return
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
-    document.addEventListener('keydown', handler)
-    return () => document.removeEventListener('keydown', handler)
-  }, [open, onClose])
-
-  // Close on outside click
-  const handleBackdropClick = useCallback(
-    (e: React.MouseEvent) => {
-      if (e.target === e.currentTarget) onClose()
-    },
-    [onClose]
-  )
 
   const handleGenerate = useCallback(async () => {
     setGenerating(true)
@@ -89,18 +79,49 @@ export function GenerateDocumentModal({
         payload.prompt = prompt
       }
 
-      const res = await fetch('/api/actions/document.generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
+      // DOCX generation uses a different endpoint
+      if (outputFormat === 'docx' && mode === 'template') {
+        const docxRes = await fetch('/api/documents/docx/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            template_id: selectedTemplateId,
+            source_block_id: blockId,
+            store: true,
+          }),
+        })
 
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        throw new Error(data.error?.message ?? `Generation failed (${res.status})`)
+        if (!docxRes.ok) {
+          const data = await docxRes.json().catch(() => ({}))
+          throw new Error(data.error?.message ?? `DOCX generation failed (${docxRes.status})`)
+        }
+
+        // Trigger download
+        const blob = await docxRes.blob()
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = docxRes.headers.get('Content-Disposition')?.split('filename="')[1]?.replace('"', '') ?? 'document.docx'
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
+
+        setResult({ success: true, message: 'DOCX generated and downloaded!' })
+      } else {
+        const res = await fetch('/api/actions/document.generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
+
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}))
+          throw new Error(data.error?.message ?? `Generation failed (${res.status})`)
+        }
+
+        setResult({ success: true, message: 'Document generated successfully!' })
       }
-
-      setResult({ success: true, message: 'Document generated successfully!' })
     } catch (err) {
       setResult({
         success: false,
@@ -111,59 +132,42 @@ export function GenerateDocumentModal({
     }
   }, [blockId, mode, selectedTemplateId, prompt, outputFormat])
 
-  if (!open) return null
-
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-      onClick={handleBackdropClick}
-      role="dialog"
-      aria-modal="true"
-      aria-label="Generate document"
-    >
-      <div
-        ref={dialogRef}
-        className="bg-background rounded-lg shadow-xl w-full max-w-lg mx-4"
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b">
-          <h2 className="text-lg font-semibold text-foreground">Generate Document</h2>
-          <button
-            onClick={onClose}
-            className="text-muted-foreground hover:text-foreground"
-            aria-label="Close"
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-
-        {/* Body */}
-        <div className="px-6 py-4 space-y-4">
-          <p className="text-sm text-muted-foreground">
+    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose() }}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Generate Document</DialogTitle>
+          <DialogDescription>
             Source block: <span className="font-medium text-foreground">{blockName}</span>
-          </p>
+          </DialogDescription>
+        </DialogHeader>
 
+        <div className="space-y-4">
           {/* Mode Toggle */}
-          <div className="flex gap-2">
+          <div className="flex gap-2" role="group" aria-label="Document generation mode">
             <button
               onClick={() => setMode('template')}
-              className={`flex-1 py-2 text-sm font-medium rounded-md border transition ${
+              aria-pressed={mode === 'template'}
+              className={cn(
+                'flex-1 py-2 text-sm font-medium rounded-md border transition',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                 mode === 'template'
                   ? 'bg-primary text-primary-foreground border-primary'
                   : 'bg-background text-muted-foreground border-border hover:border-ring'
-              }`}
+              )}
             >
               From Template
             </button>
             <button
               onClick={() => setMode('ai')}
-              className={`flex-1 py-2 text-sm font-medium rounded-md border transition ${
+              aria-pressed={mode === 'ai'}
+              className={cn(
+                'flex-1 py-2 text-sm font-medium rounded-md border transition',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                 mode === 'ai'
                   ? 'bg-primary text-primary-foreground border-primary'
                   : 'bg-background text-muted-foreground border-border hover:border-ring'
-              }`}
+              )}
             >
               AI Generate
             </button>
@@ -223,21 +227,22 @@ export function GenerateDocumentModal({
             <select
               id="output-format"
               value={outputFormat}
-              onChange={(e) => setOutputFormat(e.target.value as 'html' | 'pdf')}
+              onChange={(e) => setOutputFormat(e.target.value as 'html' | 'pdf' | 'docx')}
               className="w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="html">HTML (preview in browser)</option>
               <option value="pdf">PDF (download)</option>
+              <option value="docx">Word (.docx) — from template</option>
             </select>
           </div>
 
           {/* Result Message */}
           {result && (
             <div
-              className={`rounded-md px-4 py-3 text-sm ${
+              className={`rounded-md px-4 py-3 text-[13px] ${
                 result.success
-                  ? 'bg-green-50 text-green-700 border border-green-200'
-                  : 'bg-red-50 text-red-700 border border-red-200'
+                  ? 'bg-success/10 text-success border border-success/20'
+                  : 'bg-destructive/5 text-destructive border border-destructive/20'
               }`}
               role="alert"
             >
@@ -246,23 +251,22 @@ export function GenerateDocumentModal({
           )}
         </div>
 
-        {/* Footer */}
-        <div className="flex justify-end gap-3 px-6 py-4 border-t bg-muted rounded-b-lg">
+        <DialogFooter>
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground"
+            className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             Cancel
           </button>
           <button
             onClick={handleGenerate}
             disabled={generating}
-            className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-md hover:bg-primary/80 disabled:opacity-50"
+            className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-md hover:bg-primary/80 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             {generating ? 'Generating...' : 'Generate'}
           </button>
-        </div>
-      </div>
-    </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }

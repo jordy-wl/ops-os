@@ -27,12 +27,12 @@ export function MessageBubble({ role, content, streaming, isError }: MessageBubb
     <div className={cn('flex', isUser ? 'justify-end' : 'justify-start')}>
       <div
         className={cn(
-          'max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed',
+          'max-w-[85%] rounded-lg px-3 py-2 text-[13px] leading-relaxed',
           isUser
-            ? 'bg-primary text-primary-foreground rounded-br-sm'
+            ? 'bg-muted text-foreground'
             : isError
-              ? 'bg-red-50 text-red-700 border border-red-200 rounded-bl-sm'
-              : 'bg-background border border-border text-foreground rounded-bl-sm'
+              ? 'bg-destructive/5 text-destructive border border-destructive/20'
+              : 'bg-card border border-border text-foreground'
         )}
       >
         {content.length === 0 && streaming ? (
@@ -41,7 +41,7 @@ export function MessageBubble({ role, content, streaming, isError }: MessageBubb
             {[0, 150, 300].map((delay) => (
               <span
                 key={delay}
-                className="h-1.5 w-1.5 rounded-full bg-gray-400 animate-bounce"
+                className="h-1.5 w-1.5 rounded-full bg-gray-400 dark:bg-gray-500 animate-bounce"
                 style={{ animationDelay: `${delay}ms` }}
                 aria-hidden="true"
               />
@@ -52,7 +52,7 @@ export function MessageBubble({ role, content, streaming, isError }: MessageBubb
             {content}
             {streaming && (
               <span
-                className="inline-block w-0.5 h-3.5 bg-gray-400 ml-0.5 align-middle animate-pulse"
+                className="inline-block w-0.5 h-3.5 bg-gray-400 dark:bg-gray-500 ml-0.5 align-middle animate-pulse"
                 aria-hidden="true"
               />
             )}

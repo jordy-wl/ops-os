@@ -236,3 +236,80 @@ Define explicit triggers in `prd/07-ai-ml-spec.md` for routing to human review:
 | User explicitly requests human | Route to human queue |
 | Output contains refusal marker | Log, notify, queue for review |
 | Output validation fails | Fallback + alert |
+
+---
+
+## Phase 3 — New AI/ML Patterns
+
+### Delta Calculation Algorithm
+```typescript
+// src/lib/ai/delta-engine.ts
+interface DeltaInput {
+  block: Block                          // Source block
+  activeInstances: WorkflowInstance[]   // Running workflow instances
+  templates: WorkflowTemplate[]         // Template definitions for the instances
+}
+
+interface DeltaOutput {
+  blockId: string
+  totalSteps: number                    // Across all active instances
+  completedSteps: number
+  currentPosition: number               // 0-1 progress
+  remainingSteps: StepSummary[]         // What's left
+  expectedCompletion: Date | null       // Based on avg step duration
+  actualVsExpected: number              // Days ahead (-) or behind (+)
+  riskFactors: RiskFactor[]             // Overdue steps, stalled instances
+  gapAnalysis: string                   // Human-readable summary
+}
+// Pure calculation — no AI calls. AI is used only in insights-generator.ts
+```
+
+### Insight Prompt Template v1
+```markdown
+# Prompt: block-insights.v1.md
+Given: block data, delta analysis, recent events
+Generate 4 sections:
+1. **What's Done** — completed steps and outcomes (max 3 bullets)
+2. **What's Next** — upcoming steps with expected timing (max 3 bullets)
+3. **What's at Risk** — overdue items, stalled workflows, threshold breaches (max 3 bullets)
+4. **Recommendations** — actionable suggestions based on delta gaps (max 3 bullets)
+Tone: professional, concise, actionable. No hedging language.
+```
+
+### Confidence Scoring Framework
+```typescript
+interface ConfidenceScore {
+  value: number          // 0-1
+  factors: {
+    dataCompleteness: number  // How much input data is available
+    patternMatch: number      // How well this matches known patterns
+    actionComplexity: number  // Inverse of action risk/complexity
+  }
+  calibrationData?: {
+    predictedBucket: string   // e.g., "0.8-0.9"
+    actualApprovalRate: number // From historical decisions
+  }
+}
+// Log every confidence score + human decision for calibration
+// Recalibrate monthly: predicted vs actual approval rates per bucket
+```
+
+### Context Window Budget for Document Generation
+```
+Total budget: ~4000 tokens for context assembly
+├── Source block fields: ~500 tokens (mandatory)
+├── Connected blocks: ~1000 tokens (up to 5 blocks, summarised)
+├── Recent events: ~800 tokens (last 20 events, summarised)
+├── Reference template structure: ~700 tokens (layout + section headings)
+└── Brand kit metadata: ~200 tokens (fonts, colors, logo URL)
+Buffer: ~800 tokens for system prompt + instructions
+```
+Priority truncation: drop oldest events → drop distant connected blocks → summarise block fields
+
+### Caching / Invalidation Strategy
+| Cache | Key | TTL | Invalidation |
+|-------|-----|-----|-------------|
+| Delta calculation | `block:{id}:delta` | 5 min | New event for any associated workflow instance |
+| Insights | `block:{id}:insights` | 5 min | Delta cache invalidation (cascades) |
+| Confidence calibration | `org:{id}:calibration` | 24 hours | New human decision logged |
+| Document context | Not cached | — | Always fresh (generation is infrequent) |

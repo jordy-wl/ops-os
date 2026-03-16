@@ -9,6 +9,10 @@
  * - x-currency-code: ISO 4217 currency code
  * - x-placeholder: custom placeholder text
  * - x-is-system: marks field as system-managed (locked from editing)
+ * - x-field-group: group/category ID this field belongs to (string)
+ *
+ * Top-level schema extension for field groups:
+ * - x-field-groups: array of { id, label, order } defining available groups
  */
 
 export const FIELD_TYPES = [
@@ -179,6 +183,89 @@ export function isValidFieldType(type: string): type is FieldType {
 export function getFieldTypeDefinition(type: string): FieldTypeDefinition | undefined {
   if (!isValidFieldType(type)) return undefined
   return FIELD_TYPE_DEFINITIONS[type]
+}
+
+// --- Field Groups ---
+
+export interface FieldGroup {
+  id: string
+  label: string
+  order: number
+}
+
+/** The default group for fields without an explicit x-field-group */
+export const DEFAULT_FIELD_GROUP: FieldGroup = {
+  id: 'general',
+  label: 'General',
+  order: 999,
+}
+
+/**
+ * Extract field groups from a block type's field schema.
+ * Returns groups sorted by order. Always includes a "General" fallback
+ * for fields without an explicit group assignment.
+ */
+export function getFieldGroups(fieldSchema: Record<string, unknown>): FieldGroup[] {
+  const xGroups = fieldSchema['x-field-groups'] as FieldGroup[] | undefined
+  if (!xGroups || !Array.isArray(xGroups) || xGroups.length === 0) {
+    return [DEFAULT_FIELD_GROUP]
+  }
+
+  const groups = xGroups
+    .filter((g) => g && typeof g.id === 'string' && typeof g.label === 'string')
+    .map((g) => ({ id: g.id, label: g.label, order: typeof g.order === 'number' ? g.order : 999 }))
+    .sort((a, b) => a.order - b.order)
+
+  // Check if any properties lack a group — if so, ensure General exists
+  const properties = (fieldSchema.properties ?? {}) as Record<string, Record<string, unknown>>
+  const hasUngrouped = Object.values(properties).some(
+    (prop) => !prop['x-field-group'] || !groups.some((g) => g.id === prop['x-field-group'])
+  )
+  if (hasUngrouped && !groups.some((g) => g.id === 'general')) {
+    groups.push(DEFAULT_FIELD_GROUP)
+  }
+
+  return groups
+}
+
+/**
+ * Group field entries by their x-field-group assignment.
+ * Returns a Map of group ID → field entries (sorted by x-display-order within each group).
+ */
+export function groupFieldsByCategory(
+  fieldSchema: Record<string, unknown>
+): Map<string, Array<[string, Record<string, unknown>]>> {
+  const properties = (fieldSchema.properties ?? {}) as Record<string, Record<string, unknown>>
+  const groups = getFieldGroups(fieldSchema)
+  const groupIds = new Set(groups.map((g) => g.id))
+  const result = new Map<string, Array<[string, Record<string, unknown>]>>()
+
+  // Initialize all groups
+  for (const g of groups) {
+    result.set(g.id, [])
+  }
+
+  // Assign fields to groups
+  for (const [fieldName, prop] of Object.entries(properties)) {
+    const groupId = (prop['x-field-group'] as string) || 'general'
+    const targetGroup = groupIds.has(groupId) ? groupId : 'general'
+    const list = result.get(targetGroup) ?? []
+    list.push([fieldName, prop])
+    result.set(targetGroup, list)
+  }
+
+  // Sort fields within each group by x-display-order
+  for (const [groupId, fields] of result.entries()) {
+    fields.sort((a, b) => {
+      const orderA = (a[1]['x-display-order'] as number) ?? 999
+      const orderB = (b[1]['x-display-order'] as number) ?? 999
+      if (orderA !== orderB) return orderA - orderB
+      return a[0].localeCompare(b[0])
+    })
+    result.set(groupId, fields)
+  }
+
+  return result
 }
 
 /**

@@ -3,6 +3,8 @@
 | Feature | Version | Date | Author | Pass Rate | What Changed |
 |---------|---------|------|--------|-----------|-------------|
 | chat-system | v1 | 2026-03-02 | AI-ML-ENGINEER | Pending eval | Initial version — Sprint 1. Establishes tone (operational, not chatbot), action-naming convention, and human-approval requirement. |
+| delta-insights | v1 | 2026-03-12 | AI-ML-ENGINEER | 22/22 (100%) | Initial version — Sprint 7. Generates 4-section insights (whatsDone, whatsNext, whatsAtRisk, recommendations) from delta analysis. |
+| delta-chat-context | v1 | 2026-03-12 | AI-ML-ENGINEER | 15/15 (100%) | Initial version — Sprint 7. Delta-aware chat context instructions: how to interpret WORKFLOW DELTA sections, available actions (reassign_step, extend_deadline), response guidelines. |
 
 ## Eval Notes
 

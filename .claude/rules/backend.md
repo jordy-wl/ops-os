@@ -84,3 +84,36 @@ If your implementation diverges from `prd/05-api-contracts.md`:
 1. Update the contract doc first
 2. Log a SIGNAL in `research/signals/build-learnings.md`
 3. Notify frontend in `sprints/shared-state.md`
+
+---
+
+## Phase 3 — New Backend Patterns
+
+### Routing Engine (`src/lib/routing/`)
+- Decision engine lives in `src/lib/routing/engine.ts` — pure function, no side effects
+- Input: step config + policy block + AI confidence score → Output: routing decision + reasoning
+- Precedence: step-level override > org policy default > system fallback (human)
+- Routing modes: `human` | `agent` | `auto` | `policy_default`
+- Always log routing decisions to events table with reasoning for audit trail
+
+### RBAC Permission Middleware
+- `requirePermission('manage_blocks')` replaces `requireRole(['ops-admin'])`
+- Permissions resolved once per request in `withAuth()`, cached in `AuthContext`
+- 10 granular permissions: manage_blocks, edit_blocks, view_blocks, manage_workflows, execute_workflows, approve_tasks, manage_team, manage_settings, manage_integrations, view_audit_log
+- Backward compat: `requireRole()` still works, maps to permission sets internally
+
+### Notification Service (`src/lib/notifications/`)
+- Event-driven: delta thresholds + workflow events trigger notifications
+- Dispatch pattern: create notification row → check user preferences → deliver (in-app + optional email)
+- Never block the main request for notification delivery — fire-and-forget or queue
+
+### Sub-Org Scoping
+- All org-scoped queries must filter through hierarchy: `org_id IN (org + all descendant org IDs)`
+- Utility: `getOrgHierarchyIds(orgId)` returns flat array of org + descendant IDs
+- Max 4 levels: org → suborg → department → team — enforce via DB constraint
+
+### API Key Management
+- Store hashed keys only (SHA-256) — never store raw API keys
+- Show key only once on creation — cannot be retrieved after
+- Rate limit per API key independently from user auth rate limits
+- Audit log entry on create/revoke

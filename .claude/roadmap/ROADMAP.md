@@ -18,7 +18,7 @@
 |---|-----------|-----------|----------------|--------|--------|
 | 1 | Foundation & Primitive Validation | Blocks + Events + Actions + workflow + AI chat → 2+ design partners run live workflows | ≥2 orgs with ≥10 workflows/week | COMPLETE | Q1 2026 |
 | 2 | Composable Blocks, Visual Builder & Integrations | Canvas + Google + documents + action menu + polish → user runs ≥5 E2E workflows | User runs ≥5 complete workflows with email + docs | CODE COMPLETE | Q1 2026 |
-| 3 | Scale, Advanced AI & Marketplace | Agent AI, operational intelligence, MS 365, Salesforce/Xero, billing | ≥2 paying customers ≥£2k/mo | FUTURE | Q2–Q3 2026 |
+| 3 | Platform Evolution: RBAC, Routing, Delta AI, Doc Gen V2 | Custom RBAC, routing engine, AI delta engine, doc gen V2, 5 new block types, admin settings | RBAC + routing + delta AI + doc gen deployed | ACTIVE | Q2 2026 |
 | 4 | Enterprise & Compliance | Temporal, SOC 2, multi-region, marketplace | ≥5 paying, SOC 2 in progress | FUTURE | Q3–Q4 2026 |
 
 > Status values: PLANNING / ACTIVE / COMPLETE / ON HOLD
@@ -52,18 +52,21 @@
 
 ## Current Focus
 
-**Phase 2 — CODE COMPLETE** (Sprint 10 finished 2026-03-10)
+**Phase 3 — ACTIVE** (started 2026-03-12)
 
-All Phase 2 features are built, tested, and polished. 395 tests passing. Awaiting user manual testing for formal Phase 2 exit evaluation.
+Phase 2 code-complete (86/88 tasks, 550 tests, 12 sprints). Phase 3: 8 sprints, 53 tasks.
 
 | Milestone | Status |
 |-----------|--------|
-| Visual workflow canvas (React Flow) | DONE — Sprint 7 |
-| Google Workspace integration (OAuth, Gmail, Calendar, Drive) | DONE — Sprint 8 |
-| Document generation (templates, brand kit, AI, PDF) | DONE — Sprint 9 |
-| UI polish, dashboard overhaul, E2E test, manual test plan | DONE — Sprint 10 |
-| User manual testing + Phase 2 exit evaluation | PENDING |
-| Phase 3 sprint planning | BLOCKED on Phase 2 exit |
+| Sprint 0: Scaffold updates (PRDs, rules, standards, agents) | IN PROGRESS |
+| Sprint 1: Bug fixes (400 error, chat position, dark toggle, responsiveness) | PENDING |
+| Sprint 2: 5 new block types + sub-org hierarchy | PENDING |
+| Sprint 3: Custom RBAC engine | PENDING |
+| Sprint 4: Routing engine + policy system | PENDING |
+| Sprint 5: Workflow canvas enhancements (I/O nodes) | PENDING |
+| Sprint 6: Document Generation V2 | PENDING |
+| Sprint 7: AI Delta Engine | PENDING |
+| Sprint 8: Core admin settings | PENDING |
 
 > This section is updated by orchestrator at each sprint start and /status-report
 
@@ -78,3 +81,4 @@ All Phase 2 features are built, tested, and polished. 395 tests passing. Awaitin
 | 2026-03-02 | Initial roadmap created — 4 phases with hypotheses and exit conditions | /plan-prd | ORCHESTRATOR |
 | 2026-03-04 | Major restructuring: Phase 2 → "Composable Blocks & Workflow Engine", Phase 3 → "Visual Builder & Integrations", Phase 4 → "Scale, Revenue & Compliance". 8 PRDs updated. | Whiteboard session — product owner validated composable workflow vision | PM + ORCHESTRATOR |
 | 2026-03-10 | Phase 1 marked COMPLETE. Phase 2 scope expanded (Sprints 5–10): canvas, Google, docs, polish. Phase 2 marked CODE COMPLETE. Phase table updated with actual deliverables. | Sprint 10 retro — all 52/54 tasks done (96%) | ORCHESTRATOR |
+| 2026-03-12 | Phase 2 closed as code-complete. Usage exit conditions re-scoped as Phase 3 milestones. Phase 3 activated: "Platform Evolution" — RBAC, routing engine, delta AI, doc gen V2, 5 new block types, admin settings. 8 sprints, 53 tasks. Block-specific layouts deferred to Phase 4. | User manual testing + feature gap analysis | PM + ORCHESTRATOR |

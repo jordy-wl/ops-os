@@ -1,17 +1,9 @@
 import Link from 'next/link'
-import { cn } from '@/lib/utils'
+import { BlockTypeBadge } from '@/lib/ui/block-type-badge'
 import type { Block } from '@/lib/context-assembly'
 
 interface ConnectedBlocksPanelProps {
   neighbours: Block[]
-}
-
-const TYPE_STYLES: Record<string, string> = {
-  client:   'bg-blue-100 text-blue-700',
-  deal:     'bg-green-100 text-green-700',
-  project:  'bg-yellow-100 text-yellow-700',
-  contract: 'bg-purple-100 text-purple-700',
-  contact:  'bg-gray-100 text-gray-700',
 }
 
 /**
@@ -23,34 +15,23 @@ const TYPE_STYLES: Record<string, string> = {
 export function ConnectedBlocksPanel({ neighbours }: ConnectedBlocksPanelProps) {
   return (
     <section aria-label="Connected blocks">
-      <h2 className="text-sm font-semibold text-foreground mb-3">Connected to</h2>
+      <h2 className="text-title text-foreground mb-3">Connected to</h2>
 
       {neighbours.length === 0 ? (
         <p className="text-sm text-muted-foreground italic">(none)</p>
       ) : (
         <ul className="space-y-2" role="list">
-          {neighbours.map((block) => {
-            const typeStyle = TYPE_STYLES[block.type] ?? 'bg-gray-100 text-gray-700'
-
-            return (
-              <li key={block.id}>
-                <Link
-                  href={`/blocks/${block.id}`}
-                  className="flex items-center gap-2 rounded-md p-2 text-sm hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                  <span
-                    className={cn(
-                      'inline-flex rounded-full px-2 py-0.5 text-xs font-medium capitalize shrink-0',
-                      typeStyle
-                    )}
-                  >
-                    {block.type}
-                  </span>
-                  <span className="text-foreground truncate">{block.name}</span>
-                </Link>
-              </li>
-            )
-          })}
+          {neighbours.map((block) => (
+            <li key={block.id}>
+              <Link
+                href={`/blocks/${block.id}`}
+                className="flex items-center gap-2 rounded-md border border-border bg-card p-2 text-[13px] hover:border-foreground/10 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <BlockTypeBadge type={block.type} className="shrink-0" />
+                <span className="text-foreground truncate">{block.name}</span>
+              </Link>
+            </li>
+          ))}
         </ul>
       )}
     </section>

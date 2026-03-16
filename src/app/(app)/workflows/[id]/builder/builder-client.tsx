@@ -33,8 +33,8 @@ export function WorkflowBuilderClient({
       setError(null)
 
       try {
-        // Convert canvas to template steps
-        const { trigger, steps } = canvasToTemplate(layout)
+        // Convert canvas to template steps + data flow
+        const { trigger, steps, data_inputs, data_outputs } = canvasToTemplate(layout)
 
         // Update the template block with name + metadata
         const res = await fetch(`/api/blocks/${templateId}`, {
@@ -46,6 +46,8 @@ export function WorkflowBuilderClient({
               applies_to_type: appliesToType,
               trigger,
               steps,
+              ...(data_inputs ? { data_inputs } : {}),
+              ...(data_outputs ? { data_outputs } : {}),
               canvas_layout: layout,
             },
           }),
@@ -104,7 +106,7 @@ export function WorkflowBuilderClient({
             <button
               type="button"
               onClick={finishEditing}
-              className="p-0.5 text-muted-foreground hover:text-foreground"
+              className="p-0.5 text-muted-foreground hover:text-foreground rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               aria-label="Confirm name"
             >
               <Check className="h-3.5 w-3.5" />
@@ -114,7 +116,8 @@ export function WorkflowBuilderClient({
           <button
             type="button"
             onClick={startEditing}
-            className="flex items-center gap-1 text-sm font-medium text-foreground hover:text-muted-foreground truncate"
+            className="flex items-center gap-1 text-sm font-medium text-foreground hover:text-muted-foreground truncate rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            aria-label={`Edit workflow name: ${name}`}
           >
             {name}
             <Pencil className="h-3 w-3 text-muted-foreground" aria-hidden="true" />
@@ -125,14 +128,14 @@ export function WorkflowBuilderClient({
         <span className="text-sm text-muted-foreground">Builder</span>
 
         {error && (
-          <span className="ml-auto text-xs text-red-600 bg-red-50 px-2 py-1 rounded">
+          <span className="ml-auto text-xs text-destructive bg-destructive/5 px-2 py-1 rounded">
             {error}
           </span>
         )}
       </div>
 
       {/* Canvas fills remaining height */}
-      <div className="flex-1 min-h-0">
+      <div className="flex-1 min-h-0 bg-muted">
         <WorkflowCanvas
           initialLayout={initialLayout}
           templateName={name}

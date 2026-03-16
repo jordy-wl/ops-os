@@ -40,21 +40,21 @@ export function BlockCreationPreview({
     <div
       className={cn(
         'rounded-lg border p-3 max-w-[85%]',
-        status === 'created' && 'border-green-200 bg-green-50',
-        status === 'duplicate_warning' && 'border-amber-200 bg-amber-50',
-        status === 'error' && 'border-red-200 bg-red-50'
+        status === 'created' && 'border-success/20 bg-success/5',
+        status === 'duplicate_warning' && 'border-warning/20 bg-warning/5',
+        status === 'error' && 'border-destructive/20 bg-destructive/5'
       )}
     >
       {/* Header */}
       <div className="flex items-center gap-2 mb-2">
-        {status === 'created' && <CheckCircle className="h-4 w-4 text-green-600 shrink-0" aria-hidden="true" />}
-        {status === 'duplicate_warning' && <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0" aria-hidden="true" />}
-        {status === 'error' && <XCircle className="h-4 w-4 text-red-600 shrink-0" aria-hidden="true" />}
+        {status === 'created' && <CheckCircle className="h-4 w-4 text-success shrink-0" aria-hidden="true" />}
+        {status === 'duplicate_warning' && <AlertTriangle className="h-4 w-4 text-warning shrink-0" aria-hidden="true" />}
+        {status === 'error' && <XCircle className="h-4 w-4 text-destructive shrink-0" aria-hidden="true" />}
         <span className={cn(
           'text-xs font-medium',
-          status === 'created' && 'text-green-800',
-          status === 'duplicate_warning' && 'text-amber-800',
-          status === 'error' && 'text-red-800'
+          status === 'created' && 'text-success',
+          status === 'duplicate_warning' && 'text-warning',
+          status === 'error' && 'text-destructive'
         )}>
           {status === 'created' && 'Block Created'}
           {status === 'duplicate_warning' && 'Potential Duplicates Found'}
@@ -109,11 +109,11 @@ export function BlockCreationPreview({
       )}
 
       {/* Error message */}
-      {error && <p className="text-xs text-red-700 mb-1">{error}</p>}
+      {error && <p className="text-xs text-destructive mb-1">{error}</p>}
 
       {/* Block ID on success */}
       {blockId && (
-        <p className="text-xs text-green-700 font-mono">{blockId}</p>
+        <p className="text-xs text-success font-mono">{blockId}</p>
       )}
     </div>
   )

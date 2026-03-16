@@ -1,64 +1,69 @@
 'use client'
 
-import { useState, type ReactNode } from 'react'
-import { cn } from '@/lib/utils'
+import { useState } from 'react'
+import type { ReactNode } from 'react'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { WorkflowMetricsPanel } from './workflow-metrics-panel'
 
 interface WorkflowTabShellProps {
   templatesPanel: ReactNode
   jobsPanel: ReactNode
+  templateIds?: string[]
 }
 
-const TABS = [
-  { key: 'templates', label: 'Templates' },
-  { key: 'jobs', label: 'Jobs' },
-] as const
-
-type TabKey = (typeof TABS)[number]['key']
-
-export function WorkflowTabShell({ templatesPanel, jobsPanel }: WorkflowTabShellProps) {
-  const [active, setActive] = useState<TabKey>('templates')
+export function WorkflowTabShell({ templatesPanel, jobsPanel, templateIds }: WorkflowTabShellProps) {
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(
+    templateIds?.[0] ?? null
+  )
 
   return (
-    <div>
-      <div role="tablist" aria-label="Workflow sections" className="flex gap-1 border-b border-border mb-6">
-        {TABS.map((tab) => (
-          <button
-            key={tab.key}
-            role="tab"
-            aria-selected={active === tab.key}
-            aria-controls={`panel-${tab.key}`}
-            id={`tab-${tab.key}`}
-            onClick={() => setActive(tab.key)}
-            className={cn(
-              'px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-t',
-              active === tab.key
-                ? 'border-primary text-foreground'
-                : 'border-transparent text-muted-foreground hover:text-foreground hover:border-ring'
-            )}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+    <Tabs defaultValue="templates" className="w-full">
+      <TabsList aria-label="Workflow sections" className="mb-6">
+        <TabsTrigger value="templates">Templates</TabsTrigger>
+        <TabsTrigger value="jobs">Jobs</TabsTrigger>
+        <TabsTrigger value="metrics">Metrics</TabsTrigger>
+      </TabsList>
 
-      <div
-        role="tabpanel"
-        id="panel-templates"
-        aria-labelledby="tab-templates"
-        hidden={active !== 'templates'}
-      >
+      <TabsContent value="templates">
         {templatesPanel}
-      </div>
+      </TabsContent>
 
-      <div
-        role="tabpanel"
-        id="panel-jobs"
-        aria-labelledby="tab-jobs"
-        hidden={active !== 'jobs'}
-      >
+      <TabsContent value="jobs">
         {jobsPanel}
-      </div>
-    </div>
+      </TabsContent>
+
+      <TabsContent value="metrics">
+        {templateIds && templateIds.length > 0 ? (
+          <div className="space-y-4">
+            {templateIds.length > 1 && (
+              <div className="flex items-center gap-2">
+                <label htmlFor="metrics-template" className="text-sm text-muted-foreground">
+                  Template:
+                </label>
+                <select
+                  id="metrics-template"
+                  value={selectedTemplateId ?? ''}
+                  onChange={(e) => setSelectedTemplateId(e.target.value)}
+                  className="rounded-md border border-border bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                  {templateIds.map((id) => (
+                    <option key={id} value={id}>{id}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+            {selectedTemplateId && (
+              <WorkflowMetricsPanel templateId={selectedTemplateId} />
+            )}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <p className="text-sm text-muted-foreground">
+              Create a workflow template to see metrics.
+            </p>
+          </div>
+        )}
+      </TabsContent>
+    </Tabs>
   )
 }

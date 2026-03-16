@@ -3,12 +3,8 @@ import type { ActionHandler, ActionResult } from '@/lib/actions/types'
 import type { AuthContext } from '@/lib/auth/withAuth'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
-const BLOCK_TYPES = ['client', 'deal', 'project', 'contact', 'contract'] as const
-
 const schema = z.object({
-  type: z.enum(BLOCK_TYPES, {
-    errorMap: () => ({ message: `type must be one of: ${BLOCK_TYPES.join(', ')}` }),
-  }),
+  type: z.string().min(1, 'type is required').max(100),
   name: z.string().min(1, 'name is required').max(255),
   metadata: z.record(z.unknown()).optional().default({}),
 })
@@ -32,6 +28,19 @@ async function execute(
   supabase: SupabaseClient
 ): Promise<ActionResult> {
   const actionId = crypto.randomUUID()
+
+  // Validate block type against block_type_definitions (dynamic)
+  const { data: typeDef } = await supabase
+    .from('block_type_definitions')
+    .select('type_name')
+    .or(`org_id.eq.${ctx.orgId},org_id.is.null`)
+    .eq('type_name', payload.type)
+    .limit(1)
+    .maybeSingle()
+
+  if (!typeDef) {
+    throw new Error(`Invalid block type: ${payload.type}`)
+  }
 
   const { data: block, error: blockError } = await supabase
     .from('blocks')

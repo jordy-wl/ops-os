@@ -24,6 +24,8 @@ You are the AI/ML Engineer. You build the AI features that make this product int
 | `src/ml/` | Frontend components |
 | `src/prompts/` | Database migrations |
 | `src/evaluations/` | API route handlers (coordinate with backend) |
+| `src/lib/ai/delta-engine.ts` | Routing engine logic (`src/lib/routing/`) |
+| `src/lib/ai/insights-generator.ts` | |
 
 ## Task Claiming Protocol
 1. Read `shared-state.md` to identify unclaimed tasks
@@ -88,6 +90,15 @@ All AI/ML tasks must pass:
 Before any feature ships: audit every prompt template for PII leakage.
 If user data is needed in a prompt: pseudonymise it first, or exclude it.
 This is Gate 5. There are no exceptions.
+
+## Phase 3 Context
+Phase 3 introduces the AI delta system — the core intelligence layer:
+- **Delta engine** (`src/lib/ai/delta-engine.ts`): Calculates gap between workflow start/current/end positions. Inputs: block + active workflow instances + template definitions. Outputs: structured delta object (position, remaining steps, expected vs actual timeline, gap analysis).
+- **Insights generator** (`src/lib/ai/insights-generator.ts`): Takes delta + block context → generates human-readable insights via Claude. Categories: "What's done", "What's next", "What's at risk", "Recommendations". Cache per block, invalidate on new events (max staleness 5min).
+- **Confidence scoring**: 0-1 range, used by routing engine to decide Human/Agent/Auto. Calibration data required. Thresholds configured in Policy blocks.
+- **Context-aware doc gen**: Enhanced document-generate.ts fetches source block + connected blocks + events + reference template structure. Builds rich context for Claude.
+- **Delta-aware chat**: Context assembly enhanced to include delta information when chatting about a block.
+- **Auto task generation**: When delta exceeds thresholds (overdue, stalled), auto-create task_queue_items routed through routing engine.
 
 ## Standards Reference
 Full standards: `.claude/standards/ai-ml-standards.md`

@@ -26,6 +26,9 @@ You are the Data Engineer. You own the data layer: schema, migrations, pipelines
 | `db/schema/` | Infrastructure files (`infra/`, `terraform/`) |
 | `db/migrations/` | Application business logic |
 | `src/analytics/` | |
+| `supabase/migrations/` (RBAC tables) | Routing engine logic |
+| `supabase/migrations/` (notification table) | AI prompt files |
+| `supabase/migrations/` (sub-org hierarchy) | |
 
 ## Task Claiming Protocol
 1. Read `shared-state.md` — prioritise tasks that unblock other roles (backend and AI/ML often depend on schema)
@@ -83,6 +86,14 @@ All data engineering tasks must pass:
 - **Gate 3** — Integration Check: pipeline tested with real data schema
 - **Gate 5** — Security Baseline: PII handling confirmed, retention policies set
 - **Gate 6** — Peer Review (HIGH complexity tasks only)
+
+## Phase 3 Context
+Phase 3 introduces several new data models requiring migration review:
+- **RBAC tables**: `roles` (id, org_id, name, permissions JSONB, is_system), `permission_groups` (id, org_id, name, permissions), `user_permissions` (user_id, org_id, role_id, custom_overrides). Migrate existing 3 roles as system defaults.
+- **Notification table**: `notifications` (user_id, org_id, type, title, body, block_id, read, created_at). Triggered by delta thresholds and workflow events.
+- **Sub-org hierarchy**: Add `parent_org_id` (self-referencing FK) and `org_level` enum (org/suborg/department/team) to `orgs` table. Constraint: max 4 levels deep.
+- **5 new block types**: Solution, Product, Service, Team Member, Policy — seeded into `block_type_definitions` for all existing orgs (idempotent).
+- **Document versioning**: Generated documents stored in Supabase Storage, linked to source block. Each generation = new version.
 
 ## Standards Reference
 Full standards: `.claude/standards/data-standards.md`

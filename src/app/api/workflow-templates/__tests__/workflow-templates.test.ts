@@ -10,7 +10,7 @@ vi.mock('@/lib/auth/withAuth', () => ({
         const params = await context.params
         return handler(
           req,
-          { userId: 'user_111', clerkOrgId: 'org_abc', orgId: 'uuid-org-1', role: 'ops-admin' as const },
+          { userId: 'user_111', clerkOrgId: 'org_abc', orgId: 'uuid-org-1', role: 'ops-admin' as const, roleId: 'role-uuid-admin', permissions: new Set(['manage_blocks', 'edit_blocks', 'view_blocks', 'manage_workflows', 'execute_workflows', 'approve_tasks', 'manage_team', 'manage_settings', 'manage_integrations', 'view_audit_log']) },
           params
         )
       }
@@ -30,6 +30,8 @@ function makeDb(...responses: { data: unknown; error: unknown }[]) {
 
   const singleFn = vi.fn().mockImplementation(() => Promise.resolve(queue[i++] ?? { data: null, error: null }))
 
+  const maybeSingleFn = vi.fn().mockImplementation(() => Promise.resolve(queue[i++] ?? { data: null, error: null }))
+
   const rpcFn = vi.fn().mockImplementation(() => Promise.resolve(queue[i++] ?? { data: null, error: null }))
 
   const chain: Record<string, unknown> = {
@@ -45,6 +47,7 @@ function makeDb(...responses: { data: unknown; error: unknown }[]) {
     update: vi.fn().mockReturnThis(),
     lt: vi.fn().mockReturnThis(),
     single: singleFn,
+    maybeSingle: maybeSingleFn,
     rpc: rpcFn,
     then: (resolve: (v: unknown) => void, reject: (r: unknown) => void) =>
       Promise.resolve(queue[i++] ?? { data: [], error: null }).then(resolve, reject),
@@ -119,7 +122,11 @@ describe('POST /api/blocks — workflow_template validation', () => {
   it('creates workflow_template with valid metadata — returns 201', async () => {
     const block = { id: 'tmpl-1', org_id: 'uuid-org-1', type: 'workflow_template', name: 'Client Onboarding', metadata: VALID_TEMPLATE }
     const event = { id: 'ev-1', type: 'block.created' }
-    makeDb({ data: { block, event }, error: null })
+    makeDb(
+      { data: { type_name: 'workflow_template' }, error: null }, // maybeSingle: type validation
+      { data: { field_schema: { type: 'object', properties: {} } }, error: null }, // maybeSingle: field schema lookup
+      { data: { block, event }, error: null },                  // rpc: create_block_with_event
+    )
 
     const req = makeReq('http://localhost/api/blocks', {
       method: 'POST',
@@ -133,7 +140,9 @@ describe('POST /api/blocks — workflow_template validation', () => {
   })
 
   it('returns 400 when workflow_template metadata missing applies_to_type', async () => {
-    makeDb()
+    makeDb(
+      { data: { type_name: 'workflow_template' }, error: null }, // maybeSingle: type validation passes
+    )
     const badMeta = { trigger: { type: 'manual' }, steps: [{ name: 'step_one', type: 'emit_event' }] }
 
     const req = makeReq('http://localhost/api/blocks', {
@@ -147,21 +156,28 @@ describe('POST /api/blocks — workflow_template validation', () => {
     expect(body.error.code).toBe('validation/invalid-input')
   })
 
-  it('returns 400 when workflow_template has no steps', async () => {
-    makeDb()
-    const noSteps = { applies_to_type: 'client', trigger: { type: 'manual' }, steps: [] }
+  it('allows workflow_template with empty steps (canvas-first creation)', async () => {
+    const block = { id: 'tmpl-empty', org_id: 'uuid-org-1', type: 'workflow_template', name: 'Empty Steps', metadata: { applies_to_type: 'client', trigger: { type: 'manual' }, steps: [] } }
+    const event = { id: 'ev-empty', type: 'block.created' }
+    makeDb(
+      { data: { type_name: 'workflow_template' }, error: null }, // maybeSingle: type validation
+      { data: { field_schema: { type: 'object', properties: {} } }, error: null }, // maybeSingle: field schema lookup
+      { data: { block, event }, error: null },                  // rpc: create_block_with_event
+    )
 
     const req = makeReq('http://localhost/api/blocks', {
       method: 'POST',
-      body: JSON.stringify({ type: 'workflow_template', name: 'Empty Steps', metadata: noSteps }),
+      body: JSON.stringify({ type: 'workflow_template', name: 'Empty Steps', metadata: { applies_to_type: 'client', trigger: { type: 'manual' }, steps: [] } }),
     })
     const res = await createBlock(req, { params: Promise.resolve({}) })
 
-    expect(res.status).toBe(400)
+    expect(res.status).toBe(201)
   })
 
   it('returns 400 when workflow_template trigger is event but missing event_pattern', async () => {
-    makeDb()
+    makeDb(
+      { data: { type_name: 'workflow_template' }, error: null }, // maybeSingle: type validation passes
+    )
     const badTrigger = {
       applies_to_type: 'client',
       trigger: { type: 'event' },
@@ -178,7 +194,9 @@ describe('POST /api/blocks — workflow_template validation', () => {
   })
 
   it('returns 400 when step name is not snake_case', async () => {
-    makeDb()
+    makeDb(
+      { data: { type_name: 'workflow_template' }, error: null }, // maybeSingle: type validation passes
+    )
     const badStep = {
       applies_to_type: 'client',
       trigger: { type: 'manual' },
@@ -197,7 +215,10 @@ describe('POST /api/blocks — workflow_template validation', () => {
   it('allows non-template blocks without template validation', async () => {
     const block = { id: 'block-1', type: 'client', name: 'Acme Corp', metadata: {} }
     const event = { id: 'ev-1', type: 'block.created' }
-    makeDb({ data: { block, event }, error: null })
+    makeDb(
+      { data: { type_name: 'client' }, error: null },    // maybeSingle: type validation
+      { data: { block, event }, error: null },           // rpc: create_block_with_event
+    )
 
     const req = makeReq('http://localhost/api/blocks', {
       method: 'POST',

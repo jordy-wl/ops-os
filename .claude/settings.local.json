@@ -1,4 +1,14 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(grep -n \"^[^/]*window\\\\.\" /c/Users/langd/Ops-OS_v1.1/src/components/blocks/*.tsx)",
+      "Bash(grep -h \"^import\\\\|^from\" /c/Users/langd/Ops-OS_v1.1/src/components/blocks/*.tsx)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" https://ops-os-gamma.vercel.app/api/health)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" https://ops-os-gamma.vercel.app/sign-in)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" https://ops-os-gamma.vercel.app/dashboard)"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "github",
     "linear",
@@ -6,6 +16,5 @@
     "vercel",
     "supabase",
     "browserbase"
-  ],
-  "enableAllProjectMcpServers": true
+  ]
 }

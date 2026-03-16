@@ -16,6 +16,7 @@ import {
   Plug,
   FileText,
   Settings,
+  Building2,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -39,6 +40,7 @@ interface NavItem {
 }
 
 const MAIN_NAV: NavItem[] = [
+  { href: '/org', label: 'Organisation', icon: Building2 },
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/my-work', label: 'My Work', icon: Briefcase },
   { href: '/workflows', label: 'Workflows', icon: GitBranch },
@@ -51,7 +53,7 @@ const LIBRARY_NAV: NavItem[] = [
 ]
 
 const SETTINGS_NAV: NavItem[] = [
-  { href: '/settings/brand', label: 'Settings', icon: Settings },
+  { href: '/settings', label: 'Settings', icon: Settings },
 ]
 
 export function AppSidebar() {
@@ -130,7 +132,7 @@ export function AppSidebar() {
         <SidebarSeparator />
 
         <SidebarGroup>
-          <SidebarGroupLabel>Library</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-[11px] uppercase tracking-wider text-muted-foreground">Library</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {LIBRARY_NAV.map((item) => (

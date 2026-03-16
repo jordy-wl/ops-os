@@ -1,6 +1,14 @@
 import { createServerClient } from '@/lib/supabase/server'
 import { logger } from '@/lib/logger'
 import type { WorkflowStep } from './template-schema'
+import type { AuthContext } from '@/lib/auth/withAuth'
+import { PERMISSIONS } from '@/lib/rbac/types'
+
+/** System-level auth context for automated step execution (full admin permissions). */
+const SYSTEM_CTX: AuthContext = {
+  userId: 'system', clerkOrgId: '', orgId: '', role: 'ops-admin',
+  roleId: '', permissions: new Set(PERMISSIONS),
+}
 
 export type StepResult = {
   step_name: string
@@ -156,7 +164,7 @@ export async function advanceWorkflowInstance(
     })
   }
 
-  // 6. Emit step event
+  // 6. Emit step event (on instance block — for workflow tracking)
   await supabase.from('events').insert({
     org_id: orgId,
     block_id: instanceId,
@@ -169,6 +177,26 @@ export async function advanceWorkflowInstance(
       result_status: stepResult.status,
     },
   })
+
+  // 7. Auto-emit activity event on the SOURCE block (feeds AI delta engine).
+  //    Uses actor_type 'system' to prevent trigger loops.
+  if (meta.source_block_id) {
+    await supabase.from('events').insert({
+      org_id: orgId,
+      block_id: meta.source_block_id,
+      type: `workflow.activity.${currentStep.type}`,
+      actor_type: 'system',
+      payload: {
+        step_name: currentStep.name,
+        step_type: currentStep.type,
+        step_index: meta.current_step_index,
+        result_status: stepResult.status,
+        workflow_instance_id: instanceId,
+        template_id: meta.template_id,
+        ...(stepResult.output ?? {}),
+      },
+    })
+  }
 
   return {
     status: instanceStatus === 'done'
@@ -281,7 +309,7 @@ async function executeStep(
         body: (step as Record<string, unknown>).body as string ?? '',
         block_id: meta.source_block_id,
       }
-      const emailResult = await handler.execute(emailPayload, { orgId, userId: 'system', clerkOrgId: '', role: 'ops-admin' as const }, supabase)
+      const emailResult = await handler.execute(emailPayload, { ...SYSTEM_CTX, orgId }, supabase)
       return {
         step_name: step.name,
         step_type: step.type,
@@ -308,7 +336,7 @@ async function executeStep(
         attendees: (step as Record<string, unknown>).attendees as string[] ?? [],
         block_id: meta.source_block_id,
       }
-      const meetingResult = await handler.execute(meetingPayload, { orgId, userId: 'system', clerkOrgId: '', role: 'ops-admin' as const }, supabase)
+      const meetingResult = await handler.execute(meetingPayload, { ...SYSTEM_CTX, orgId }, supabase)
       return {
         step_name: step.name,
         step_type: step.type,
@@ -330,7 +358,7 @@ async function executeStep(
         prompt: (step as Record<string, unknown>).prompt as string | undefined,
         output_format: ((step as Record<string, unknown>).output_format as string) ?? 'html',
       }
-      const docResult = await handler.execute(docPayload, { orgId, userId: 'system', clerkOrgId: '', role: 'ops-admin' as const }, supabase)
+      const docResult = await handler.execute(docPayload, { ...SYSTEM_CTX, orgId }, supabase)
       return {
         step_name: step.name,
         step_type: step.type,
@@ -347,6 +375,190 @@ async function executeStep(
         fields: ((step as Record<string, unknown>).fields as Record<string, unknown>) ?? {},
       }
       return await executeUpdateBlock(step.name, updateConfig, meta, orgId, supabase)
+    }
+
+    case 'generate_task': {
+      const stepAny = step as Record<string, unknown>
+      let taskFormSchema = stepAny.task_form_schema as Record<string, unknown> | undefined
+      const assignTo = (stepAny.task_assign_to as string) ?? 'routing_engine'
+      const priority = (stepAny.task_priority as string) ?? 'medium'
+
+      // If task_form_schema is empty, generate AI defaults (or fall back to hardcoded)
+      const schemaFields = taskFormSchema?.fields as unknown[] | undefined
+      const schemaActions = taskFormSchema?.actions as unknown[] | undefined
+      const isEmpty = !taskFormSchema || (!schemaFields?.length && !schemaActions?.length)
+
+      if (isEmpty) {
+        const { generateTaskFormDefaults, getFallbackTaskFormDefaults } = await import('@/lib/ai/task-form-defaults')
+        const context = {
+          stepName: step.name,
+          appliesTo: meta.applies_to_type,
+          routingMode: (stepAny.routing_mode as string) ?? undefined,
+          instructions: step.instructions ?? undefined,
+          priority,
+        }
+
+        // Fetch source block name for richer context
+        const { data: srcBlock } = await supabase
+          .from('blocks')
+          .select('name')
+          .eq('id', meta.source_block_id)
+          .single()
+        if (srcBlock?.name) {
+          (context as Record<string, unknown>).sourceBlockName = srcBlock.name
+        }
+
+        const aiDefaults = await generateTaskFormDefaults(context)
+        taskFormSchema = (aiDefaults ?? getFallbackTaskFormDefaults(context)) as unknown as Record<string, unknown>
+      }
+
+      // Create a task_queue_item block that appears in My Work
+      const { data: taskBlock, error: taskError } = await supabase
+        .from('blocks')
+        .insert({
+          org_id: orgId,
+          type: 'task_queue_item',
+          name: (taskFormSchema?.title as string) || step.name,
+          metadata: {
+            workflow_instance_id: meta.template_id,
+            step_name: step.name,
+            step_index: meta.current_step_index,
+            source_block_id: meta.source_block_id,
+            task_form_schema: taskFormSchema ?? {},
+            assign_to: assignTo,
+            priority,
+            status: 'pending',
+            created_at: now,
+          },
+        })
+        .select('id')
+        .single()
+
+      if (taskError || !taskBlock) {
+        logger.error('step-engine', 'step.generate_task_failed', { error_code: taskError?.code })
+        return { step_name: step.name, step_type: step.type, status: 'failed', error: taskError?.message ?? 'Failed to create task', executed_at: now }
+      }
+
+      // Link task to source block
+      await supabase.from('block_edges').insert({
+        org_id: orgId,
+        source_block_id: meta.source_block_id,
+        target_block_id: taskBlock.id,
+        type: 'task_for',
+      })
+
+      // Emit task created event
+      await supabase.from('events').insert({
+        org_id: orgId,
+        block_id: taskBlock.id,
+        type: 'task.created',
+        actor_type: 'workflow',
+        payload: {
+          workflow_instance_id: meta.template_id,
+          step_name: step.name,
+          source_block_id: meta.source_block_id,
+          assign_to: assignTo,
+          priority,
+        },
+      })
+
+      // Return waiting — workflow pauses until human completes the task
+      return {
+        step_name: step.name,
+        step_type: step.type,
+        status: 'waiting',
+        output: { task_id: taskBlock.id, assign_to: assignTo, priority },
+        executed_at: now,
+      }
+    }
+
+    case 'run_sub_workflow': {
+      const stepAny = step as Record<string, unknown>
+      const subTemplateId = stepAny.sub_workflow_template_id as string | undefined
+      const waitForCompletion = (stepAny.wait_for_completion as boolean) ?? false
+
+      if (!subTemplateId) {
+        return { step_name: step.name, step_type: step.type, status: 'failed', error: 'Missing sub_workflow_template_id', executed_at: now }
+      }
+
+      // Verify the sub-workflow template exists
+      const { data: subTemplate, error: subTplErr } = await supabase
+        .from('blocks')
+        .select('id, name')
+        .eq('id', subTemplateId)
+        .eq('org_id', orgId)
+        .eq('type', 'workflow_template')
+        .single()
+
+      if (subTplErr || !subTemplate) {
+        return { step_name: step.name, step_type: step.type, status: 'failed', error: `Sub-workflow template not found: ${subTemplateId}`, executed_at: now }
+      }
+
+      // Create a new workflow instance for the sub-workflow
+      const subInstanceMeta = {
+        template_id: subTemplateId,
+        source_block_id: meta.source_block_id,
+        applies_to_type: meta.applies_to_type,
+        status: 'pending',
+        current_step_index: 0,
+        step_results: [],
+        started_at: null,
+        completed_at: null,
+        parent_instance_id: meta.template_id,
+        parent_step_name: step.name,
+      }
+
+      const { data: subInstance, error: subCreateErr } = await supabase
+        .from('blocks')
+        .insert({
+          org_id: orgId,
+          type: 'workflow_instance',
+          name: `${subTemplate.name} (sub)`,
+          metadata: subInstanceMeta,
+        })
+        .select('id')
+        .single()
+
+      if (subCreateErr || !subInstance) {
+        logger.error('step-engine', 'step.run_sub_workflow_failed', { error_code: subCreateErr?.code })
+        return { step_name: step.name, step_type: step.type, status: 'failed', error: subCreateErr?.message ?? 'Failed to create sub-workflow instance', executed_at: now }
+      }
+
+      await supabase.from('events').insert({
+        org_id: orgId,
+        block_id: subInstance.id,
+        type: 'workflow.instance.spawned',
+        actor_type: 'workflow',
+        payload: {
+          parent_template_id: meta.template_id,
+          sub_template_id: subTemplateId,
+          parent_step_name: step.name,
+        },
+      })
+
+      logger.info('step-engine', 'step.sub_workflow_spawned', {
+        parent_instance: meta.template_id,
+        sub_instance: subInstance.id,
+        sub_template: subTemplateId,
+      })
+
+      if (waitForCompletion) {
+        return {
+          step_name: step.name,
+          step_type: step.type,
+          status: 'waiting',
+          output: { sub_instance_id: subInstance.id, sub_template_id: subTemplateId, waiting: true },
+          executed_at: now,
+        }
+      }
+
+      return {
+        step_name: step.name,
+        step_type: step.type,
+        status: 'completed',
+        output: { sub_instance_id: subInstance.id, sub_template_id: subTemplateId },
+        executed_at: now,
+      }
     }
 
     default:

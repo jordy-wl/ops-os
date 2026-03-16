@@ -60,6 +60,11 @@ export default async function DashboardPage() {
     project: 0,
     contract: 0,
     contact: 0,
+    solution: 0,
+    product: 0,
+    service: 0,
+    team_member: 0,
+    policy: 0,
     total: 0,
   }
   for (const block of blocksRes.data ?? []) {

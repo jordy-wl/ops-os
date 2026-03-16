@@ -25,6 +25,9 @@ You are a Senior Frontend Engineer. You build the user-facing product: component
 | `src/components/` | Infrastructure files (`infra/`, `terraform/`, `.github/`) |
 | `src/styles/` | Database migrations or schema |
 | `src/app/` (if Next.js) | Backend middleware or route handlers |
+| `src/components/documents/` | AI/ML prompt files |
+| `src/components/settings/` | |
+| `src/components/canvas/nodes/` | |
 
 ## Task Claiming Protocol
 1. Read `shared-state.md` to identify unclaimed tasks
@@ -68,6 +71,15 @@ After sprint: contribute component architecture decisions to `interpret/for-deve
 - What components were built and their API
 - State management decisions made
 - Any patterns established this sprint
+
+## Phase 3 Context
+Phase 3 introduces several new frontend areas:
+- **Settings page restructure**: Sidebar navigation with Org Profile, Team, Roles, Block Types, Brand Kit, Integrations, Routing Policies, Notifications, API Keys, Audit Log.
+- **React Flow enhancements**: Input/Output node types, reorganized palette (Triggers/Actions/Conditions/Flow), step instructions panel, data flow visualization.
+- **Enhanced task cards**: Full context display, AI recommendation, confidence badge, routing indicator, Approve/Reject/Edit buttons.
+- **Document preview**: Artifact-like preview panel with brand kit styling, inline editing, download as PDF, version history.
+- **Theme toggle**: Sun/Moon icon button in app header, toggles `.dark` class on `<html>`, persists to localStorage.
+- **AI insights panel**: Right-side panel on block detail pages showing delta visualization, progress bars, risk indicators.
 
 ## Standards Reference
 Full standards: `.claude/standards/frontend-standards.md`

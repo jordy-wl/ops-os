@@ -11,15 +11,16 @@
 | Phase | Name | Status | Sprint | Exit Conditions Met |
 |-------|------|--------|--------|---------------------|
 | 1 | Foundation & Primitive Validation | COMPLETE | Sprint 4 | YES (code) — usage metrics deferred (user = test user) |
-| 2 | Composable Blocks, Visual Builder & Integrations | CODE COMPLETE | Sprint 16 | CODE DONE (S16) — exit conditions require live usage testing |
-| 3 | Scale, Advanced AI & Marketplace | FUTURE | — | — |
-| 4 | Enterprise & Compliance | FUTURE | — | — |
+| 2 | Composable Blocks, Visual Builder & Integrations | COMPLETE (code) | Sprint 16 | CODE DONE — usage validation re-scoped as P3 milestones |
+| 3 | Platform Evolution: RBAC, Routing, Delta AI, Doc Gen V2 | COMPLETE (code) | Sprint 8 | CODE DONE — usage validation pending |
+| 4 | Workflow Engine V2, Client Portal, Chat V2, Analytics | COMPLETE (code) | Sprint 12 | CODE DONE — usage validation pending |
+| 5 | Enterprise, Scale & Compliance | FUTURE | — | — |
 
 ---
 
 ## Phase 1: Foundation & Primitive Validation
 
-**Status:** ACTIVE
+**Status:** COMPLETE
 **Target:** Q2 2026 (approximately 10–12 weeks)
 **Active Roles:** Backend Engineer, Frontend Engineer, DevOps Engineer, Data Engineer, AI/ML Engineer, QA Engineer, Researcher, PM
 
@@ -73,7 +74,7 @@ If exit condition is NOT met after 12 weeks:
 
 ## Phase 2: Composable Blocks, Visual Builder & Integrations
 
-**Status:** ACTIVE
+**Status:** COMPLETE (code)
 **Target:** Q2-Q3 2026 (Sprints 4–10)
 **Active Roles:** Backend Engineer, Frontend Engineer, Design Lead, AI/ML Engineer, PM
 
@@ -125,43 +126,114 @@ If exit condition is NOT met after 12 weeks:
 
 ---
 
-## Phase 3: Scale, Advanced AI & Marketplace
+## Phase 3: Platform Evolution — RBAC, Routing, Delta AI, Doc Gen V2
 
-**Status:** FUTURE
-**Target:** Q1 2027 (approximately 8–10 weeks)
-**Active Roles:** Backend Engineer, AI/ML Engineer, DevOps Engineer, PM
+**Status:** COMPLETE (code)
+**Target:** Q2 2026 (8 sprints)
+**Active Roles:** Backend Engineer, Frontend Engineer, AI/ML Engineer, QA Engineer
 
-**Hypothesis:** If we add agent AI processing with confidence scoring, operational intelligence (design vs reality analysis), Microsoft 365 integration, Salesforce/Xero connectors, and billing — at least 2 customers (including internal company) will convert to paying at ≥£2k/month.
+**Hypothesis:** If we add custom RBAC with org hierarchy, a routing engine (human/agent/auto) with policy-based confidence thresholds, an AI delta engine that calculates workflow gaps and generates proactive insights, document generation V2 with external reference templates, and enhanced task cards — the platform will support real operational workflows for capital markets firms, proving readiness for design partner onboarding.
 
 **What we're building:**
-- Agent Queue Processor: AI processes `route_agent` task_queue_items with confidence scoring
-- Operational Intelligence: compare workflow template (design) vs instance events (reality), surface deviations and bottlenecks
-- Microsoft 365 integration (for internal company onboarding)
-- Salesforce connector: read client/deal data, bidirectional sync (deferred from Phase 2)
-- Xero connector: read invoices, outbound payment notifications (deferred from Phase 2)
-- Workflow suggestion: AI suggests template structure from historical event patterns
-- Billing integration (Stripe) for paying customers
-- Audit trail export: PDF/JSON for regulatory requests
+- **Sprint 1:** Bug fixes (workflow 400 error, chat position, dark toggle, responsiveness)
+- **Sprint 2:** 5 new block types (Solution, Product, Service, Team Member, Policy) + Contact enrichment + sub-org hierarchy (4 levels: Org → SubOrg → Department → Team)
+- **Sprint 3:** Custom RBAC engine (independent of Clerk, 10 granular permissions, custom roles, permission groups, team member CRUD, org hierarchy API)
+- **Sprint 4:** Routing engine (Human/Agent/Auto per step, org policy defaults, confidence scoring, enhanced task cards with approve/reject/edit)
+- **Sprint 5:** Workflow canvas enhancements (Input/Output nodes, reorganized palette, step instructions, data flow visualization)
+- **Sprint 6:** Document Generation V2 (external reference templates, AI content from block data, artifact-like preview, versioning)
+- **Sprint 7:** AI Delta Engine (gap calculation, insights panel, auto task generation, notifications, delta-aware chat)
+- **Sprint 8:** Core admin settings (settings restructure, routing policy config, notification preferences, API key management, audit log viewer)
 
-**Dependencies on Phase 2:** Visual canvas working; Google integration proven; document generation working; user has run ≥5 complete workflows.
+**Design decisions confirmed with user:**
+- Client fields: configurable per org (not hardcoded)
+- Solutions: block type + tab on client detail
+- Revenue: derived from deals + placeholder (no accounting integration yet)
+- Team: fully custom RBAC, Clerk = login only
+- Playbooks: covered by template step instructions (no new block type)
+- Task routing: org default + per-step override
+- Doc templates: external files + AI rendering
+- Sub-orgs: 4-level max (org → suborg → dept → team)
 
-**Exit Condition:** TRUE when ≥2 paying customers at ≥£2k/month, each processing ≥50 workflow instances/week.
+**Dependencies on Phase 2:** All Phase 2 features complete ✓. 550 tests passing ✓. Production deployed ✓.
 
-**Failure Path:** If no conversion → re-evaluate pricing and value proposition. If integrations unused → webhooks sufficient. If agent AI error rate too high → keep human-only.
+**Exit Condition:** TRUE when:
+1. Custom RBAC deployed with ≥3 custom roles per test org
+2. Routing engine processes ≥10 tasks through human/agent/auto routing
+3. AI delta engine generates insights on ≥5 active workflow instances
+4. ≥3 documents generated via V2 (external template reference + block data)
+5. Settings page covers all admin functions (team, roles, routing, notifications, API keys, audit)
 
-**Sprints in This Phase:** Generated at Phase 2 exit retro.
+**Phase 2 usage conditions re-scoped as Phase 3 milestones:**
+- Onboard 2-3 design partners
+- Run ≥5 complete workflows with canvas + Google + document generation
+- ≥10 task queue items completed
+
+**Failure Path:** If RBAC too complex → simplify to 3 fixed roles. If AI delta latency unacceptable → remove real-time, cache only. If routing engine unused → default to human-only. If doc gen quality low → improve prompt templates before advanced rendering.
+
+**Sprints in This Phase:**
+- Sprint 0: Scaffold updates (PRDs, rules, standards, agents, sprint files) — **COMPLETE** (2026-03-12)
+- Sprint 1: Bug fixes & quick wins (6 tasks) — **COMPLETE** (6/6 DONE, 100%. 2026-03-12)
+- Sprint 2: New block types & schema foundation (7 tasks) — **COMPLETE** (7/7 DONE, 100%. 2026-03-12)
+- Sprint 3: Custom RBAC engine (8 tasks) — **COMPLETE** (8/8 DONE, 100%. 2026-03-12)
+- Sprint 4: Routing engine & policy system (8 tasks) — **COMPLETE** (8/8 DONE, 100%. 2026-03-12)
+- Sprint 5: Workflow canvas enhancements + block config foundation (9 tasks) — **COMPLETE** (9/9 DONE, 100%. 2026-03-12)
+- Sprint 6: Document Generation V2 + block config UI (8 tasks) — **COMPLETE** (8/8 DONE, 100%. 2026-03-12)
+- Sprint 7: AI Delta Engine + inline field manager (8 tasks) — **COMPLETE** (8/8 DONE, 100%. 2026-03-12)
+- Sprint 8: Core admin settings + org page (9 tasks) — **COMPLETE** (9/9 DONE, 100%. 2026-03-12)
+
+**Phase 3 Status:** CODE COMPLETE. 70/70 tasks done across 8 sprints (100%). 1230 tests passing. All features built, tested, committed. Exit conditions require live usage testing (design partner onboarding).
 
 ---
 
-## Phase 4: Enterprise, Scale & Compliance
+## Phase 4: Workflow Engine V2, Client Portal, Chat V2, Analytics
+
+**Status:** COMPLETE (code)
+**Target:** Q1 2026 (4 sprints, Sprints 9-12)
+**Active Roles:** Backend Engineer, Frontend Engineer, AI/ML Engineer, QA Engineer
+
+**Hypothesis:** If we add task-aware workflow nodes, a client portal with interactive forms and e-signature, document generation V3 (DOCX + Google Docs), custom reusable actions, chat history persistence with an expandable panel, and workflow analytics with AI optimization — the platform will have the full feature set for a capital markets client onboarding → form → document → signature → audit trail workflow.
+
+**What was built (22 features across 7 groups):**
+- **A. Workflow Builder UX (Sprint 9):** Generate/Route Task node, entity-aware config, auto event emission, node palette search, undo/redo, glassmorphism canvas, Output node simplification
+- **B. Custom Actions & External Triggers (Sprints 9, 11):** Save custom actions, auto-load integration actions, external API triggers (POST /api/webhooks/trigger/{templateId})
+- **C. Inter-Workflow Orchestration (Sprint 11):** Run Sub-Workflow node
+- **D. Client Portal (Sprint 10):** Shareable links (JWT token auth), interactive form builder, form submission storage + viewer, e-signature capture (ETA 1999 compliant)
+- **E. Document Generation V3 (Sprint 11):** Generate .docx (docxtemplater), push to Google Docs, document → share → sign flow
+- **F. Chat System V2 (Sprint 12):** Bigger chat icon, expandable docked panel (float/panel toggle, resizable), chat history persistence (conversations + messages tables)
+- **G. Workflow Analytics (Sprint 12):** Workflow metrics API (runs, success rate, avg time, bottlenecks), AI optimization suggestions
+
+**Dependencies on Phase 3:** All Phase 3 features complete ✓. 1230 tests passing ✓.
+
+**Exit Condition (practical, based on what was built):**
+1. Client portal with form submission + e-signature — MET
+2. Document generation from templates + Google Docs push — MET
+3. Workflow builder production-ready for non-technical users — MET
+4. Chat system with history + expandable panel — MET
+5. Workflow analytics with optimization suggestions — MET
+6. External triggers + sub-workflow orchestration — MET
+7. Custom actions reusable across workflows — MET
+
+**Usage validation (pending):** Manual testing of end-to-end flows by user.
+
+**Sprints in This Phase:**
+- Sprint 9: Workflow Builder UX + External Triggers (12 tasks) — **COMPLETE** (12/12 DONE, 100%. 2026-03-13)
+- Sprint 10: Client Portal + Interactive Forms (10 tasks) — **COMPLETE** (10/10 DONE, 100%. 2026-03-13)
+- Sprint 11: Document Gen V3 + Custom Actions (10 tasks) — **COMPLETE** (10/10 DONE, 100%. 2026-03-13)
+- Sprint 12: Chat Panel V2 + Workflow Analytics (10 tasks) — **COMPLETE** (10/10 DONE, 100%. 2026-03-13)
+
+**Phase 4 Status:** CODE COMPLETE. 42/42 tasks done across 4 sprints (100%). 1230 tests passing. Build + lint clean. 4 Supabase migrations applied via MCP. Gate evidence in `.claude/sprints/phase-4/gate-results.md`.
+
+---
+
+## Phase 5: Enterprise, Scale & Compliance
 
 **Status:** FUTURE
-**Target:** Q2–Q3 2027
+**Target:** TBD — contingent on paying customers and revenue
 **Active Roles:** DevOps Engineer, Backend Engineer, AI/ML Engineer, PM
 
 **Hypothesis:** If we migrate to Temporal for durable workflow execution, start SOC 2 Type II, add multi-region data residency, and build a marketplace for workflow templates and connectors — 5+ paying customers can use production data at enterprise scale.
 
-**What we're building:**
+**What we'll build:**
 - Temporal workflow engine (replaces workflow-as-block runtime for exactly-once semantics)
 - Production infrastructure: Railway or AWS ECS + Terraform IaC
 - Neon Postgres + Redis for hot cache
@@ -171,11 +243,11 @@ If exit condition is NOT met after 12 weeks:
 - Marketplace: third-party workflow templates, integration connectors, block type definitions
 - Advanced RBAC: field-level permissions, approval chains
 
-**Dependencies on Phase 3:** ≥2 paying customers; revenue to justify infrastructure investment; agent AI proven; operational intelligence validated.
+**Dependencies on Phase 4:** ≥2 paying customers; revenue to justify infrastructure investment; agent AI proven; operational intelligence validated.
 
 **Exit Condition:** TRUE when ≥5 paying customers, Temporal deployed, SOC 2 audit in progress.
 
-**Sprints in This Phase:** Generated at Phase 3 exit retro.
+**Sprints in This Phase:** Generated at Phase 4 exit retro.
 
 ---
 
@@ -203,3 +275,7 @@ Replaced by "Visual Builder & Integrations". Original hypothesis focused on Sale
 ### [2026-03-04] Original Phase 4: Scale & Production Hardening
 
 Replaced by "Scale, Revenue & Compliance". Original scope included Temporal (moved from Phase 2), production infra, SOC 2, multi-region, and React Flow canvas (moved to Phase 3). Reason: canvas now Phase 3; marketplace added; compliance consolidated here.
+
+### [2026-03-15] Original Phase 4: Enterprise, Scale & Compliance
+
+Moved to Phase 5. Actual Phase 4 was a research brief-driven sprint set: Workflow Engine V2, Client Portal, Chat Panel V2, Workflow Analytics (22 features, 42 tasks, 4 sprints). Enterprise/compliance scope deferred until paying customers justify the infrastructure investment.

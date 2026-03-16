@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { withAuth } from '@/lib/auth/withAuth'
-import { requireRole } from '@/lib/auth/requireRole'
+import { requirePermission } from '@/lib/rbac/middleware'
 import { createServerClient } from '@/lib/supabase/server'
 import { ok, apiError, validationError } from '@/lib/api/responses'
 import { isValidJsonSchema } from '@/lib/validation/json-schema'
@@ -52,7 +52,7 @@ export const GET = withAuth(async (_req: NextRequest, ctx, params) => {
 
 /** POST /api/block-types/[id]/fields — add a new field (ops-admin only) */
 export const POST = withAuth(
-  requireRole(['ops-admin'], async (req: NextRequest, ctx, params) => {
+  requirePermission(['manage_blocks'], async (req: NextRequest, ctx, params) => {
     const { id } = params
     const body = await req.json().catch(() => null)
     if (!body) return apiError('Invalid JSON body', 'validation/invalid-json', 400)

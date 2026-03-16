@@ -3,8 +3,11 @@ import { NextRequest } from 'next/server'
 import type { AuthContext, UserRole } from '@/lib/auth/withAuth'
 
 // Configurable mock context
+const ALL_PERMS = new Set(['manage_blocks', 'edit_blocks', 'view_blocks', 'manage_workflows', 'execute_workflows', 'approve_tasks', 'manage_team', 'manage_settings', 'manage_integrations', 'view_audit_log'])
+
 const mockCtx = vi.hoisted(() => ({
   role: 'ops-admin' as UserRole,
+  permissions: null as unknown as Set<string>,
 }))
 
 vi.mock('@/lib/auth/withAuth', () => ({
@@ -14,7 +17,7 @@ vi.mock('@/lib/auth/withAuth', () => ({
         const params = await context.params
         return handler(
           req,
-          { userId: 'user_111', clerkOrgId: 'org_abc', orgId: 'uuid-org-1', role: mockCtx.role },
+          { userId: 'user_111', clerkOrgId: 'org_abc', orgId: 'uuid-org-1', role: mockCtx.role, roleId: 'role-uuid', permissions: mockCtx.permissions },
           params
         )
       }
@@ -67,6 +70,7 @@ describe('GET /api/workflow-instances', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockCtx.role = 'ops-admin'
+    mockCtx.permissions = ALL_PERMS
   })
 
   it('returns workflow instances for org', async () => {
@@ -121,6 +125,7 @@ describe('POST /api/workflow-instances', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockCtx.role = 'ops-admin'
+    mockCtx.permissions = ALL_PERMS
   })
 
   const validBody = {
@@ -282,6 +287,7 @@ describe('GET /api/workflow-instances/[id]', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockCtx.role = 'ops-admin'
+    mockCtx.permissions = ALL_PERMS
   })
 
   it('returns a single instance', async () => {

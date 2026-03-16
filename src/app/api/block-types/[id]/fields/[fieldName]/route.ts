@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { withAuth } from '@/lib/auth/withAuth'
-import { requireRole } from '@/lib/auth/requireRole'
+import { requirePermission } from '@/lib/rbac/middleware'
 import { createServerClient } from '@/lib/supabase/server'
 import { ok, apiError, validationError } from '@/lib/api/responses'
 import { isValidJsonSchema } from '@/lib/validation/json-schema'
@@ -54,7 +54,7 @@ async function fetchTypeAndField(
 
 /** PATCH /api/block-types/[id]/fields/[fieldName] — update field properties (ops-admin only) */
 export const PATCH = withAuth(
-  requireRole(['ops-admin'], async (req: NextRequest, ctx, params) => {
+  requirePermission(['manage_blocks'], async (req: NextRequest, ctx, params) => {
     const { id, fieldName } = params
     const body = await req.json().catch(() => null)
     if (!body) return apiError('Invalid JSON body', 'validation/invalid-json', 400)
@@ -118,7 +118,7 @@ export const PATCH = withAuth(
 
 /** DELETE /api/block-types/[id]/fields/[fieldName] — remove a field (ops-admin only) */
 export const DELETE = withAuth(
-  requireRole(['ops-admin'], async (_req: NextRequest, ctx, params) => {
+  requirePermission(['manage_blocks'], async (_req: NextRequest, ctx, params) => {
     const { id, fieldName } = params
     const supabase = createServerClient()
     const result = await fetchTypeAndField(supabase, ctx.orgId, id, fieldName)

@@ -1,7 +1,8 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
-import { ClipboardList, GitBranch, LayoutGrid, Activity, ArrowRight } from 'lucide-react'
+import { ClipboardList, GitBranch, LayoutGrid, Activity, ArrowRight, Circle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { MyWorkData, MyWorkTask, MyWorkWorkflow, MyWorkBlock, MyWorkEvent } from '@/app/(app)/my-work/page'
 
@@ -22,59 +23,73 @@ function formatRelative(iso: string): string {
 }
 
 const STATUS_STYLES: Record<string, string> = {
-  open: 'bg-blue-100 text-blue-800',
-  claimed: 'bg-amber-100 text-amber-800',
-  completed: 'bg-green-100 text-green-800',
-  pending: 'bg-gray-100 text-gray-700',
-  running: 'bg-blue-100 text-blue-800',
-  done: 'bg-green-100 text-green-800',
-  failed: 'bg-red-100 text-red-800',
+  open: 'bg-primary/10 text-primary',
+  claimed: 'bg-warning/10 text-warning',
+  completed: 'bg-success/10 text-success',
+  pending: 'bg-muted text-muted-foreground',
+  running: 'bg-primary/10 text-primary',
+  done: 'bg-success/10 text-success',
+  failed: 'bg-destructive/10 text-destructive',
 }
 
-// ─── Section Components ─────────────────────────────────────────────────────
+// ─── Tabs ────────────────────────────────────────────────────────────────────
 
-function TasksSection({ tasks, currentUserId }: { tasks: MyWorkTask[]; currentUserId: string }) {
+type TabId = 'tasks' | 'workflows' | 'blocks' | 'activity'
+
+const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
+  { id: 'tasks', label: 'Assigned to me', icon: ClipboardList },
+  { id: 'workflows', label: 'Active Workflows', icon: GitBranch },
+  { id: 'blocks', label: 'Recent Blocks', icon: LayoutGrid },
+  { id: 'activity', label: 'Activity', icon: Activity },
+]
+
+// ─── Flat Row Components ─────────────────────────────────────────────────────
+
+function TaskRows({ tasks, currentUserId }: { tasks: MyWorkTask[]; currentUserId: string }) {
   const myTasks = tasks.filter((t) => t.assigned_to === currentUserId || t.status === 'open')
 
   if (myTasks.length === 0) {
     return (
-      <div className="text-center py-8 text-sm text-muted-foreground">
+      <div className="text-center py-10 text-[13px] text-muted-foreground">
         No open tasks. You&apos;re all caught up!
       </div>
     )
   }
 
   return (
-    <div className="space-y-2">
-      {myTasks.slice(0, 8).map((task) => (
+    <div className="divide-y divide-border">
+      {myTasks.slice(0, 12).map((task) => (
         <Link
           key={task.id}
-          href={`/tasks`}
-          className="flex items-center justify-between rounded-lg border border-border p-3 hover:border-border hover:bg-muted transition-colors"
+          href="/tasks"
+          className="flex items-center gap-3 px-3 py-2.5 hover:bg-muted/50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
         >
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium text-foreground truncate">{task.name}</p>
-            <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground">
-              {task.step_name && <span>{task.step_name}</span>}
-              {task.workflow_instance_name && (
-                <span className="truncate max-w-[140px]">{task.workflow_instance_name}</span>
-              )}
-            </div>
-          </div>
+          <ClipboardList className="h-4 w-4 text-muted-foreground shrink-0" aria-hidden="true" />
+          <span className="text-[13px] font-medium text-foreground truncate flex-1 min-w-0">
+            {task.name}
+          </span>
           <span
             className={cn(
-              'shrink-0 ml-2 inline-flex rounded-full px-2 py-0.5 text-xs font-medium',
+              'shrink-0 inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium capitalize',
               STATUS_STYLES[task.status] ?? STATUS_STYLES.open
             )}
           >
             {task.status}
           </span>
+          {task.workflow_instance_name && (
+            <span className="shrink-0 text-[12px] text-muted-foreground truncate max-w-[120px] hidden sm:inline">
+              {task.workflow_instance_name}
+            </span>
+          )}
+          <span className="shrink-0 text-[12px] text-muted-foreground tabular-nums">
+            {formatRelative(task.created_at)}
+          </span>
         </Link>
       ))}
-      {myTasks.length > 8 && (
+      {myTasks.length > 12 && (
         <Link
           href="/tasks"
-          className="flex items-center justify-center gap-1 py-2 text-xs text-muted-foreground hover:text-foreground"
+          className="flex items-center justify-center gap-1 py-2.5 text-[12px] text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
         >
           View all {myTasks.length} tasks <ArrowRight className="h-3 w-3" />
         </Link>
@@ -83,46 +98,49 @@ function TasksSection({ tasks, currentUserId }: { tasks: MyWorkTask[]; currentUs
   )
 }
 
-function WorkflowsSection({ workflows }: { workflows: MyWorkWorkflow[] }) {
+function WorkflowRows({ workflows }: { workflows: MyWorkWorkflow[] }) {
   if (workflows.length === 0) {
     return (
-      <div className="text-center py-8 text-sm text-muted-foreground">
+      <div className="text-center py-10 text-[13px] text-muted-foreground">
         No active workflows.
       </div>
     )
   }
 
   return (
-    <div className="space-y-2">
-      {workflows.slice(0, 6).map((wf) => (
+    <div className="divide-y divide-border">
+      {workflows.slice(0, 10).map((wf) => (
         <Link
           key={wf.id}
           href={`/blocks/${wf.id}`}
-          className="flex items-center justify-between rounded-lg border border-border p-3 hover:border-border hover:bg-muted transition-colors"
+          className="flex items-center gap-3 px-3 py-2.5 hover:bg-muted/50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
         >
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium text-foreground truncate">{wf.name}</p>
-            <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground">
-              {wf.template_name && (
-                <span className="truncate max-w-[160px]">{wf.template_name}</span>
-              )}
-              <span>{formatRelative(wf.updated_at)}</span>
-            </div>
-          </div>
+          <GitBranch className="h-4 w-4 text-muted-foreground shrink-0" aria-hidden="true" />
+          <span className="text-[13px] font-medium text-foreground truncate flex-1 min-w-0">
+            {wf.name}
+          </span>
           <span
             className={cn(
-              'shrink-0 ml-2 inline-flex rounded-full px-2 py-0.5 text-xs font-medium',
+              'shrink-0 inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium capitalize',
               STATUS_STYLES[wf.status] ?? STATUS_STYLES.pending
             )}
           >
             {wf.status}
           </span>
+          {wf.template_name && (
+            <span className="shrink-0 text-[12px] text-muted-foreground truncate max-w-[120px] hidden sm:inline">
+              {wf.template_name}
+            </span>
+          )}
+          <span className="shrink-0 text-[12px] text-muted-foreground tabular-nums">
+            {formatRelative(wf.updated_at)}
+          </span>
         </Link>
       ))}
-      {workflows.length > 6 && (
+      {workflows.length > 10 && (
         <Link
           href="/workflows"
-          className="flex items-center justify-center gap-1 py-2 text-xs text-muted-foreground hover:text-foreground"
+          className="flex items-center justify-center gap-1 py-2.5 text-[12px] text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
         >
           View all {workflows.length} workflows <ArrowRight className="h-3 w-3" />
         </Link>
@@ -131,28 +149,31 @@ function WorkflowsSection({ workflows }: { workflows: MyWorkWorkflow[] }) {
   )
 }
 
-function RecentBlocksSection({ blocks }: { blocks: MyWorkBlock[] }) {
+function BlockRows({ blocks }: { blocks: MyWorkBlock[] }) {
   if (blocks.length === 0) {
     return (
-      <div className="text-center py-8 text-sm text-muted-foreground">
+      <div className="text-center py-10 text-[13px] text-muted-foreground">
         No blocks yet.
       </div>
     )
   }
 
   return (
-    <div className="space-y-2">
+    <div className="divide-y divide-border">
       {blocks.map((block) => (
         <Link
           key={block.id}
           href={`/blocks/${block.id}`}
-          className="flex items-center justify-between rounded-lg border border-border p-3 hover:border-border hover:bg-muted transition-colors"
+          className="flex items-center gap-3 px-3 py-2.5 hover:bg-muted/50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
         >
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium text-foreground truncate">{block.name}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">{block.type}</p>
-          </div>
-          <span className="shrink-0 ml-2 text-xs text-muted-foreground">
+          <LayoutGrid className="h-4 w-4 text-muted-foreground shrink-0" aria-hidden="true" />
+          <span className="text-[13px] font-medium text-foreground truncate flex-1 min-w-0">
+            {block.name}
+          </span>
+          <span className="shrink-0 inline-flex rounded-full bg-muted text-foreground px-2 py-0.5 text-[11px] font-medium capitalize">
+            {block.type.replace(/_/g, ' ')}
+          </span>
+          <span className="shrink-0 text-[12px] text-muted-foreground tabular-nums">
             {formatRelative(block.updated_at)}
           </span>
         </Link>
@@ -161,46 +182,35 @@ function RecentBlocksSection({ blocks }: { blocks: MyWorkBlock[] }) {
   )
 }
 
-function ActivityFeed({ events }: { events: MyWorkEvent[] }) {
+function ActivityRows({ events }: { events: MyWorkEvent[] }) {
   if (events.length === 0) {
     return (
-      <div className="text-center py-8 text-sm text-muted-foreground">
+      <div className="text-center py-10 text-[13px] text-muted-foreground">
         No recent activity.
       </div>
     )
   }
 
   return (
-    <div className="space-y-1">
+    <div className="divide-y divide-border">
       {events.map((event) => (
         <div
           key={event.id}
-          className="flex items-center gap-3 rounded-md px-3 py-2 text-xs"
+          className="flex items-center gap-3 px-3 py-2.5"
         >
-          <span
-            className={cn(
-              'shrink-0 h-1.5 w-1.5 rounded-full',
-              event.type.startsWith('block.') ? 'bg-blue-400' :
-              event.type.startsWith('workflow.') ? 'bg-purple-400' :
-              event.type.startsWith('email.') ? 'bg-green-400' :
-              event.type.startsWith('document.') ? 'bg-amber-400' :
-              event.type.startsWith('meeting.') ? 'bg-teal-400' :
-              'bg-muted-foreground'
-            )}
-            aria-hidden="true"
-          />
-          <div className="min-w-0 flex-1">
-            <span className="font-medium text-foreground">{event.type}</span>
-            {event.block_name && (
-              <span className="text-muted-foreground">
-                {' '}on{' '}
-                <Link href={`/blocks/${event.block_id}`} className="text-muted-foreground hover:underline">
-                  {event.block_name}
-                </Link>
-              </span>
-            )}
-          </div>
-          <span className="shrink-0 text-muted-foreground">{formatRelative(event.occurred_at)}</span>
+          <Circle className="h-2 w-2 fill-muted-foreground text-muted-foreground shrink-0" aria-hidden="true" />
+          <span className="text-[13px] font-medium text-foreground shrink-0">{event.type}</span>
+          {event.block_name && (
+            <span className="text-[13px] text-muted-foreground min-w-0 truncate">
+              on{' '}
+              <Link href={`/blocks/${event.block_id}`} className="hover:underline">
+                {event.block_name}
+              </Link>
+            </span>
+          )}
+          <span className="shrink-0 ml-auto text-[12px] text-muted-foreground tabular-nums">
+            {formatRelative(event.occurred_at)}
+          </span>
         </div>
       ))}
     </div>
@@ -209,63 +219,65 @@ function ActivityFeed({ events }: { events: MyWorkEvent[] }) {
 
 // ─── Main Component ─────────────────────────────────────────────────────────
 
-function SectionCard({
-  title,
-  icon: Icon,
-  children,
-}: {
-  title: string
-  icon: React.ElementType
-  children: React.ReactNode
-}) {
-  return (
-    <div className="rounded-lg border border-border bg-background">
-      <div className="flex items-center gap-2 border-b px-4 py-3">
-        <Icon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-        <h2 className="text-sm font-semibold text-foreground">{title}</h2>
-      </div>
-      <div className="p-4">{children}</div>
-    </div>
-  )
-}
-
 export function MyWorkClient({ initialData, currentUserId }: MyWorkClientProps) {
+  const [activeTab, setActiveTab] = useState<TabId>('tasks')
+
   if (!initialData) {
     return (
-      <div className="p-6 lg:p-8">
-        <h1 className="text-2xl font-semibold text-foreground mb-6">My Work</h1>
-        <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center" role="alert">
-          <p className="text-sm font-medium text-red-800">Failed to load data.</p>
-          <p className="mt-1 text-sm text-red-600">Refresh the page to try again.</p>
+      <div className="p-6 lg:p-8 max-w-7xl mx-auto">
+        <h1 className="text-page font-semibold text-foreground mb-6">My Work</h1>
+        <div className="rounded-md border border-destructive/20 bg-destructive/5 p-6 text-center" role="alert">
+          <p className="text-[13px] font-medium text-destructive">Failed to load data.</p>
+          <p className="mt-1 text-[13px] text-muted-foreground">Refresh the page to try again.</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="p-6 lg:p-8">
-      <h1 className="text-2xl font-semibold text-foreground mb-6">My Work</h1>
+    <div className="p-6 lg:p-8 max-w-7xl mx-auto">
+      <h1 className="text-page font-semibold text-foreground mb-6">My Work</h1>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Tasks — top left */}
-        <SectionCard title="Tasks" icon={ClipboardList}>
-          <TasksSection tasks={initialData.tasks} currentUserId={currentUserId} />
-        </SectionCard>
+      {/* Tab bar */}
+      <div className="flex items-center gap-1 border-b border-border mb-0" role="tablist" aria-label="My Work sections">
+        {TABS.map((tab) => {
+          const Icon = tab.icon
+          const isActive = activeTab === tab.id
+          return (
+            <button
+              key={tab.id}
+              role="tab"
+              aria-selected={isActive}
+              onClick={() => setActiveTab(tab.id)}
+              className={cn(
+                'flex items-center gap-1.5 px-3 py-2 text-[13px] font-medium transition-colors -mb-px border-b-2',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                isActive
+                  ? 'border-foreground text-foreground'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              )}
+            >
+              <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+              {tab.label}
+            </button>
+          )
+        })}
+      </div>
 
-        {/* Active Workflows — top right */}
-        <SectionCard title="Active Workflows" icon={GitBranch}>
-          <WorkflowsSection workflows={initialData.workflows} />
-        </SectionCard>
-
-        {/* Recent Blocks — bottom left */}
-        <SectionCard title="Recent Blocks" icon={LayoutGrid}>
-          <RecentBlocksSection blocks={initialData.recentBlocks} />
-        </SectionCard>
-
-        {/* Activity Feed — bottom right */}
-        <SectionCard title="Recent Activity" icon={Activity}>
-          <ActivityFeed events={initialData.recentEvents} />
-        </SectionCard>
+      {/* Tab content */}
+      <div className="rounded-b-md border border-t-0 border-border bg-card" role="tabpanel">
+        {activeTab === 'tasks' && (
+          <TaskRows tasks={initialData.tasks} currentUserId={currentUserId} />
+        )}
+        {activeTab === 'workflows' && (
+          <WorkflowRows workflows={initialData.workflows} />
+        )}
+        {activeTab === 'blocks' && (
+          <BlockRows blocks={initialData.recentBlocks} />
+        )}
+        {activeTab === 'activity' && (
+          <ActivityRows events={initialData.recentEvents} />
+        )}
       </div>
     </div>
   )

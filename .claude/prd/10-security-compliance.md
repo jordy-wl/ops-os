@@ -1,6 +1,6 @@
 # PRD Layer 10: Security and Compliance
 
-> Last updated: 2026-03-02 | Author: All roles review | Status: DRAFT
+> Last updated: 2026-03-12 | Author: All roles review | Status: DRAFT
 > All roles read this document. Security is everyone's responsibility.
 > Cross-references: `prd/04-data-models.md` (PII inventory), `prd/08-infra-devops.md` (secrets), `prd/05-api-contracts.md` (auth scheme).
 > Also read: `.claude/rules/security-baseline.md` — unconditional security rules for every agent.
@@ -223,6 +223,49 @@ FCA-regulated design partners may require evidence of:
 6. **Post-mortem:** Document what happened, how it was detected, and preventive measures.
 
 **Who to contact:** Founder (primary incident responder in Phase 1). No formal security team until Phase 2.
+
+---
+
+## Phase 3 Security Requirements
+
+### Granular RBAC Permission Model
+- 10 permissions replace the simple 3-role system
+- Permissions checked on every API request via `requirePermission()` middleware
+- System roles (ops-admin, ops-user, compliance-approver) are backward compatible — they map to permission sets
+- Custom roles: orgs create roles with arbitrary permission combinations
+- Permission changes logged as `rbac.permission.granted` / `rbac.permission.revoked` events
+- **Audit requirement:** Every permission check that denies access must be logged with: user_id, permission_required, endpoint, timestamp
+
+### Agent Decision Audit Logging
+- Every AI routing decision logged as `routing.decision.made` event with: confidence score, risk level, routing outcome, reasoning text
+- Every task approval/rejection/modification logged with: original AI recommendation, human decision, modifications made
+- Auto-executed tasks (confidence ≥ threshold, risk = low) logged with same detail as human-reviewed tasks
+- **Compliance requirement:** Regulators must be able to reconstruct any AI decision chain from events table alone
+
+### API Key Security
+- Keys hashed with SHA-256 before storage — raw key never persisted
+- Key shown to user exactly once on creation — cannot be retrieved after
+- Key prefix stored in plaintext for identification (e.g. `opskey_abc...`)
+- Rate limiting per API key (independent from user auth limits)
+- Key creation/revocation logged as events with actor_id
+- Keys have optional expiration date — expired keys automatically rejected
+- **No key in logs:** API key values must never appear in any log statement
+
+### Routing Decision Audit Trail
+- The routing engine's decision path must be fully reconstructable:
+  1. Step config (requested routing mode)
+  2. Org policy (default routing rules from Policy block)
+  3. AI confidence score + factors
+  4. Risk assessment
+  5. Final decision + reasoning
+- All stored in the `routing.decision.made` event payload
+- Retention: indefinite (part of immutable events table)
+
+### Sub-Org Data Isolation
+- Sub-orgs inherit parent org's data access by default
+- Child orgs can see parent org data; parent orgs can see child org data
+- Cross-branch isolation: Department A cannot see Department B data (unless both under same parent with explicit permission)
+- All org-scoped queries must use `getOrgHierarchyIds()` utility to include appropriate org scope
 
 ---
 

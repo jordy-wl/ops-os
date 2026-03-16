@@ -1,6 +1,6 @@
 # PRD Layer 07: AI/ML Specification
 
-> Last updated: 2026-03-04 | Author: AI/ML Engineer | Status: DRAFT
+> Last updated: 2026-03-12 | Author: AI/ML Engineer | Status: DRAFT
 > Cross-references: `prd/03-system-architecture.md` (AI integration), `prd/10-security-compliance.md` (PII in prompts).
 > AI/ML engineer: read this before claiming tasks. All evaluation criteria and cost targets live here.
 
@@ -330,6 +330,118 @@ Verdict: PASS / FAIL
 |-----------|-------|---------------------|
 | Suggested workflow matches actual user patterns | 10 cases | > 70% step overlap |
 | User accepts suggestion (human eval) | 10 cases | > 50% acceptance rate |
+
+---
+
+## Phase 3 AI Features
+
+### Feature 9: Delta Calculation Engine
+
+**What it does:** Given a block and its active workflow instances, calculates the gap between "where we are" and "where we should be". Pure calculation — no AI model calls. Outputs a structured delta object.
+
+**Module:** `src/lib/ai/delta-engine.ts`
+
+**Input:**
+- Block data (type, status, metadata)
+- Active workflow instances (current step, total steps, started_at)
+- Workflow template definitions (expected step durations, step names)
+
+**Output:**
+```typescript
+interface DeltaOutput {
+  blockId: string
+  totalSteps: number
+  completedSteps: number
+  currentPosition: number        // 0-1 progress
+  remainingSteps: StepSummary[]
+  expectedCompletion: Date | null
+  actualVsExpected: number       // Days ahead (-) or behind (+)
+  riskFactors: RiskFactor[]
+  gapAnalysis: string            // Human-readable summary
+}
+```
+
+**Caching:** Per-block, 5-minute TTL, invalidated on new events for associated workflow instances.
+
+---
+
+### Feature 10: AI Insights Generator
+
+**What it does:** Takes a delta object + block context → generates human-readable insights via Claude. Four categories: "What's Done", "What's Next", "What's at Risk", "Recommendations".
+
+**Model:** `claude-sonnet-4-6` (primary), `claude-haiku-4-5` (cost fallback)
+
+**Eval criteria:**
+
+| Case Type | Count | Acceptance Threshold |
+|-----------|-------|---------------------|
+| Insights are factually accurate (match delta data) | 15 cases | > 90% accuracy |
+| Recommendations are actionable (human eval) | 15 cases | > 70% useful rating |
+| No hallucinated data (not present in context) | 15 cases | 0 hallucinations |
+
+**Cost estimate:** ~500 input tokens + ~300 output tokens per call = ~$0.003/call at Sonnet pricing. Cache reduces calls by ~80%.
+
+---
+
+### Feature 11: Confidence Scoring Framework
+
+**What it does:** Assigns a 0-1 confidence score to AI-generated task recommendations. Used by the routing engine to decide Human/Agent/Auto routing.
+
+**Factors:**
+- Data completeness (0-1): how much input data is available for the decision
+- Pattern match (0-1): how well this situation matches known successful patterns
+- Action complexity (0-1): inverse of action risk/complexity
+
+**Calibration:** Log every `(predicted_confidence, human_decision)` pair. Monthly recalibration: compare predicted confidence buckets to actual approval rates.
+
+**Default thresholds (configurable per-org via Policy blocks):**
+- Auto-execute: confidence ≥ 0.85 AND risk = low
+- Agent-assisted: confidence ≥ 0.60
+- Human required: confidence < 0.60 OR risk = high/critical
+
+---
+
+### Feature 12: Context-Aware Document Generation
+
+**What it does:** Enhanced document generation that assembles rich context from the business graph — source block + connected blocks + events + reference template structure — then generates content matching the reference style.
+
+**Context assembly budget:** ~4000 tokens
+- Source block fields: ~500 tokens (mandatory)
+- Connected blocks: ~1000 tokens (up to 5 blocks, summarized)
+- Recent events: ~800 tokens (last 20 events, summarized)
+- Reference template structure: ~700 tokens
+- Brand kit metadata: ~200 tokens
+
+**Model:** `claude-sonnet-4-6`
+
+**Eval criteria:**
+
+| Case Type | Count | Acceptance Threshold |
+|-----------|-------|---------------------|
+| Generated content matches reference template structure | 10 cases | > 80% structural match |
+| Block data accurately populated in document | 10 cases | > 95% data accuracy |
+| Brand kit styling correctly applied | 10 cases | > 90% style match |
+
+---
+
+### Feature 13: Delta-Aware Chat Context
+
+**What it does:** Enhances the existing chat context assembly to include delta information when the user is chatting about a specific block. Chat can naturally reference "what's next", "what's at risk", and action delta recommendations in execute mode.
+
+**Implementation:** When `blockId` is provided in chat request and mode is `discuss` or `execute`, fetch or compute the delta for that block and include it in the system prompt context. Budget: ~400 additional tokens from the delta summary.
+
+---
+
+### Feature 14: Auto Task Generation from Deltas
+
+**What it does:** When a delta calculation exceeds configured thresholds (overdue milestone, stalled workflow instance), automatically creates `task_queue_item` blocks routed through the routing engine with AI-generated recommendations.
+
+**Triggers:**
+- Workflow step overdue by > 2x expected duration
+- Workflow instance stalled (no events for > 48 hours)
+- Delta `actualVsExpected` exceeds org-configured threshold
+
+**Behavior:** Create task → route via routing engine → if auto-route: execute immediately. If human: add to task queue with AI recommendation + confidence score.
 
 ---
 

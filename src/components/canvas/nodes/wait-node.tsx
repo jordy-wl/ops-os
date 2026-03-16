@@ -15,14 +15,14 @@ function WaitNodeComponent({ data, selected }: NodeProps & { data: WaitNodeData 
   return (
     <div
       className={cn(
-        'min-w-[180px] rounded-lg border-2 bg-gray-50 px-4 py-3 shadow-sm',
-        selected ? 'border-gray-600 ring-2 ring-gray-200' : 'border-gray-300'
+        'min-w-[180px] rounded-xl border bg-card/80 backdrop-blur-sm px-4 py-3 shadow-lg transition-shadow hover:shadow-xl',
+        selected ? 'border-gray-500/60 ring-2 ring-gray-500/30' : 'border-border/50'
       )}
     >
       <Handle type="target" position={Position.Top} className="!bg-gray-500 !w-3 !h-3 !border-2 !border-white" />
       <div className="flex items-center gap-2">
-        <div className="flex h-7 w-7 items-center justify-center rounded-md bg-gray-200">
-          <Clock className="h-4 w-4 text-gray-600" />
+        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gray-500/15">
+          <Clock className="h-4 w-4 text-gray-500" />
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Wait</p>

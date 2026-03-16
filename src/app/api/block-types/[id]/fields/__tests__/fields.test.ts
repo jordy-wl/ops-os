@@ -2,8 +2,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
 import type { AuthContext, UserRole } from '@/lib/auth/withAuth'
 
+const ALL_PERMS = new Set(['manage_blocks', 'edit_blocks', 'view_blocks', 'manage_workflows', 'execute_workflows', 'approve_tasks', 'manage_team', 'manage_settings', 'manage_integrations', 'view_audit_log'])
+const USER_PERMS = new Set(['view_blocks', 'edit_blocks', 'execute_workflows', 'approve_tasks', 'view_audit_log'])
+
 const mockCtx = vi.hoisted(() => ({
   role: 'ops-admin' as UserRole,
+  permissions: null as unknown as Set<string>,
 }))
 
 vi.mock('@/lib/auth/withAuth', () => ({
@@ -13,7 +17,7 @@ vi.mock('@/lib/auth/withAuth', () => ({
         const params = await context.params
         return handler(
           req,
-          { userId: 'user_111', clerkOrgId: 'org_abc', orgId: 'uuid-org-1', role: mockCtx.role },
+          { userId: 'user_111', clerkOrgId: 'org_abc', orgId: 'uuid-org-1', role: mockCtx.role, roleId: 'role-uuid', permissions: mockCtx.permissions },
           params
         )
       }
@@ -90,6 +94,7 @@ describe('GET /api/block-types/[id]/fields', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockCtx.role = 'ops-admin'
+    mockCtx.permissions = ALL_PERMS
   })
 
   it('returns fields sorted by display order', async () => {
@@ -112,6 +117,7 @@ describe('GET /api/block-types/[id]/fields', () => {
 
   it('ops-user can list fields', async () => {
     mockCtx.role = 'ops-user'
+    mockCtx.permissions = USER_PERMS
     makeDb({ data: { id: 'bt-1', field_schema: baseSchema }, error: null })
 
     const res = await listFields(makeReq(), { params: Promise.resolve({ id: 'bt-1' }) })
@@ -123,6 +129,7 @@ describe('POST /api/block-types/[id]/fields', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockCtx.role = 'ops-admin'
+    mockCtx.permissions = ALL_PERMS
   })
 
   it('adds a text field and returns 201', async () => {
@@ -217,6 +224,7 @@ describe('POST /api/block-types/[id]/fields', () => {
 
   it('rejects non-ops-admin with 403', async () => {
     mockCtx.role = 'ops-user'
+    mockCtx.permissions = USER_PERMS
 
     const res = await addField(
       makeReq('http://localhost/api/block-types/bt-1/fields', {
@@ -234,6 +242,7 @@ describe('PATCH /api/block-types/[id]/fields/[fieldName]', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockCtx.role = 'ops-admin'
+    mockCtx.permissions = ALL_PERMS
   })
 
   it('updates field description', async () => {
@@ -289,6 +298,7 @@ describe('DELETE /api/block-types/[id]/fields/[fieldName]', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockCtx.role = 'ops-admin'
+    mockCtx.permissions = ALL_PERMS
   })
 
   it('deletes a non-system field', async () => {
@@ -335,6 +345,7 @@ describe('DELETE /api/block-types/[id]/fields/[fieldName]', () => {
 
   it('rejects non-ops-admin with 403', async () => {
     mockCtx.role = 'ops-user'
+    mockCtx.permissions = USER_PERMS
 
     const res = await deleteField(
       makeDelete('http://localhost/api/block-types/bt-1/fields/name'),

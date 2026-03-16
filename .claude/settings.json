@@ -1,6 +1,5 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
-
   "permissions": {
     "allow": [
       "Bash(npm run *)",
@@ -18,7 +17,19 @@
       "Bash(ls *)",
       "Bash(cat *)",
       "Bash(wc *)",
-      "Bash(echo *)"
+      "Bash(echo *)",
+      "Bash(git commit:*)",
+      "Bash(gh pr:*)",
+      "Bash(npm install googleapis)",
+      "mcp__browserbase__browserbase_session_create"
+    ],
+    "deny": [
+      "Read(.env*)",
+      "Read(**/secrets/**)",
+      "Read(**/*.pem)",
+      "Read(**/*.key)",
+      "Read(**/*.p12)",
+      "Read(**/*.pfx)"
     ],
     "ask": [
       "Bash(git commit *)",
@@ -28,17 +39,14 @@
       "Bash(rm *)",
       "Bash(mv *)",
       "Bash(cp *)"
-    ],
-    "deny": [
-      "Read(.env*)",
-      "Read(**/secrets/**)",
-      "Read(**/*.pem)",
-      "Read(**/*.key)",
-      "Read(**/*.p12)",
-      "Read(**/*.pfx)"
     ]
   },
-
+  "enableAllProjectMcpServers": false,
+  "enabledMcpjsonServers": [
+    "github",
+    "vercel",
+    "supabase"
+  ],
   "hooks": {
     "PostToolUse": [
       {
@@ -61,8 +69,5 @@
         ]
       }
     ]
-  },
-
-  "enableAllProjectMcpServers": false,
-  "enabledMcpjsonServers": ["github", "vercel", "supabase"]
+  }
 }

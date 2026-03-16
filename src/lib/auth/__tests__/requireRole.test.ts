@@ -10,6 +10,8 @@ const makeCtx = (role: AuthContext['role']): AuthContext => ({
   clerkOrgId: 'org_abc',
   orgId: 'uuid-org-1',
   role,
+  roleId: 'role-uuid',
+  permissions: new Set(),
 })
 
 const okHandler = vi.fn<Parameters<typeof requireRole>[1]>().mockResolvedValue(

@@ -2,10 +2,9 @@ import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import { createServerClient } from '@/lib/supabase/server'
 import { resolveOrgId } from '@/lib/auth/resolve-org'
-import { PageContainer } from '@/components/shell/page-container'
 import { BrandKitEditor } from '@/components/settings/brand-kit-editor'
 
-export const metadata = { title: 'Brand Kit — Ops OS' }
+export const metadata = { title: 'Brand Kit — Settings — Ops OS' }
 
 export default async function BrandKitPage() {
   const { userId, orgId } = await auth()
@@ -27,11 +26,15 @@ export default async function BrandKitPage() {
     .single()
 
   return (
-    <PageContainer maxWidth="md">
+    <div className="max-w-2xl">
+      <div className="mb-6">
+        <h2 className="text-lg font-semibold text-foreground">Brand Kit</h2>
+        <p className="text-sm text-muted-foreground mt-0.5">Logo, colours, and brand identity for documents.</p>
+      </div>
       <BrandKitEditor
         orgId={internalOrgId}
         existingBlock={brandKitBlock ?? undefined}
       />
-    </PageContainer>
+    </div>
   )
 }

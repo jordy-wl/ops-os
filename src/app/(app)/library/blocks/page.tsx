@@ -32,7 +32,7 @@ export default async function BlockLibraryPage() {
   ])
 
   return (
-    <div className="p-6 lg:p-8">
+    <div className="p-6 lg:p-8 max-w-7xl mx-auto">
       <PageHeader
         title="Block Library"
         subtitle="Browse and manage all blocks"

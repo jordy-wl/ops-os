@@ -36,7 +36,7 @@ export default async function DocumentLibraryPage() {
   ])
 
   return (
-    <div className="p-6 lg:p-8">
+    <div className="p-6 lg:p-8 max-w-7xl mx-auto">
       <PageHeader
         title="Document Library"
         subtitle="Templates and generated documents"
