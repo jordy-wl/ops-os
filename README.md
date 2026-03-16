@@ -161,6 +161,76 @@ Ops OS is built on 5 core primitives:
 
 ---
 
+## Deployment Flow
+
+```
+local dev → git push → Vercel preview URL → test → PR to main → merge → production
+```
+
+| Stage | Trigger | URL |
+|-------|---------|-----|
+| **Local dev** | `npm run dev` | `http://localhost:3000` |
+| **Preview** | Push any branch to GitHub | `https://ops-os-git-<branch>.vercel.app` |
+| **Production** | Merge PR to `main` | `https://ops-os-gamma.vercel.app` |
+
+### Environment Variables on Vercel
+
+All `NEXT_PUBLIC_*` vars are baked into the JS bundle at **build time**. If they're missing during the Vercel build, the client app silently fails.
+
+In Vercel → Project Settings → Environment Variables:
+- Scope all vars to **both** Production AND Preview
+- Exception: `CRON_SECRET` → Production ONLY (prevents preview branches running cron against shared DB)
+
+### Clerk Redirect URLs
+
+Preview URLs like `ops-os-git-feature-xyz.vercel.app` need to be allowed in Clerk:
+
+1. Clerk Dashboard → Application → Paths/URLs
+2. Add `https://*.vercel.app` to allowed redirect origins (or add each preview URL manually)
+
+### Health Checks
+
+After deploying, verify the stack is working:
+
+```bash
+# Shallow check (Edge runtime, no DB)
+curl https://<your-url>/api/health
+
+# Deep check (Node runtime, verifies DB + env vars)
+curl https://<your-url>/api/health/deep
+```
+
+---
+
+## Phase Complete Testing Checklist
+
+Run this at the end of each development phase:
+
+### Pre-deploy (local)
+- [ ] `npm run lint` — zero errors
+- [ ] `npm test` — all tests pass
+- [ ] `npm run build` — production build succeeds
+
+### Database (if new migrations)
+- [ ] Apply new migrations to remote Supabase
+- [ ] Verify: query new table/column to confirm it exists
+
+### Preview deployment
+- [ ] `git push origin feature/<branch>` — triggers Vercel preview build
+- [ ] Wait for build to complete (check Vercel dashboard or GitHub checks)
+- [ ] Hit `<preview-url>/api/health/deep` — all checks "ok"
+- [ ] Sign in via Clerk on preview URL
+- [ ] Walk through key user flows for the phase
+- [ ] Check browser console for errors
+
+### Production
+- [ ] Open PR to `main`, CI passes
+- [ ] Merge PR (GitHub UI)
+- [ ] Hit production `/api/health/deep` — all checks "ok"
+- [ ] Sign in, spot-check key features
+
+---
+
 ## Orchestration System
 
 This repo uses a multi-agent Claude Code orchestration system in `.claude/`. To work within it:
