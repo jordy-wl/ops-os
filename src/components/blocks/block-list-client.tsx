@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { Search } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -10,22 +10,59 @@ interface BlockListClientProps {
   blocks: Block[]
 }
 
-const BLOCK_TYPES = [
-  'client', 'deal', 'project', 'contract', 'contact',
-  'solution', 'product', 'service', 'team_member', 'policy',
-] as const
-type BlockType = (typeof BLOCK_TYPES)[number]
+interface BlockTypeDef {
+  type_name: string
+  display_name: string
+}
 
 /**
  * BlockListClient — client component handling type filter + text search.
  * Receives the full pre-fetched block list and filters client-side.
- * No additional network requests needed for filter/search interactions.
- *
- * @param blocks - All blocks for the current org (pre-fetched by server component)
+ * Dynamically loads block type definitions from the API so all system
+ * and custom types appear in the filter.
  */
 export function BlockListClient({ blocks }: BlockListClientProps) {
   const [search, setSearch] = useState('')
-  const [activeType, setActiveType] = useState<BlockType | 'all'>('all')
+  const [activeType, setActiveType] = useState<string>('all')
+  const [typeDefs, setTypeDefs] = useState<BlockTypeDef[]>([])
+
+  // Fetch block type definitions for filter pills
+  useEffect(() => {
+    async function loadTypes() {
+      try {
+        const res = await fetch('/api/block-types')
+        if (res.ok) {
+          const json = await res.json()
+          setTypeDefs((json.data ?? []) as BlockTypeDef[])
+        }
+      } catch {
+        // Fallback to deriving types from blocks if API fails
+      }
+    }
+    loadTypes()
+  }, [])
+
+  // Derive available types from both definitions and actual block data
+  const availableTypes = useMemo(() => {
+    const typeMap = new Map<string, string>()
+
+    // Add types from definitions
+    for (const def of typeDefs) {
+      typeMap.set(def.type_name, def.display_name)
+    }
+
+    // Add any types from blocks that might not be in definitions
+    for (const block of blocks) {
+      if (!typeMap.has(block.type)) {
+        typeMap.set(
+          block.type,
+          block.type.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+        )
+      }
+    }
+
+    return Array.from(typeMap.entries()).sort(([a], [b]) => a.localeCompare(b))
+  }, [typeDefs, blocks])
 
   // Apply type filter then text search (case-insensitive on block name)
   const filtered = blocks.filter((block) => {
@@ -65,20 +102,20 @@ export function BlockListClient({ blocks }: BlockListClientProps) {
           >
             All
           </button>
-          {BLOCK_TYPES.map((type) => (
+          {availableTypes.map(([typeName, displayName]) => (
             <button
-              key={type}
-              onClick={() => setActiveType(type)}
+              key={typeName}
+              onClick={() => setActiveType(typeName)}
               className={cn(
-                'h-7 px-3 rounded-full text-[13px] font-medium capitalize transition-colors',
+                'h-7 px-3 rounded-full text-[13px] font-medium transition-colors',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                activeType === type
+                activeType === typeName
                   ? 'bg-foreground text-background'
                   : 'bg-muted text-muted-foreground hover:text-foreground'
               )}
-              aria-pressed={activeType === type}
+              aria-pressed={activeType === typeName}
             >
-              {type.replace(/_/g, ' ')}
+              {displayName}
             </button>
           ))}
         </div>

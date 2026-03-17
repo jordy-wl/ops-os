@@ -73,6 +73,29 @@ function TextInput({
   )
 }
 
+function TextArea({
+  id,
+  value,
+  onChange,
+  placeholder,
+}: {
+  id: string
+  value: string
+  onChange: (v: string) => void
+  placeholder?: string
+}) {
+  return (
+    <textarea
+      id={id}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      rows={3}
+      className="w-full rounded-md border border-border px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+    />
+  )
+}
+
 function SelectInput({
   id,
   value,
@@ -504,6 +527,340 @@ function ActionConfig({ node, onUpdate, entities }: Pick<NodeConfigPanelProps, '
       )}
       {stepType === 'update_block' && (
         <UpdateBlockConfig node={node} onUpdate={onUpdate} entities={entities} />
+      )}
+
+      {/* ── Create Edge Config ──────────────────────────────────────────── */}
+      {stepType === 'create_edge' && (
+        <>
+          <div className="mb-3">
+            <FieldLabel htmlFor="ce-from">From Block</FieldLabel>
+            {(entities?.blocks ?? []).length > 0 ? (
+              <EntitySelect
+                id="ce-from"
+                value={(config.from_block_id as string) ?? ''}
+                onChange={(v) => updateConfig('from_block_id', v)}
+                options={(entities?.blocks ?? []).map((b) => ({ value: b.id, label: `${b.name} (${b.type})` }))}
+                placeholder="Source block (defaults to trigger block)"
+                allowFreeText
+              />
+            ) : (
+              <TextInput id="ce-from" value={(config.from_block_id as string) ?? ''} onChange={(v) => updateConfig('from_block_id', v)} placeholder="{{context.source_block_id}}" />
+            )}
+          </div>
+          <div className="mb-3">
+            <FieldLabel htmlFor="ce-to">To Block</FieldLabel>
+            {(entities?.blocks ?? []).length > 0 ? (
+              <EntitySelect
+                id="ce-to"
+                value={(config.to_block_id as string) ?? ''}
+                onChange={(v) => updateConfig('to_block_id', v)}
+                options={(entities?.blocks ?? []).map((b) => ({ value: b.id, label: `${b.name} (${b.type})` }))}
+                placeholder="Select target block"
+                allowFreeText
+              />
+            ) : (
+              <TextInput id="ce-to" value={(config.to_block_id as string) ?? ''} onChange={(v) => updateConfig('to_block_id', v)} placeholder="Target block ID" />
+            )}
+          </div>
+          <div className="mb-3">
+            <FieldLabel htmlFor="ce-type">Edge Type</FieldLabel>
+            <TextInput id="ce-type" value={(config.edge_type as string) ?? 'related'} onChange={(v) => updateConfig('edge_type', v)} placeholder="related" />
+          </div>
+        </>
+      )}
+
+      {/* ── Search Blocks Config ────────────────────────────────────────── */}
+      {stepType === 'search_blocks' && (
+        <>
+          <div className="mb-3">
+            <FieldLabel htmlFor="sb-type">Block Type</FieldLabel>
+            {(entities?.blockTypes ?? []).length > 0 ? (
+              <SelectInput
+                id="sb-type"
+                value={(config.search_type as string) ?? ''}
+                onChange={(v) => updateConfig('search_type', v || undefined)}
+                options={[
+                  { value: '', label: 'Any type' },
+                  ...(entities?.blockTypes ?? []).map((t) => ({ value: t, label: t.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) })),
+                ]}
+              />
+            ) : (
+              <TextInput id="sb-type" value={(config.search_type as string) ?? ''} onChange={(v) => updateConfig('search_type', v || undefined)} placeholder="e.g. client" />
+            )}
+          </div>
+          <div className="mb-3">
+            <FieldLabel htmlFor="sb-name">Name Contains</FieldLabel>
+            <TextInput id="sb-name" value={(config.search_name as string) ?? ''} onChange={(v) => updateConfig('search_name', v || undefined)} placeholder="Partial name match" />
+          </div>
+          <div className="mb-3">
+            <FieldLabel htmlFor="sb-limit">Max Results</FieldLabel>
+            <TextInput id="sb-limit" value={String((config.search_limit as number) ?? 10)} onChange={(v) => updateConfig('search_limit', parseInt(v) || 10)} placeholder="10" />
+          </div>
+        </>
+      )}
+
+      {/* ── Send Notification Config ────────────────────────────────────── */}
+      {stepType === 'send_notification' && (
+        <>
+          <div className="mb-3">
+            <FieldLabel htmlFor="sn-title">Notification Title</FieldLabel>
+            <TextInput id="sn-title" value={(config.notification_title as string) ?? ''} onChange={(v) => updateConfig('notification_title', v)} placeholder="e.g. New deal requires approval" />
+          </div>
+          <div className="mb-3">
+            <FieldLabel htmlFor="sn-body">Message Body</FieldLabel>
+            <TextArea id="sn-body" value={(config.notification_body as string) ?? ''} onChange={(v) => updateConfig('notification_body', v)} placeholder="Notification details…" />
+          </div>
+          <div className="mb-3">
+            <FieldLabel htmlFor="sn-type">Type</FieldLabel>
+            <SelectInput
+              id="sn-type"
+              value={(config.notification_type as string) ?? 'info'}
+              onChange={(v) => updateConfig('notification_type', v)}
+              options={[
+                { value: 'info', label: 'Info' },
+                { value: 'success', label: 'Success' },
+                { value: 'warning', label: 'Warning' },
+                { value: 'error', label: 'Error' },
+              ]}
+            />
+          </div>
+          <div className="mb-3">
+            <FieldLabel htmlFor="sn-link">Link URL</FieldLabel>
+            <TextInput id="sn-link" value={(config.notification_link as string) ?? ''} onChange={(v) => updateConfig('notification_link', v || undefined)} placeholder="/blocks/{{context.source_block_id}}" />
+          </div>
+        </>
+      )}
+
+      {/* ── Create Shared Link Config ───────────────────────────────────── */}
+      {stepType === 'create_shared_link' && (
+        <>
+          <div className="mb-3">
+            <FieldLabel htmlFor="sl-block">Target Block</FieldLabel>
+            {(entities?.blocks ?? []).length > 0 ? (
+              <EntitySelect
+                id="sl-block"
+                value={(config.link_block_id as string) ?? ''}
+                onChange={(v) => updateConfig('link_block_id', v)}
+                options={(entities?.blocks ?? []).map((b) => ({ value: b.id, label: `${b.name} (${b.type})` }))}
+                placeholder="Defaults to trigger block"
+                allowFreeText
+              />
+            ) : (
+              <TextInput id="sl-block" value={(config.link_block_id as string) ?? ''} onChange={(v) => updateConfig('link_block_id', v || undefined)} placeholder="Block ID (defaults to source)" />
+            )}
+          </div>
+          <div className="mb-3">
+            <FieldLabel htmlFor="sl-type">Link Type</FieldLabel>
+            <SelectInput
+              id="sl-type"
+              value={(config.link_type as string) ?? 'view'}
+              onChange={(v) => updateConfig('link_type', v)}
+              options={[
+                { value: 'view', label: 'View Only' },
+                { value: 'form', label: 'Form Submission' },
+                { value: 'sign', label: 'Signature Request' },
+              ]}
+            />
+          </div>
+          <div className="mb-3">
+            <FieldLabel htmlFor="sl-expiry">Expires After (hours)</FieldLabel>
+            <TextInput id="sl-expiry" value={String((config.link_expires_hours as number) ?? 168)} onChange={(v) => updateConfig('link_expires_hours', parseInt(v) || 168)} placeholder="168 (7 days)" />
+          </div>
+        </>
+      )}
+
+      {/* ── AI Analysis ─────────────────────────────────────────────────── */}
+      {stepType === 'ai_analysis' && (
+        <>
+          <div className="mb-3">
+            <FieldLabel htmlFor="ai-prompt">Analysis Prompt</FieldLabel>
+            <TextArea id="ai-prompt" value={(config.ai_prompt as string) ?? ''} onChange={(v) => updateConfig('ai_prompt', v || undefined)} placeholder="Analyze this client's deal pipeline and identify key risks..." />
+          </div>
+          <div className="mb-3">
+            <FieldLabel htmlFor="ai-format">Output Format</FieldLabel>
+            <SelectInput
+              id="ai-format"
+              value={(config.ai_output_format as string) ?? 'json'}
+              onChange={(v) => updateConfig('ai_output_format', v)}
+              options={[
+                { value: 'json', label: 'Structured JSON' },
+                { value: 'text', label: 'Free Text' },
+              ]}
+            />
+          </div>
+          <div className="mb-3">
+            <FieldLabel htmlFor="ai-block">Context Block</FieldLabel>
+            {(entities?.blocks ?? []).length > 0 ? (
+              <EntitySelect
+                id="ai-block"
+                value={(config.ai_context_block_id as string) ?? ''}
+                onChange={(v) => updateConfig('ai_context_block_id', v || undefined)}
+                options={(entities?.blocks ?? []).map((b) => ({ value: b.id, label: `${b.name} (${b.type})` }))}
+                placeholder="Defaults to trigger block"
+                allowFreeText
+              />
+            ) : (
+              <TextInput id="ai-block" value={(config.ai_context_block_id as string) ?? ''} onChange={(v) => updateConfig('ai_context_block_id', v || undefined)} placeholder="Block ID (defaults to source)" />
+            )}
+          </div>
+          <div className="mb-3">
+            <FieldLabel htmlFor="ai-tokens">Max Tokens</FieldLabel>
+            <TextInput id="ai-tokens" value={String((config.ai_max_tokens as number) ?? 1024)} onChange={(v) => updateConfig('ai_max_tokens', parseInt(v) || 1024)} placeholder="1024" />
+          </div>
+        </>
+      )}
+
+      {/* ── AI Classify ──────────────────────────────────────────────────── */}
+      {stepType === 'ai_classify' && (
+        <>
+          <div className="mb-3">
+            <FieldLabel htmlFor="ai-cats">Categories (comma-separated)</FieldLabel>
+            <TextInput
+              id="ai-cats"
+              value={(config.ai_categories as string[] ?? []).join(', ')}
+              onChange={(v) => updateConfig('ai_categories', v.split(',').map((s) => s.trim()).filter(Boolean))}
+              placeholder="high_priority, medium_priority, low_priority"
+            />
+          </div>
+          <div className="mb-3">
+            <FieldLabel htmlFor="ai-cls-prompt">Classification Instructions</FieldLabel>
+            <TextArea id="ai-cls-prompt" value={(config.ai_prompt as string) ?? ''} onChange={(v) => updateConfig('ai_prompt', v || undefined)} placeholder="Classify based on deal value and client tier..." />
+          </div>
+          <div className="mb-3">
+            <FieldLabel htmlFor="ai-cls-block">Context Block</FieldLabel>
+            {(entities?.blocks ?? []).length > 0 ? (
+              <EntitySelect
+                id="ai-cls-block"
+                value={(config.ai_context_block_id as string) ?? ''}
+                onChange={(v) => updateConfig('ai_context_block_id', v || undefined)}
+                options={(entities?.blocks ?? []).map((b) => ({ value: b.id, label: `${b.name} (${b.type})` }))}
+                placeholder="Defaults to trigger block"
+                allowFreeText
+              />
+            ) : (
+              <TextInput id="ai-cls-block" value={(config.ai_context_block_id as string) ?? ''} onChange={(v) => updateConfig('ai_context_block_id', v || undefined)} placeholder="Block ID (defaults to source)" />
+            )}
+          </div>
+        </>
+      )}
+
+      {/* ── AI Summarize ─────────────────────────────────────────────────── */}
+      {stepType === 'ai_summarize' && (
+        <>
+          <div className="mb-3">
+            <FieldLabel htmlFor="ai-sum-prompt">Summary Instructions</FieldLabel>
+            <TextArea id="ai-sum-prompt" value={(config.ai_prompt as string) ?? ''} onChange={(v) => updateConfig('ai_prompt', v || undefined)} placeholder="Provide a concise executive summary focused on..." />
+          </div>
+          <div className="mb-3">
+            <FieldLabel htmlFor="ai-sum-block">Context Block</FieldLabel>
+            {(entities?.blocks ?? []).length > 0 ? (
+              <EntitySelect
+                id="ai-sum-block"
+                value={(config.ai_context_block_id as string) ?? ''}
+                onChange={(v) => updateConfig('ai_context_block_id', v || undefined)}
+                options={(entities?.blocks ?? []).map((b) => ({ value: b.id, label: `${b.name} (${b.type})` }))}
+                placeholder="Defaults to trigger block"
+                allowFreeText
+              />
+            ) : (
+              <TextInput id="ai-sum-block" value={(config.ai_context_block_id as string) ?? ''} onChange={(v) => updateConfig('ai_context_block_id', v || undefined)} placeholder="Block ID (defaults to source)" />
+            )}
+          </div>
+          <div className="flex items-center gap-2 mb-3">
+            <input
+              type="checkbox"
+              id="ai-sum-events"
+              checked={(config.ai_include_events as boolean) !== false}
+              onChange={(e) => updateConfig('ai_include_events', e.target.checked)}
+              className="rounded border-border"
+            />
+            <label htmlFor="ai-sum-events" className="text-xs text-foreground">Include recent events</label>
+          </div>
+          <div className="mb-3">
+            <FieldLabel htmlFor="ai-sum-tokens">Max Tokens</FieldLabel>
+            <TextInput id="ai-sum-tokens" value={String((config.ai_max_tokens as number) ?? 512)} onChange={(v) => updateConfig('ai_max_tokens', parseInt(v) || 512)} placeholder="512" />
+          </div>
+        </>
+      )}
+
+      {/* ── AI Risk Assessment ───────────────────────────────────────────── */}
+      {stepType === 'ai_risk_assessment' && (
+        <>
+          <div className="mb-3">
+            <FieldLabel htmlFor="ai-risk-prompt">Assessment Instructions</FieldLabel>
+            <TextArea id="ai-risk-prompt" value={(config.ai_prompt as string) ?? ''} onChange={(v) => updateConfig('ai_prompt', v || undefined)} placeholder="Assess compliance risk for this deal considering jurisdiction..." />
+          </div>
+          <div className="mb-3">
+            <FieldLabel htmlFor="ai-risk-cats">Risk Categories (comma-separated)</FieldLabel>
+            <TextInput
+              id="ai-risk-cats"
+              value={(config.ai_risk_categories as string[] ?? []).join(', ')}
+              onChange={(v) => updateConfig('ai_risk_categories', v.split(',').map((s) => s.trim()).filter(Boolean))}
+              placeholder="operational, financial, compliance, reputational"
+            />
+          </div>
+          <div className="mb-3">
+            <FieldLabel htmlFor="ai-risk-block">Context Block</FieldLabel>
+            {(entities?.blocks ?? []).length > 0 ? (
+              <EntitySelect
+                id="ai-risk-block"
+                value={(config.ai_context_block_id as string) ?? ''}
+                onChange={(v) => updateConfig('ai_context_block_id', v || undefined)}
+                options={(entities?.blocks ?? []).map((b) => ({ value: b.id, label: `${b.name} (${b.type})` }))}
+                placeholder="Defaults to trigger block"
+                allowFreeText
+              />
+            ) : (
+              <TextInput id="ai-risk-block" value={(config.ai_context_block_id as string) ?? ''} onChange={(v) => updateConfig('ai_context_block_id', v || undefined)} placeholder="Block ID (defaults to source)" />
+            )}
+          </div>
+          <div className="flex items-center gap-2 mb-3">
+            <input
+              type="checkbox"
+              id="ai-risk-policies"
+              checked={(config.ai_include_policies as boolean) !== false}
+              onChange={(e) => updateConfig('ai_include_policies', e.target.checked)}
+              className="rounded border-border"
+            />
+            <label htmlFor="ai-risk-policies" className="text-xs text-foreground">Include org policies</label>
+          </div>
+        </>
+      )}
+
+      {/* ── Store File ───────────────────────────────────────────────────── */}
+      {stepType === 'store_file' && (
+        <>
+          <div className="mb-3">
+            <FieldLabel htmlFor="sf-name">File Name</FieldLabel>
+            <TextInput id="sf-name" value={(config.file_name as string) ?? ''} onChange={(v) => updateConfig('file_name', v || undefined)} placeholder="report.pdf" />
+          </div>
+          <div className="mb-3">
+            <FieldLabel htmlFor="sf-content">File Content / Template</FieldLabel>
+            <TextArea id="sf-content" value={(config.file_content as string) ?? ''} onChange={(v) => updateConfig('file_content', v || undefined)} placeholder="Content or {{context.previous_step.output}} template" />
+          </div>
+          <div className="mb-3">
+            <FieldLabel htmlFor="sf-type">Content Type</FieldLabel>
+            <SelectInput
+              id="sf-type"
+              value={(config.file_content_type as string) ?? 'text/plain'}
+              onChange={(v) => updateConfig('file_content_type', v)}
+              options={[
+                { value: 'text/plain', label: 'Text' },
+                { value: 'application/json', label: 'JSON' },
+                { value: 'text/csv', label: 'CSV' },
+                { value: 'application/pdf', label: 'PDF (base64)' },
+              ]}
+            />
+          </div>
+          <div className="mb-3">
+            <FieldLabel htmlFor="sf-bucket">Storage Bucket</FieldLabel>
+            <TextInput id="sf-bucket" value={(config.file_bucket as string) ?? 'workflow-files'} onChange={(v) => updateConfig('file_bucket', v || 'workflow-files')} placeholder="workflow-files" />
+          </div>
+          <div className="mb-3">
+            <FieldLabel htmlFor="sf-prefix">Path Prefix</FieldLabel>
+            <TextInput id="sf-prefix" value={(config.file_path_prefix as string) ?? ''} onChange={(v) => updateConfig('file_path_prefix', v || undefined)} placeholder="reports/monthly" />
+          </div>
+        </>
       )}
 
       {/* ── Routing Configuration ─────────────────────────────────────────── */}

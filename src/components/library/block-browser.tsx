@@ -51,17 +51,27 @@ export function BlockBrowser({ blocks, typeDefinitions }: BlockBrowserProps) {
   const [activeType, setActiveType] = useState<string>('all')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
 
-  // Build type list from actual blocks + definitions
+  // Build type list from definitions + actual blocks (ensures all types show even with 0 blocks)
   const typeMap = new Map<string, { label: string; color: string | null; count: number }>()
+
+  // Seed from all type definitions first (shows types with 0 blocks)
+  for (const def of typeDefinitions) {
+    typeMap.set(def.type_name, {
+      label: def.label ?? def.type_name.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+      color: def.color ?? null,
+      count: 0,
+    })
+  }
+
+  // Count from actual blocks
   for (const block of blocks) {
     const existing = typeMap.get(block.type)
     if (existing) {
       existing.count++
     } else {
-      const def = typeDefinitions.find((d) => d.type_name === block.type)
       typeMap.set(block.type, {
-        label: def?.label ?? block.type,
-        color: def?.color ?? null,
+        label: block.type.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+        color: null,
         count: 1,
       })
     }

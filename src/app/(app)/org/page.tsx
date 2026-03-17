@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { PageContainer } from '@/components/shell/page-container'
 import { PageHeader } from '@/components/shell/page-header'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import {
   Boxes,
   Users,
@@ -14,6 +15,14 @@ import {
   Building2,
   AlertCircle,
   RefreshCw,
+  TrendingUp,
+  DollarSign,
+  Package,
+  Wrench,
+  Grid2X2,
+  Target,
+  Plus,
+  Sparkles,
 } from 'lucide-react'
 import type {
   OrgOverview,
@@ -22,6 +31,38 @@ import type {
   BlockStats,
   RecentEvent,
 } from '@/lib/org/overview'
+
+// ─── Revenue Types ──────────────────────────────────────────────────────────
+
+interface RevenueSummary {
+  total_pipeline: number
+  weighted_forecast: number
+  closed_won: number
+  solution_recurring: number
+  deal_count: number
+  solution_count: number
+}
+
+interface StageFunnel {
+  stage: string
+  count: number
+  value: number
+  probability: number
+}
+
+interface MonthlyForecast {
+  month: string
+  value: number
+}
+
+interface RevenueData {
+  summary: RevenueSummary
+  stage_funnel: StageFunnel[]
+  monthly_forecast: MonthlyForecast[]
+  solutions: { id: string; name: string; pricing_model: string; value: number }[]
+  products: { id: string; name: string; unit_price: number; currency: string }[]
+  services: { id: string; name: string; hourly_rate: number; currency: string }[]
+}
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -420,6 +461,558 @@ function EmptyState() {
   )
 }
 
+// ─── Revenue Snapshot (Overview tab) ────────────────────────────────────────
+
+function RevenueSnapshot() {
+  const [summary, setSummary] = useState<RevenueSummary | null>(null)
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const res = await fetch('/api/org/revenue')
+        if (res.ok) {
+          const json = await res.json()
+          if (json.data?.summary) setSummary(json.data.summary)
+        }
+      } catch {
+        // Silently fail — this is a supplemental widget
+      }
+    }
+    load()
+  }, [])
+
+  if (!summary) return null
+
+  return (
+    <section aria-labelledby="revenue-snapshot-heading">
+      <div className="flex items-center justify-between mb-3">
+        <h2 id="revenue-snapshot-heading" className="text-[13px] font-semibold text-foreground">
+          Revenue Snapshot
+        </h2>
+        <span className="text-[11px] text-muted-foreground">Forecast</span>
+      </div>
+      <div className="rounded-md border border-border bg-card p-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+          <div>
+            <p className="text-lg font-semibold text-foreground">{formatCurrency(summary.total_pipeline)}</p>
+            <p className="text-[11px] text-muted-foreground">Pipeline</p>
+          </div>
+          <div>
+            <p className="text-lg font-semibold text-foreground">{formatCurrency(summary.weighted_forecast)}</p>
+            <p className="text-[11px] text-muted-foreground">Weighted Forecast</p>
+          </div>
+          <div>
+            <p className="text-lg font-semibold text-foreground">{formatCurrency(summary.closed_won)}</p>
+            <p className="text-[11px] text-muted-foreground">Closed Won</p>
+          </div>
+          <div>
+            <p className="text-lg font-semibold text-foreground">{summary.deal_count}</p>
+            <p className="text-[11px] text-muted-foreground">Active Deals</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function TeamUtilization({ team }: { team: TeamStats }) {
+  return (
+    <section aria-labelledby="utilization-heading">
+      <h2 id="utilization-heading" className="text-[13px] font-semibold text-foreground mb-3">
+        Team Utilization
+      </h2>
+      <div className="rounded-md border border-border bg-card p-4">
+        <div className="grid grid-cols-2 gap-4 text-center">
+          <div>
+            <p className="text-lg font-semibold text-foreground">{team.total}</p>
+            <p className="text-[11px] text-muted-foreground">Team Members</p>
+          </div>
+          <div>
+            <p className="text-lg font-semibold text-foreground">{Object.keys(team.by_role).length}</p>
+            <p className="text-[11px] text-muted-foreground">Active Roles</p>
+          </div>
+        </div>
+        <p className="text-[11px] text-muted-foreground text-center mt-3">
+          Detailed utilization metrics available after time tracking is enabled.
+        </p>
+      </div>
+    </section>
+  )
+}
+
+// ─── Strategy Tab ───────────────────────────────────────────────────────────
+
+interface SwotBlock {
+  id: string
+  name: string
+  data: {
+    strengths?: string[]
+    weaknesses?: string[]
+    opportunities?: string[]
+    threats?: string[]
+    analysis_date?: string
+    ai_generated?: boolean
+  }
+}
+
+interface ValuePropBlock {
+  id: string
+  name: string
+  data: {
+    target_audience?: string
+    unique_value?: string
+    competitive_advantage?: string
+    positioning_statement?: string
+    proof_points?: string[]
+    status?: string
+  }
+}
+
+const QUADRANT_CONFIG = [
+  { key: 'strengths' as const, label: 'Strengths', color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-950/30', border: 'border-emerald-200 dark:border-emerald-800' },
+  { key: 'weaknesses' as const, label: 'Weaknesses', color: 'text-red-600 dark:text-red-400', bg: 'bg-red-50 dark:bg-red-950/30', border: 'border-red-200 dark:border-red-800' },
+  { key: 'opportunities' as const, label: 'Opportunities', color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-950/30', border: 'border-blue-200 dark:border-blue-800' },
+  { key: 'threats' as const, label: 'Threats', color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-950/30', border: 'border-amber-200 dark:border-amber-800' },
+]
+
+function StrategyTab() {
+  const [swots, setSwots] = useState<SwotBlock[]>([])
+  const [valueProps, setValueProps] = useState<ValuePropBlock[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const [swotRes, vpRes] = await Promise.all([
+          fetch('/api/blocks?type=swot_analysis&status=active'),
+          fetch('/api/blocks?type=value_proposition&status=active'),
+        ])
+        if (swotRes.ok) {
+          const json = await swotRes.json()
+          setSwots((json.data ?? []) as SwotBlock[])
+        }
+        if (vpRes.ok) {
+          const json = await vpRes.json()
+          setValueProps((json.data ?? []) as ValuePropBlock[])
+        }
+      } catch {
+        // Non-blocking
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    load()
+  }, [])
+
+  if (isLoading) {
+    return (
+      <div className="animate-pulse space-y-6">
+        <div className="grid grid-cols-2 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="rounded-md border border-border bg-card p-4 h-40" />
+          ))}
+        </div>
+        <div className="rounded-md border border-border bg-card p-4 h-32" />
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-8">
+      {/* SWOT Analysis Section */}
+      <section aria-labelledby="swot-heading">
+        <div className="flex items-center justify-between mb-4">
+          <h2 id="swot-heading" className="text-[13px] font-semibold text-foreground flex items-center gap-2">
+            <Grid2X2 className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+            SWOT Analysis
+          </h2>
+          <Link
+            href="/blocks?type=swot_analysis"
+            className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-[13px] font-medium text-foreground transition-colors hover:bg-accent"
+          >
+            <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+            New SWOT
+          </Link>
+        </div>
+
+        {swots.length > 0 ? (
+          swots.map((swot) => (
+            <div key={swot.id} className="space-y-3 mb-6">
+              <div className="flex items-center gap-2 text-[13px]">
+                <Link href={`/blocks/${swot.id}`} className="font-medium text-foreground hover:underline">
+                  {swot.name}
+                </Link>
+                {swot.data.ai_generated && (
+                  <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+                    <Sparkles className="h-3 w-3" aria-hidden="true" />
+                    AI Generated
+                  </span>
+                )}
+                {swot.data.analysis_date && (
+                  <span className="text-[11px] text-muted-foreground">{swot.data.analysis_date}</span>
+                )}
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {QUADRANT_CONFIG.map((q) => {
+                  const items = swot.data[q.key] ?? []
+                  return (
+                    <div key={q.key} className={`rounded-md border ${q.border} ${q.bg} p-3`}>
+                      <h3 className={`text-[12px] font-semibold ${q.color} mb-2`}>{q.label}</h3>
+                      {items.length > 0 ? (
+                        <ul className="space-y-1">
+                          {items.map((item, i) => (
+                            <li key={i} className="text-[12px] text-foreground flex items-start gap-1.5">
+                              <span className="mt-1.5 h-1 w-1 rounded-full bg-current flex-shrink-0" />
+                              {item}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="text-[11px] text-muted-foreground italic">No items yet</p>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="rounded-md border border-border bg-card p-6 text-center">
+            <Grid2X2 className="h-8 w-8 text-muted-foreground mx-auto mb-2" aria-hidden="true" />
+            <p className="text-[13px] text-muted-foreground">No SWOT analyses created yet.</p>
+            <p className="text-[11px] text-muted-foreground mt-1">
+              Create one to map your strengths, weaknesses, opportunities, and threats.
+            </p>
+          </div>
+        )}
+      </section>
+
+      {/* Value Propositions Section */}
+      <section aria-labelledby="vp-heading">
+        <div className="flex items-center justify-between mb-4">
+          <h2 id="vp-heading" className="text-[13px] font-semibold text-foreground flex items-center gap-2">
+            <Target className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+            Value Propositions
+          </h2>
+          <Link
+            href="/blocks?type=value_proposition"
+            className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-[13px] font-medium text-foreground transition-colors hover:bg-accent"
+          >
+            <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+            New Value Prop
+          </Link>
+        </div>
+
+        {valueProps.length > 0 ? (
+          <div className="space-y-3">
+            {valueProps.map((vp) => (
+              <div key={vp.id} className="rounded-md border border-border bg-card p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <Link href={`/blocks/${vp.id}`} className="text-[13px] font-medium text-foreground hover:underline">
+                    {vp.name}
+                  </Link>
+                  {vp.data.status && (
+                    <span className={`text-[11px] px-2 py-0.5 rounded-full ${
+                      vp.data.status === 'active' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' :
+                      vp.data.status === 'draft' ? 'bg-muted text-muted-foreground' :
+                      'bg-muted text-muted-foreground'
+                    }`}>
+                      {vp.data.status}
+                    </span>
+                  )}
+                </div>
+                {vp.data.target_audience && (
+                  <p className="text-[12px] text-muted-foreground mb-1">
+                    <span className="font-medium">For:</span> {vp.data.target_audience}
+                  </p>
+                )}
+                {vp.data.unique_value && (
+                  <p className="text-[12px] text-foreground mb-1">{vp.data.unique_value}</p>
+                )}
+                {vp.data.proof_points && vp.data.proof_points.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {vp.data.proof_points.map((point, i) => (
+                      <span key={i} className="text-[11px] bg-muted text-muted-foreground px-2 py-0.5 rounded">
+                        {point}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-md border border-border bg-card p-6 text-center">
+            <Target className="h-8 w-8 text-muted-foreground mx-auto mb-2" aria-hidden="true" />
+            <p className="text-[13px] text-muted-foreground">No value propositions defined yet.</p>
+            <p className="text-[11px] text-muted-foreground mt-1">
+              Define your target audience, unique value, and competitive advantage.
+            </p>
+          </div>
+        )}
+      </section>
+    </div>
+  )
+}
+
+// ─── Revenue Tab ────────────────────────────────────────────────────────────
+
+function formatCurrency(value: number): string {
+  if (value >= 1000000) return `$${(value / 1000000).toFixed(1)}M`
+  if (value >= 1000) return `$${(value / 1000).toFixed(0)}K`
+  return `$${value.toLocaleString()}`
+}
+
+function formatStageName(stage: string): string {
+  return stage.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
+function RevenueTab() {
+  const [revenue, setRevenue] = useState<RevenueData | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const res = await fetch('/api/org/revenue')
+        if (res.ok) {
+          const json = await res.json()
+          setRevenue(json.data as RevenueData)
+        }
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    load()
+  }, [])
+
+  if (isLoading) {
+    return (
+      <div className="animate-pulse space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="rounded-xl border border-border bg-card p-6 h-20" />
+          ))}
+        </div>
+        <div className="rounded-md border border-border bg-card p-4 h-48" />
+      </div>
+    )
+  }
+
+  if (!revenue || !revenue.summary) {
+    return <p className="text-[13px] text-muted-foreground py-8 text-center">Unable to load revenue data.</p>
+  }
+
+  const { summary, stage_funnel = [], monthly_forecast = [], solutions = [] } = revenue
+  const maxFunnelValue = Math.max(...stage_funnel.map((s) => s.value), 1)
+  const maxMonthValue = Math.max(...monthly_forecast.map((m) => m.value), 1)
+
+  return (
+    <div className="space-y-6">
+      {/* Summary cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="rounded-xl border border-border bg-card p-6">
+          <div className="flex items-center gap-3">
+            <TrendingUp className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+            <div>
+              <p className="text-lg font-semibold text-foreground">{formatCurrency(summary.total_pipeline)}</p>
+              <p className="text-[12px] text-muted-foreground">Total Pipeline</p>
+            </div>
+          </div>
+        </div>
+        <div className="rounded-xl border border-border bg-card p-6">
+          <div className="flex items-center gap-3">
+            <DollarSign className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+            <div>
+              <p className="text-lg font-semibold text-foreground">{formatCurrency(summary.weighted_forecast)}</p>
+              <p className="text-[12px] text-muted-foreground">Weighted Forecast</p>
+            </div>
+          </div>
+        </div>
+        <div className="rounded-xl border border-border bg-card p-6">
+          <div className="flex items-center gap-3">
+            <CheckCircle2 className="h-4 w-4 text-success" aria-hidden="true" />
+            <div>
+              <p className="text-lg font-semibold text-foreground">{formatCurrency(summary.closed_won)}</p>
+              <p className="text-[12px] text-muted-foreground">Closed Won</p>
+            </div>
+          </div>
+        </div>
+        <div className="rounded-xl border border-border bg-card p-6">
+          <div className="flex items-center gap-3">
+            <GitBranch className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+            <div>
+              <p className="text-lg font-semibold text-foreground">{summary.deal_count}</p>
+              <p className="text-[12px] text-muted-foreground">Active Deals</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Pipeline funnel by stage */}
+        <section aria-labelledby="funnel-heading">
+          <h2 id="funnel-heading" className="text-[13px] font-semibold text-foreground mb-3">Pipeline by Stage</h2>
+          <div className="rounded-md border border-border bg-card p-4 space-y-3">
+            {stage_funnel.length > 0 ? stage_funnel.map((s) => (
+              <div key={s.stage} className="space-y-1">
+                <div className="flex items-center justify-between text-[13px]">
+                  <span className="text-foreground">{formatStageName(s.stage)}</span>
+                  <span className="text-muted-foreground">{formatCurrency(s.value)} ({s.count} deals, {Math.round(s.probability * 100)}%)</span>
+                </div>
+                <div className="h-2 rounded-full bg-muted overflow-hidden" role="progressbar" aria-valuenow={s.value} aria-valuemin={0} aria-valuemax={maxFunnelValue}>
+                  <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${(s.value / maxFunnelValue) * 100}%` }} />
+                </div>
+              </div>
+            )) : (
+              <p className="text-[13px] text-muted-foreground">No deals in pipeline yet.</p>
+            )}
+          </div>
+        </section>
+
+        {/* Monthly forecast */}
+        <section aria-labelledby="forecast-heading">
+          <h2 id="forecast-heading" className="text-[13px] font-semibold text-foreground mb-3">Monthly Forecast</h2>
+          <div className="rounded-md border border-border bg-card p-4 space-y-3">
+            {monthly_forecast.length > 0 ? monthly_forecast.map((m) => (
+              <div key={m.month} className="space-y-1">
+                <div className="flex items-center justify-between text-[13px]">
+                  <span className="text-foreground">{m.month}</span>
+                  <span className="text-muted-foreground">{formatCurrency(m.value)}</span>
+                </div>
+                <div className="h-2 rounded-full bg-muted overflow-hidden" role="progressbar" aria-valuenow={m.value} aria-valuemin={0} aria-valuemax={maxMonthValue}>
+                  <div className="h-full rounded-full bg-success transition-all" style={{ width: `${(m.value / maxMonthValue) * 100}%` }} />
+                </div>
+              </div>
+            )) : (
+              <p className="text-[13px] text-muted-foreground">No forecast data yet. Add expected close dates to deals.</p>
+            )}
+          </div>
+        </section>
+      </div>
+
+      {/* Solutions breakdown */}
+      {solutions.length > 0 && (
+        <section aria-labelledby="solutions-heading">
+          <h2 id="solutions-heading" className="text-[13px] font-semibold text-foreground mb-3">Solution Revenue</h2>
+          <div className="rounded-md border border-border bg-card p-4">
+            <div className="divide-y divide-border">
+              {solutions.map((sol) => (
+                <div key={sol.id} className="flex items-center justify-between py-2 text-[13px]">
+                  <div>
+                    <span className="text-foreground font-medium">{sol.name}</span>
+                    <span className="ml-2 text-[11px] text-muted-foreground rounded bg-muted px-1.5 py-0.5">{sol.pricing_model}</span>
+                  </div>
+                  <span className="text-foreground">{formatCurrency(sol.value)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      <p className="text-[11px] text-muted-foreground italic">
+        All values are forecasts derived from deal pipeline probability, solution pricing, and product/service defaults.
+      </p>
+    </div>
+  )
+}
+
+// ─── Offerings Tab ──────────────────────────────────────────────────────────
+
+function OfferingsTab({ revenue }: { revenue: RevenueData | null }) {
+  const [data, setData] = useState<RevenueData | null>(revenue)
+  const [isLoading, setIsLoading] = useState(!revenue)
+
+  useEffect(() => {
+    if (data) return
+    async function load() {
+      try {
+        const res = await fetch('/api/org/revenue')
+        if (res.ok) {
+          const json = await res.json()
+          setData(json.data as RevenueData)
+        }
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    load()
+  }, [data])
+
+  if (isLoading) {
+    return <div className="animate-pulse rounded-md border border-border bg-card p-4 h-48" />
+  }
+
+  if (!data || !data.products) {
+    return <p className="text-[13px] text-muted-foreground py-8 text-center">Unable to load offerings data.</p>
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Products */}
+      <section aria-labelledby="products-heading">
+        <div className="flex items-center justify-between mb-3">
+          <h2 id="products-heading" className="text-[13px] font-semibold text-foreground flex items-center gap-2">
+            <Package className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+            Products
+          </h2>
+          <Link
+            href="/library/blocks?type=product"
+            className="text-[13px] text-muted-foreground hover:text-foreground transition-colors"
+          >
+            View all
+          </Link>
+        </div>
+        <div className="rounded-md border border-border bg-card p-4">
+          {data.products.length > 0 ? (
+            <div className="divide-y divide-border">
+              {data.products.map((p) => (
+                <div key={p.id} className="flex items-center justify-between py-2.5 text-[13px]">
+                  <Link href={`/blocks/${p.id}`} className="text-foreground font-medium hover:underline">{p.name}</Link>
+                  <span className="text-muted-foreground">{p.unit_price > 0 ? `${p.currency} ${p.unit_price.toLocaleString()}` : 'No price set'}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-[13px] text-muted-foreground text-center py-4">No products defined yet.</p>
+          )}
+        </div>
+      </section>
+
+      {/* Services */}
+      <section aria-labelledby="services-heading">
+        <div className="flex items-center justify-between mb-3">
+          <h2 id="services-heading" className="text-[13px] font-semibold text-foreground flex items-center gap-2">
+            <Wrench className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+            Services
+          </h2>
+          <Link
+            href="/library/blocks?type=service"
+            className="text-[13px] text-muted-foreground hover:text-foreground transition-colors"
+          >
+            View all
+          </Link>
+        </div>
+        <div className="rounded-md border border-border bg-card p-4">
+          {data.services.length > 0 ? (
+            <div className="divide-y divide-border">
+              {data.services.map((s) => (
+                <div key={s.id} className="flex items-center justify-between py-2.5 text-[13px]">
+                  <Link href={`/blocks/${s.id}`} className="text-foreground font-medium hover:underline">{s.name}</Link>
+                  <span className="text-muted-foreground">{s.hourly_rate > 0 ? `${s.currency} ${s.hourly_rate.toLocaleString()}/hr` : 'No rate set'}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-[13px] text-muted-foreground text-center py-4">No services defined yet.</p>
+          )}
+        </div>
+      </section>
+    </div>
+  )
+}
+
 // ─── Main Page Component ────────────────────────────────────────────────────
 
 export default function OrgOverviewPage() {
@@ -490,27 +1083,70 @@ export default function OrgOverviewPage() {
         </span>
       </div>
 
-      {/* Metric cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <MetricCard icon={Boxes} value={data.blocks.total} label="Total Blocks" />
-        <MetricCard icon={Users} value={data.team.total} label="Team Size" />
-        <MetricCard icon={GitBranch} value={data.workflows.active} label="Active Workflows" />
-        <MetricCard icon={CheckCircle2} value={data.workflows.completed} label="Completed Workflows" />
-      </div>
+      {/* Tabbed content */}
+      <Tabs defaultValue="overview" className="w-full">
+        <TabsList className="mb-6">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="revenue">Revenue</TabsTrigger>
+          <TabsTrigger value="strategy">Strategy</TabsTrigger>
+          <TabsTrigger value="offerings">Offerings</TabsTrigger>
+          <TabsTrigger value="team">Team</TabsTrigger>
+        </TabsList>
 
-      {/* Hierarchy section (conditional) */}
-      <div className="space-y-8">
-        <HierarchySection hierarchy={data.hierarchy} />
+        {/* Overview Tab */}
+        <TabsContent value="overview">
+          {/* Metric cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <MetricCard icon={Boxes} value={data.blocks.total} label="Total Blocks" />
+            <MetricCard icon={Users} value={data.team.total} label="Team Size" />
+            <MetricCard icon={GitBranch} value={data.workflows.active} label="Active Workflows" />
+            <MetricCard icon={CheckCircle2} value={data.workflows.completed} label="Completed Workflows" />
+          </div>
 
-        {/* Two-column layout for Team + Blocks */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <TeamSection team={data.team} />
-          <BlocksSection blocks={data.blocks} />
-        </div>
+          <div className="space-y-8">
+            <RevenueSnapshot />
+            <HierarchySection hierarchy={data.hierarchy} />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <BlocksSection blocks={data.blocks} />
+              <RecentActivitySection events={data.recent_events} />
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <TeamUtilization team={data.team} />
+            </div>
+          </div>
+        </TabsContent>
 
-        {/* Recent activity */}
-        <RecentActivitySection events={data.recent_events} />
-      </div>
+        {/* Revenue Tab */}
+        <TabsContent value="revenue">
+          <RevenueTab />
+        </TabsContent>
+
+        {/* Strategy Tab */}
+        <TabsContent value="strategy">
+          <StrategyTab />
+        </TabsContent>
+
+        {/* Offerings Tab */}
+        <TabsContent value="offerings">
+          <OfferingsTab revenue={null} />
+        </TabsContent>
+
+        {/* Team Tab */}
+        <TabsContent value="team">
+          <div className="space-y-6">
+            <TeamSection team={data.team} />
+            <div className="flex justify-end">
+              <Link
+                href="/settings/team"
+                className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-1.5 text-[13px] font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+              >
+                <Settings className="h-4 w-4" aria-hidden="true" />
+                Manage Team
+              </Link>
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
     </PageContainer>
   )
 }

@@ -13,11 +13,26 @@ import { logger } from '@/lib/logger'
 export async function GET(req: NextRequest) {
   try {
     const { userId, orgId: clerkOrgId } = await auth()
-    if (!userId || !clerkOrgId) {
+    if (!userId) {
       return apiError('Not authenticated', 'auth/unauthenticated', 401)
     }
 
-    const orgId = await resolveOrgId(clerkOrgId)
+    // When user has no active Clerk org (clerkOrgId is null), fall back to
+    // their primary org membership. This fixes the Google OAuth flow for
+    // users who haven't explicitly selected an org in Clerk.
+    let effectiveClerkOrgId = clerkOrgId
+    if (!effectiveClerkOrgId) {
+      const { clerkClient: getClerk } = await import('@clerk/nextjs/server')
+      const clerk = await getClerk()
+      const memberships = await clerk.users.getOrganizationMembershipList({ userId, limit: 1 })
+      effectiveClerkOrgId = memberships.data?.[0]?.organization?.id ?? null
+      if (!effectiveClerkOrgId) {
+        return apiError('No organization found. Please create or join an organization first.', 'auth/no-org', 403)
+      }
+      logger.info('google-oauth', 'oauth.fallback_org', { user_id: userId, org_id: effectiveClerkOrgId })
+    }
+
+    const orgId = await resolveOrgId(effectiveClerkOrgId)
     if (!orgId) {
       return apiError('No organization found', 'auth/no-org', 403)
     }

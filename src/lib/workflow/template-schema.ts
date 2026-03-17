@@ -26,7 +26,14 @@ const TriggerSchema = z.discriminatedUnion('type', [
 
 const StepSchema = z.object({
   name: z.string().min(1).max(100).regex(/^[a-z][a-z0-9_]*$/, 'Step name must be lowercase snake_case'),
-  type: z.enum(['emit_event', 'run_action', 'wait', 'condition', 'call_api', 'send_email', 'book_meeting', 'generate_document', 'update_block', 'generate_task', 'run_sub_workflow', 'input', 'output']),
+  type: z.enum([
+    'emit_event', 'run_action', 'wait', 'condition', 'call_api', 'send_email', 'book_meeting',
+    'generate_document', 'update_block', 'generate_task', 'run_sub_workflow', 'input', 'output',
+    // Phase 5 Sprint 15: Data Operations + Human Interaction
+    'create_edge', 'search_blocks', 'send_notification', 'create_shared_link',
+    // Phase 5 Sprint 16: AI + External
+    'ai_analysis', 'ai_classify', 'ai_summarize', 'ai_risk_assessment', 'store_file',
+  ]),
   event_type: z.string().min(1).max(100).optional(),
   action_type: z.string().min(1).max(100).optional(),
   wait_seconds: z.number().int().positive().optional(),
@@ -73,6 +80,40 @@ const StepSchema = z.object({
   // run_sub_workflow step fields (Phase 4)
   sub_workflow_template_id: z.string().uuid().optional(),
   wait_for_completion: z.boolean().optional(),
+  // create_edge step fields (Phase 5)
+  from_block_id: z.string().max(500).optional(),
+  to_block_id: z.string().max(500).optional(),
+  edge_type: z.string().max(100).optional(),
+  // search_blocks step fields (Phase 5)
+  search_type: z.string().max(100).optional(),
+  search_name: z.string().max(200).optional(),
+  search_filters: z.record(z.unknown()).optional(),
+  search_limit: z.number().int().min(1).max(50).optional(),
+  // send_notification step fields (Phase 5)
+  notification_title: z.string().max(200).optional(),
+  notification_body: z.string().max(2000).optional(),
+  notification_type: z.enum(['info', 'warning', 'success', 'error']).optional(),
+  notification_user_id: z.string().max(200).optional(),
+  notification_link: z.string().max(500).optional(),
+  // create_shared_link step fields (Phase 5)
+  link_block_id: z.string().max(500).optional(),
+  link_type: z.enum(['view', 'form', 'sign']).optional(),
+  link_expires_hours: z.number().int().min(1).max(8760).optional(),
+  // AI step fields (Phase 5 Sprint 16)
+  ai_prompt: z.string().max(5000).optional(),
+  ai_output_format: z.enum(['json', 'text']).optional(),
+  ai_max_tokens: z.number().int().min(64).max(4096).optional(),
+  ai_context_block_id: z.string().max(500).optional(),
+  ai_categories: z.array(z.string().max(100)).min(2).max(20).optional(),
+  ai_include_events: z.boolean().optional(),
+  ai_risk_categories: z.array(z.string().max(100)).max(10).optional(),
+  ai_include_policies: z.boolean().optional(),
+  // store_file step fields (Phase 5 Sprint 16)
+  file_content: z.string().max(100000).optional(),
+  file_name: z.string().max(200).optional(),
+  file_bucket: z.string().max(100).optional(),
+  file_content_type: z.string().max(100).optional(),
+  file_path_prefix: z.string().max(200).optional(),
 })
 
 const DataInputSchema = z.object({
