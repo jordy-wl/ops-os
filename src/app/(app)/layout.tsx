@@ -5,6 +5,7 @@ import { AppSidebar } from '@/components/shell/app-sidebar'
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
 import { Separator } from '@/components/ui/separator'
 import { ChatWidgetShell } from '@/components/chat/chat-widget-shell'
+import { TimerWidgetShell } from '@/components/timer/timer-widget-shell'
 import { BottomTabBar } from '@/components/shell/bottom-tab-bar'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { CommandPalette } from '@/components/shell/command-palette'
@@ -54,6 +55,7 @@ export default async function AppLayout({
         </main>
       </SidebarInset>
       <ChatWidgetShell />
+      <TimerWidgetShell />
       <BottomTabBar />
     </SidebarProvider>
   )

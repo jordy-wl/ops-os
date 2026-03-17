@@ -2,11 +2,14 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ClipboardList, GitBranch, LayoutGrid, Activity, ArrowRight, Circle, Sparkles } from 'lucide-react'
+import { ClipboardList, GitBranch, LayoutGrid, Activity, ArrowRight, Circle, Sparkles, Clock, Calendar, TrendingUp } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { PriorityBadge } from './priority-badge'
 import { DeadlineCountdown } from './deadline-countdown'
 import { ConfidenceScore } from './confidence-score'
+import { TimeTab } from './time-tab'
+import { CalendarTab } from './calendar-tab'
+import { PerformanceTab } from './performance-tab'
 import type { MyWorkData, MyWorkTask, MyWorkWorkflow, MyWorkBlock, MyWorkEvent } from '@/app/(app)/my-work/page'
 
 interface MyWorkClientProps {
@@ -37,10 +40,13 @@ const STATUS_STYLES: Record<string, string> = {
 
 // ─── Tabs ────────────────────────────────────────────────────────────────────
 
-type TabId = 'tasks' | 'workflows' | 'blocks' | 'activity'
+type TabId = 'tasks' | 'time' | 'calendar' | 'performance' | 'workflows' | 'blocks' | 'activity'
 
 const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: 'tasks', label: 'Assigned to me', icon: ClipboardList },
+  { id: 'time', label: 'Time', icon: Clock },
+  { id: 'calendar', label: 'Calendar', icon: Calendar },
+  { id: 'performance', label: 'Performance', icon: TrendingUp },
   { id: 'workflows', label: 'Active Workflows', icon: GitBranch },
   { id: 'blocks', label: 'Recent Blocks', icon: LayoutGrid },
   { id: 'activity', label: 'Activity', icon: Activity },
@@ -277,8 +283,8 @@ export function MyWorkClient({ initialData, currentUserId }: MyWorkClientProps) 
     <div className="p-6 lg:p-8 max-w-7xl mx-auto">
       <h1 className="text-page font-semibold text-foreground mb-6">My Work</h1>
 
-      {/* Tab bar */}
-      <div className="flex items-center gap-1 border-b border-border mb-0" role="tablist" aria-label="My Work sections">
+      {/* Tab bar — horizontally scrollable on mobile for 7 tabs */}
+      <div className="flex items-center gap-1 border-b border-border mb-0 overflow-x-auto scrollbar-none" role="tablist" aria-label="My Work sections">
         {TABS.map((tab) => {
           const Icon = tab.icon
           const isActive = activeTab === tab.id
@@ -289,14 +295,14 @@ export function MyWorkClient({ initialData, currentUserId }: MyWorkClientProps) 
               aria-selected={isActive}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                'flex items-center gap-1.5 px-3 py-2 text-[13px] font-medium transition-colors -mb-px border-b-2',
+                'flex items-center gap-1.5 px-3 py-2 text-[13px] font-medium transition-colors -mb-px border-b-2 whitespace-nowrap shrink-0',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                 isActive
                   ? 'border-foreground text-foreground'
                   : 'border-transparent text-muted-foreground hover:text-foreground'
               )}
             >
-              <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+              <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
               {tab.label}
             </button>
           )
@@ -308,6 +314,9 @@ export function MyWorkClient({ initialData, currentUserId }: MyWorkClientProps) 
         {activeTab === 'tasks' && (
           <TaskRows tasks={initialData.tasks} currentUserId={currentUserId} />
         )}
+        {activeTab === 'time' && <TimeTab />}
+        {activeTab === 'calendar' && <CalendarTab />}
+        {activeTab === 'performance' && <PerformanceTab />}
         {activeTab === 'workflows' && (
           <WorkflowRows workflows={initialData.workflows} />
         )}
