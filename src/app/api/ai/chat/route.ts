@@ -5,6 +5,7 @@ import path from 'path'
 import Anthropic from '@anthropic-ai/sdk'
 import { withAuth } from '@/lib/auth/withAuth'
 import { assembleContext, contextToPromptString } from '@/lib/context-assembly'
+import { loadDeltaContext } from '@/lib/ai/delta-context-loader'
 import { CHAT_TOOLS, executeChatTool } from '@/lib/ai/chat-tools'
 import { apiError, validationError } from '@/lib/api/responses'
 import { logger } from '@/lib/logger'
@@ -32,11 +33,12 @@ const ChatSchema = z.object({
     .default([]),
 })
 
-// Load mode-specific system prompts
+// Load mode-specific system prompts (v2 for discuss/plan, v1 for execute)
 const PROMPTS: Record<string, string> = {}
+const PROMPT_VERSIONS: Record<string, string> = { discuss: 'v2', plan: 'v2', execute: 'v1' }
 for (const mode of ['discuss', 'plan', 'execute'] as const) {
   PROMPTS[mode] = fs.readFileSync(
-    path.join(process.cwd(), `src/prompts/chat-${mode}-mode.v1.md`),
+    path.join(process.cwd(), `src/prompts/chat-${mode}-mode.${PROMPT_VERSIONS[mode]}.md`),
     'utf-8'
   )
 }
@@ -66,8 +68,21 @@ export const POST = withAuth(async (req: NextRequest, ctx) => {
     )
   }
 
-  // Assemble context
-  const context = await assembleContext(blockId ?? null, ctx.orgId, ctx.userId, message)
+  // Assemble context with user-awareness and delta injection
+  const context = await assembleContext(
+    blockId ?? null,
+    ctx.orgId,
+    ctx.userId,
+    message,
+    Array.from(ctx.permissions)
+  )
+
+  // Inject workflow delta context when viewing a workflow_instance
+  if (context.block?.type === 'workflow_instance' && !context.deltaContext) {
+    const deltaCtx = await loadDeltaContext(context.block.id, ctx.orgId)
+    if (deltaCtx) context.deltaContext = deltaCtx
+  }
+
   const contextString = contextToPromptString(context)
   const systemPrompt = buildSystemPrompt(mode, contextString)
 
@@ -219,13 +234,7 @@ async function handleExecuteMode(
     },
   })
 
-  return new NextResponse(readable, {
-    headers: {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      Connection: 'keep-alive',
-    },
-  })
+  return buildSseResponse(readable)
 }
 
 // ─── SSE Streaming Helper ────────────────────────────────────────────────────
@@ -241,15 +250,42 @@ function streamSseResponse(
   const readable = new ReadableStream({
     async start(controller) {
       let totalTokens = 0
+      let accumulatedText = ''
 
       try {
         for await (const event of stream) {
           if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
+            accumulatedText += event.delta.text
             const chunk = `data: ${JSON.stringify({ text: event.delta.text })}\n\n`
             controller.enqueue(encoder.encode(chunk))
           }
           if (event.type === 'message_delta' && event.usage) {
             totalTokens = event.usage.output_tokens
+          }
+        }
+
+        // Extract structured blocks from accumulated text and emit as separate SSE events
+        const suggestions = extractTagContent(accumulatedText, 'SUGGESTIONS')
+        if (suggestions) {
+          try {
+            const parsed = JSON.parse(suggestions)
+            controller.enqueue(
+              encoder.encode(`data: ${JSON.stringify({ suggestions: parsed })}\n\n`)
+            )
+          } catch {
+            // malformed suggestions JSON — skip silently
+          }
+        }
+
+        const planJson = extractTagContent(accumulatedText, 'PLAN_JSON')
+        if (planJson) {
+          try {
+            const parsed = JSON.parse(planJson)
+            controller.enqueue(
+              encoder.encode(`data: ${JSON.stringify({ plan_data: parsed })}\n\n`)
+            )
+          } catch {
+            // malformed plan JSON — skip silently
           }
         }
 
@@ -259,6 +295,8 @@ function streamSseResponse(
           message_length: messageLength,
           tokens_used: totalTokens,
           mode,
+          has_suggestions: !!suggestions,
+          has_plan_data: !!planJson,
         })
 
         controller.enqueue(encoder.encode('data: [DONE]\n\n'))
@@ -275,6 +313,12 @@ function streamSseResponse(
     },
   })
 
+  return buildSseResponse(readable)
+}
+
+// ─── Shared Helpers ─────────────────────────────────────────────────────────
+
+function buildSseResponse(readable: ReadableStream): NextResponse {
   return new NextResponse(readable, {
     headers: {
       'Content-Type': 'text/event-stream',
@@ -282,4 +326,15 @@ function streamSseResponse(
       Connection: 'keep-alive',
     },
   })
+}
+
+/** Extract content between <TAG>...</TAG> markers. Returns null if not found. */
+function extractTagContent(text: string, tag: string): string | null {
+  const open = `<${tag}>`
+  const close = `</${tag}>`
+  const start = text.indexOf(open)
+  if (start === -1) return null
+  const end = text.indexOf(close, start)
+  if (end === -1) return null
+  return text.slice(start + open.length, end).trim()
 }
