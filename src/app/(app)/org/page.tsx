@@ -516,25 +516,79 @@ function RevenueSnapshot() {
 }
 
 function TeamUtilization({ team }: { team: TeamStats }) {
+  const [utilData, setUtilData] = useState<{
+    members: { user_id: string; name: string; tasks_completed: number; total_time_seconds: number; on_time_rate: number; billable_rate: number }[]
+    totals: { total_tasks_completed: number; total_time_seconds: number; avg_on_time_rate: number }
+  } | null>(null)
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const res = await fetch('/api/performance/team?weeks=4')
+        if (res.ok) {
+          const json = await res.json()
+          if (json.data?.totals && Array.isArray(json.data?.members)) setUtilData(json.data)
+        }
+      } catch {
+        // Best-effort — falls back to basic stats
+      }
+    }
+    load()
+  }, [])
+
   return (
     <section aria-labelledby="utilization-heading">
       <h2 id="utilization-heading" className="text-[13px] font-semibold text-foreground mb-3">
         Team Utilization
       </h2>
       <div className="rounded-md border border-border bg-card p-4">
-        <div className="grid grid-cols-2 gap-4 text-center">
+        {/* Summary row */}
+        <div className="grid grid-cols-3 gap-4 text-center mb-4">
           <div>
             <p className="text-lg font-semibold text-foreground">{team.total}</p>
             <p className="text-[11px] text-muted-foreground">Team Members</p>
           </div>
           <div>
-            <p className="text-lg font-semibold text-foreground">{Object.keys(team.by_role).length}</p>
-            <p className="text-[11px] text-muted-foreground">Active Roles</p>
+            <p className="text-lg font-semibold text-foreground">
+              {utilData?.totals.total_tasks_completed ?? '—'}
+            </p>
+            <p className="text-[11px] text-muted-foreground">Tasks (4 wks)</p>
+          </div>
+          <div>
+            <p className="text-lg font-semibold text-foreground">
+              {utilData?.totals.avg_on_time_rate != null ? `${utilData.totals.avg_on_time_rate}%` : '—'}
+            </p>
+            <p className="text-[11px] text-muted-foreground">On-Time Rate</p>
           </div>
         </div>
-        <p className="text-[11px] text-muted-foreground text-center mt-3">
-          Detailed utilization metrics available after time tracking is enabled.
-        </p>
+
+        {/* Per-member horizontal bars */}
+        {utilData && utilData.members.length > 0 ? (
+          <div className="space-y-2.5">
+            {utilData.members.slice(0, 8).map((member) => {
+              const maxTasks = Math.max(...utilData.members.map((m) => m.tasks_completed), 1)
+              const barWidth = Math.max((member.tasks_completed / maxTasks) * 100, 2)
+              return (
+                <div key={member.user_id} className="space-y-1">
+                  <div className="flex items-center justify-between text-[12px]">
+                    <span className="text-foreground font-medium truncate max-w-[120px]">{member.name}</span>
+                    <span className="text-muted-foreground tabular-nums">{member.tasks_completed} tasks</span>
+                  </div>
+                  <div className="h-2 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-primary transition-all"
+                      style={{ width: `${barWidth}%` }}
+                    />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        ) : (
+          <p className="text-[11px] text-muted-foreground text-center">
+            {utilData ? 'No utilization data yet. Complete tasks and log time to see metrics.' : 'Loading utilization data...'}
+          </p>
+        )}
       </div>
     </section>
   )
@@ -1085,7 +1139,7 @@ export default function OrgOverviewPage() {
 
       {/* Tabbed content */}
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="mb-6">
+        <TabsList className="mb-6 w-full overflow-x-auto scrollbar-none justify-start">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="revenue">Revenue</TabsTrigger>
           <TabsTrigger value="strategy">Strategy</TabsTrigger>
@@ -1096,7 +1150,7 @@ export default function OrgOverviewPage() {
         {/* Overview Tab */}
         <TabsContent value="overview">
           {/* Metric cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-8">
             <MetricCard icon={Boxes} value={data.blocks.total} label="Total Blocks" />
             <MetricCard icon={Users} value={data.team.total} label="Team Size" />
             <MetricCard icon={GitBranch} value={data.workflows.active} label="Active Workflows" />

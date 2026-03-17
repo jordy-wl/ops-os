@@ -4,6 +4,10 @@
     {
       "path": "/api/workflow-engine/process",
       "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/performance/snapshot",
+      "schedule": "0 0 * * 0"
     }
   ]
 }
