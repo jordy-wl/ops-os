@@ -401,6 +401,35 @@ export const SYSTEM_BLOCK_TYPES = [
           enum: ['fixed', 'hourly', 'retainer', 'subscription', 'hybrid'],
           description: 'Pricing model for this solution',
         },
+        base_price: {
+          type: 'number',
+          minimum: 0,
+          description: 'Base price per unit or period',
+        },
+        quantity: {
+          type: 'number',
+          minimum: 0,
+          description: 'Number of units or seats',
+        },
+        deal_value: {
+          type: 'number',
+          minimum: 0,
+          description: 'Total deal value (override or base_price × quantity)',
+        },
+        recurring: {
+          type: 'boolean',
+          description: 'Whether this is a recurring charge',
+        },
+        billing_period: {
+          type: 'string',
+          enum: ['monthly', 'quarterly', 'annually'],
+          description: 'Billing frequency for recurring solutions',
+        },
+        currency: {
+          type: 'string',
+          maxLength: 3,
+          description: 'ISO 4217 currency code (e.g., AUD, USD)',
+        },
         product_refs: {
           type: 'array',
           items: { type: 'string' },
@@ -450,6 +479,23 @@ export const SYSTEM_BLOCK_TYPES = [
           maxLength: 3,
           description: 'ISO 4217 currency code (e.g., AUD, USD)',
         },
+        default_price: {
+          type: 'number',
+          minimum: 0,
+          description: 'Default list price (before discounts or tiers)',
+        },
+        pricing_tiers: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              label: { type: 'string', description: 'Tier name (e.g., Starter, Pro, Enterprise)' },
+              min_quantity: { type: 'number', description: 'Minimum quantity for this tier' },
+              unit_price: { type: 'number', description: 'Price per unit at this tier' },
+            },
+          },
+          description: 'Volume-based pricing tiers',
+        },
         availability_date: {
           type: 'string',
           description: 'Available from date (YYYY-MM-DD)',
@@ -490,6 +536,24 @@ export const SYSTEM_BLOCK_TYPES = [
           type: 'string',
           maxLength: 3,
           description: 'ISO 4217 currency code (e.g., AUD, USD)',
+        },
+        default_rate: {
+          type: 'number',
+          minimum: 0,
+          description: 'Default rate (before client-specific adjustments)',
+        },
+        pricing_tiers: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              label: { type: 'string', description: 'Tier name (e.g., Standard, Premium, Enterprise)' },
+              hours_included: { type: 'number', description: 'Hours included in this tier' },
+              rate: { type: 'number', description: 'Hourly rate at this tier' },
+              retainer_fee: { type: 'number', description: 'Fixed monthly retainer fee for this tier' },
+            },
+          },
+          description: 'Service pricing tiers',
         },
         engagement_type: {
           type: 'string',
@@ -671,6 +735,123 @@ export const SYSTEM_BLOCK_TYPES = [
           description: 'Maximum AI retry attempts before escalating to human (default 3)',
           'x-field-group': 'escalation',
           'x-display-order': 3,
+        },
+      },
+    },
+  },
+  {
+    type_name: 'swot_analysis',
+    display_name: 'SWOT Analysis',
+    description: 'A strategic analysis of strengths, weaknesses, opportunities, and threats.',
+    icon: 'grid-2x2',
+    color: 'amber',
+    field_schema: {
+      type: 'object',
+      'x-field-groups': [
+        { id: 'internal', label: 'Internal Factors', order: 1 },
+        { id: 'external', label: 'External Factors', order: 2 },
+        { id: 'context', label: 'Context', order: 3 },
+      ],
+      properties: {
+        strengths: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Internal strengths and capabilities',
+          'x-field-group': 'internal',
+          'x-display-order': 1,
+        },
+        weaknesses: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Internal weaknesses and limitations',
+          'x-field-group': 'internal',
+          'x-display-order': 2,
+        },
+        opportunities: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'External opportunities to pursue',
+          'x-field-group': 'external',
+          'x-display-order': 1,
+        },
+        threats: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'External threats and risks',
+          'x-field-group': 'external',
+          'x-display-order': 2,
+        },
+        analysis_date: {
+          type: 'string',
+          description: 'Date of analysis (YYYY-MM-DD)',
+          'x-field-group': 'context',
+          'x-display-order': 1,
+        },
+        context_block_id: {
+          type: 'string',
+          description: 'Optional reference to the client or org block being analysed',
+          'x-field-group': 'context',
+          'x-display-order': 2,
+        },
+        ai_generated: {
+          type: 'boolean',
+          description: 'Whether this analysis was AI-generated',
+          'x-field-group': 'context',
+          'x-display-order': 3,
+        },
+      },
+    },
+  },
+  {
+    type_name: 'value_proposition',
+    display_name: 'Value Proposition',
+    description: 'A statement of the unique value offered to a target audience.',
+    icon: 'target',
+    color: 'emerald',
+    field_schema: {
+      type: 'object',
+      'x-field-groups': [
+        { id: 'proposition', label: 'Proposition', order: 1 },
+        { id: 'evidence', label: 'Evidence', order: 2 },
+      ],
+      properties: {
+        target_audience: {
+          type: 'string',
+          description: 'Who this value proposition is for',
+          'x-field-group': 'proposition',
+          'x-display-order': 1,
+        },
+        unique_value: {
+          type: 'string',
+          description: 'The unique value or benefit delivered',
+          'x-field-group': 'proposition',
+          'x-display-order': 2,
+        },
+        competitive_advantage: {
+          type: 'string',
+          description: 'What differentiates this from competitors',
+          'x-field-group': 'proposition',
+          'x-display-order': 3,
+        },
+        positioning_statement: {
+          type: 'string',
+          description: 'Full positioning statement',
+          'x-field-group': 'proposition',
+          'x-display-order': 4,
+        },
+        proof_points: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Evidence or proof points supporting this proposition',
+          'x-field-group': 'evidence',
+          'x-display-order': 1,
+        },
+        status: {
+          type: 'string',
+          enum: ['draft', 'active', 'archived'],
+          description: 'Proposition lifecycle status',
+          'x-field-group': 'evidence',
+          'x-display-order': 2,
         },
       },
     },

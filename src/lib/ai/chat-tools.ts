@@ -301,6 +301,21 @@ export const CHAT_TOOLS: Anthropic.Tool[] = [
       required: ['instance_id', 'step_name', 'extend_hours'],
     },
   },
+  {
+    name: 'calculate_delta',
+    description:
+      'Calculate the health delta for a workflow instance — compares the template design (expected steps) against the actual execution state (completed steps, events, timing). Returns a DeltaResult with health score, gap analysis (overdue/skipped/out-of-order steps), timeline deltas, and actionable insights. Use this when a user asks about workflow health, progress, or issues.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        instance_id: {
+          type: 'string',
+          description: 'Workflow instance block ID to analyze',
+        },
+      },
+      required: ['instance_id'],
+    },
+  },
 ]
 
 // ─── Tool Execution ──────────────────────────────────────────────────────────
@@ -326,7 +341,7 @@ export async function executeChatTool(
 ): Promise<ToolResult> {
   // RBAC: read-only tools available to all, mutation tools require ops-admin,
   // block config tools require ops-admin (manage_settings)
-  const readOnlyTools = new Set(['search_blocks', 'list_block_types'])
+  const readOnlyTools = new Set(['search_blocks', 'list_block_types', 'calculate_delta'])
   const configTools = new Set(['suggest_fields', 'configure_block_type', 'create_block_type', 'create_relationship'])
   const workflowTools = new Set(['reassign_step', 'extend_deadline'])
   if (!readOnlyTools.has(toolName) && role !== 'ops-admin') {
@@ -367,6 +382,8 @@ export async function executeChatTool(
         return await executeReassignStep(supabase, orgId, input)
       case 'extend_deadline':
         return await executeExtendDeadline(supabase, orgId, input)
+      case 'calculate_delta':
+        return await executeCalculateDelta(supabase, orgId, input)
       default:
         return { success: false, error: `Unknown tool: ${toolName}` }
     }
@@ -1154,6 +1171,104 @@ async function executeExtendDeadline(
       step_name: stepName,
       extend_hours: extendHours,
       message: `Deadline for step "${stepName}" extended by ${extendHours} hours`,
+    },
+  }
+}
+
+// ─── Calculate Delta ─────────────────────────────────────────────────────────
+
+async function executeCalculateDelta(
+  supabase: ReturnType<typeof createServerClient>,
+  orgId: string,
+  input: Record<string, unknown>
+): Promise<ToolResult> {
+  const instanceId = String(input.instance_id ?? '')
+  if (!instanceId) return { success: false, error: 'instance_id is required' }
+
+  // Fetch the workflow instance block
+  const { data: instance } = await supabase
+    .from('blocks')
+    .select('id, name, type, metadata')
+    .eq('id', instanceId)
+    .eq('org_id', orgId)
+    .eq('type', 'workflow_instance')
+    .single()
+
+  if (!instance) return { success: false, error: 'Workflow instance not found' }
+
+  const meta = instance.metadata as Record<string, unknown>
+  const templateId = meta.template_id as string | undefined
+
+  if (!templateId) return { success: false, error: 'Instance has no template_id' }
+
+  // Fetch the template for step definitions
+  const { data: template } = await supabase
+    .from('blocks')
+    .select('metadata')
+    .eq('id', templateId)
+    .eq('org_id', orgId)
+    .single()
+
+  if (!template) return { success: false, error: 'Workflow template not found' }
+
+  const templateMeta = template.metadata as Record<string, unknown>
+  const steps = (templateMeta.steps as Array<Record<string, unknown>>) ?? []
+
+  // Fetch recent events for this instance
+  const { data: events } = await supabase
+    .from('events')
+    .select('id, type, payload, created_at')
+    .eq('block_id', instanceId)
+    .eq('org_id', orgId)
+    .order('created_at', { ascending: false })
+    .limit(50)
+
+  // Import and run the delta engine
+  const { calculateDelta } = await import('@/lib/ai/delta-engine')
+  type DeltaStatus = 'pending' | 'running' | 'done' | 'failed'
+  const validStatuses = new Set<DeltaStatus>(['pending', 'running', 'done', 'failed'])
+  const rawStatus = (meta.status as string) ?? 'pending'
+  const status: DeltaStatus = validStatuses.has(rawStatus as DeltaStatus) ? (rawStatus as DeltaStatus) : 'pending'
+
+  const rawResults = (meta.step_results as Array<Record<string, unknown>>) ?? []
+
+  const deltaResult = calculateDelta(
+    instanceId,
+    {
+      template_id: (meta.template_id as string) ?? '',
+      source_block_id: (meta.source_block_id as string) ?? '',
+      status,
+      current_step_index: (meta.current_step_index as number) ?? 0,
+      step_results: rawResults.map((r) => ({
+        step_name: (r.step_name as string) ?? '',
+        step_type: (r.step_type as string) ?? '',
+        status: (r.status as 'completed' | 'failed' | 'waiting') ?? 'waiting',
+        output: r.output as Record<string, unknown> | undefined,
+        error: r.error as string | undefined,
+        executed_at: (r.executed_at as string) ?? new Date().toISOString(),
+      })),
+      started_at: (meta.started_at as string) ?? new Date().toISOString(),
+      completed_at: (meta.completed_at as string) ?? null,
+    },
+    steps.map((s) => ({
+      name: (s.name as string) ?? 'unnamed',
+      type: (s.type as string) ?? 'unknown',
+      wait_seconds: s.wait_seconds as number | undefined,
+    })),
+    (events ?? []).map((e) => ({
+      id: e.id,
+      type: e.type,
+      occurred_at: e.created_at,
+      payload: (e.payload ?? {}) as Record<string, unknown>,
+    }))
+  )
+
+  return {
+    success: true,
+    data: {
+      instance_id: instanceId,
+      instance_name: instance.name,
+      ...deltaResult,
     },
   }
 }

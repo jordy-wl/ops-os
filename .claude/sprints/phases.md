@@ -14,7 +14,9 @@
 | 2 | Composable Blocks, Visual Builder & Integrations | COMPLETE (code) | Sprint 16 | CODE DONE — usage validation re-scoped as P3 milestones |
 | 3 | Platform Evolution: RBAC, Routing, Delta AI, Doc Gen V2 | COMPLETE (code) | Sprint 8 | CODE DONE — usage validation pending |
 | 4 | Workflow Engine V2, Client Portal, Chat V2, Analytics | COMPLETE (code) | Sprint 12 | CODE DONE — usage validation pending |
-| 5 | Enterprise, Scale & Compliance | FUTURE | — | — |
+| 5 | Org Intelligence + Workflow Power-Up | ACTIVE | Sprint 13 | — |
+| 6 | Productivity Suite + Infrastructure Planning | FUTURE | — | — |
+| 7 | Enterprise, Scale & Compliance | FUTURE | — | — |
 
 ---
 
@@ -225,7 +227,76 @@ If exit condition is NOT met after 12 weeks:
 
 ---
 
-## Phase 5: Enterprise, Scale & Compliance
+## Phase 5: Org Intelligence + Workflow Power-Up
+
+**Status:** ACTIVE
+**Target:** Q1 2026 (5 sprints, Sprints 13–17)
+**Active Roles:** Backend Engineer, Frontend Engineer, AI/ML Engineer, QA Engineer
+
+**Hypothesis:** If we add a tabbed org dashboard with revenue forecasting, expand the workflow builder with 9 new node types across 6 categories, enrich block types for strategy and offerings, wire the delta engine to chat Execute mode, and fix the Google OAuth bug — capital markets users will have a complete self-service operational dashboard and workflow automation suite.
+
+**What we're building:**
+- **Org Page Redesign:** 5-tab layout (Overview, Revenue, Strategy, Offerings, Team)
+- **Revenue Forecasting:** Derived from deals (pipeline × probability), products/services (default pricing), solutions (client-specific pricing as living records)
+- **New Block Types:** SWOT Analysis, Value Proposition. Enriched: Solution (pricing fields), Product/Service (pricing tiers, metrics)
+- **Workflow Node Expansion:** 9 new step handlers (create_edge, search_blocks, send_notification, create_shared_link, ai_analysis, ai_classify, ai_summarize, ai_risk_assessment, store_file). 12 new palette items across 2 new categories (Data Operations, Human Interaction) + expansion of AI & Analysis and External categories
+- **Step Engine Refactor:** Switch statement → handler registry pattern (like actions/registry.ts)
+- **My Work V2:** Enhanced task inbox with priority badges, deadline indicators, AI suggestion chips
+- **Delta-Chat Wiring:** Inject delta engine results into chat Execute mode system prompt
+- **Google OAuth Fix:** resolveOrgId null fallback to primary org
+- **Integration Health:** Capabilities model + health monitoring endpoint
+
+**Dependencies on Phase 4:** All Phase 4 features complete ✓. 1230 tests passing ✓.
+
+**Exit Condition:** TRUE when:
+1. Org page has 5 functional tabs with real forecast data
+2. Workflow builder has 6+ categories with 25+ node types
+3. Delta engine powers chat Execute mode responses
+4. Google OAuth works without active org context
+5. All 17+ block types visible in browser/library/create modal
+
+**Sprints in This Phase:**
+- Sprint 13: Org Page Tabs + Revenue Forecasting (10 tasks) — **IN PROGRESS**
+- Sprint 14: Strategy Block Types + Block Browser Fix (9 tasks) — PLANNED
+- Sprint 15: Workflow Nodes: Data Ops + Human Interaction (10 tasks) — PLANNED
+- Sprint 16: Workflow Nodes: AI + External (10 tasks) — PLANNED
+- Sprint 17: My Work V2 + Delta-Chat + Fixes + Polish (9 tasks) — PLANNED
+
+---
+
+## Phase 6: Productivity Suite + Infrastructure Planning
+
+**Status:** FUTURE
+**Target:** Q2 2026 (4 sprints, Sprints 18–21)
+**Active Roles:** Backend Engineer, Frontend Engineer, AI/ML Engineer, QA Engineer, Researcher
+
+**Hypothesis:** If we add time tracking with a floating timer, calendar integration with Google Calendar sync, personal performance metrics, and conduct infrastructure architecture research (Kafka, Neo4j, event bus) — the system will be a complete productivity platform ready for capital markets design partner trials.
+
+**What we'll build:**
+- **Time Tracking + Timebox:** time_entries table, CRUD API, floating timer, weekly time view, billable tracking
+- **Calendar Integration:** calendar_events table, Google Calendar sync (pull-based), month/week/day views, deadline + milestone visualization
+- **Performance Metrics:** performance_snapshots, weekly scheduler, personal dashboard, trend charts, team utilization
+- **Infrastructure Research:** Evaluate Kafka vs Postgres for event bus at scale, Neo4j vs adjacency list for block graph, multi-DB architecture design with migration trigger points
+- **Final Polish:** All 6 My Work tabs + 5 Org tabs at all breakpoints, integration health dashboard
+
+**Dependencies on Phase 5:** Org tabs, workflow expansion, My Work V2 all complete.
+
+**Exit Condition:** TRUE when:
+1. Time tracking works with floating timer across pages
+2. Calendar syncs with Google Calendar
+3. Performance trends visible with 2+ weeks of data
+4. Infrastructure research report delivered with recommendation + trigger points
+5. All UI at all 4 breakpoints passes review
+
+**Sprints in This Phase:**
+- Sprint 18: Time Tracking + Timebox (9 tasks) — PLANNED
+- Sprint 19: Calendar Integration (9 tasks) — PLANNED
+- Sprint 20: Performance Metrics (8 tasks) — PLANNED
+- Sprint 21: Infrastructure Research + Final Polish (8 tasks) — PLANNED
+
+---
+
+## Phase 7: Enterprise, Scale & Compliance
 
 **Status:** FUTURE
 **Target:** TBD — contingent on paying customers and revenue
@@ -242,12 +313,13 @@ If exit condition is NOT met after 12 weeks:
 - Multi-region Postgres for FCA/MAS/ASIC data residency
 - Marketplace: third-party workflow templates, integration connectors, block type definitions
 - Advanced RBAC: field-level permissions, approval chains
+- Event bus (Kafka) and graph database (Neo4j) — informed by Phase 6 infrastructure research
 
-**Dependencies on Phase 4:** ≥2 paying customers; revenue to justify infrastructure investment; agent AI proven; operational intelligence validated.
+**Dependencies on Phase 6:** Infrastructure research complete; ≥2 paying customers; revenue to justify investment.
 
 **Exit Condition:** TRUE when ≥5 paying customers, Temporal deployed, SOC 2 audit in progress.
 
-**Sprints in This Phase:** Generated at Phase 4 exit retro.
+**Sprints in This Phase:** Generated at Phase 6 exit retro.
 
 ---
 

@@ -23,6 +23,15 @@ vi.mock('next/link', () => ({
   ),
 }))
 
+// ─── Mock Tabs (Radix Tabs doesn't work in jsdom) ──────────────────────────
+
+vi.mock('@/components/ui/tabs', () => ({
+  Tabs: ({ children, ...props }: { children: React.ReactNode; [key: string]: unknown }) => <div data-testid="tabs" {...props}>{children}</div>,
+  TabsList: ({ children, ...props }: { children: React.ReactNode; [key: string]: unknown }) => <div role="tablist" {...props}>{children}</div>,
+  TabsTrigger: ({ children, value, ...props }: { children: React.ReactNode; value: string; [key: string]: unknown }) => <button role="tab" data-value={value} {...props}>{children}</button>,
+  TabsContent: ({ children }: { children: React.ReactNode; [key: string]: unknown }) => <div>{children}</div>,
+}))
+
 // ─── Test Data ──────────────────────────────────────────────────────────────
 
 const mockOverview: OrgOverview = {
@@ -240,7 +249,7 @@ describe('OrgOverviewPage', () => {
     })
   })
 
-  describe('Team summary section', () => {
+  describe('Team summary section (Team tab)', () => {
     it('shows total team members', async () => {
       mockFetchSuccess(mockOverview)
       render(<OrgOverviewPage />)
@@ -248,7 +257,6 @@ describe('OrgOverviewPage', () => {
       await waitFor(() => {
         expect(screen.getByText('Team Summary')).toBeTruthy()
         expect(screen.getByText('team members')).toBeTruthy()
-        // The total is rendered in the section
         expect(screen.getAllByText('42').length).toBeGreaterThanOrEqual(1)
       })
     })
@@ -258,7 +266,6 @@ describe('OrgOverviewPage', () => {
       render(<OrgOverviewPage />)
 
       await waitFor(() => {
-        // Role names appear in both the distribution bars and the recent additions badges
         expect(screen.getAllByText('Ops Admin').length).toBeGreaterThanOrEqual(1)
         expect(screen.getAllByText('Ops User').length).toBeGreaterThanOrEqual(1)
         expect(screen.getAllByText('Compliance Approver').length).toBeGreaterThanOrEqual(1)
@@ -276,14 +283,29 @@ describe('OrgOverviewPage', () => {
       })
     })
 
-    it('shows link to team settings', async () => {
+    it('shows Manage Team link', async () => {
       mockFetchSuccess(mockOverview)
       render(<OrgOverviewPage />)
 
       await waitFor(() => {
-        const viewAllLink = screen.getAllByText('View all')[0]
-        expect(viewAllLink.closest('a')).toBeTruthy()
-        expect(viewAllLink.closest('a')?.getAttribute('href')).toBe('/settings/team')
+        const manageLink = screen.getByText('Manage Team')
+        expect(manageLink.closest('a')).toBeTruthy()
+        expect(manageLink.closest('a')?.getAttribute('href')).toBe('/settings/team')
+      })
+    })
+
+    it('renders tab triggers for all 5 tabs', async () => {
+      mockFetchSuccess(mockOverview)
+      render(<OrgOverviewPage />)
+
+      await waitFor(() => {
+        const tabs = screen.getAllByRole('tab')
+        expect(tabs.length).toBe(5)
+        expect(screen.getByRole('tab', { name: 'Overview' })).toBeTruthy()
+        expect(screen.getByRole('tab', { name: 'Revenue' })).toBeTruthy()
+        expect(screen.getByRole('tab', { name: 'Strategy' })).toBeTruthy()
+        expect(screen.getByRole('tab', { name: 'Offerings' })).toBeTruthy()
+        expect(screen.getByRole('tab', { name: 'Team' })).toBeTruthy()
       })
     })
   })
@@ -311,7 +333,7 @@ describe('OrgOverviewPage', () => {
       })
     })
 
-    it('shows link to blocks library', async () => {
+    it('shows link to blocks library in Overview tab', async () => {
       mockFetchSuccess(mockOverview)
       render(<OrgOverviewPage />)
 

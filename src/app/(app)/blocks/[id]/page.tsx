@@ -14,6 +14,8 @@ import { InsightsPanel } from '@/components/blocks/insights-panel'
 import { InlineFieldManagerWrapper } from '@/components/blocks/inline-field-manager-wrapper'
 import { FormSubmissionsPanel } from '@/components/blocks/form-submissions-panel'
 import { ShareLinkButton } from '@/components/blocks/share-link-dialog'
+import { SwotEditor } from '@/components/blocks/swot-editor'
+import { ValuePropEditor } from '@/components/blocks/value-prop-editor'
 import type { Block, Event } from '@/lib/context-assembly'
 
 interface Props {
@@ -180,6 +182,20 @@ export default async function BlockDetailPage({ params }: Props) {
             block={block as Block}
             fieldSchema={typeDef?.field_schema as Record<string, unknown> | undefined}
           />
+          {block.type === 'swot_analysis' && (
+            <SwotEditor
+              blockId={block.id}
+              blockName={block.name}
+              initialData={(block.metadata ?? {}) as Record<string, unknown>}
+            />
+          )}
+          {block.type === 'value_proposition' && (
+            <ValuePropEditor
+              blockId={block.id}
+              blockName={block.name}
+              initialData={(block.metadata ?? {}) as Record<string, unknown>}
+            />
+          )}
           <BlockDocumentsSection blockId={block.id} />
           <FormSubmissionsPanel blockId={block.id} />
           <EventTimeline events={(events ?? []) as Event[]} />

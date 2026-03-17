@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createServerClient } from '@/lib/supabase/server'
 import { resolveOrgId } from '@/lib/auth/resolve-org'
+import { CreateBlockTypeButton } from '@/components/settings/create-block-type-modal'
 
 export const metadata = { title: 'Block Types — Settings — Ops OS' }
 
@@ -73,9 +74,12 @@ export default async function BlockTypesPage() {
 
   return (
     <div>
-      <div className="mb-6">
-        <h2 className="text-lg font-semibold text-foreground">Block Types</h2>
-        <p className="text-sm text-muted-foreground mt-0.5">Manage fields and properties for each block type.</p>
+      <div className="flex items-start justify-between mb-6">
+        <div>
+          <h2 className="text-lg font-semibold text-foreground">Block Types</h2>
+          <p className="text-sm text-muted-foreground mt-0.5">Manage fields and properties for each block type.</p>
+        </div>
+        <CreateBlockTypeButton />
       </div>
 
       {error && (

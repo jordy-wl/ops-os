@@ -21,6 +21,24 @@ import {
   Search,
   ClipboardCheck,
   Workflow,
+  // Phase 5: Data Operations
+  PlusCircle,
+  RefreshCw,
+  Link,
+  Filter,
+  // Phase 5: Human Interaction
+  UserCheck,
+  Bell,
+  Share2,
+  // Phase 5 Sprint 16: AI + External
+  Brain,
+  Tags,
+  FileBarChart,
+  ShieldAlert,
+  Upload,
+  Send,
+  Database,
+  Receipt,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -56,6 +74,41 @@ const PALETTE_ITEMS: { category: string; items: PaletteItem[] }[] = [
       { nodeType: 'action', stepType: 'book_meeting', label: 'Book Meeting', icon: Calendar, color: 'text-success bg-success/10', description: 'Schedule a calendar event via your connected calendar' },
       { nodeType: 'action', stepType: 'update_block', label: 'Update Record', icon: Pencil, color: 'text-success bg-success/10', description: 'Change fields on a block (e.g. update status, assign owner)' },
       { nodeType: 'task', stepType: 'generate_task', label: 'Create Task', icon: ClipboardCheck, color: 'text-violet-500 bg-violet-500/10', description: 'Generate a human task with a custom form — appears in My Work for review/approval' },
+    ],
+  },
+  {
+    category: 'Data Operations',
+    items: [
+      { nodeType: 'action', stepType: 'run_action', label: 'Create Record', icon: PlusCircle, color: 'text-cyan-500 bg-cyan-500/10', description: 'Create a new block record of any type' },
+      { nodeType: 'action', stepType: 'update_block', label: 'Change Status', icon: RefreshCw, color: 'text-cyan-500 bg-cyan-500/10', description: 'Update the status field on a block' },
+      { nodeType: 'action', stepType: 'create_edge', label: 'Connect Items', icon: Link, color: 'text-cyan-500 bg-cyan-500/10', description: 'Link two blocks together with a relationship edge' },
+      { nodeType: 'action', stepType: 'search_blocks', label: 'Search / Filter', icon: Filter, color: 'text-cyan-500 bg-cyan-500/10', description: 'Find blocks by type, name, or metadata criteria' },
+    ],
+  },
+  {
+    category: 'Human Interaction',
+    items: [
+      { nodeType: 'task', stepType: 'generate_task', label: 'Approval Request', icon: UserCheck, color: 'text-violet-500 bg-violet-500/10', description: 'Create an approval task that pauses the workflow until reviewed' },
+      { nodeType: 'action', stepType: 'send_notification', label: 'Send Notification', icon: Bell, color: 'text-violet-500 bg-violet-500/10', description: 'Push a notification to specific users or the whole org' },
+      { nodeType: 'action', stepType: 'create_shared_link', label: 'Create Portal Link', icon: Share2, color: 'text-violet-500 bg-violet-500/10', description: 'Generate a secure shared link for external client access' },
+    ],
+  },
+  {
+    category: 'AI & Analysis',
+    items: [
+      { nodeType: 'action', stepType: 'ai_analysis', label: 'AI Analysis', icon: Brain, color: 'text-emerald-500 bg-emerald-500/10', description: 'Run structured AI analysis on block data using Claude' },
+      { nodeType: 'action', stepType: 'ai_classify', label: 'Classify / Route', icon: Tags, color: 'text-emerald-500 bg-emerald-500/10', description: 'Classify a block into categories with confidence scoring' },
+      { nodeType: 'action', stepType: 'ai_summarize', label: 'Summarize', icon: FileBarChart, color: 'text-emerald-500 bg-emerald-500/10', description: 'Generate an executive summary of block data and events' },
+      { nodeType: 'action', stepType: 'ai_risk_assessment', label: 'Risk Assessment', icon: ShieldAlert, color: 'text-emerald-500 bg-emerald-500/10', description: 'Perform policy-aware risk scoring with mitigations' },
+    ],
+  },
+  {
+    category: 'External',
+    items: [
+      { nodeType: 'action', stepType: 'call_api', label: 'Webhook Send', icon: Send, color: 'text-rose-500 bg-rose-500/10', description: 'Send data to an external webhook URL' },
+      { nodeType: 'action', stepType: 'store_file', label: 'Store File', icon: Upload, color: 'text-rose-500 bg-rose-500/10', description: 'Upload a file to cloud storage' },
+      { nodeType: 'action', stepType: 'call_api', label: 'Update CRM', icon: Database, color: 'text-rose-500 bg-rose-500/10', description: 'Push data to your connected CRM (e.g. Salesforce)' },
+      { nodeType: 'action', stepType: 'call_api', label: 'Create Invoice', icon: Receipt, color: 'text-rose-500 bg-rose-500/10', description: 'Create an invoice in your accounting system (e.g. Xero)' },
     ],
   },
   {

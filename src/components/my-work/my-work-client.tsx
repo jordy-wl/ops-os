@@ -2,8 +2,11 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ClipboardList, GitBranch, LayoutGrid, Activity, ArrowRight, Circle } from 'lucide-react'
+import { ClipboardList, GitBranch, LayoutGrid, Activity, ArrowRight, Circle, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { PriorityBadge } from './priority-badge'
+import { DeadlineCountdown } from './deadline-countdown'
+import { ConfidenceScore } from './confidence-score'
 import type { MyWorkData, MyWorkTask, MyWorkWorkflow, MyWorkBlock, MyWorkEvent } from '@/app/(app)/my-work/page'
 
 interface MyWorkClientProps {
@@ -48,7 +51,22 @@ const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
 function TaskRows({ tasks, currentUserId }: { tasks: MyWorkTask[]; currentUserId: string }) {
   const myTasks = tasks.filter((t) => t.assigned_to === currentUserId || t.status === 'open')
 
-  if (myTasks.length === 0) {
+  // Sort by priority (urgent first), then by deadline (earliest first)
+  const sortedTasks = [...myTasks].sort((a, b) => {
+    const priorityOrder: Record<string, number> = { urgent: 0, high: 1, medium: 2, low: 3 }
+    const aPri = priorityOrder[(a as unknown as Record<string, unknown>).priority as string] ?? 2
+    const bPri = priorityOrder[(b as unknown as Record<string, unknown>).priority as string] ?? 2
+    if (aPri !== bPri) return aPri - bPri
+    // Then by deadline
+    const aDl = (a as unknown as Record<string, unknown>).deadline as string | undefined
+    const bDl = (b as unknown as Record<string, unknown>).deadline as string | undefined
+    if (aDl && bDl) return new Date(aDl).getTime() - new Date(bDl).getTime()
+    if (aDl) return -1
+    if (bDl) return 1
+    return 0
+  })
+
+  if (sortedTasks.length === 0) {
     return (
       <div className="text-center py-10 text-[13px] text-muted-foreground">
         No open tasks. You&apos;re all caught up!
@@ -58,40 +76,61 @@ function TaskRows({ tasks, currentUserId }: { tasks: MyWorkTask[]; currentUserId
 
   return (
     <div className="divide-y divide-border">
-      {myTasks.slice(0, 12).map((task) => (
-        <Link
-          key={task.id}
-          href="/tasks"
-          className="flex items-center gap-3 px-3 py-2.5 hover:bg-muted/50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
-        >
-          <ClipboardList className="h-4 w-4 text-muted-foreground shrink-0" aria-hidden="true" />
-          <span className="text-[13px] font-medium text-foreground truncate flex-1 min-w-0">
-            {task.name}
-          </span>
-          <span
-            className={cn(
-              'shrink-0 inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium capitalize',
-              STATUS_STYLES[task.status] ?? STATUS_STYLES.open
-            )}
+      {sortedTasks.slice(0, 12).map((task) => {
+        const taskExtra = task as unknown as Record<string, unknown>
+        const priority = taskExtra.priority as string | undefined
+        const deadline = taskExtra.deadline as string | undefined
+        const confidence = taskExtra.ai_confidence as number | undefined
+        const aiSuggestion = taskExtra.ai_suggestion as string | undefined
+
+        return (
+          <Link
+            key={task.id}
+            href="/tasks"
+            className="flex items-center gap-2 px-3 py-2.5 hover:bg-muted/50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
           >
-            {task.status}
-          </span>
-          {task.workflow_instance_name && (
-            <span className="shrink-0 text-[12px] text-muted-foreground truncate max-w-[120px] hidden sm:inline">
-              {task.workflow_instance_name}
+            <ClipboardList className="h-4 w-4 text-muted-foreground shrink-0" aria-hidden="true" />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-[13px] font-medium text-foreground truncate">
+                  {task.name}
+                </span>
+                {priority && <PriorityBadge priority={priority} />}
+              </div>
+              {aiSuggestion && (
+                <div className="flex items-center gap-1 mt-0.5">
+                  <Sparkles className="h-3 w-3 text-primary shrink-0" />
+                  <span className="text-[11px] text-muted-foreground truncate">{aiSuggestion}</span>
+                </div>
+              )}
+            </div>
+            {deadline && <DeadlineCountdown deadline={deadline} />}
+            {confidence != null && <ConfidenceScore score={confidence} />}
+            <span
+              className={cn(
+                'shrink-0 inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium capitalize',
+                STATUS_STYLES[task.status] ?? STATUS_STYLES.open
+              )}
+            >
+              {task.status}
             </span>
-          )}
-          <span className="shrink-0 text-[12px] text-muted-foreground tabular-nums">
-            {formatRelative(task.created_at)}
-          </span>
-        </Link>
-      ))}
-      {myTasks.length > 12 && (
+            {task.workflow_instance_name && (
+              <span className="shrink-0 text-[12px] text-muted-foreground truncate max-w-[120px] hidden sm:inline">
+                {task.workflow_instance_name}
+              </span>
+            )}
+            <span className="shrink-0 text-[12px] text-muted-foreground tabular-nums">
+              {formatRelative(task.created_at)}
+            </span>
+          </Link>
+        )
+      })}
+      {sortedTasks.length > 12 && (
         <Link
           href="/tasks"
           className="flex items-center justify-center gap-1 py-2.5 text-[12px] text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
         >
-          View all {myTasks.length} tasks <ArrowRight className="h-3 w-3" />
+          View all {sortedTasks.length} tasks <ArrowRight className="h-3 w-3" />
         </Link>
       )}
     </div>

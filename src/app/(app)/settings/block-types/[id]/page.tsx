@@ -5,6 +5,7 @@ import { resolveOrgId } from '@/lib/auth/resolve-org'
 import { PageContainer } from '@/components/shell/page-container'
 import { PageHeader } from '@/components/shell/page-header'
 import { FieldManager } from '@/components/settings/field-manager'
+import { DeleteBlockType } from '@/components/settings/delete-block-type'
 
 interface BlockTypeDetailPageProps {
   params: Promise<{ id: string }>
@@ -70,6 +71,12 @@ export default async function BlockTypeDetailPage({ params }: BlockTypeDetailPag
           type_name: t.type_name as string,
           display_name: t.display_name as string,
         }))}
+      />
+
+      <DeleteBlockType
+        blockTypeId={typeDef.id}
+        blockTypeName={typeDef.type_name}
+        isSystem={typeDef.is_system}
       />
     </PageContainer>
   )

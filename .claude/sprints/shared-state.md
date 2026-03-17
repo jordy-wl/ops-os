@@ -8,10 +8,10 @@
 
 ## Current Phase and Sprint
 
-**Phase:** 4 — Workflow Engine V2, Client Portal, Chat Panel
-**Phase Status:** CODE COMPLETE. All 4 sprints done (42/42 tasks, 100%).
-**Sprint:** 12 — Chat Panel V2 + Workflow Analytics — COMPLETE (10/10)
-**Previous:** Sprint 11 (10/10), Sprint 10 (10/10), Sprint 9 (12/12). All DONE.
+**Phase:** 5 — Org Intelligence + Workflow Power-Up — **CODE COMPLETE**
+**Phase Status:** COMPLETE. All 5 sprints done (48/48 tasks). Ready for Phase 6.
+**Sprint:** 17 — My Work V2 + Delta-Chat + Fixes — **COMPLETE** (9/9)
+**Previous:** Sprint 16 complete (10/10). Sprint 15 complete (10/10). Sprint 14 complete (11/11). Sprint 13 complete (10/10). Phase 4 complete (42/42). Phase 3 complete (70/70). Phase 2 complete (86/88).
 
 ---
 
@@ -19,9 +19,9 @@
 
 | Task ID | Title | Role | Status | Last Updated |
 |---------|-------|------|--------|-------------|
-| (none — Phase 4 code complete) | | | | |
+| (none — Phase 5 complete, Phase 6 not yet started) | | | | |
 
-**Phase 4 Final Metrics:** 42/42 tasks (100%), 4 sprints, 22 features, 1230 tests passing. Build + lint clean.
+**Phase 6 Plan:** 35 tasks across 4 sprints (S18–S21). Time tracking, calendar integration, performance metrics, infrastructure research.
 
 ---
 
@@ -45,10 +45,9 @@
 
 | Date | Author | Note |
 |------|--------|------|
-| 2026-03-13 | ORCHESTRATOR | **PHASE 4 CODE COMPLETE** — 42/42 tasks, 1230 tests, 4 sprints. 22 features across 7 groups: Workflow Builder UX (entity-aware config, task nodes, undo/redo, glassmorphism canvas, palette search, auto events, external triggers), Client Portal (shared links, public forms, e-signature, form submissions), Document Gen V3 (docxtemplater .docx, Google Docs push, doc→sign flow), Custom Actions (save/reuse, auto-register from integrations), Inter-Workflow (sub-workflow node), Chat Panel V2 (history persistence, expandable panel, bigger icon, auto-save), Workflow Analytics (metrics dashboard, AI optimization suggestions). |
-| 2026-03-13 | ORCHESTRATOR | **Sprint 12 retro complete** — 10/10 tasks, 100%. 0 blockers, 0 new signals. 1230 tests. MCP: 1 migration applied (conversations + conversation_messages). Phase 4 exit conditions: all MET. Gate evidence in `.claude/sprints/phase-4/gate-results.md`. Retro notes in `.claude/sprints/phase-4/retro-notes.md`. |
-| 2026-03-12 | ORCHESTRATOR | **PHASE 3 CODE COMPLETE** — 70/70 tasks, 1230 tests, 8 sprints. Deliverables: custom RBAC (10 permissions, 3 system roles, custom roles), routing engine (human/agent/auto, policy-based, 6-level priority), AI delta engine (gap analysis, insights, auto tasks), document gen V2 (reference templates, context-aware, versioning), workflow canvas I/O nodes + data flow, block configurability (field groups, AI suggestions, inline manager), admin settings (10 sections), org overview page, API key management, notification system, audit log. |
-| 2026-03-12 | ORCHESTRATOR | **Phase 3 → Phase 4 transition needed.** All code built. Next: user testing of Phase 3 features, design direction for Phase 4 block-specific layouts, design partner onboarding planning. |
+| 2026-03-15 | ORCHESTRATOR | **PHASE 5 CODE COMPLETE** — 48/48 tasks, 1414 tests, 5 sprints (S13–S17). Deliverables: Org page 5-tab layout (Overview/Revenue/Strategy/Offerings/Team), revenue forecast API (deal pipeline + solution pricing + product/service pricing), SWOT Analysis + Value Proposition block types with AI generation, interactive SWOT editor + value prop editor, custom block type creation + deletion UI, step engine refactored to handler registry (20 handlers), 9 new step handlers (create_edge, search_blocks, send_notification, create_shared_link, ai_analysis, ai_classify, ai_summarize, ai_risk_assessment, store_file), node palette expanded to 6 categories with 25+ items, delta engine wired to chat Execute mode (calculate_delta tool), enhanced My Work Task Inbox (priority badges, deadline countdown, AI suggestion chips, confidence scores), Google OAuth null org fallback fix, integration health check endpoint + capabilities model, block browser dynamic type seeding. |
+| 2026-03-13 | ORCHESTRATOR | **PHASE 4 CODE COMPLETE** — 42/42 tasks, 1230 tests, 4 sprints. 22 features across 7 groups: Workflow Builder UX, Client Portal, Document Gen V3, Custom Actions, Inter-Workflow, Chat Panel V2, Workflow Analytics. |
+| 2026-03-12 | ORCHESTRATOR | **PHASE 3 CODE COMPLETE** — 70/70 tasks, 1230 tests, 8 sprints. Deliverables: custom RBAC, routing engine, AI delta engine, document gen V2, workflow canvas I/O nodes, block configurability, admin settings, org overview page, API key management, notification system, audit log. |
 
 ---
 
@@ -63,35 +62,35 @@
 
 ---
 
-## Recently Completed — Sprint 12 Archive
+## Recently Completed — Sprint 17 Archive
 
-Sprint 12 (2026-03-13): 10/10 DONE (100%).
-Deliverables: Chat icon update (h-12 w-12 primary-colored with unread badge), conversations + conversation_messages tables (Supabase MCP migration with auto-update trigger), Chat history API (CRUD conversations + messages, batch insert, resume), chat history sidebar UI (time-ago labels, active highlighting, delete), expandable docked panel mode (float/panel toggle, resizable 320-600px, localStorage persistence), auto-save messages to DB (fire-and-forget after streaming), workflow metrics API (aggregates from workflow_jobs + events — runs, rates, times, daily breakdown, bottleneck steps), workflow metrics UI (stat cards, status breakdown, daily bar chart, slowest steps), AI optimization suggestions (rule-based analysis — failure rates, unused steps, slow steps, inconsistent times, missing conditions), build/lint/test pass. Test count: 1230. Build clean.
+Sprint 17 (2026-03-15): 9/9 DONE (100%).
+Deliverables: Enhanced My Work Task Inbox (priority sorting urgent→low, deadline sorting earliest→latest, PriorityBadge component with 4 levels + icons + colors, DeadlineCountdown component with overdue/urgent/warning/normal states, ConfidenceScore component with percentage color coding, AI suggestion chips with Sparkles icon), delta engine wired to chat Execute mode (calculate_delta tool in CHAT_TOOLS, dispatched via executeChatTool, fetches workflow instance + template + events, maps to DeltaInstanceMeta/DeltaStepResult types, read-only access for all roles), Google OAuth null org fix (clerkOrgId null → fallback to user's primary org via clerk.users.getOrganizationMembershipList), integration capabilities model (capabilities JSONB + health_status + last_health_check columns on integration_connectors, migration 20260315000001), integration health check endpoint (GET /api/integrations/[id]/health — webhook/custom_api URL reachability, Google token presence, default capabilities by provider, DB health_status update), block browser type seeding (seeds typeMap from all block_type_definitions first, then counts from actual blocks — ensures all 17+ types appear in filter even with 0 blocks). Test count: 1414 (+70). Build clean.
 
-## Recently Completed — Sprint 11 Archive
+## Recently Completed — Sprint 16 Archive
 
-Sprint 11 (2026-03-13): 10/10 DONE (100%).
-Deliverables: docxtemplater + pizzip deps installed, docx-generator.ts (template-based .docx generation with {tag} extraction and filling from block data + brand kit), google-docs.ts (Google Docs push — create doc, fill content, share with emails), .docx template upload UI with tag extraction preview (detected {tags} shown as pills), DOCX generation API route (POST /api/documents/docx/generate — downloads generated .docx), Google Docs push API route (POST /api/documents/google-docs), document → share → sign flow (share-for-signature button on document list, creates sign-type shared link), custom_action block type + save/edit dialog, custom actions API (GET/POST /api/custom-actions), custom actions loaded into node palette as "Custom Actions" category, Run Sub-Workflow node type (new step type `run_sub_workflow` with `sub_workflow_template_id` + `wait_for_completion`), auto-register integration actions on connector create (known actions per provider: xero, salesforce, custom_api). Test count: 1230. Build clean.
+Sprint 16 (2026-03-16): 10/10 DONE (100%).
+Deliverables: 4 AI step handlers (ai_analysis, ai_classify, ai_summarize, ai_risk_assessment) + store_file handler, StepSchema extended with 5 new types + AI/file config fields, node palette "AI & Analysis" + "External" categories, config panels for all AI/external nodes. Handler registry now at 20. Test count: 1344 (+30). Build clean.
 
-## Recently Completed — Sprint 10 Archive
+## Recently Completed — Sprint 15 Archive
 
-Sprint 10 (2026-03-13): 10/10 DONE (100%).
-Deliverables: shared_links + form_submissions tables (Supabase MCP), shared links CRUD API (create/list/deactivate with audit events), public route group /public/[token] (bypasses Clerk middleware, token-validated), minimal public layout (org branding from brand_kit block, no sidebar), PublicFormPage component (dynamic form fields, validation, submission), form submission API (public, no auth, token-validated), form responses viewer (expandable list on block detail), share link generation UI (modal with type/expiry selection, copy URL), signature_events table (immutable audit trail, ETA 1999 compliant), click-to-sign component (review → consent → sign flow with SHA-256 hash, IP, user agent). Test count: 1230. Lint + build clean.
+Sprint 15 (2026-03-16): 10/10 DONE (100%).
+Deliverables: Step engine refactored to handler registry (15 lazy-loaded handlers), 4 new handlers (create_edge, search_blocks, send_notification, create_shared_link), StepSchema extended, node palette "Data Operations" + "Human Interaction" categories, config panels. Test count: 1314 (+28). Build clean.
 
-## Recently Completed — Sprint 9 Archive
+## Recently Completed — Sprint 14 Archive
 
-Sprint 9 (2026-03-13): 12/12 DONE (100%).
-Deliverables: Auto event emission (step-engine emits events by default), user-friendly node labels + info tooltips, node palette search/filter, entity-aware node config (org blocks/fields as dropdowns), Generate/Route Task node (new violet node type, task_form_schema config panel, dynamic task card renderer, AI form defaults with fallback), undo/redo (Cmd+Z/Cmd+Shift+Z canvas history), canvas visual refresh (dark gradient bg, glassmorphism nodes), external API trigger endpoint (POST /api/webhooks/trigger/{templateId}), Output node simplification. Test count: 1230. Lint + build clean.
+Sprint 14 (2026-03-15): 11/11 DONE (100%).
+Deliverables: SWOT + Value Proposition block types, Strategy tab, interactive editors, dynamic block type browser, create/delete block type UI, AI SWOT + value prop generation. Test count: 1286. Build clean.
 
-## Recently Completed — Sprint 8 Archive
+## Recently Completed — Sprint 13 Archive
 
-Sprint 8 (2026-03-12): 9/9 DONE (100%).
-Deliverables: Settings page restructure, routing policy config, API key management, org overview page, notification preferences, audit log viewer, cross-cutting integration tests. MCP: 1 migration applied (api_keys table). Test count: 1230 (+156). Lint + build clean.
+Sprint 13 (2026-03-15): 10/10 DONE (100%).
+Deliverables: Org page 5-tab layout, Revenue forecast API, Solution/Product/Service type enrichment, Overview/Team/Offerings tabs wired. Test count: 1254. Build clean.
 
-## Recently Completed — Sprints 1-7 Archive
+## Recently Completed — Sprints 8-12 Archive
 
-Sprint 7 (8/8), Sprint 6 (8/8), Sprint 5 (9/9), Sprint 4 (8/8), Sprint 3 (8/8), Sprint 2 (7/7), Sprint 1 (6/6). Full details in `shared-state-history.md`.
+Sprint 12 (10/10), Sprint 11 (10/10), Sprint 10 (10/10), Sprint 9 (12/12), Sprint 8 (9/9). Full details in `shared-state-history.md`.
 
 ## Earlier Sprints
 
-Phase 2 Sprints 1–16 complete. Phase 3 Sprint 0 complete. Full details in `shared-state-history.md`.
+Phase 2 Sprints 1–16 complete. Phase 3 Sprints 1-7 complete. Full details in `shared-state-history.md`.
