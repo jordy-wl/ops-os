@@ -2,6 +2,7 @@ import type Anthropic from '@anthropic-ai/sdk'
 import { createServerClient } from '@/lib/supabase/server'
 import { logger } from '@/lib/logger'
 import { checkForDuplicates } from '@/lib/ai/research-tools'
+import { embedBlock } from '@/lib/embeddings'
 import { validateFieldsAgainstSchema, getBlockTypeSchemas } from '@/lib/ai/entity-creation'
 import { suggestFields, type SuggestionContext } from '@/lib/ai/field-suggestion'
 import { FIELD_TYPE_DEFINITIONS, isValidFieldType, getFieldGroups } from '@/lib/block-types/field-types'
@@ -499,6 +500,12 @@ async function executeCreateBlock(
     payload: { name, block_type: type, field_count: Object.keys(validatedMetadata).length },
   })
 
+  // Fire-and-forget: embed the new block for semantic search
+  embedBlock(
+    { id: data.id, org_id: orgId, type, name, metadata: validatedMetadata as Record<string, unknown> },
+    supabase
+  ).catch(() => {})
+
   return {
     success: true,
     data: {
@@ -552,6 +559,27 @@ async function executeUpdateBlock(
     actor_id: 'system',
     payload: { updated_fields: Object.keys(fields) },
   })
+
+  // Fire-and-forget: re-embed the updated block
+  // Fetch the full block for embedding content
+  const { data: updatedBlock } = await supabase
+    .from('blocks')
+    .select('id, org_id, type, name, metadata')
+    .eq('id', blockId)
+    .single()
+
+  if (updatedBlock) {
+    embedBlock(
+      {
+        id: updatedBlock.id,
+        org_id: updatedBlock.org_id as string,
+        type: updatedBlock.type as string,
+        name: updatedBlock.name as string,
+        metadata: (updatedBlock.metadata ?? {}) as Record<string, unknown>,
+      },
+      supabase
+    ).catch(() => {})
+  }
 
   return { success: true, data: { block_id: blockId, updated_fields: Object.keys(fields) } }
 }

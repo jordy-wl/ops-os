@@ -14,8 +14,8 @@
 | 2 | Composable Blocks, Visual Builder & Integrations | COMPLETE (code) | Sprint 16 | CODE DONE — usage validation re-scoped as P3 milestones |
 | 3 | Platform Evolution: RBAC, Routing, Delta AI, Doc Gen V2 | COMPLETE (code) | Sprint 8 | CODE DONE — usage validation pending |
 | 4 | Workflow Engine V2, Client Portal, Chat V2, Analytics | COMPLETE (code) | Sprint 12 | CODE DONE — usage validation pending |
-| 5 | Org Intelligence + Workflow Power-Up | ACTIVE | Sprint 13 | — |
-| 6 | Productivity Suite + Infrastructure Planning | FUTURE | — | — |
+| 5 | Org Intelligence + Workflow Power-Up | COMPLETE (code) | Sprint 17 | CODE DONE — usage validation pending |
+| 6 | Productivity Suite + Infrastructure Planning + Workflow Builder UX | ACTIVE | Sprint 23 | Core code complete (S18–S21); Workflow Builder UX Redesign in progress (S22–S23) |
 | 7 | Enterprise, Scale & Compliance | FUTURE | — | — |
 
 ---
@@ -229,7 +229,7 @@ If exit condition is NOT met after 12 weeks:
 
 ## Phase 5: Org Intelligence + Workflow Power-Up
 
-**Status:** ACTIVE
+**Status:** COMPLETE (code)
 **Target:** Q1 2026 (5 sprints, Sprints 13–17)
 **Active Roles:** Backend Engineer, Frontend Engineer, AI/ML Engineer, QA Engineer
 
@@ -256,17 +256,19 @@ If exit condition is NOT met after 12 weeks:
 5. All 17+ block types visible in browser/library/create modal
 
 **Sprints in This Phase:**
-- Sprint 13: Org Page Tabs + Revenue Forecasting (10 tasks) — **IN PROGRESS**
-- Sprint 14: Strategy Block Types + Block Browser Fix (9 tasks) — PLANNED
-- Sprint 15: Workflow Nodes: Data Ops + Human Interaction (10 tasks) — PLANNED
-- Sprint 16: Workflow Nodes: AI + External (10 tasks) — PLANNED
-- Sprint 17: My Work V2 + Delta-Chat + Fixes + Polish (9 tasks) — PLANNED
+- Sprint 13: Org Page Tabs + Revenue Forecasting (10 tasks) — **COMPLETE** (10/10 DONE, 100%. 2026-03-15)
+- Sprint 14: Strategy Block Types + Block Browser Fix (11 tasks) — **COMPLETE** (11/11 DONE, 100%. 2026-03-15)
+- Sprint 15: Workflow Nodes: Data Ops + Human Interaction (10 tasks) — **COMPLETE** (10/10 DONE, 100%. 2026-03-16)
+- Sprint 16: Workflow Nodes: AI + External (10 tasks) — **COMPLETE** (10/10 DONE, 100%. 2026-03-16)
+- Sprint 17: My Work V2 + Delta-Chat + Fixes + Polish (9 tasks) — **COMPLETE** (9/9 DONE, 100%. 2026-03-15)
+
+**Phase 5 Status:** CODE COMPLETE. 48/48 tasks done across 5 sprints (100%). 1414 tests passing. All features built, tested, committed.
 
 ---
 
 ## Phase 6: Productivity Suite + Infrastructure Planning
 
-**Status:** FUTURE
+**Status:** COMPLETE (code)
 **Target:** Q2 2026 (4 sprints, Sprints 18–21)
 **Active Roles:** Backend Engineer, Frontend Engineer, AI/ML Engineer, QA Engineer, Researcher
 
@@ -289,10 +291,68 @@ If exit condition is NOT met after 12 weeks:
 5. All UI at all 4 breakpoints passes review
 
 **Sprints in This Phase:**
-- Sprint 18: Time Tracking + Timebox (9 tasks) — PLANNED
-- Sprint 19: Calendar Integration (9 tasks) — PLANNED
-- Sprint 20: Performance Metrics (8 tasks) — PLANNED
-- Sprint 21: Infrastructure Research + Final Polish (8 tasks) — PLANNED
+- Sprint 18: Time Tracking + Timebox (9 tasks) — **COMPLETE** (9/9 DONE, 100%. 2026-03-17)
+- Sprint 19: Calendar Integration (9 tasks) — **COMPLETE** (9/9 DONE, 100%. 2026-03-17)
+- Sprint 20: Performance Metrics (10 tasks) — **COMPLETE** (10/10 DONE, 100%. 2026-03-17)
+- Sprint 21: Infrastructure Research + Final Polish (9 tasks) — **COMPLETE** (9/9 DONE, 100%. 2026-03-17)
+
+**Phase 6 Status (core):** CODE COMPLETE. 37/37 tasks done across 4 sprints (100%). 1689 tests passing. All features built, tested, committed. Includes post-sprint AI layer deep-dive (2026-03-18): 6 improvements to context assembly, delta injection, discuss/plan mode interactivity, block embeddings, and AI suggestions panel.
+
+### Workflow Builder UX Redesign (Sprints 22–23)
+
+**Motivation:** The workflow builder has 25+ functional nodes but the config UX is built for developers, not business users. The 1,697-line monolith `node-config-panel.tsx` exposed technical fields (snake_case names, raw template variables, connector IDs, seconds-based durations) and lacked entity-driven dropdowns. Design partners need: **dropdown before free text, select from existing entities, minimal technical terminology, context-aware auto-fill.**
+
+**Key design decisions:**
+- Every node is context-aware of the source record type (e.g., Send Email auto-fills client's email)
+- Variable picker (`{{block.field}}`) is the PRIMARY input method for entity-referenced fields
+- AI nodes use template-first approach (14 built-in templates across 4 node types)
+- Schedule trigger uses presets + custom (no cron syntax)
+- Conditions use progressive disclosure (simple → compound → advanced)
+- External actions consolidated into single connector-driven node with templates
+- For Each node for batch processing (new)
+- Route node for multi-branch routing (new)
+- Workflow completion config (restart/chain) replaces loop nodes
+
+**Final palette: 27 nodes across 8 categories:**
+- Triggers (4): Manual, Event, Webhook, Schedule
+- Actions (6): Log Event, Send Email, Generate Document, Book Meeting, Update Record, Create Task
+- Data Operations (4): Create Record, Change Status, Link Records, Search/Filter
+- Human Interaction (3): Approval Request, Send Notification, Share Link
+- AI & Analysis (4): AI Analysis, Classify/Route, Summarise, Risk Assessment
+- External (1): External Action (connector-driven templates)
+- Conditions (2): If/Else, Route
+- Flow (3): Wait/Delay, Run Sub-Workflow, For Each
+
+**Sprints in Workflow Builder UX Redesign:**
+- Sprint 22: Foundation — Architecture Decomposition (8 tasks) — **COMPLETE** (8/8 DONE, 100%. 2026-03-18)
+- Sprint 23: Per-Node Improvements (15 tasks) — **PLANNED**
+
+**Sprint 22 deliverables:**
+- A1: Shared form primitives (`panels/shared/form-primitives.tsx`) — FieldLabel, TextInput, TextArea, SelectInput, NumberInput, EntitySelect, CheckboxInput
+- A2: Routing section (`panels/shared/routing-section.tsx`) — reusable routing mode + permission config
+- A3: Per-node config decomposition — 8 components in `panels/configs/`: TriggerConfig, ActionConfig (723 lines, handles all 16 action types), ConditionConfig, WaitConfig, InputConfig, OutputConfig, TaskConfig, StepInstructionsPanel. Barrel export via `configs/index.ts`. Main `node-config-panel.tsx` reduced from 1,697 to ~90 lines.
+- A4: Duration picker (`panels/shared/duration-picker.tsx`) — amount + unit → seconds conversion, human-readable summary
+- A5: Condition builder (`panels/shared/condition-builder.tsx`) — simple/compound/advanced modes, 8 operators, AND/OR logic, mode switching with data preservation
+- A6: Variable picker (`panels/shared/variable-picker.tsx`) — VariablePickerButton (dropdown with search), VariablePickerInput (text input with inline picker), cursor-position insertion
+- A7: Schedule config (`panels/shared/schedule-config.tsx`) — 6 presets, conditional fields per preset, timezone selector, human-readable summary, no cron syntax
+- A8: AI template picker (`panels/shared/ai-template-picker.tsx`) + template data (`lib/workflow/ai-prompt-templates.ts`) — 14 templates across 4 AI node types, tag-style category inputs, output format toggle, save destination selector
+
+**Sprint 23 planned tasks (Phase B):**
+- B1: Trigger configs — event dropdown with scoping, schedule config integration, webhook full config
+- B2: Node label renames — palette items + config panel labels to user-friendly names
+- B3: Route node — new node component, config panel, backend handler, schema, canvas layout
+- B4: AI template integration — wire AI template picker into all 4 AI node configs
+- B5: External action consolidation — single palette item + connector-driven templates
+- B6: Data operations abstraction — domain language, smart defaults, auto-link, lifecycle stages
+- B7: Human interaction — approval preset, multi-channel notifications, share link, task attachments
+- B8: Wait/Delay — duration picker integration
+- B9: Sub-workflow preview — workflow template dropdown + mini step preview
+- B10: Variable picker integration — wire across all config components
+- B11: For Each node — new node component, config panel, backend handler
+- B12: Workflow completion config — settings panel with restart/chain options
+- B13: Context-aware auto-fill — smart defaults for Send Email, Book Meeting, etc.
+- B14: External action test + preview — test button with request preview
+- B15: Condition handler implementation — replace stub with real expression evaluator
 
 ---
 

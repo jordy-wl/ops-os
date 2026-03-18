@@ -5,6 +5,9 @@
 | chat-system | v1 | 2026-03-02 | AI-ML-ENGINEER | Pending eval | Initial version — Sprint 1. Establishes tone (operational, not chatbot), action-naming convention, and human-approval requirement. |
 | delta-insights | v1 | 2026-03-12 | AI-ML-ENGINEER | 22/22 (100%) | Initial version — Sprint 7. Generates 4-section insights (whatsDone, whatsNext, whatsAtRisk, recommendations) from delta analysis. |
 | delta-chat-context | v1 | 2026-03-12 | AI-ML-ENGINEER | 15/15 (100%) | Initial version — Sprint 7. Delta-aware chat context instructions: how to interpret WORKFLOW DELTA sections, available actions (reassign_step, extend_deadline), response guidelines. |
+| chat-discuss-mode | v2 | 2026-03-18 | AI-ML-ENGINEER | Pending eval | Adds user context awareness, delta reasoning instructions, and `<SUGGESTIONS>` extraction block for actionable chips. |
+| chat-plan-mode | v2 | 2026-03-18 | AI-ML-ENGINEER | Pending eval | Adds user context awareness, delta-informed planning, qualifying questions, and `<PLAN_JSON>` structured output for interactive accept/reject/modify UI. |
+| block-suggestions | v1 | 2026-03-18 | AI-ML-ENGINEER | Pending eval | Block-type-specific AI suggestion generation. Returns typed suggestions (action/insight/risk/next_step) with priority levels. |
 
 ## Eval Notes
 

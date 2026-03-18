@@ -11,6 +11,7 @@ import { ConnectedBlocksPanel } from '@/components/blocks/connected-blocks-panel
 import { ActionMenu } from '@/components/actions/action-menu'
 import { BlockDocumentsSection } from '@/components/documents/block-documents-section'
 import { InsightsPanel } from '@/components/blocks/insights-panel'
+import { BlockSuggestionsPanel } from '@/components/blocks/block-suggestions-panel'
 import { InlineFieldManagerWrapper } from '@/components/blocks/inline-field-manager-wrapper'
 import { FormSubmissionsPanel } from '@/components/blocks/form-submissions-panel'
 import { ShareLinkButton } from '@/components/blocks/share-link-dialog'
@@ -213,6 +214,11 @@ export default async function BlockDetailPage({ params }: Props) {
           {/* AI Insights panel — workflow_instance blocks only */}
           {block.type === 'workflow_instance' && (
             <InsightsPanel blockId={block.id} />
+          )}
+
+          {/* AI Suggestions panel — all non-workflow block types */}
+          {block.type !== 'workflow_instance' && block.type !== 'workflow_template' && (
+            <BlockSuggestionsPanel blockId={block.id} blockType={block.type} />
           )}
 
           <div className="rounded-md border border-border bg-card p-4">

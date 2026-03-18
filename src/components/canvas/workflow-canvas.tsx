@@ -24,6 +24,8 @@ import { WaitNode } from './nodes/wait-node'
 import { InputNode } from './nodes/input-node'
 import { OutputNode } from './nodes/output-node'
 import { TaskNode } from './nodes/task-node'
+import { RouteNode } from './nodes/route-node'
+import { ForEachNode } from './nodes/for-each-node'
 import { DataFlowEdge } from './edges/data-flow-edge'
 import { Undo2, Redo2 } from 'lucide-react'
 import { NodePalette, type PaletteItem } from './node-palette'
@@ -40,6 +42,8 @@ const nodeTypes = {
   input: InputNode,
   output: OutputNode,
   task: TaskNode,
+  route: RouteNode,
+  foreach: ForEachNode,
 }
 
 const edgeTypes = {
@@ -148,7 +152,11 @@ export function WorkflowCanvas({ initialLayout, templateName, onSave, saving }: 
                 ? 'output'
                 : item.nodeType === 'task'
                   ? 'generate_task'
-                  : item.stepType ?? 'emit_event'
+                  : item.nodeType === 'route'
+                    ? 'route'
+                    : item.nodeType === 'foreach'
+                      ? 'for_each'
+                      : item.stepType ?? 'emit_event'
 
       const defaultStepName = `${defaultStepType}_${Date.now()}`
 
@@ -161,7 +169,11 @@ export function WorkflowCanvas({ initialLayout, templateName, onSave, saving }: 
               ? { output_type: 'update_fields', field_mappings: [] }
               : item.nodeType === 'task'
                 ? { task_form_schema: { title: '', fields: [], actions: [] }, task_assign_to: 'routing_engine', task_priority: 'medium' }
-                : {}
+                : item.nodeType === 'route'
+                  ? { route_field: '', route_branches: [], route_default_label: 'Default' }
+                  : item.nodeType === 'foreach'
+                    ? { for_each_source: '', for_each_max_parallel: 1, for_each_max_iterations: 100 }
+                    : {}
 
       const newNode: Node = {
         id,

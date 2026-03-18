@@ -34,6 +34,13 @@ export type Org = {
   created_at: string
 }
 
+export type UserTaskSummary = {
+  id: string
+  name: string
+  priority: string
+  status: string
+}
+
 export type ContextObject = {
   block: Block | null
   events: Event[]          // chronologically recent events
@@ -41,6 +48,9 @@ export type ContextObject = {
   neighbours: Block[]
   org: Org | null
   userRole: string
+  userPermissions?: string[]
+  userTasks?: UserTaskSummary[]
+  userRecentActivity?: string[]
   orgSummary?: string      // org-level factual summary (block counts, active workflows, recent events)
   graphContext?: string     // block-level relationship summary (neighbour names+types with direction)
   deltaContext?: string     // workflow delta summary (only for workflow_instance blocks)
@@ -61,21 +71,27 @@ const EMBEDDING_MODEL = 'text-embedding-3-small'
 
 // ─── Semantic Search Helpers ──────────────────────────────────────────────────
 
+type SemanticResults = {
+  eventIds: string[]
+  blockIds: string[]
+}
+
 /**
- * fetchSemanticEventIds — embeds a query string and returns IDs of the most
- * semantically similar events in the org via the match_embeddings() RPC.
+ * fetchSemanticResults — embeds a query string and returns IDs of the most
+ * semantically similar events and blocks in the org via the match_embeddings() RPC.
  *
- * Always returns an array (empty on any failure) — never throws.
- * Failures are logged at warn level so degraded search is detectable.
+ * Always returns an object with empty arrays on failure — never throws.
  */
-async function fetchSemanticEventIds(
+async function fetchSemanticResults(
   query: string,
   orgId: string,
   supabase: ReturnType<typeof createServerClient>
-): Promise<string[]> {
+): Promise<SemanticResults> {
+  const empty: SemanticResults = { eventIds: [], blockIds: [] }
+
   if (!process.env.OPENAI_API_KEY) {
     logger.warn('context-assembly', 'semantic.openai_key_missing', { org_id: orgId })
-    return []
+    return empty
   }
 
   let queryEmbedding: number[]
@@ -91,12 +107,13 @@ async function fetchSemanticEventIds(
       org_id: orgId,
       error: (err as Error).message?.slice(0, 100),
     })
-    return []
+    return empty
   }
 
+  // Request more results to cover both types
   const { data, error } = await supabase.rpc('match_embeddings', {
     query_embedding: queryEmbedding,
-    match_count: MAX_SEMANTIC_EVENTS,
+    match_count: MAX_SEMANTIC_EVENTS + 3, // extra for block results
     filter_org_id: orgId,
   })
 
@@ -105,42 +122,68 @@ async function fetchSemanticEventIds(
       org_id: orgId,
       error_code: error.code,
     })
-    return []
+    return empty
   }
 
-  // Filter to event-type embeddings only; source_id is the events.id FK
-  return (data ?? [])
-    .filter((row: { source_type: string }) => row.source_type === 'event')
-    .map((row: { source_id: string }) => row.source_id)
+  const rows = (data ?? []) as Array<{ source_type: string; source_id: string }>
+  return {
+    eventIds: rows
+      .filter((r) => r.source_type === 'event')
+      .slice(0, MAX_SEMANTIC_EVENTS)
+      .map((r) => r.source_id),
+    blockIds: rows
+      .filter((r) => r.source_type === 'block')
+      .slice(0, 3)
+      .map((r) => r.source_id),
+  }
+}
+
+type SemanticEnrichment = {
+  relevantEvents: Event[]
+  relevantBlocks: Block[]
 }
 
 /**
- * fetchRelevantEvents — given a query, fetches semantically similar events
- * that are NOT already present in the provided recentEvents list.
+ * fetchSemanticEnrichment — given a query, fetches semantically similar events
+ * and blocks that are NOT already present in the provided context.
  *
- * Always returns an array — never throws.
+ * Always returns an object with empty arrays — never throws.
  */
-async function fetchRelevantEvents(
+async function fetchSemanticEnrichment(
   query: string,
   orgId: string,
   recentEvents: Event[],
+  neighbours: Block[],
   supabase: ReturnType<typeof createServerClient>
-): Promise<Event[]> {
-  const semanticIds = await fetchSemanticEventIds(query, orgId, supabase)
-  if (semanticIds.length === 0) return []
+): Promise<SemanticEnrichment> {
+  const results = await fetchSemanticResults(query, orgId, supabase)
+  const enrichment: SemanticEnrichment = { relevantEvents: [], relevantBlocks: [] }
 
-  // Deduplicate: exclude events already in the recency list
-  const recentSet = new Set(recentEvents.map((e) => e.id))
-  const newIds = semanticIds.filter((id) => !recentSet.has(id))
-  if (newIds.length === 0) return []
+  // Deduplicate events: exclude those already in the recency list
+  const recentEventSet = new Set(recentEvents.map((e) => e.id))
+  const newEventIds = results.eventIds.filter((id) => !recentEventSet.has(id))
+  if (newEventIds.length > 0) {
+    const { data: semEvents } = await supabase
+      .from('events')
+      .select('*')
+      .in('id', newEventIds)
+      .eq('org_id', orgId)
+    enrichment.relevantEvents = (semEvents as Event[]) ?? []
+  }
 
-  const { data: semEvents } = await supabase
-    .from('events')
-    .select('*')
-    .in('id', newIds)
-    .eq('org_id', orgId)
+  // Deduplicate blocks: exclude those already in neighbours
+  const neighbourSet = new Set(neighbours.map((b) => b.id))
+  const newBlockIds = results.blockIds.filter((id) => !neighbourSet.has(id))
+  if (newBlockIds.length > 0) {
+    const { data: semBlocks } = await supabase
+      .from('blocks')
+      .select('*')
+      .in('id', newBlockIds)
+      .eq('org_id', orgId)
+    enrichment.relevantBlocks = (semBlocks as Block[]) ?? []
+  }
 
-  return (semEvents as Event[]) ?? []
+  return enrichment
 }
 
 // ─── Context Assembly ─────────────────────────────────────────────────────────
@@ -162,9 +205,9 @@ async function fetchRelevantEvents(
 export async function assembleContext(
   blockId: string | null,
   orgId: string,
-  // userId reserved for Phase 2 role resolution
-  _userId: string,
-  query?: string
+  userId: string,
+  query?: string,
+  permissions?: string[]
 ): Promise<ContextObject> {
   const supabase = createServerClient()
 
@@ -176,6 +219,58 @@ export async function assembleContext(
     .single()
 
   const recentLimit = query ? MAX_RECENT_EVENTS : MAX_CONTEXT_EVENTS
+
+  // ── User context: role, tasks, recent activity (parallel) ──────────
+  let userRole = 'member'
+  let userTasks: UserTaskSummary[] = []
+  let userRecentActivity: string[] = []
+
+  try {
+    const [roleResult, tasksResult, activityResult] = await Promise.all([
+      supabase
+        .from('user_roles')
+        .select('role')
+        .eq('org_id', orgId)
+        .eq('user_id', userId)
+        .single(),
+      supabase
+        .from('blocks')
+        .select('id, name, metadata')
+        .eq('org_id', orgId)
+        .eq('type', 'task_queue_item')
+        .or(`metadata->>assigned_to.eq.${userId},metadata->>assignee.eq.${userId}`)
+        .in('state', ['open', 'claimed', 'active'])
+        .order('created_at', { ascending: false })
+        .limit(5),
+      supabase
+        .from('events')
+        .select('type, occurred_at, payload')
+        .eq('org_id', orgId)
+        .eq('actor_id', userId)
+        .order('occurred_at', { ascending: false })
+        .limit(3),
+    ])
+
+    if (roleResult.data?.role) userRole = roleResult.data.role
+
+    userTasks = (tasksResult.data ?? []).map(
+      (t: { id: string; name: string; metadata: Record<string, unknown> }) => ({
+        id: t.id,
+        name: t.name,
+        priority: (t.metadata?.priority as string) ?? 'medium',
+        status: (t.metadata?.status as string) ?? 'open',
+      })
+    )
+
+    userRecentActivity = (activityResult.data ?? []).map(
+      (e: { type: string; occurred_at: string }) => {
+        const ago = formatTimeAgo(new Date(e.occurred_at))
+        return `${e.type} (${ago})`
+      }
+    )
+  } catch {
+    // Non-critical — fall back to defaults
+  }
 
   if (!blockId) {
     // Org-level context: recent events + org summary (parallel)
@@ -217,7 +312,8 @@ export async function assembleContext(
 
     let relevantEvents: Event[] = []
     if (query) {
-      relevantEvents = await fetchRelevantEvents(query, orgId, recentEvents, supabase)
+      const enrichment = await fetchSemanticEnrichment(query, orgId, recentEvents, [], supabase)
+      relevantEvents = enrichment.relevantEvents
     }
 
     return {
@@ -226,7 +322,10 @@ export async function assembleContext(
       relevantEvents,
       neighbours: [],
       org: org ?? null,
-      userRole: 'member',
+      userRole,
+      userPermissions: permissions,
+      userTasks,
+      userRecentActivity,
       orgSummary,
     }
   }
@@ -308,8 +407,14 @@ export async function assembleContext(
 
   // Semantic search enrichment — runs after all synchronous context is assembled
   let relevantEvents: Event[] = []
+  let semanticBlockContext: string | undefined
   if (query) {
-    relevantEvents = await fetchRelevantEvents(query, orgId, recentEvents, supabase)
+    const enrichment = await fetchSemanticEnrichment(query, orgId, recentEvents, neighbours, supabase)
+    relevantEvents = enrichment.relevantEvents
+    if (enrichment.relevantBlocks.length > 0) {
+      semanticBlockContext = 'Semantically relevant blocks: ' +
+        enrichment.relevantBlocks.map((b) => `"${b.name}" (${b.type})`).join(', ')
+    }
   }
 
   return {
@@ -318,8 +423,11 @@ export async function assembleContext(
     relevantEvents,
     neighbours,
     org: (org as Org) ?? null,
-    userRole: 'member',
-    graphContext,
+    userRole,
+    userPermissions: permissions,
+    userTasks,
+    userRecentActivity,
+    graphContext: [graphContext, semanticBlockContext].filter(Boolean).join('\n') || graphContext,
   }
 }
 
@@ -340,6 +448,21 @@ export function contextToPromptString(context: ContextObject): string {
 
   lines.push(`Org: ${org?.name ?? 'Unknown Org'}`)
   lines.push(`User role: ${userRole}`)
+
+  if (context.userPermissions && context.userPermissions.length > 0) {
+    lines.push(`User permissions: ${context.userPermissions.join(', ')}`)
+  }
+
+  if (context.userTasks && context.userTasks.length > 0) {
+    lines.push(`User's open tasks (${context.userTasks.length}):`)
+    for (const task of context.userTasks) {
+      lines.push(`  - "${task.name}" [${task.priority}] (${task.status})`)
+    }
+  }
+
+  if (context.userRecentActivity && context.userRecentActivity.length > 0) {
+    lines.push(`User's recent actions: ${context.userRecentActivity.join(', ')}`)
+  }
 
   if (context.orgSummary) {
     lines.push(context.orgSummary)
@@ -400,4 +523,17 @@ export function contextToPromptString(context: ContextObject): string {
   }
 
   return result
+}
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function formatTimeAgo(date: Date): string {
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000)
+  if (seconds < 60) return 'just now'
+  const minutes = Math.floor(seconds / 60)
+  if (minutes < 60) return `${minutes}m ago`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours}h ago`
+  const days = Math.floor(hours / 24)
+  return `${days}d ago`
 }

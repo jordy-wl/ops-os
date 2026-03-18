@@ -29,6 +29,9 @@ const HANDLER_MAP: Record<string, LazyHandler> = {
   ai_summarize: () => import('./ai-summarize').then((m) => m),
   ai_risk_assessment: () => import('./ai-risk-assessment').then((m) => m),
   store_file: () => import('./store-file').then((m) => m),
+  // Phase 6 Sprint 23: Route + For Each
+  route: () => import('./route').then((m) => m),
+  for_each: () => import('./for-each').then((m) => m),
 }
 
 /** Resolved handler cache — avoids repeated dynamic imports */

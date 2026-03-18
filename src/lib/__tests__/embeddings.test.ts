@@ -56,7 +56,7 @@ describe('buildEmbeddingContent', () => {
   it('formats content string correctly', () => {
     const result = buildEmbeddingContent(MOCK_EVENT, MOCK_BLOCK)
     expect(result).toBe(
-      `compliance.review.required on client 'Thornfield Capital Partners': ${JSON.stringify(MOCK_EVENT.payload)}`
+      `compliance.review.required on client 'Thornfield Capital Partners' [2026-03-01]: ${JSON.stringify(MOCK_EVENT.payload)}`
     )
   })
 

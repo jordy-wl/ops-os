@@ -110,7 +110,16 @@ export async function advanceWorkflowInstance(
 
   // 4. Record result and advance
   const updatedResults = [...meta.step_results, stepResult]
-  const nextIndex = meta.current_step_index + 1
+
+  // Check if handler specified a branch target (route/for-each nodes)
+  let nextIndex: number
+  if (stepResult.output?.next_step_name) {
+    const targetName = stepResult.output.next_step_name as string
+    const targetIdx = steps.findIndex((s) => s.name === targetName)
+    nextIndex = targetIdx >= 0 ? targetIdx : meta.current_step_index + 1
+  } else {
+    nextIndex = meta.current_step_index + 1
+  }
 
   let instanceStatus: InstanceMetadata['status'] = 'running'
   let completedAt: string | null = null

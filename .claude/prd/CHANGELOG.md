@@ -54,6 +54,7 @@
 | 2026-03-12 | 07-ai-ml-spec.md | AI Features | Added Phase 3 AI features: delta calculation engine, AI insights generator (4 categories), confidence scoring framework, context-aware document generation, delta-aware chat context, auto task generation from delta thresholds. | architect-decision | ORCHESTRATOR | prd/04 (notification table), prd/09 (delta pipeline) |
 | 2026-03-12 | 10-security-compliance.md | RBAC, Audit | Added Phase 3 security: granular RBAC permission model (10 permissions), agent decision audit logging, API key security (hashing + rotation), routing decision audit trail. | architect-decision | ORCHESTRATOR | prd/05 (API key endpoints), prd/04 (RBAC tables) |
 | 2026-03-12 | master-prd.md | Open Questions, Decision Log, PRD Status | Closed: React Flow confirmed, agent framework = Claude API tool use. Added 5 Phase 3 decisions. Updated PRD status dates. | architect-decision | ORCHESTRATOR | All PRD layers |
+| 2026-03-18 | 06-frontend-spec.md | Workflow Builder UX Redesign (new section) | Added comprehensive Workflow Builder UX Redesign section: design principles (5), architecture overview (3-layer decomposition), shared component inventory (14 components), node palette (27 nodes, 8 categories), AI prompt templates (14 templates, 4 node types). Archived Input/Output node section (superseded by trigger/action config integration). | architect-decision | FRONTEND ENGINEER | sprints/phase-6/ (sprint-22, sprint-23 task files), roadmap/ROADMAP.md |
 
 ---
 
