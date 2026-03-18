@@ -39,11 +39,12 @@ import {
   Send,
   Database,
   Receipt,
+  Repeat,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface PaletteItem {
-  nodeType: 'trigger' | 'action' | 'condition' | 'wait' | 'input' | 'output' | 'task'
+  nodeType: 'trigger' | 'action' | 'condition' | 'wait' | 'input' | 'output' | 'task' | 'route' | 'foreach'
   stepType?: string
   label: string
   icon: React.ElementType
@@ -66,9 +67,8 @@ const PALETTE_ITEMS: { category: string; items: PaletteItem[] }[] = [
   {
     category: 'Actions',
     items: [
-      { nodeType: 'action', stepType: 'emit_event', label: 'Log Activity', icon: Play, color: 'text-success bg-success/10', description: 'Record an activity on the timeline for tracking and audit' },
-      { nodeType: 'action', stepType: 'run_action', label: 'Run Action', icon: Play, color: 'text-success bg-success/10', description: 'Execute a registered action (e.g. onboarding, approval)' },
-      { nodeType: 'action', stepType: 'call_api', label: 'Call External API', icon: Globe, color: 'text-success bg-success/10', description: 'Send a request to an external service via a configured integration' },
+      { nodeType: 'action', stepType: 'emit_event', label: 'Log Event', icon: Play, color: 'text-success bg-success/10', description: 'Record an activity on the timeline for tracking and audit' },
+      { nodeType: 'action', stepType: 'call_api', label: 'External Action', icon: Globe, color: 'text-success bg-success/10', description: 'Send a request to an external service via a configured integration' },
       { nodeType: 'action', stepType: 'send_email', label: 'Send Email', icon: Mail, color: 'text-success bg-success/10', description: 'Send an email via your connected email integration' },
       { nodeType: 'action', stepType: 'generate_document', label: 'Generate Document', icon: FileText, color: 'text-success bg-success/10', description: 'Create a document from a template or AI prompt' },
       { nodeType: 'action', stepType: 'book_meeting', label: 'Book Meeting', icon: Calendar, color: 'text-success bg-success/10', description: 'Schedule a calendar event via your connected calendar' },
@@ -81,7 +81,7 @@ const PALETTE_ITEMS: { category: string; items: PaletteItem[] }[] = [
     items: [
       { nodeType: 'action', stepType: 'run_action', label: 'Create Record', icon: PlusCircle, color: 'text-cyan-500 bg-cyan-500/10', description: 'Create a new block record of any type' },
       { nodeType: 'action', stepType: 'update_block', label: 'Change Status', icon: RefreshCw, color: 'text-cyan-500 bg-cyan-500/10', description: 'Update the status field on a block' },
-      { nodeType: 'action', stepType: 'create_edge', label: 'Connect Items', icon: Link, color: 'text-cyan-500 bg-cyan-500/10', description: 'Link two blocks together with a relationship edge' },
+      { nodeType: 'action', stepType: 'create_edge', label: 'Link Records', icon: Link, color: 'text-cyan-500 bg-cyan-500/10', description: 'Link two records together with a relationship' },
       { nodeType: 'action', stepType: 'search_blocks', label: 'Search / Filter', icon: Filter, color: 'text-cyan-500 bg-cyan-500/10', description: 'Find blocks by type, name, or metadata criteria' },
     ],
   },
@@ -90,7 +90,7 @@ const PALETTE_ITEMS: { category: string; items: PaletteItem[] }[] = [
     items: [
       { nodeType: 'task', stepType: 'generate_task', label: 'Approval Request', icon: UserCheck, color: 'text-violet-500 bg-violet-500/10', description: 'Create an approval task that pauses the workflow until reviewed' },
       { nodeType: 'action', stepType: 'send_notification', label: 'Send Notification', icon: Bell, color: 'text-violet-500 bg-violet-500/10', description: 'Push a notification to specific users or the whole org' },
-      { nodeType: 'action', stepType: 'create_shared_link', label: 'Create Portal Link', icon: Share2, color: 'text-violet-500 bg-violet-500/10', description: 'Generate a secure shared link for external client access' },
+      { nodeType: 'action', stepType: 'create_shared_link', label: 'Share Link', icon: Share2, color: 'text-violet-500 bg-violet-500/10', description: 'Generate a secure shared link for external client access' },
     ],
   },
   {
@@ -105,17 +105,15 @@ const PALETTE_ITEMS: { category: string; items: PaletteItem[] }[] = [
   {
     category: 'External',
     items: [
-      { nodeType: 'action', stepType: 'call_api', label: 'Webhook Send', icon: Send, color: 'text-rose-500 bg-rose-500/10', description: 'Send data to an external webhook URL' },
+      { nodeType: 'action', stepType: 'call_api', label: 'External Action', icon: Globe, color: 'text-rose-500 bg-rose-500/10', description: 'Send data to an external service via a connector (Xero, HubSpot, webhooks, etc.)' },
       { nodeType: 'action', stepType: 'store_file', label: 'Store File', icon: Upload, color: 'text-rose-500 bg-rose-500/10', description: 'Upload a file to cloud storage' },
-      { nodeType: 'action', stepType: 'call_api', label: 'Update CRM', icon: Database, color: 'text-rose-500 bg-rose-500/10', description: 'Push data to your connected CRM (e.g. Salesforce)' },
-      { nodeType: 'action', stepType: 'call_api', label: 'Create Invoice', icon: Receipt, color: 'text-rose-500 bg-rose-500/10', description: 'Create an invoice in your accounting system (e.g. Xero)' },
     ],
   },
   {
     category: 'Conditions',
     items: [
       { nodeType: 'condition', label: 'If / Else', icon: GitBranch, color: 'text-warning bg-warning/10', description: 'Branch the workflow based on a true/false condition' },
-      { nodeType: 'condition', stepType: 'switch', label: 'Switch', icon: Split, color: 'text-warning bg-warning/10', description: 'Branch into multiple paths based on a value' },
+      { nodeType: 'route', label: 'Route', icon: Split, color: 'text-orange-500 bg-orange-500/10', description: 'Branch into multiple paths based on a field value (e.g. AI classification, record status)' },
     ],
   },
   {
@@ -123,6 +121,7 @@ const PALETTE_ITEMS: { category: string; items: PaletteItem[] }[] = [
     items: [
       { nodeType: 'wait', label: 'Wait / Delay', icon: Clock, color: 'text-muted-foreground bg-muted', description: 'Pause the workflow for a set amount of time' },
       { nodeType: 'action', stepType: 'run_sub_workflow', label: 'Run Sub-Workflow', icon: Workflow, color: 'text-blue-500 bg-blue-500/10', description: 'Trigger another workflow and optionally wait for it to complete' },
+      { nodeType: 'foreach', label: 'For Each', icon: Repeat, color: 'text-teal-500 bg-teal-500/10', description: 'Iterate over a list and run steps for each item' },
       { nodeType: 'input', label: 'Data Input', icon: ArrowDownToLine, color: 'text-foreground bg-muted', description: 'Define what data this workflow receives when it starts' },
       { nodeType: 'output', label: 'Data Output', icon: ArrowUpFromLine, color: 'text-foreground bg-muted', description: 'Define what data this workflow sends out when it completes' },
     ],

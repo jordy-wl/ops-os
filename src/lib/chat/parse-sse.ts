@@ -2,9 +2,11 @@
  * SSE chunk types emitted by POST /api/ai/chat.
  *
  * The chat route streams Server-Sent Events in the format:
- *   data: {"text": "..."}\n\n   — token chunk
- *   data: [DONE]\n\n            — stream end sentinel
- *   data: {"error": "..."}\n\n  — error mid-stream
+ *   data: {"text": "..."}\n\n        — token chunk
+ *   data: [DONE]\n\n                 — stream end sentinel
+ *   data: {"error": "..."}\n\n       — error mid-stream
+ *   data: {"suggestions": [...]}\n\n  — discuss mode action suggestions
+ *   data: {"plan_data": {...}}\n\n    — plan mode structured plan data
  */
 export type ToolCallChunk = {
   name: string
@@ -12,11 +14,32 @@ export type ToolCallChunk = {
   result: { success: boolean; data?: unknown; error?: string }
 }
 
+export type ActionSuggestion = {
+  label: string
+  action: string
+  blockId?: string
+  params?: Record<string, unknown>
+}
+
+export type PlanData = {
+  title: string
+  steps: Array<{
+    index: number
+    description: string
+    actionType?: string | null
+    blockType?: string
+  }>
+  prerequisites: string[]
+  complexity: string
+}
+
 export type SseChunk =
   | { type: 'text'; text: string }
   | { type: 'done' }
   | { type: 'error'; message: string }
   | { type: 'tool_call'; tool_call: ToolCallChunk }
+  | { type: 'suggestions'; suggestions: ActionSuggestion[] }
+  | { type: 'plan_data'; plan_data: PlanData }
 
 /**
  * parseSseChunk — parses a raw SSE string into typed chunk objects.
@@ -44,29 +67,28 @@ export function parseSseChunk(raw: string): SseChunk[] {
 
     try {
       const parsed: unknown = JSON.parse(payload)
-      if (
-        parsed !== null &&
-        typeof parsed === 'object' &&
-        'text' in parsed &&
-        typeof (parsed as Record<string, unknown>).text === 'string'
-      ) {
-        results.push({ type: 'text', text: (parsed as { text: string }).text })
-      } else if (
-        parsed !== null &&
-        typeof parsed === 'object' &&
-        'error' in parsed &&
-        typeof (parsed as Record<string, unknown>).error === 'string'
-      ) {
-        results.push({ type: 'error', message: (parsed as { error: string }).error })
-      } else if (
-        parsed !== null &&
-        typeof parsed === 'object' &&
-        'tool_call' in parsed &&
-        typeof (parsed as Record<string, unknown>).tool_call === 'object'
-      ) {
+      if (parsed === null || typeof parsed !== 'object') continue
+
+      const obj = parsed as Record<string, unknown>
+
+      if ('text' in obj && typeof obj.text === 'string') {
+        results.push({ type: 'text', text: obj.text })
+      } else if ('error' in obj && typeof obj.error === 'string') {
+        results.push({ type: 'error', message: obj.error })
+      } else if ('tool_call' in obj && typeof obj.tool_call === 'object') {
         results.push({
           type: 'tool_call',
-          tool_call: (parsed as { tool_call: ToolCallChunk }).tool_call,
+          tool_call: obj.tool_call as ToolCallChunk,
+        })
+      } else if ('suggestions' in obj && Array.isArray(obj.suggestions)) {
+        results.push({
+          type: 'suggestions',
+          suggestions: obj.suggestions as ActionSuggestion[],
+        })
+      } else if ('plan_data' in obj && typeof obj.plan_data === 'object') {
+        results.push({
+          type: 'plan_data',
+          plan_data: obj.plan_data as PlanData,
         })
       }
     } catch {
@@ -75,4 +97,16 @@ export function parseSseChunk(raw: string): SseChunk[] {
   }
 
   return results
+}
+
+/**
+ * Strip structured tag blocks (<SUGGESTIONS>, <PLAN_JSON>) from visible message content.
+ * These blocks are parsed server-side and emitted as separate SSE events,
+ * but they may also appear in the streamed text content.
+ */
+export function stripStructuredTags(content: string): string {
+  return content
+    .replace(/<SUGGESTIONS>[\s\S]*?<\/SUGGESTIONS>/g, '')
+    .replace(/<PLAN_JSON>[\s\S]*?<\/PLAN_JSON>/g, '')
+    .trim()
 }

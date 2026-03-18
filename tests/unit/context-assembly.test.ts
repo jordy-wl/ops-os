@@ -90,10 +90,23 @@ function makeEvent(id: string, type = 'block.created'): Event {
 const recentEvents = [makeEvent('evt-1'), makeEvent('evt-2'), makeEvent('evt-3')]
 const semanticEvent = makeEvent('evt-sem', 'compliance.review.started')
 
-/** Standard block-level from() mock sequence — no query (4 calls) */
+/** Builders for the 3 parallel user-context queries (user_roles, tasks, activity) */
+function userContextBuilders() {
+  return [
+    makeBuilder({ data: { role: 'member' } }),  // user_roles (single)
+    makeBuilder({ data: [] }),                    // blocks (tasks)
+    makeBuilder({ data: [] }),                    // events (activity)
+  ] as const
+}
+
+/** Standard block-level from() mock sequence — no query (7 calls: orgs + 3 user ctx + block + events + edges) */
 function setupBlockFromMocks(eventsData = recentEvents, edges: unknown[] = []) {
+  const [ur, tasks, activity] = userContextBuilders()
   mockClient.from
     .mockReturnValueOnce(makeBuilder({ data: mockOrg }))          // orgs
+    .mockReturnValueOnce(ur)                                       // user_roles
+    .mockReturnValueOnce(tasks)                                    // blocks (tasks)
+    .mockReturnValueOnce(activity)                                 // events (activity)
     .mockReturnValueOnce(makeBuilder({ data: mockBlock }))         // blocks (single)
     .mockReturnValueOnce(makeBuilder({ data: eventsData }))        // events (recent)
     .mockReturnValueOnce(makeBuilder({ data: edges }))             // block_edges
@@ -130,7 +143,7 @@ describe('assembleContext', () => {
     expect(mockEmbeddingsCreate).toHaveBeenCalledOnce()
     expect(mockClient.rpc).toHaveBeenCalledWith('match_embeddings', {
       query_embedding: expect.any(Array),
-      match_count: MAX_SEMANTIC_EVENTS,
+      match_count: MAX_SEMANTIC_EVENTS + 3,
       filter_org_id: ORG_ID,
     })
 
@@ -154,8 +167,8 @@ describe('assembleContext', () => {
     const ctx = await assembleContext(BLOCK_ID, ORG_ID, USER_ID, 'any query')
 
     expect(ctx.relevantEvents).toHaveLength(0)
-    // from() should only be called 4 times — no 5th call for deduplicated events
-    expect(mockClient.from).toHaveBeenCalledTimes(4)
+    // from() should only be called 7 times (orgs + 3 user ctx + block + events + edges) — no 8th call for deduplicated events
+    expect(mockClient.from).toHaveBeenCalledTimes(7)
   })
 
   it('falls back to 20 recent events with no semantic search when no query given', async () => {
@@ -205,8 +218,12 @@ describe('assembleContext', () => {
   })
 
   it('assembles org-level context (blockId = null) with semantic search', async () => {
+    const [ur, tasks, activity] = userContextBuilders()
     mockClient.from
       .mockReturnValueOnce(makeBuilder({ data: mockOrg }))          // orgs
+      .mockReturnValueOnce(ur)                                       // user_roles
+      .mockReturnValueOnce(tasks)                                    // blocks (tasks)
+      .mockReturnValueOnce(activity)                                 // events (activity)
       .mockReturnValueOnce(makeBuilder({ data: recentEvents }))      // events (org-level, recent)
       .mockReturnValueOnce(makeBuilder({ data: [{ type: 'client' }] })) // blocks (type counts)
       .mockReturnValueOnce(makeBuilder({ data: [] }))               // workflow_jobs (active)
@@ -229,8 +246,12 @@ describe('assembleContext', () => {
   })
 
   it('assembles org-level context (blockId = null) without query — no semantic search', async () => {
+    const [ur, tasks, activity] = userContextBuilders()
     mockClient.from
       .mockReturnValueOnce(makeBuilder({ data: mockOrg }))
+      .mockReturnValueOnce(ur)                                       // user_roles
+      .mockReturnValueOnce(tasks)                                    // blocks (tasks)
+      .mockReturnValueOnce(activity)                                 // events (activity)
       .mockReturnValueOnce(makeBuilder({ data: recentEvents }))
       .mockReturnValueOnce(makeBuilder({ data: [{ type: 'client' }, { type: 'deal' }] })) // blocks
       .mockReturnValueOnce(makeBuilder({ data: [{ id: 'j1' }] }))   // workflow_jobs (active)
@@ -254,8 +275,12 @@ describe('assembleContext', () => {
     const parentBlock = { id: 'parent-1', org_id: ORG_ID, type: 'client', name: 'ParentCo', state: 'active', metadata: {}, created_at: '', updated_at: '' }
     const childBlock = { id: 'child-1', org_id: ORG_ID, type: 'contact', name: 'Jane Doe', state: 'active', metadata: {}, created_at: '', updated_at: '' }
 
+    const [ur, tasks, activity] = userContextBuilders()
     mockClient.from
       .mockReturnValueOnce(makeBuilder({ data: mockOrg }))       // orgs
+      .mockReturnValueOnce(ur)                                     // user_roles
+      .mockReturnValueOnce(tasks)                                  // blocks (tasks)
+      .mockReturnValueOnce(activity)                               // events (activity)
       .mockReturnValueOnce(makeBuilder({ data: mockBlock }))      // blocks (single)
       .mockReturnValueOnce(makeBuilder({ data: recentEvents }))   // events (recent)
       .mockReturnValueOnce(makeBuilder({ data: edges }))          // block_edges
@@ -277,9 +302,13 @@ describe('assembleContext', () => {
   })
 
   it('omits orgSummary gracefully when summary queries fail', async () => {
-    // Provide org response, events response, but null for the 3 summary queries
+    const [ur, tasks, activity] = userContextBuilders()
+    // Provide org response, user context, events response, but null for the 3 summary queries
     mockClient.from
       .mockReturnValueOnce(makeBuilder({ data: mockOrg }))
+      .mockReturnValueOnce(ur)                                     // user_roles
+      .mockReturnValueOnce(tasks)                                  // blocks (tasks)
+      .mockReturnValueOnce(activity)                               // events (activity)
       .mockReturnValueOnce(makeBuilder({ data: recentEvents }))
       .mockReturnValueOnce(makeBuilder({ data: null }))  // blocks: null
       .mockReturnValueOnce(makeBuilder({ data: null }))  // workflow_jobs: null

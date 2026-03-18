@@ -400,16 +400,11 @@ Every data-fetching component must implement all three states:
 - On Reject: log `task.rejected` event, move to next routing fallback
 - On Edit: modify recommendation text/params → then Approve modified version, log `task.modified` event
 
-### Flow: Canvas Input/Output Nodes
-**New node types:**
-- `InputNode` — defines data entering the workflow (block fields or external webhook/API payload schema). Handle on right side.
-- `OutputNode` — defines data produced (updated fields, generated documents, emitted events, API calls). Handle on left side.
+### Flow: Canvas Input/Output Nodes (Archived — superseded by Sprint 22 palette)
+**Note:** Input/Output nodes merged into trigger configs (input) and action configs (output) during the Sprint 22 Workflow Builder UX Redesign. See "Workflow Builder UX Redesign" section below.
 
-**Palette restructure (collapsible categories):**
-- **Triggers:** Manual, Event, Webhook, Schedule
-- **Actions:** Emit Event, Run Action, Call API, Send Email, Generate Doc, Book Meeting, Update Block
-- **Conditions:** If/Else, Switch
-- **Flow:** Wait/Delay, Input, Output
+**Palette restructure (Phase 6, Sprint 22):**
+See the "Workflow Builder Node Palette (27 nodes, 8 categories)" section below for the current palette structure.
 
 ### Flow: Document Preview
 **Component:** `DocumentPreview` — artifact-like right-side drawer or modal
@@ -450,6 +445,123 @@ Every data-fetching component must implement all three states:
 | Document preview | Loading spinner | "No document generated yet." | "Failed to load document." |
 | Notification list | Skeleton items | "No notifications." | "Failed to load notifications." |
 | Audit log | Skeleton rows | "No events recorded." | "Failed to load audit log." |
+
+---
+
+---
+
+## Workflow Builder UX Redesign (Phase 6, Sprints 22–23)
+
+> Added 2026-03-18. Comprehensive UX overhaul of the visual workflow builder config panel.
+
+### Design Principles
+
+1. **Dropdown before free text** — every field that CAN be a select/dropdown SHOULD be
+2. **Select from existing entities** — blocks, connectors, block types, field definitions, workflow templates
+3. **Minimal technical terminology** — no snake_case, no raw template variables, no seconds-based durations
+4. **Context-aware auto-fill** — every node knows the source record type and auto-suggests the most likely field (e.g., Send Email → auto-fills `{{block.email}}`)
+5. **Variable picker as PRIMARY input** — `{{variable}}` insertion via inline picker button, not manual typing
+
+### Architecture (Sprint 22 — COMPLETE)
+
+**Before:** Single 1,697-line monolith `node-config-panel.tsx` containing all node config UIs.
+
+**After:** Decomposed into 3 layers:
+
+| Layer | Path | Files | Purpose |
+|-------|------|-------|---------|
+| Dispatcher | `panels/node-config-panel.tsx` | 1 (~90 lines) | Thin router: label field + type-specific config component |
+| Per-node configs | `panels/configs/` | 8 + barrel index.ts | TriggerConfig, ActionConfig, ConditionConfig, WaitConfig, InputConfig, OutputConfig, TaskConfig, StepInstructionsPanel |
+| Shared components | `panels/shared/` | 7 | form-primitives, routing-section, duration-picker, condition-builder, variable-picker, schedule-config, ai-template-picker |
+| Types + helpers | `panels/types.ts` | 1 | NodeConfigProps, getNodeData(), makeConfigUpdater() |
+| AI templates | `lib/workflow/ai-prompt-templates.ts` | 1 | 14 built-in templates across 4 AI node types |
+
+### Shared Component Inventory
+
+| Component | File | Props | Purpose |
+|-----------|------|-------|---------|
+| `FieldLabel` | form-primitives.tsx | htmlFor, children | Consistent label styling |
+| `TextInput` | form-primitives.tsx | value, onChange, id?, placeholder? | Single-line text input |
+| `TextArea` | form-primitives.tsx | value, onChange, id?, placeholder?, rows? | Multi-line text input |
+| `SelectInput` | form-primitives.tsx | value, onChange, options[], id? | Dropdown select |
+| `NumberInput` | form-primitives.tsx | value, onChange, min?, max?, id? | Numeric input |
+| `EntitySelect` | form-primitives.tsx | value, onChange, entities[], id?, placeholder? | Entity picker dropdown |
+| `CheckboxInput` | form-primitives.tsx | checked, onChange, id?, label | Checkbox with label |
+| `RoutingSection` | routing-section.tsx | config, updateConfig, entities? | Routing mode + permission config |
+| `DurationPicker` | duration-picker.tsx | value (seconds), onChange | Amount + unit → seconds, human-readable summary |
+| `ConditionBuilder` | condition-builder.tsx | value (ConditionValue), onChange, fields? | 3-mode progressive: simple → compound → advanced |
+| `VariablePickerButton` | variable-picker.tsx | variables[], onSelect | `{ }` button with searchable dropdown |
+| `VariablePickerInput` | variable-picker.tsx | value, onChange, variables[], autoSuggestion? | TextInput with inline variable picker |
+| `ScheduleConfig` | schedule-config.tsx | value (ScheduleValue), onChange | 6 presets, conditional fields, timezone, no cron |
+| `AITemplatePicker` | ai-template-picker.tsx | nodeType, onSelect, prompt, categories?, etc. | Template dropdown + prompt + tag inputs + output config |
+
+### Workflow Builder Node Palette (27 nodes, 8 categories)
+
+**Triggers (4):**
+- **Manual Trigger** — No config. Start button only.
+- **Event Trigger** — Searchable dropdown grouped by category (Record/Workflow/Integration/System events). Event scope: all records / matching filters / specific record.
+- **Webhook Trigger** — Connector dropdown, auto-generated webhook URL with copy, expected payload field definitions.
+- **Schedule Trigger** — Presets (hourly/daily/weekly/monthly/quarterly/custom) + timezone. No cron syntax.
+
+**Actions (6):**
+- **Log Event** — Activity-focused dropdown (Note Added, Call Logged, Meeting Held, etc.) + custom option.
+- **Send Email** — Context-aware: auto-suggests source record email. To/CC/BCC with variable picker. Subject/body with variable picker. Email template dropdown. Send-as connector.
+- **Generate Document** — Data source picker (fields or blocks). Prompt with variable picker. Template dropdown. Output format (HTML/PDF).
+- **Book Meeting** — Title with variable picker. Duration dropdown. Attendees auto-suggested. Location toggle. Buffer time. Calendar connector.
+- **Update Record** — "Which record?" selector. Field picker + value inputs with variable picker. Each row: field dropdown + value.
+- **Create Task** — Title, assignee (routing engine/user/role), priority, dynamic form fields, decision buttons, attachments (records/URLs/files/context), routing mode.
+
+**Data Operations (4):**
+- **Create Record** — Record type dropdown. Auto-populate matching fields. Auto-link toggle (default ON).
+- **Change Status** — Record selector. Status dropdown from lifecycle stages. Optional note.
+- **Link Records** — From/To record selectors. Relationship dropdown.
+- **Search / Filter** — Record type. Filter conditions (field + operator + value). Max results. Save results as variable.
+
+**Human Interaction (3):**
+- **Approval Request** — Pre-configured Create Task (auto-fills Approve/Reject buttons). Fully customisable.
+- **Send Notification** — Channel (in-app/email/both). Title/body with variable picker. Type (info/success/warning/error). Collapsible email settings.
+- **Share Link** — Block picker. Link type (view/fill/sign). Expiry duration. Permissions. Auth/password toggles. Branding toggle.
+
+**AI & Analysis (4):**
+All use template-first approach with 14 built-in templates. Results auto-saved + available to downstream nodes.
+- **AI Analysis** — Template dropdown (Pipeline Risk, Client Health, Deal Qualification, Custom). Prompt. Output format (JSON/text).
+- **Classify / Route** — Template dropdown (Priority Triage, Client Tier, Compliance Risk, Custom). Categories (tag input, min 2). Auto-suggests Route node branches.
+- **Summarise** — Template dropdown (Executive Summary, Meeting Notes, Deal Progress, Quick Update, Custom). Smart context inclusion per template.
+- **Risk Assessment** — Template dropdown (AML/KYC, Deal Risk, Regulatory, Operational, Custom). Risk categories. Org policies toggle.
+
+**External (1):**
+- **External Action** — Connector dropdown → provider-specific action templates (Xero: Create Invoice; HubSpot: Create Deal; etc.). Manual config fallback. Test + Preview button.
+
+**Conditions (2):**
+- **If / Else** — Condition builder: simple mode (field/operator/value), compound mode (AND/OR groups), advanced mode (raw expression). True/False output handles.
+- **Route** — "Route based on" dropdown (any context value). Dynamic branch list with labels. Auto-suggests from Classify node. N output handles.
+
+**Flow (3):**
+- **Wait / Delay** — Duration picker: amount (1-99) + unit (min/hr/day/week). Human-readable summary.
+- **Run Sub-Workflow** — Workflow template dropdown. Mini read-only step preview. Wait-for-completion toggle. Input mapping.
+- **For Each** — Source dropdown (search results/list field/API response). Max parallel (1/5/10/25). Max iterations (default 100).
+
+**Workflow-Level Config (settings, not a node):**
+- Completion behavior: Do nothing / Restart after delay / Trigger another workflow.
+
+### AI Prompt Templates (14 built-in)
+
+| ID | Node Type | Name | Pre-fills |
+|----|-----------|------|-----------|
+| analysis-pipeline-risk | ai_analysis | Pipeline Risk Analysis | prompt + outputFormat: json |
+| analysis-client-health | ai_analysis | Client Health Check | prompt + outputFormat: json |
+| analysis-deal-qualification | ai_analysis | Deal Qualification Score | prompt + outputFormat: json |
+| classify-priority-triage | ai_classify | Priority Triage | prompt + categories: Critical/High/Medium/Low |
+| classify-client-tier | ai_classify | Client Tier Classification | prompt + categories: Enterprise/Premium/Standard/Starter |
+| classify-compliance-risk | ai_classify | Compliance Risk Level | prompt + categories: High Risk/Medium Risk/Low Risk/Compliant |
+| summarise-executive | ai_summarise | Executive Summary | prompt (includes all context) |
+| summarise-meeting-notes | ai_summarise | Meeting Notes Summary | prompt (extracts decisions + action items) |
+| summarise-deal-progress | ai_summarise | Deal Progress Summary | prompt (stage changes + milestones) |
+| summarise-quick-update | ai_summarise | Quick Update | prompt (last 5 events only) |
+| risk-aml-kyc | ai_risk | AML/KYC Risk | prompt + riskCategories + includeOrgPolicies: true |
+| risk-deal-score | ai_risk | Deal Risk Score | prompt + riskCategories |
+| risk-regulatory-compliance | ai_risk | Regulatory Compliance Check | prompt + riskCategories + includeOrgPolicies: true |
+| risk-operational | ai_risk | Operational Risk Review | prompt + riskCategories |
 
 ---
 

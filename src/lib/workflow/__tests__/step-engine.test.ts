@@ -261,7 +261,7 @@ describe('advanceWorkflowInstance', () => {
   })
 
   describe('condition step', () => {
-    it('always completes (placeholder evaluator)', async () => {
+    it('evaluates legacy condition expression and completes', async () => {
       const instance = makeInstance()
       const template = makeTemplate([
         { name: 'check_status', type: 'condition', condition: 'block.state == "active"' },
@@ -273,14 +273,15 @@ describe('advanceWorkflowInstance', () => {
         { data: null, error: null },         // update metadata
         { data: null, error: null },         // completion event
         { data: null, error: null },         // step event
+        { data: null, error: null },         // source block activity event
       )
 
       const result = await advanceWorkflowInstance(INSTANCE_ID, ORG_ID)
 
       expect(result.status).toBe('completed')
       expect(result.step_result.output).toMatchObject({
-        condition: 'block.state == "active"',
-        result: true,
+        condition_mode: 'legacy',
+        result: expect.any(Boolean),
       })
     })
   })

@@ -56,11 +56,14 @@ describe('assembleContext', () => {
     const neighbour = { id: 'block-2', org_id: 'org-uuid', type: 'deal', name: 'Deal Alpha', state: 'active', metadata: {}, created_at: '2026-03-01T00:00:00Z', updated_at: '2026-03-01T00:00:00Z' }
 
     makeDb(
-      { data: ORG, error: null },          // single: org
-      { data: BLOCK, error: null },         // single: block
-      { data: EVENTS, error: null },        // then: events
-      { data: edges, error: null },         // then: edges
-      { data: [neighbour], error: null }    // then: neighbour blocks
+      { data: ORG, error: null },                    // single: org
+      { data: { role: 'member' }, error: null },     // single: user_roles
+      { data: [], error: null },                      // then: blocks (tasks)
+      { data: [], error: null },                      // then: events (activity)
+      { data: BLOCK, error: null },                   // single: block
+      { data: EVENTS, error: null },                  // then: events
+      { data: edges, error: null },                   // then: edges
+      { data: [neighbour], error: null }              // then: neighbour blocks
     )
 
     const ctx = await assembleContext('block-1', 'org-uuid', 'user_111')
@@ -76,6 +79,9 @@ describe('assembleContext', () => {
   it('returns empty events array when block has no events', async () => {
     makeDb(
       { data: ORG, error: null },
+      { data: { role: 'member' }, error: null },     // single: user_roles
+      { data: [], error: null },                      // then: blocks (tasks)
+      { data: [], error: null },                      // then: events (activity)
       { data: BLOCK, error: null },
       { data: [], error: null },   // empty events
       { data: [], error: null }    // empty edges
@@ -92,6 +98,9 @@ describe('assembleContext', () => {
     ]
     makeDb(
       { data: ORG, error: null },                              // single: org
+      { data: { role: 'member' }, error: null },               // single: user_roles
+      { data: [], error: null },                                // then: blocks (tasks)
+      { data: [], error: null },                                // then: events (activity)
       { data: orgEvents, error: null },                        // then: org-level events
       { data: [{ type: 'client' }, { type: 'deal' }], error: null }, // then: blocks (type counts)
       { data: [], error: null },                               // then: workflow_jobs (active)

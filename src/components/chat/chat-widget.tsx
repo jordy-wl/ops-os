@@ -11,9 +11,10 @@ import { ExecuteConfirmation } from './execute-confirmation'
 import { MessageBubble } from './message-bubble'
 import { BlockCreationPreview, extractBlockCreationData } from './block-creation-preview'
 import { ChatHistorySidebar } from './chat-history-sidebar'
-import { parseSseChunk } from '@/lib/chat/parse-sse'
+import { parseSseChunk, stripStructuredTags } from '@/lib/chat/parse-sse'
+import { ActionSuggestionChips } from './action-suggestion-chips'
 import type { ChatMode } from './chat-widget-provider'
-import type { ToolCallChunk } from '@/lib/chat/parse-sse'
+import type { ToolCallChunk, ActionSuggestion, PlanData } from '@/lib/chat/parse-sse'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -25,6 +26,8 @@ type WidgetMessage = {
   isError?: boolean
   mode?: ChatMode
   toolCalls?: ToolCallChunk[]
+  suggestions?: ActionSuggestion[]
+  planData?: PlanData | null
 }
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -240,11 +243,30 @@ export function ChatWidget() {
                     : m
                 )
               )
-            } else if (chunk.type === 'done') {
-              finalContent = accumulated
+            } else if (chunk.type === 'suggestions') {
               setMessages((prev) =>
                 prev.map((m) =>
-                  m.id === assistantId ? { ...m, streaming: false } : m
+                  m.id === assistantId
+                    ? { ...m, suggestions: chunk.suggestions }
+                    : m
+                )
+              )
+            } else if (chunk.type === 'plan_data') {
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.id === assistantId
+                    ? { ...m, planData: chunk.plan_data }
+                    : m
+                )
+              )
+            } else if (chunk.type === 'done') {
+              // Strip structured tags from final visible content
+              finalContent = stripStructuredTags(accumulated)
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.id === assistantId
+                    ? { ...m, content: finalContent!, streaming: false }
+                    : m
                 )
               )
             } else if (chunk.type === 'error') {
@@ -426,7 +448,24 @@ export function ChatWidget() {
                 {/* Plan mode: structured rendering for assistant messages */}
                 {msg.role === 'assistant' && msg.mode === 'plan' && !msg.isError && !msg.streaming && msg.content ? (
                   <div className="bg-background border border-border rounded-2xl rounded-bl-sm px-4 py-2.5 max-w-[85%]">
-                    <PlanMessage content={msg.content} />
+                    <PlanMessage
+                      content={msg.content}
+                      planData={msg.planData}
+                      onAccept={(plan, steps) => {
+                        const stepsDesc = plan.steps
+                          .filter((s) => steps.includes(s.index))
+                          .map((s) => `${s.index}. ${s.description}`)
+                          .join('\n')
+                        setMode('execute')
+                        handleSend(`Execute this plan: ${plan.title}\n${stepsDesc}`)
+                      }}
+                      onReject={(reason) => {
+                        handleSend(`Reject this plan: ${reason}`)
+                      }}
+                      onAddMore={(text) => {
+                        handleSend(`Add to plan: ${text}`)
+                      }}
+                    />
                   </div>
                 ) : (
                   <MessageBubble
@@ -434,6 +473,16 @@ export function ChatWidget() {
                     content={msg.content}
                     streaming={msg.streaming}
                     isError={msg.isError}
+                  />
+                )}
+
+                {/* Action suggestion chips (discuss mode) */}
+                {msg.role === 'assistant' && msg.suggestions && msg.suggestions.length > 0 && !msg.streaming && (
+                  <ActionSuggestionChips
+                    suggestions={msg.suggestions}
+                    onSelect={(suggestion) => {
+                      handleSend(suggestion.label)
+                    }}
                   />
                 )}
 

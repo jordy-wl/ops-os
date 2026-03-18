@@ -8,10 +8,11 @@
 
 ## Current Phase and Sprint
 
-**Phase:** 6 — Productivity Suite + Infrastructure Planning — **CODE COMPLETE**
-**Phase Status:** COMPLETE. 37/37 tasks across 4 sprints (S18–S21). 1689 tests passing.
-**Sprint:** 21 — Infrastructure Research + Final Polish — **COMPLETE** (9/9)
-**Previous:** Sprint 20 complete (10/10). Sprint 19 complete (9/9). Sprint 18 complete (9/9). Phase 5 complete (48/48). Phase 4 complete (42/42). Phase 3 complete (70/70). Phase 2 complete (86/88).
+**Phase:** 6 — Productivity Suite + Infrastructure Planning + Workflow Builder UX Redesign — **ACTIVE**
+**Phase Status:** **COMPLETE** — S18–S23, 60/60 tasks, 1746 tests. Workflow Builder UX Redesign COMPLETE (S22–S23).
+**Sprint:** 23 — Per-Node Improvements — **COMPLETE** (15/15)
+**Next:** Phase 7 planning (pending)
+**Previous:** Sprint 22 complete (8/8). Sprint 21 complete (9/9). Sprint 20 complete (10/10). Sprint 19 complete (9/9). Sprint 18 complete (9/9). Phase 5 complete (48/48). Phase 4 complete (42/42). Phase 3 complete (70/70). Phase 2 complete (86/88).
 
 ---
 
@@ -19,7 +20,7 @@
 
 | Task ID | Title | Role | Status | Last Updated |
 |---------|-------|------|--------|-------------|
-| (Sprint 21 complete — see archive below) | | | | |
+| (none — Sprint 23 complete, all 15/15 DONE) | | | | |
 
 ---
 
@@ -43,6 +44,9 @@
 
 | Date | Author | Note |
 |------|--------|------|
+| 2026-03-18 | ORCHESTRATOR | **SPRINT 23 COMPLETE — Per-Node Improvements (15/15).** 8-wave execution: Route node (component + config + handler + engine branching), For Each node (component + config + placeholder handler), condition handler rewrite (370 lines, 8 operators, AND/OR, 56 new tests), node label renames (user-friendly names, consolidated palette from 30→27 items), trigger configs (4 types: manual/event/webhook/schedule with scoping + condition builder), Wait/Delay DurationPicker, workflow completion config (restart/chain), External Action consolidation with ConnectorTemplates (Xero/HubSpot/Generic), AI template picker wired to 4 AI nodes, data operations abstraction (entity-driven dropdowns), human interaction improvements (multi-channel notifications, share link permissions, task attachments), sub-workflow preview dropdown, External Action test/preview panel, VariablePickerInput wired across 9 inputs in 3 config files, context-aware auto-fill (5 autoSuggestion hints). New files: 5 (route-node, for-each-node, route-config, for-each-config, connector-templates, workflow-settings-panel, route handler, for-each handler). Modified: ~25 files. Step engine now supports N-way branching via next_step_name. Handler registry: 22. Test count: 1746 (+57). Build clean. |
+| 2026-03-18 | ORCHESTRATOR | **SPRINT 22 COMPLETE — Workflow Builder UX Foundation (8/8).** Decomposed 1,697-line `node-config-panel.tsx` monolith into 8 per-node config components (`panels/configs/`) + 7 shared components (`panels/shared/`): form primitives, routing section, duration picker, condition builder, variable picker, schedule config, AI template picker. Created 14 built-in AI prompt templates (`lib/workflow/ai-prompt-templates.ts`). Added `panels/types.ts` with shared NodeConfigProps, getNodeData, makeConfigUpdater helpers. Zero new TypeScript errors. Main dispatcher now ~90 lines. Sprint 23 (15 tasks) planned for per-node improvements. |
+| 2026-03-18 | AI-ML-ENGINEER | **AI LAYER DEEP-DIVE — 6 improvements shipped.** (1) User context enrichment: `assembleContext` now queries user role, assigned tasks, recent activity — chat knows who it's talking to. (2) Delta context injection: `loadDeltaContext()` wired into chat route for workflow_instance blocks — chat references health score and overdue steps. (3) Discuss mode action chips: v2 prompt extracts `<SUGGESTIONS>` tags → SSE events → clickable pill buttons below messages. (4) Plan mode accept/reject: v2 prompt outputs `<PLAN_JSON>` → interactive checkboxes, Accept/Reject/Add More buttons → auto-execute on accept. (5) Block-level embeddings: `embedBlock()` added (fire-and-forget on create/update via chat-tools), semantic search now returns blocks + events. (6) AI suggestions panel: new `/api/blocks/:id/suggestions` route + `BlockSuggestionsPanel` component on all non-workflow block detail pages. 3 new prompts registered in VERSIONS.md. 1689 tests passing, 0 failures. |
 | 2026-03-17 | ORCHESTRATOR | **PHASE 6 CODE COMPLETE** — 37/37 tasks, 1689 tests, 4 sprints (S18–S21). Deliverables: Time tracking (floating timer, timestamp-based elapsed, timebox mode, manual entry, weekly bar chart, billable vs non-billable), Calendar integration (Google Calendar sync pull-based 30-day window, week/month CSS grid views, event CRUD, deadline markers, "Connect Google Calendar" CTA), Performance metrics (weekly cron snapshots, dashboard API with trend data, team utilization API, recharts trend charts, stat cards, "Collecting Data" empty state, AI time estimation), responsive polish (7-tab My Work horizontal scroll, 5-tab Org page scroll, metric card grid optimization), integration health dashboard in Settings, 3 infrastructure research reports (event-bus-kafka-vs-postgres, graph-db-neo4j-vs-adjacency, multi-db-architecture-design). New DB objects: time_entries, calendar_events, performance_snapshots tables + task_deadlines_v view. New API routes: /api/time-entries, /api/time-entries/active, /api/calendar-events, /api/calendar-events/sync, /api/performance/snapshot, /api/performance/dashboard, /api/performance/team. |
 | 2026-03-15 | ORCHESTRATOR | **PHASE 5 CODE COMPLETE** — 48/48 tasks, 1414 tests, 5 sprints (S13–S17). Deliverables: Org page 5-tab layout (Overview/Revenue/Strategy/Offerings/Team), revenue forecast API (deal pipeline + solution pricing + product/service pricing), SWOT Analysis + Value Proposition block types with AI generation, interactive SWOT editor + value prop editor, custom block type creation + deletion UI, step engine refactored to handler registry (20 handlers), 9 new step handlers (create_edge, search_blocks, send_notification, create_shared_link, ai_analysis, ai_classify, ai_summarize, ai_risk_assessment, store_file), node palette expanded to 6 categories with 25+ items, delta engine wired to chat Execute mode (calculate_delta tool), enhanced My Work Task Inbox (priority badges, deadline countdown, AI suggestion chips, confidence scores), Google OAuth null org fallback fix, integration health check endpoint + capabilities model, block browser dynamic type seeding. |
 | 2026-03-13 | ORCHESTRATOR | **PHASE 4 CODE COMPLETE** — 42/42 tasks, 1230 tests, 4 sprints. 22 features across 7 groups: Workflow Builder UX, Client Portal, Document Gen V3, Custom Actions, Inter-Workflow, Chat Panel V2, Workflow Analytics. |
@@ -63,6 +67,16 @@
 | 2026-03-17 | supabase | apply_migration: create_performance_snapshots | SUCCESS | P6-S20-BE-01 | BACKEND |
 
 ---
+
+## Recently Completed — Sprint 23 Archive
+
+Sprint 23 (2026-03-18): 15/15 DONE (100%).
+Deliverables: Per-Node Improvements across 8 execution waves. **Wave 1** — Route node (`route-node.tsx`, `route-config.tsx`, `route.ts` handler; N-way branching with `next_step_name` engine support), For Each node (`for-each-node.tsx`, `for-each-config.tsx`, `for-each.ts` placeholder handler), Condition handler rewrite (~370 lines replacing always-true stub; 8 operators, AND/OR compound mode, advanced expression mode, 56 new tests). **Wave 2** — Node label renames (user-friendly names, "Log Event", "External Action", "Link Records", "Share Link"; consolidated palette from 30→27 items, removed redundant "Run Action"/"Webhook Send"/"Update CRM"/"Create Invoice"). **Wave 3** — Trigger configs upgraded (4 types: manual/event/webhook/schedule; event scoping with ConditionBuilder; webhook payload schema; ScheduleConfig with presets), Wait/Delay integrated with DurationPicker, Workflow completion config (none/restart_after_delay/trigger_workflow). **Wave 4** — External Action consolidation with `connector-templates.ts` (Xero/HubSpot/Generic providers, 3-step progressive disclosure), AI template picker wired into 4 AI node configs, Data operations abstraction (entity-driven dropdowns for record type/status/relationship), Human interaction improvements (multi-channel notifications, share link permissions/branding/password, task attachments), Sub-workflow preview dropdown with step list. **Wave 5** — External Action request preview panel + disabled Send Test button. **Wave 7** — VariablePickerInput wired across 9 inputs in 3 config files (action-config, task-config, trigger-config). **Wave 8** — Context-aware auto-fill (5 autoSuggestion hints: email→block.email, subject→block.name, meeting title→block.name, attendees→block.email, task title→block.name). Schema changes: added route/for_each step types, 10+ new optional fields. Handler registry: 22 (up from 20). Canvas layout: route/foreach node types registered. Step engine: N-way branching via `next_step_name` output. Test count: 1746 (+57 from condition handler tests). Build clean.
+
+## Recently Completed — Sprint 22 Archive
+
+Sprint 22 (2026-03-18): 8/8 DONE (100%).
+Deliverables: Workflow Builder UX Foundation — architecture decomposition of the 1,697-line node-config-panel.tsx monolith. Created 8 per-node config components in `panels/configs/` (trigger-config.tsx, action-config.tsx at 723 lines, condition-config.tsx, wait-config.tsx, input-config.tsx, output-config.tsx, task-config.tsx, step-instructions-panel.tsx) + barrel index.ts. Created 7 shared components in `panels/shared/` (form-primitives.tsx with 7 primitives, routing-section.tsx, duration-picker.tsx with seconds↔amount+unit conversion, condition-builder.tsx with 3-mode progressive disclosure and 8 operators, variable-picker.tsx with VariablePickerButton/VariablePickerInput and cursor-position insertion, schedule-config.tsx with 6 presets and timezone selector, ai-template-picker.tsx with tag-style category inputs). Created `panels/types.ts` with NodeConfigProps interface and helper functions. Created `lib/workflow/ai-prompt-templates.ts` with 14 templates (3 analysis, 3 classify, 4 summarise, 4 risk assessment) + getTemplatesForNodeType helper. Main dispatcher reduced to ~90 lines. Zero new TypeScript errors. Test count: 1689 (unchanged — architecture refactor, no new tests). Build clean.
 
 ## Recently Completed — Sprint 21 Archive
 

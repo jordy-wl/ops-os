@@ -49,17 +49,31 @@ export function sanitizePayload(payload: unknown): Record<string, unknown> {
 }
 
 /**
- * Builds the plain-text content string that gets embedded.
- * Format: "[event_type] on [block.type] '[block.name]': [payload summary]"
+ * Builds the plain-text content string that gets embedded for events.
+ * Format: "[event_type] on [block.type] '[block.name]' [YYYY-MM-DD]: [payload summary]"
  * PII keys are stripped from the payload before embedding.
  */
 export function buildEmbeddingContent(
-  event: Pick<Event, 'type' | 'payload'>,
+  event: Pick<Event, 'type' | 'payload' | 'occurred_at'>,
   block: { type: string; name: string }
 ): string {
   const sanitized = sanitizePayload(event.payload)
   const payloadStr = JSON.stringify(sanitized).slice(0, 200)
-  return `${event.type} on ${block.type} '${block.name}': ${payloadStr}`
+  const date = event.occurred_at ? event.occurred_at.split('T')[0] : ''
+  const dateSuffix = date ? ` [${date}]` : ''
+  return `${event.type} on ${block.type} '${block.name}'${dateSuffix}: ${payloadStr}`
+}
+
+/**
+ * Builds the plain-text content string for block embeddings.
+ * Format: "[block_type] '[block_name]': [sanitized metadata summary]"
+ */
+export function buildBlockEmbeddingContent(
+  block: { type: string; name: string; metadata?: Record<string, unknown> }
+): string {
+  const sanitized = sanitizePayload(block.metadata ?? {})
+  const metaStr = JSON.stringify(sanitized).slice(0, 300)
+  return `${block.type} '${block.name}': ${metaStr}`
 }
 
 /**
@@ -128,6 +142,63 @@ export async function embedEvent(
 
   logger.info('embeddings', 'embed.stored', {
     event_id: event.id,
+    content_length: content.length,
+  })
+}
+
+/**
+ * Generates and stores a vector embedding for a block.
+ *
+ * Fire-and-forget pattern — same as embedEvent. Call after block creation/update.
+ * Uses source_type='block' in the embeddings table.
+ */
+export async function embedBlock(
+  block: { id: string; org_id: string; type: string; name: string; metadata?: Record<string, unknown> },
+  supabase: SupabaseClient
+): Promise<void> {
+  const content = buildBlockEmbeddingContent(block)
+
+  let embedding: number[]
+  try {
+    const response = await getOpenAI().embeddings.create({
+      model: EMBEDDING_MODEL,
+      input: content,
+    })
+    embedding = response.data[0].embedding
+  } catch (err) {
+    logger.error('embeddings', 'embed_block.openai_failed', {
+      block_id: block.id,
+      error: (err as Error).message?.slice(0, 100),
+    })
+    return
+  }
+
+  // Upsert: delete existing embedding for this block then insert new one
+  // This handles block updates replacing the previous embedding
+  await supabase
+    .from('embeddings')
+    .delete()
+    .eq('source_type', 'block')
+    .eq('source_id', block.id)
+
+  const { error: insertErr } = await supabase.from('embeddings').insert({
+    org_id: block.org_id,
+    source_type: 'block',
+    source_id: block.id,
+    content,
+    embedding,
+  })
+
+  if (insertErr) {
+    logger.error('embeddings', 'embed_block.store_failed', {
+      block_id: block.id,
+      error_code: insertErr.code,
+    })
+    return
+  }
+
+  logger.info('embeddings', 'embed_block.stored', {
+    block_id: block.id,
     content_length: content.length,
   })
 }

@@ -8,7 +8,7 @@ import type { Permission } from '@/lib/rbac/types'
 
 export interface CanvasNode {
   id: string
-  type: 'trigger' | 'action' | 'condition' | 'wait' | 'input' | 'output' | 'task' | 'end'
+  type: 'trigger' | 'action' | 'condition' | 'wait' | 'input' | 'output' | 'task' | 'route' | 'foreach' | 'end'
   position: { x: number; y: number }
   data: {
     stepName?: string
@@ -226,6 +226,10 @@ function stepTypeToNodeType(stepType: WorkflowStep['type']): CanvasNode['type'] 
       return 'output'
     case 'generate_task':
       return 'task'
+    case 'route':
+      return 'route'
+    case 'for_each':
+      return 'foreach'
     default:
       return 'action'
   }
@@ -241,6 +245,10 @@ function stepToLabel(step: WorkflowStep): string {
       return `Wait ${step.wait_seconds ?? 0}s`
     case 'condition':
       return `If: ${step.condition ?? 'condition'}`
+    case 'route':
+      return `Route: ${step.route_field ?? 'field'}`
+    case 'for_each':
+      return `For Each: ${step.for_each_source ?? 'items'}`
     case 'call_api':
       return `API: ${step.method ?? 'GET'} ${step.path ?? '/'}`
     case 'update_block':
@@ -270,6 +278,15 @@ function stepToConfig(step: WorkflowStep): Record<string, unknown> {
   if (step.max_retries != null) config.max_retries = step.max_retries
   if (step.block_id) config.block_id = step.block_id
   if (step.fields) config.fields = step.fields
+  // Route step fields (Phase 6 Sprint 23)
+  if (step.route_field) config.route_field = step.route_field
+  if (step.route_branches) config.route_branches = step.route_branches
+  if (step.route_default_label) config.route_default_label = step.route_default_label
+  if (step.route_branch_targets) config.route_branch_targets = step.route_branch_targets
+  // For Each step fields (Phase 6 Sprint 23)
+  if (step.for_each_source) config.for_each_source = step.for_each_source
+  if (step.for_each_max_parallel != null) config.for_each_max_parallel = step.for_each_max_parallel
+  if (step.for_each_max_iterations != null) config.for_each_max_iterations = step.for_each_max_iterations
   // Routing fields (Sprint 4)
   if (step.routing_mode) config.routing_mode = step.routing_mode
   if (step.instructions) config.instructions = step.instructions
@@ -324,5 +341,14 @@ function configToStep(data: CanvasNode['data']): WorkflowStep {
     ...(config.task_form_schema ? { task_form_schema: config.task_form_schema } : {}),
     ...(config.task_assign_to ? { task_assign_to: config.task_assign_to as 'routing_engine' | 'specific_user' | 'role' } : {}),
     ...(config.task_priority ? { task_priority: config.task_priority as 'low' | 'medium' | 'high' | 'urgent' } : {}),
+    // Route fields (Phase 6 Sprint 23)
+    ...(config.route_field ? { route_field: String(config.route_field) } : {}),
+    ...(Array.isArray(config.route_branches) ? { route_branches: config.route_branches as Array<{ value: string; label?: string }> } : {}),
+    ...(config.route_default_label ? { route_default_label: String(config.route_default_label) } : {}),
+    ...(config.route_branch_targets ? { route_branch_targets: config.route_branch_targets as Record<string, string> } : {}),
+    // For Each fields (Phase 6 Sprint 23)
+    ...(config.for_each_source ? { for_each_source: String(config.for_each_source) } : {}),
+    ...(config.for_each_max_parallel != null ? { for_each_max_parallel: Number(config.for_each_max_parallel) } : {}),
+    ...(config.for_each_max_iterations != null ? { for_each_max_iterations: Number(config.for_each_max_iterations) } : {}),
   }
 }

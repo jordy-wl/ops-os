@@ -9,7 +9,7 @@ vi.mock('@/lib/auth/withAuth', () => ({
         const params = await context.params
         return handler(
           req,
-          { userId: 'user_111', clerkOrgId: 'org_abc', orgId: 'uuid-org-1', role: 'ops-admin' },
+          { userId: 'user_111', clerkOrgId: 'org_abc', orgId: 'uuid-org-1', role: 'ops-admin', roleId: 'role-1', permissions: new Set(['manage_settings', 'manage_blocks', 'execute_actions']) },
           params
         )
       }
@@ -84,14 +84,15 @@ describe('POST /api/ai/chat', () => {
       '00000000-0000-0000-0000-000000000001',
       'uuid-org-1',
       'user_111',
-      'Summarise this block'
+      'Summarise this block',
+      ['manage_settings', 'manage_blocks', 'execute_actions']
     )
   })
 
   it('calls assembleContext with null blockId and message when no blockId provided', async () => {
     await chatEndpoint(makeReq({ message: 'What happened today?' }), { params: Promise.resolve({}) })
 
-    expect(assembleContext).toHaveBeenCalledWith(null, 'uuid-org-1', 'user_111', 'What happened today?')
+    expect(assembleContext).toHaveBeenCalledWith(null, 'uuid-org-1', 'user_111', 'What happened today?', ['manage_settings', 'manage_blocks', 'execute_actions'])
   })
 
   it('passes conversationHistory to Claude messages', async () => {

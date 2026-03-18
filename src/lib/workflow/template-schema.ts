@@ -33,11 +33,31 @@ const StepSchema = z.object({
     'create_edge', 'search_blocks', 'send_notification', 'create_shared_link',
     // Phase 5 Sprint 16: AI + External
     'ai_analysis', 'ai_classify', 'ai_summarize', 'ai_risk_assessment', 'store_file',
+    // Phase 6 Sprint 23: Route + For Each
+    'route', 'for_each',
   ]),
   event_type: z.string().min(1).max(100).optional(),
   action_type: z.string().min(1).max(100).optional(),
   wait_seconds: z.number().int().positive().optional(),
   condition: z.string().max(500).optional(),
+  // condition_value: structured condition from ConditionBuilder (Phase 6 Sprint 23)
+  condition_value: z.object({
+    mode: z.enum(['simple', 'compound', 'advanced']),
+    simple: z.object({
+      field: z.string(),
+      operator: z.enum(['is', 'is_not', 'contains', 'not_contains', 'greater_than', 'less_than', 'is_empty', 'is_not_empty']),
+      value: z.string(),
+    }).optional(),
+    compound: z.object({
+      logic: z.enum(['and', 'or']),
+      conditions: z.array(z.object({
+        field: z.string(),
+        operator: z.enum(['is', 'is_not', 'contains', 'not_contains', 'greater_than', 'less_than', 'is_empty', 'is_not_empty']),
+        value: z.string(),
+      })),
+    }).optional(),
+    advanced: z.string().optional(),
+  }).optional(),
   // call_api step fields
   connector_id: z.string().uuid().optional(),
   method: z.enum(['GET', 'POST', 'PUT', 'PATCH', 'DELETE']).optional(),
@@ -114,6 +134,18 @@ const StepSchema = z.object({
   file_bucket: z.string().max(100).optional(),
   file_content_type: z.string().max(100).optional(),
   file_path_prefix: z.string().max(200).optional(),
+  // route step fields (Phase 6 Sprint 23)
+  route_field: z.string().max(200).optional(),
+  route_branches: z.array(z.object({
+    value: z.string().max(200),
+    label: z.string().max(200).optional(),
+  })).max(20).optional(),
+  route_default_label: z.string().max(200).optional(),
+  route_branch_targets: z.record(z.string()).optional(),
+  // for_each step fields (Phase 6 Sprint 23)
+  for_each_source: z.string().max(200).optional(),
+  for_each_max_parallel: z.number().int().min(1).max(25).optional(),
+  for_each_max_iterations: z.number().int().min(1).max(1000).optional(),
 })
 
 const DataInputSchema = z.object({
@@ -139,6 +171,10 @@ export const WorkflowTemplateSchema = z.object({
   data_outputs: z.array(DataOutputSchema).max(10).optional(),
   description: z.string().max(500).optional(),
   canvas_layout: z.unknown().optional(),
+  // Workflow-level completion behavior (Phase 6 Sprint 23)
+  completion_behavior: z.enum(['none', 'restart_after_delay', 'trigger_workflow']).optional(),
+  completion_delay_seconds: z.number().int().positive().optional(),
+  completion_trigger_template_id: z.string().uuid().optional(),
 })
 
 export type WorkflowTemplate = z.infer<typeof WorkflowTemplateSchema>
