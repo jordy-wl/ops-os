@@ -40,6 +40,26 @@ vi.mock('@/components/my-work/manual-time-entry-form', () => ({
   ),
 }))
 
+// Mock the TimerWidget (now embedded in TimeTab after WS3 Timer Relocation)
+vi.mock('@/components/timer/timer-widget', () => ({
+  TimerWidget: ({ className }: { className?: string }) => (
+    <div data-testid="timer-widget" className={className}>Timer Mock</div>
+  ),
+}))
+
+// Mock the TimerWidgetProvider context
+vi.mock('@/components/timer/timer-widget-provider', () => ({
+  useTimer: () => ({
+    isRunning: false,
+    elapsed: 0,
+    activeEntry: null,
+    start: vi.fn(),
+    stop: vi.fn(),
+    toggle: vi.fn(),
+  }),
+  TimerWidgetProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}))
+
 // ---- Fetch mock setup -------------------------------------------------------
 
 const fetchSpy = vi.spyOn(global, 'fetch')

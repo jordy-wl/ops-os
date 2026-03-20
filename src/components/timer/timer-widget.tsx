@@ -15,7 +15,7 @@ function formatElapsed(seconds: number): string {
   return `${s}s`
 }
 
-export function TimerWidget() {
+export function TimerWidget({ className }: { className?: string }) {
   const timer = useTimer()
   const [isExpanded, setIsExpanded] = useState(false)
   const [description, setDescription] = useState('')
@@ -34,10 +34,10 @@ export function TimerWidget() {
       <button
         onClick={() => setIsExpanded(true)}
         className={cn(
-          'fixed bottom-16 left-4 z-[45] md:bottom-4',
           'flex items-center gap-2 rounded-full bg-primary px-4 py-2.5',
           'text-primary-foreground shadow-lg hover:bg-primary/90',
-          'transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+          'transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+          className
         )}
         aria-label="Start timer"
       >
@@ -51,9 +51,9 @@ export function TimerWidget() {
   return (
     <div
       className={cn(
-        'fixed bottom-16 left-4 z-[45] md:bottom-4',
-        'w-72 rounded-lg border border-border bg-card shadow-xl',
-        'transition-all'
+        'w-full rounded-lg border border-border bg-card shadow-sm',
+        'transition-all',
+        className
       )}
     >
       {/* Header */}

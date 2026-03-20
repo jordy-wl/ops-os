@@ -10,7 +10,7 @@ import { logger } from '@/lib/logger'
 const TOKEN_BYTES = 32 // 32 bytes = 64 hex chars
 const TOKEN_PREFIX = 'sl_'
 
-export type ShareType = 'view' | 'submit' | 'sign'
+export type ShareType = 'view' | 'submit' | 'sign' | 'portal'
 
 export interface SharedLink {
   id: string

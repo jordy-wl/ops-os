@@ -13,14 +13,14 @@ import {
 } from '../field-types'
 
 describe('FIELD_TYPES constant', () => {
-  it('has 12 field types', () => {
-    expect(FIELD_TYPES).toHaveLength(12)
+  it('has 13 field types', () => {
+    expect(FIELD_TYPES).toHaveLength(13)
   })
 
   it('includes all expected types', () => {
     const expected = [
       'text', 'number', 'email', 'date', 'select', 'multi-select',
-      'boolean', 'url', 'phone', 'currency', 'relation', 'rich-text',
+      'boolean', 'url', 'phone', 'currency', 'relation', 'multi-relation', 'rich-text',
     ]
     expect([...FIELD_TYPES]).toEqual(expected)
   })

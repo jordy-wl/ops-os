@@ -15,8 +15,9 @@
 | 3 | Platform Evolution: RBAC, Routing, Delta AI, Doc Gen V2 | COMPLETE (code) | Sprint 8 | CODE DONE — usage validation pending |
 | 4 | Workflow Engine V2, Client Portal, Chat V2, Analytics | COMPLETE (code) | Sprint 12 | CODE DONE — usage validation pending |
 | 5 | Org Intelligence + Workflow Power-Up | COMPLETE (code) | Sprint 17 | CODE DONE — usage validation pending |
-| 6 | Productivity Suite + Infrastructure Planning + Workflow Builder UX | ACTIVE | Sprint 23 | Core code complete (S18–S21); Workflow Builder UX Redesign in progress (S22–S23) |
-| 7 | Enterprise, Scale & Compliance | FUTURE | — | — |
+| 6 | Productivity Suite + Infrastructure Planning + Workflow Builder UX | COMPLETE | Sprint 23 | CODE DONE — 60/60 tasks, 1746 tests |
+| 7 | Design Partner Readiness | ACTIVE | Sprint 24 | Client portal, entity fields, timer relocation, Google OAuth |
+| 8 | Enterprise, Scale & Compliance | FUTURE | — | — |
 
 ---
 
@@ -356,7 +357,35 @@ If exit condition is NOT met after 12 weeks:
 
 ---
 
-## Phase 7: Enterprise, Scale & Compliance
+## Phase 7: Design Partner Readiness
+
+**Status:** ACTIVE
+**Target:** Q2 2026 (1 sprint, Sprint 24)
+**Active Roles:** Backend Engineer, Frontend Engineer, AI/ML Engineer
+
+**Hypothesis:** If we add client-facing portals with branded dashboards/documents/forms/requests, convert entity reference fields to proper dropdowns, clean up the timer UI, and fix Google OAuth — the platform will be ready for 2–3 design partner engagements with their actual clients.
+
+**What we built (4 workstreams):**
+- **WS1: Client Portal System** — `portal_configurations` table, `form_template` block type (12 question types + branching), portal validation lib, admin CRUD API, 7 public API endpoints (portal data, blocks, documents, events, requests, forms, form submissions), 5 portal UI pages (branded layout+shell, dashboard with card grid, documents hub with forms tab, request intake, form filling with conditional branching), admin config panel on client block detail page. Middleware updated for `/portal(.*)` public routes.
+- **WS2: Entity Dropdown Fields** — Added `multi-relation` field type, created `MultiRelationField` component (chip-based multi-select), converted 7 system type fields (solution.product_refs, solution.service_refs → multi-relation; workflow_instance.template_id, workflow_instance.source_block_id, task_queue_item.workflow_instance_id, team_member.reporting_to, swot_analysis.context_block_id → relation), rewrote `RelationField` with searchable dropdown.
+- **WS3: Timer Widget Relocation** — Removed floating timer from global layout, restructured `TimerWidgetShell` as provider-only wrapper, embedded `TimerWidget` in My Work Time tab only.
+- **WS4: Google OAuth** — Created detailed setup guide (docs/google-oauth-setup.md) with 2026 Google policy considerations. Updated code for granular consent (Jan 2026 policy). Deferred `gmail.readonly` (restricted tier, requires CASA audit $4k–$15k+).
+
+**Dependencies on Phase 6:** All Phase 6 features complete ✓. 1746 tests passing ✓.
+
+**Exit Condition:** TRUE when:
+1. Client portal accessible via token URL with branded dashboard
+2. Entity fields render as proper dropdowns (not plain text)
+3. Timer lives in My Work Time tab only (not floating)
+4. Google OAuth guide complete and env vars documented
+5. ≥1 design partner client views their portal
+
+**Sprints in This Phase:**
+- Sprint 24: Full Phase 7 Build (all 4 workstreams) — **IN PROGRESS**
+
+---
+
+## Phase 8: Enterprise, Scale & Compliance
 
 **Status:** FUTURE
 **Target:** TBD — contingent on paying customers and revenue

@@ -7,6 +7,8 @@ const isPublicRoute = createRouteMatcher([
   '/api/health/deep',
   '/public(.*)',
   '/api/public(.*)',
+  '/portal(.*)',
+  '/api/portal(.*)',
 ])
 
 export default clerkMiddleware(async (auth, request) => {

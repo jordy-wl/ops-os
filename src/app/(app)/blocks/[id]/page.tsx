@@ -17,6 +17,7 @@ import { FormSubmissionsPanel } from '@/components/blocks/form-submissions-panel
 import { ShareLinkButton } from '@/components/blocks/share-link-dialog'
 import { SwotEditor } from '@/components/blocks/swot-editor'
 import { ValuePropEditor } from '@/components/blocks/value-prop-editor'
+import { PortalConfigPanel } from '@/components/portal/portal-config-panel'
 import type { Block, Event } from '@/lib/context-assembly'
 
 interface Props {
@@ -219,6 +220,11 @@ export default async function BlockDetailPage({ params }: Props) {
           {/* AI Suggestions panel — all non-workflow block types */}
           {block.type !== 'workflow_instance' && block.type !== 'workflow_template' && (
             <BlockSuggestionsPanel blockId={block.id} blockType={block.type} />
+          )}
+
+          {/* Portal config panel — client blocks only */}
+          {block.type === 'client' && (
+            <PortalConfigPanel blockId={block.id} blockName={block.name} />
           )}
 
           <div className="rounded-md border border-border bg-card p-4">

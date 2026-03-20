@@ -36,27 +36,28 @@ export default async function AppLayout({
   const defaultOpen = cookieStore.get('sidebar_state')?.value !== 'false'
 
   return (
-    <SidebarProvider defaultOpen={defaultOpen}>
-      <AppSidebar />
-      <SidebarInset>
-        <header className="sticky top-0 z-30 flex h-11 shrink-0 items-center gap-2 border-b bg-background px-4">
-          <SidebarTrigger className="-ml-1" />
-          <Separator orientation="vertical" className="mr-2 h-4" />
-          <div className="flex items-center gap-1 text-[13px] text-muted-foreground">
-            <span>Ops OS</span>
-          </div>
-          <div className="ml-auto flex items-center gap-2">
-            <CommandPalette />
-            <ThemeToggle />
-          </div>
-        </header>
-        <main id="main-content" className="flex-1 overflow-x-hidden animate-page-in pb-16 md:pb-0">
-          {children}
-        </main>
-      </SidebarInset>
-      <ChatWidgetShell />
-      <TimerWidgetShell />
-      <BottomTabBar />
-    </SidebarProvider>
+    <TimerWidgetShell>
+      <SidebarProvider defaultOpen={defaultOpen}>
+        <AppSidebar />
+        <SidebarInset>
+          <header className="sticky top-0 z-30 flex h-11 shrink-0 items-center gap-2 border-b bg-background px-4">
+            <SidebarTrigger className="-ml-1" />
+            <Separator orientation="vertical" className="mr-2 h-4" />
+            <div className="flex items-center gap-1 text-[13px] text-muted-foreground">
+              <span>Ops OS</span>
+            </div>
+            <div className="ml-auto flex items-center gap-2">
+              <CommandPalette />
+              <ThemeToggle />
+            </div>
+          </header>
+          <main id="main-content" className="flex-1 overflow-x-hidden animate-page-in pb-16 md:pb-0">
+            {children}
+          </main>
+        </SidebarInset>
+        <ChatWidgetShell />
+        <BottomTabBar />
+      </SidebarProvider>
+    </TimerWidgetShell>
   )
 }

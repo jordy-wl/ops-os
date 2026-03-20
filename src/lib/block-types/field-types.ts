@@ -27,6 +27,7 @@ export const FIELD_TYPES = [
   'phone',
   'currency',
   'relation',
+  'multi-relation',
   'rich-text',
 ] as const
 
@@ -162,6 +163,18 @@ export const FIELD_TYPE_DEFINITIONS: Record<FieldType, FieldTypeDefinition> = {
       'x-relation-target': '',
     },
   },
+  'multi-relation': {
+    type: 'multi-relation',
+    label: 'Multi-Relation',
+    icon: 'link-2',
+    jsonSchemaType: 'array',
+    defaultSchema: {
+      type: 'array',
+      items: { type: 'string' },
+      'x-field-type': 'multi-relation',
+      'x-relation-target': '',
+    },
+  },
   'rich-text': {
     type: 'rich-text',
     label: 'Rich Text',
@@ -286,7 +299,10 @@ export function inferFieldType(schemaProp: Record<string, unknown>): FieldType {
     if (schemaProp['x-currency-code']) return 'currency'
     return 'number'
   }
-  if (type === 'array') return 'multi-select'
+  if (type === 'array') {
+    if (schemaProp['x-relation-target']) return 'multi-relation'
+    return 'multi-select'
+  }
 
   // String subtypes
   if (type === 'string') {

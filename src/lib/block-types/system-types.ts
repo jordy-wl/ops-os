@@ -235,8 +235,8 @@ export const SYSTEM_BLOCK_TYPES = [
     field_schema: {
       type: 'object',
       properties: {
-        template_id: { type: 'string', description: 'ID of the workflow template block' },
-        source_block_id: { type: 'string', description: 'ID of the block that triggered this workflow' },
+        template_id: { type: 'string', description: 'ID of the workflow template block', 'x-field-type': 'relation', 'x-relation-target': 'workflow_template' },
+        source_block_id: { type: 'string', description: 'ID of the block that triggered this workflow', 'x-field-type': 'relation', 'x-relation-target': '' },
         applies_to_type: { type: 'string', description: 'Block type this workflow processes' },
         status: {
           type: 'string',
@@ -260,7 +260,7 @@ export const SYSTEM_BLOCK_TYPES = [
     field_schema: {
       type: 'object',
       properties: {
-        workflow_instance_id: { type: 'string', description: 'ID of the parent workflow instance' },
+        workflow_instance_id: { type: 'string', description: 'ID of the parent workflow instance', 'x-field-type': 'relation', 'x-relation-target': 'workflow_instance' },
         step_name: { type: 'string', description: 'Name of the workflow step that created this task' },
         assigned_to: { type: 'string', description: 'User ID of the assignee' },
         claimed_at: { type: 'string', description: 'When the task was claimed' },
@@ -434,11 +434,15 @@ export const SYSTEM_BLOCK_TYPES = [
           type: 'array',
           items: { type: 'string' },
           description: 'Block IDs of included products',
+          'x-field-type': 'multi-relation',
+          'x-relation-target': 'product',
         },
         service_refs: {
           type: 'array',
           items: { type: 'string' },
           description: 'Block IDs of included services',
+          'x-field-type': 'multi-relation',
+          'x-relation-target': 'service',
         },
       },
     },
@@ -612,6 +616,8 @@ export const SYSTEM_BLOCK_TYPES = [
         reporting_to: {
           type: 'string',
           description: 'Block ID of the manager (team_member block)',
+          'x-field-type': 'relation',
+          'x-relation-target': 'team_member',
           'x-field-group': 'organisation',
           'x-display-order': 2,
         },
@@ -790,6 +796,8 @@ export const SYSTEM_BLOCK_TYPES = [
         context_block_id: {
           type: 'string',
           description: 'Optional reference to the client or org block being analysed',
+          'x-field-type': 'relation',
+          'x-relation-target': '',
           'x-field-group': 'context',
           'x-display-order': 2,
         },
@@ -852,6 +860,106 @@ export const SYSTEM_BLOCK_TYPES = [
           description: 'Proposition lifecycle status',
           'x-field-group': 'evidence',
           'x-display-order': 2,
+        },
+      },
+    },
+  },
+  {
+    type_name: 'form_template',
+    display_name: 'Form',
+    description: 'A reusable form with configurable questions, answer types, and optional branching logic.',
+    icon: 'clipboard-list',
+    color: 'teal',
+    field_schema: {
+      type: 'object',
+      'x-field-groups': [
+        { id: 'basics', label: 'Basics', order: 1 },
+        { id: 'config', label: 'Configuration', order: 2 },
+      ],
+      properties: {
+        title: {
+          type: 'string',
+          description: 'Form title shown to respondents',
+          'x-field-group': 'basics',
+          'x-display-order': 1,
+        },
+        form_description: {
+          type: 'string',
+          description: 'Form description / instructions',
+          'x-field-type': 'rich-text',
+          'x-field-group': 'basics',
+          'x-display-order': 2,
+        },
+        category: {
+          type: 'string',
+          enum: ['intake', 'kyc', 'feedback', 'assessment', 'onboarding', 'general'],
+          description: 'Form category',
+          'x-field-group': 'basics',
+          'x-display-order': 3,
+        },
+        status: {
+          type: 'string',
+          enum: ['draft', 'active', 'archived'],
+          description: 'Form lifecycle status',
+          'x-field-group': 'basics',
+          'x-display-order': 4,
+        },
+        collect_contact: {
+          type: 'boolean',
+          description: 'Collect respondent name and email',
+          'x-field-group': 'config',
+          'x-display-order': 1,
+        },
+        questions: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              id: { type: 'string', description: 'Unique question identifier' },
+              label: { type: 'string', description: 'Question text' },
+              type: {
+                type: 'string',
+                enum: ['text', 'textarea', 'number', 'select', 'multi_select', 'scale', 'likert', 'emoji', 'date', 'url', 'file_upload', 'yes_no'],
+                description: 'Answer input type',
+              },
+              required: { type: 'boolean', description: 'Whether answer is required' },
+              options: { type: 'array', items: { type: 'string' }, description: 'Options for select/multi_select' },
+              scale_min: { type: 'number', description: 'Min value for scale type' },
+              scale_max: { type: 'number', description: 'Max value for scale type' },
+              scale_labels: {
+                type: 'object',
+                properties: {
+                  min: { type: 'string' },
+                  max: { type: 'string' },
+                },
+                description: 'Labels for scale endpoints',
+              },
+              branching: {
+                type: 'object',
+                properties: {
+                  condition_field: { type: 'string', description: 'Question ID to check' },
+                  condition_value: { type: 'string', description: 'Value that triggers this question' },
+                  condition_operator: {
+                    type: 'string',
+                    enum: ['equals', 'not_equals', 'contains', 'greater_than', 'less_than'],
+                  },
+                },
+                description: 'Conditional display based on previous answer',
+              },
+              order: { type: 'number', description: 'Display order' },
+            },
+          },
+          description: 'Ordered list of questions',
+          'x-field-group': 'config',
+          'x-display-order': 2,
+        },
+        client_block_id: {
+          type: 'string',
+          'x-field-type': 'relation',
+          'x-relation-target': 'client',
+          description: 'Client this form is assigned to (optional)',
+          'x-field-group': 'config',
+          'x-display-order': 3,
         },
       },
     },
