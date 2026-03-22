@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Clock, DollarSign, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ManualTimeEntryForm } from './manual-time-entry-form'
+import { TimerWidget } from '@/components/timer/timer-widget'
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -185,6 +186,11 @@ export function TimeTab() {
 
   return (
     <div>
+      {/* Timer Widget */}
+      <div className="px-3 py-3 border-b border-border">
+        <TimerWidget className="mb-0" />
+      </div>
+
       {/* Week Summary */}
       <div className="px-3 py-3 border-b border-border">
         <div className="flex items-center justify-between mb-3">

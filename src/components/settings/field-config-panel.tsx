@@ -121,7 +121,7 @@ export function FieldConfigPanel({
         config.items = { type: 'string', enum: values }
       }
 
-      if (fieldType === 'relation' && relationTarget) {
+      if ((fieldType === 'relation' || fieldType === 'multi-relation') && relationTarget) {
         config['x-relation-target'] = relationTarget
       }
 
@@ -378,7 +378,7 @@ export function FieldConfigPanel({
         )}
 
         {/* Type-specific config: Relation target */}
-        {fieldType === 'relation' && (
+        {(fieldType === 'relation' || fieldType === 'multi-relation') && (
           <div>
             <label
               htmlFor={`field-relation-target-${fieldName}`}

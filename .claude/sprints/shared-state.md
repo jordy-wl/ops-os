@@ -8,11 +8,11 @@
 
 ## Current Phase and Sprint
 
-**Phase:** 6 — Productivity Suite + Infrastructure Planning + Workflow Builder UX Redesign — **ACTIVE**
-**Phase Status:** **COMPLETE** — S18–S23, 60/60 tasks, 1746 tests. Workflow Builder UX Redesign COMPLETE (S22–S23).
-**Sprint:** 23 — Per-Node Improvements — **COMPLETE** (15/15)
-**Next:** Phase 7 planning (pending)
-**Previous:** Sprint 22 complete (8/8). Sprint 21 complete (9/9). Sprint 20 complete (10/10). Sprint 19 complete (9/9). Sprint 18 complete (9/9). Phase 5 complete (48/48). Phase 4 complete (42/42). Phase 3 complete (70/70). Phase 2 complete (86/88).
+**Phase:** 7 — Design Partner Readiness — **ACTIVE**
+**Phase Status:** **IN PROGRESS** — 4 workstreams. WS4 (Google OAuth) DONE. WS3 (Timer Relocation) DONE. WS2 (Entity Dropdown Fields) DONE. WS1 (Client Portal System) DONE.
+**Sprint:** 24 — Phase 7 Build — **IN PROGRESS**
+**Next:** Testing, deploy, design partner outreach
+**Previous:** Phase 6 complete (60/60, S18–S23, 1746 tests). Phase 5 (48/48). Phase 4 (42/42). Phase 3 (70/70). Phase 2 (86/88).
 
 ---
 
@@ -20,7 +20,12 @@
 
 | Task ID | Title | Role | Status | Last Updated |
 |---------|-------|------|--------|-------------|
-| (none — Sprint 23 complete, all 15/15 DONE) | | | | |
+| P7-S24-WS4 | Google OAuth setup guide + granular consent | AI/BE | DONE | 2026-03-18 |
+| P7-S24-WS3 | Timer widget relocation to My Work Time tab | FE | DONE | 2026-03-18 |
+| P7-S24-WS2 | Entity dropdown fields (multi-relation, conversions, UX) | FE/BE | DONE | 2026-03-18 |
+| P7-S24-WS1A | Portal foundation (migration, form_template, config API) | BE | DONE | 2026-03-18 |
+| P7-S24-WS1B | Portal UI (layout, dashboard, documents, requests, forms) | FE | DONE | 2026-03-18 |
+| P7-S24-WS1C | Portal public API + admin config panel | BE/FE | DONE | 2026-03-18 |
 
 ---
 
@@ -44,6 +49,7 @@
 
 | Date | Author | Note |
 |------|--------|------|
+| 2026-03-18 | ORCHESTRATOR | **PHASE 7 BUILD — Design Partner Readiness.** 4 workstreams shipped: **WS4** Google OAuth setup guide (docs/google-oauth-setup.md) + granular consent handling (Jan 2026 policy), gmail.readonly deferred (restricted tier). **WS3** Timer widget relocated from floating global → My Work Time tab only, provider restructured as layout wrapper. **WS2** Multi-relation field type added, 7 system type fields converted to relation/multi-relation, RelationField rewritten with searchable dropdown. **WS1** Client Portal System: portal_configurations table + form_template block type + portal validation lib + admin CRUD API + 7 public API endpoints (blocks/docs/events/requests/forms) + 5 portal UI pages (layout+shell, dashboard, documents hub, requests, form filling with 12 question types + branching) + admin config panel on client block detail page. Middleware updated for /portal public routes. New files: ~25. Modified: ~15. Supabase migration applied. Build clean. |
 | 2026-03-18 | ORCHESTRATOR | **SPRINT 23 COMPLETE — Per-Node Improvements (15/15).** 8-wave execution: Route node (component + config + handler + engine branching), For Each node (component + config + placeholder handler), condition handler rewrite (370 lines, 8 operators, AND/OR, 56 new tests), node label renames (user-friendly names, consolidated palette from 30→27 items), trigger configs (4 types: manual/event/webhook/schedule with scoping + condition builder), Wait/Delay DurationPicker, workflow completion config (restart/chain), External Action consolidation with ConnectorTemplates (Xero/HubSpot/Generic), AI template picker wired to 4 AI nodes, data operations abstraction (entity-driven dropdowns), human interaction improvements (multi-channel notifications, share link permissions, task attachments), sub-workflow preview dropdown, External Action test/preview panel, VariablePickerInput wired across 9 inputs in 3 config files, context-aware auto-fill (5 autoSuggestion hints). New files: 5 (route-node, for-each-node, route-config, for-each-config, connector-templates, workflow-settings-panel, route handler, for-each handler). Modified: ~25 files. Step engine now supports N-way branching via next_step_name. Handler registry: 22. Test count: 1746 (+57). Build clean. |
 | 2026-03-18 | ORCHESTRATOR | **SPRINT 22 COMPLETE — Workflow Builder UX Foundation (8/8).** Decomposed 1,697-line `node-config-panel.tsx` monolith into 8 per-node config components (`panels/configs/`) + 7 shared components (`panels/shared/`): form primitives, routing section, duration picker, condition builder, variable picker, schedule config, AI template picker. Created 14 built-in AI prompt templates (`lib/workflow/ai-prompt-templates.ts`). Added `panels/types.ts` with shared NodeConfigProps, getNodeData, makeConfigUpdater helpers. Zero new TypeScript errors. Main dispatcher now ~90 lines. Sprint 23 (15 tasks) planned for per-node improvements. |
 | 2026-03-18 | AI-ML-ENGINEER | **AI LAYER DEEP-DIVE — 6 improvements shipped.** (1) User context enrichment: `assembleContext` now queries user role, assigned tasks, recent activity — chat knows who it's talking to. (2) Delta context injection: `loadDeltaContext()` wired into chat route for workflow_instance blocks — chat references health score and overdue steps. (3) Discuss mode action chips: v2 prompt extracts `<SUGGESTIONS>` tags → SSE events → clickable pill buttons below messages. (4) Plan mode accept/reject: v2 prompt outputs `<PLAN_JSON>` → interactive checkboxes, Accept/Reject/Add More buttons → auto-execute on accept. (5) Block-level embeddings: `embedBlock()` added (fire-and-forget on create/update via chat-tools), semantic search now returns blocks + events. (6) AI suggestions panel: new `/api/blocks/:id/suggestions` route + `BlockSuggestionsPanel` component on all non-workflow block detail pages. 3 new prompts registered in VERSIONS.md. 1689 tests passing, 0 failures. |
@@ -65,6 +71,7 @@
 | 2026-03-17 | supabase | apply_migration: create_time_entries | SUCCESS | P6-S18-BE-01 | BACKEND |
 | 2026-03-17 | supabase | apply_migration: create_calendar_events | SUCCESS | P6-S19-BE-01 | BACKEND |
 | 2026-03-17 | supabase | apply_migration: create_performance_snapshots | SUCCESS | P6-S20-BE-01 | BACKEND |
+| 2026-03-18 | supabase | apply_migration: create_portal_configurations | SUCCESS | P7-S24-WS1A | BACKEND |
 
 ---
 

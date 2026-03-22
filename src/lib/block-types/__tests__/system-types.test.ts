@@ -9,8 +9,8 @@ describe('SYSTEM_BLOCK_TYPES', () => {
   // ── Required fields on every type ───────────────────────────────────────────
 
   describe('required fields on all types', () => {
-    it('has exactly 17 system block types', () => {
-      expect(SYSTEM_BLOCK_TYPES).toHaveLength(17)
+    it('has exactly 18 system block types', () => {
+      expect(SYSTEM_BLOCK_TYPES).toHaveLength(18)
     })
 
     it.each(SYSTEM_BLOCK_TYPES.map((t) => [t.type_name, t]))(
@@ -209,7 +209,7 @@ describe('SYSTEM_BLOCK_TYPES', () => {
   // ── Snapshot of all type names for regression ───────────────────────────────
 
   describe('complete type name list', () => {
-    it('contains exactly the expected 17 types in order', () => {
+    it('contains exactly the expected 18 types in order', () => {
       const names = SYSTEM_BLOCK_TYPES.map((t) => t.type_name)
       expect(names).toEqual([
         'client',
@@ -229,6 +229,7 @@ describe('SYSTEM_BLOCK_TYPES', () => {
         'policy',
         'swot_analysis',
         'value_proposition',
+        'form_template',
       ])
     })
   })

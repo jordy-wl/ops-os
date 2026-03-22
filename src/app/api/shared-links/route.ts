@@ -7,7 +7,7 @@ import type { Permission } from '@/lib/rbac/types'
 
 const CreateSchema = z.object({
   block_id: z.string().uuid(),
-  share_type: z.enum(['view', 'submit', 'sign']),
+  share_type: z.enum(['view', 'submit', 'sign', 'portal']),
   expires_in_hours: z.number().int().min(1).max(8760).optional(), // max 1 year
   form_schema: z.record(z.unknown()).optional(),
   permissions: z.record(z.unknown()).optional(),

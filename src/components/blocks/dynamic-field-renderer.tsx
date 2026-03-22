@@ -16,6 +16,7 @@ import { UrlField } from './fields/url-field'
 import { PhoneField } from './fields/phone-field'
 import { RichTextField } from './fields/rich-text-field'
 import { RelationField } from './fields/relation-field'
+import { MultiRelationField } from './fields/multi-relation-field'
 import type { FieldComponentProps } from './fields/field-props'
 
 interface DynamicFieldRendererProps {
@@ -236,6 +237,8 @@ function FieldDispatcher(props: FieldComponentProps) {
       return <RichTextField {...props} />
     case 'relation':
       return <RelationField {...props} />
+    case 'multi-relation':
+      return <MultiRelationField {...props} />
     default:
       return <DefaultField {...props} fieldType={fieldType} />
   }

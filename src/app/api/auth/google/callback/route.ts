@@ -55,11 +55,17 @@ export async function GET(req: NextRequest) {
       .neq('status', 'archived')
       .single()
 
+    // Parse granted scopes — since Jan 2026, users can selectively deny scopes
+    const grantedScopes = tokens.scope ? tokens.scope.split(' ') : []
     const connectorConfig = {
       refresh_token: tokens.refresh_token,
       access_token: tokens.access_token ?? null,
       token_expiry: tokens.expiry_date ?? null,
       scope: tokens.scope ?? null,
+      granted_scopes: grantedScopes,
+      has_gmail_send: grantedScopes.includes('https://www.googleapis.com/auth/gmail.send'),
+      has_calendar: grantedScopes.includes('https://www.googleapis.com/auth/calendar.events'),
+      has_drive: grantedScopes.includes('https://www.googleapis.com/auth/drive.file'),
       connected_by: userId,
       connected_at: new Date().toISOString(),
     }

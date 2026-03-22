@@ -1,17 +1,12 @@
 'use client'
 
 import { TimerWidgetProvider } from './timer-widget-provider'
-import { TimerWidget } from './timer-widget'
 
 /**
  * TimerWidgetShell — client component wrapper that provides
- * the TimerWidgetProvider context and renders the TimerWidget.
- * Mounted in the server-rendered app layout alongside ChatWidgetShell.
+ * the TimerWidgetProvider context globally. The timer UI itself
+ * is embedded in the My Work Time tab, not rendered here.
  */
-export function TimerWidgetShell() {
-  return (
-    <TimerWidgetProvider>
-      <TimerWidget />
-    </TimerWidgetProvider>
-  )
+export function TimerWidgetShell({ children }: { children: React.ReactNode }) {
+  return <TimerWidgetProvider>{children}</TimerWidgetProvider>
 }
