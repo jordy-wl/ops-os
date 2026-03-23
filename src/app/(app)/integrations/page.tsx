@@ -3,13 +3,21 @@ import { redirect } from 'next/navigation'
 import { createServerClient } from '@/lib/supabase/server'
 import { resolveOrgId } from '@/lib/auth/resolve-org'
 import { IntegrationListClient } from '@/components/integrations/integration-list-client'
+import { OAuthResultBanner } from '@/components/integrations/oauth-result-banner'
 import { logger } from '@/lib/logger'
 
-export default async function IntegrationsPage() {
+interface Props {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}
+
+export default async function IntegrationsPage({ searchParams }: Props) {
   const { userId, orgId } = await auth()
 
   if (!userId) redirect('/sign-in')
   if (!orgId) redirect('/org-setup')
+
+  const params = await searchParams
+  const googleResult = typeof params.google === 'string' ? params.google : undefined
 
   const internalOrgId = await resolveOrgId(orgId)
   const supabase = createServerClient()
@@ -32,6 +40,7 @@ export default async function IntegrationsPage() {
   return (
     <div className="p-6 lg:p-8">
       <h1 className="text-2xl font-semibold text-foreground mb-6">Integrations</h1>
+      {googleResult && <OAuthResultBanner result={googleResult} />}
       <IntegrationListClient initialConnectors={error ? null : (connectors ?? [])} />
     </div>
   )

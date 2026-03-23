@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
       .eq('org_id', orgId)
       .eq('provider', 'google')
       .neq('status', 'archived')
-      .single()
+      .maybeSingle()
 
     // Parse granted scopes — since Jan 2026, users can selectively deny scopes
     const grantedScopes = tokens.scope ? tokens.scope.split(' ') : []
@@ -72,7 +72,7 @@ export async function GET(req: NextRequest) {
 
     if (existing) {
       // Update existing connector
-      await supabase
+      const { error: updateError } = await supabase
         .from('integration_connectors')
         .update({
           config: connectorConfig,
@@ -80,6 +80,14 @@ export async function GET(req: NextRequest) {
           updated_at: new Date().toISOString(),
         })
         .eq('id', existing.id)
+
+      if (updateError) {
+        logger.error('google-oauth', 'oauth.update_failed', {
+          connector_id: existing.id,
+          error_code: updateError.code,
+        })
+        return NextResponse.redirect(new URL('/integrations?google=error', req.url))
+      }
 
       logger.info('google-oauth', 'oauth.reconnected', {
         connector_id: existing.id,
@@ -96,6 +104,7 @@ export async function GET(req: NextRequest) {
           direction: 'bidirectional',
           config: connectorConfig,
           status: 'active',
+          created_by: userId,
         })
 
       if (insertError) {
