@@ -32,6 +32,8 @@ const HANDLER_MAP: Record<string, LazyHandler> = {
   // Phase 6 Sprint 23: Route + For Each
   route: () => import('./route').then((m) => m),
   for_each: () => import('./for-each').then((m) => m),
+  // Phase 7: Portal provisioning
+  provision_portal: () => import('./provision-portal').then((m) => m),
 }
 
 /** Resolved handler cache — avoids repeated dynamic imports */

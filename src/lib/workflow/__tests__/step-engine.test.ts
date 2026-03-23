@@ -9,7 +9,7 @@ vi.mock('@/lib/logger', () => ({
 }))
 
 import { createServerClient } from '@/lib/supabase/server'
-import { advanceWorkflowInstance, interpolateTemplate } from '@/lib/workflow/step-engine'
+import { advanceWorkflowInstance, interpolateTemplate, buildStepVariables } from '@/lib/workflow/step-engine'
 
 // ─── Mock DB helper ──────────────────────────────────────────────────────────
 function makeDb(...responses: { data: unknown; error: unknown }[]) {
@@ -659,5 +659,95 @@ describe('interpolateTemplate', () => {
       { block: { a: null, b: undefined } }
     )
     expect(result).toBe(' / ')
+  })
+
+  it('resolves 3-part step output paths ({{steps.step_name.field}})', () => {
+    const result = interpolateTemplate(
+      'Portal: {{steps.create_portal.portal_url}}',
+      {
+        steps: {
+          create_portal: { portal_url: 'https://app.example.com/portal/tok123', portal_token: 'tok123' },
+        },
+      }
+    )
+    expect(result).toBe('Portal: https://app.example.com/portal/tok123')
+  })
+
+  it('resolves nested step output paths', () => {
+    const result = interpolateTemplate(
+      '{{steps.api_call.response.id}}',
+      {
+        steps: {
+          api_call: { response: { id: 'resp-123' } },
+        },
+      }
+    )
+    expect(result).toBe('resp-123')
+  })
+
+  it('returns empty string for missing step name', () => {
+    const result = interpolateTemplate(
+      '{{steps.missing_step.field}}',
+      {
+        steps: {
+          create_portal: { portal_url: 'https://example.com' },
+        },
+      }
+    )
+    expect(result).toBe('')
+  })
+
+  it('2-part paths still work with N-part regex (backward compat)', () => {
+    const result = interpolateTemplate(
+      '{{block.name}} / {{context.type}}',
+      {
+        block: { name: 'Acme' },
+        context: { type: 'client' },
+      }
+    )
+    expect(result).toBe('Acme / client')
+  })
+
+  it('mixes 2-part and 3-part paths in same template', () => {
+    const result = interpolateTemplate(
+      'Hi {{block.name}}, your portal: {{steps.create_portal.portal_url}}',
+      {
+        block: { name: 'Acme Corp' },
+        steps: {
+          create_portal: { portal_url: 'https://app.example.com/portal/tok123' },
+        },
+      }
+    )
+    expect(result).toBe('Hi Acme Corp, your portal: https://app.example.com/portal/tok123')
+  })
+})
+
+// ─── buildStepVariables unit tests ──────────────────────────────────────────
+
+describe('buildStepVariables', () => {
+  it('indexes step results by step_name', () => {
+    const result = buildStepVariables([
+      { step_name: 'create_portal', step_type: 'provision_portal', status: 'completed', output: { portal_url: 'https://example.com/portal/tok' }, executed_at: '2026-01-01' },
+      { step_name: 'send_email', step_type: 'send_email', status: 'completed', output: { action_id: 'act-1' }, executed_at: '2026-01-01' },
+    ])
+    expect(result).toEqual({
+      create_portal: { portal_url: 'https://example.com/portal/tok' },
+      send_email: { action_id: 'act-1' },
+    })
+  })
+
+  it('skips results without output', () => {
+    const result = buildStepVariables([
+      { step_name: 'no_output', step_type: 'emit_event', status: 'completed', executed_at: '2026-01-01' },
+      { step_name: 'with_output', step_type: 'provision_portal', status: 'completed', output: { url: 'https://x.com' }, executed_at: '2026-01-01' },
+    ])
+    expect(result).toEqual({
+      with_output: { url: 'https://x.com' },
+    })
+  })
+
+  it('returns empty object for empty step results', () => {
+    const result = buildStepVariables([])
+    expect(result).toEqual({})
   })
 })

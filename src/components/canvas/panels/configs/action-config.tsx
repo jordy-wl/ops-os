@@ -1037,6 +1037,63 @@ export function ActionConfig({ node, onUpdate, entities }: NodeConfigProps) {
         </>
       )}
 
+      {/* -- Provision Portal --------------------------------------------------- */}
+      {stepType === 'provision_portal' && (
+        <>
+          <div className="mb-3">
+            <FieldLabel htmlFor="pp-template">Portal Template</FieldLabel>
+            <PortalConfigSelector
+              id="pp-template"
+              value={(config.portal_config_id as string) ?? ''}
+              onChange={(v) => updateConfig('portal_config_id', v)}
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Select a portal configuration to use as a template. Settings will be cloned for the client.
+            </p>
+          </div>
+          <div className="mb-3">
+            <FieldLabel htmlFor="pp-client">Client Record</FieldLabel>
+            {(entities?.blocks ?? []).length > 0 ? (
+              <EntitySelect
+                id="pp-client"
+                value={(config.link_block_id as string) ?? ''}
+                onChange={(v) => updateConfig('link_block_id', v)}
+                options={(entities?.blocks ?? []).map((b) => ({ value: b.id, label: `${b.name} (${b.type})` }))}
+                placeholder="Defaults to triggering record"
+                allowFreeText
+              />
+            ) : (
+              <TextInput id="pp-client" value={(config.link_block_id as string) ?? ''} onChange={(v) => updateConfig('link_block_id', v || undefined)} placeholder="Block ID (defaults to triggering record)" />
+            )}
+          </div>
+          <div className="mb-3">
+            <FieldLabel htmlFor="pp-name">Portal Name</FieldLabel>
+            <VariablePickerInput
+              id="pp-name"
+              value={(config.portal_name as string) ?? ''}
+              onChange={(v) => updateConfig('portal_name', v || undefined)}
+              placeholder="e.g. {{block.name}} Portal"
+              variables={[]}
+              autoSuggestion="block.name"
+            />
+          </div>
+          <div className="mb-3">
+            <FieldLabel htmlFor="pp-expires">Link Expires (hours)</FieldLabel>
+            <NumberInput
+              id="pp-expires"
+              value={(config.portal_expires_hours as number) ?? 8760}
+              onChange={(v) => updateConfig('portal_expires_hours', v)}
+              min={1}
+              max={8760}
+            />
+            <p className="text-xs text-muted-foreground mt-1">Default: 8760 (1 year)</p>
+          </div>
+          <div className="rounded-md bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+            <strong>Output:</strong> Use <code className="text-foreground">{'{{steps.<step_name>.portal_url}}'}</code> in subsequent steps to reference the generated portal link.
+          </div>
+        </>
+      )}
+
       {/* -- AI Analysis ------------------------------------------------------- */}
       {stepType === 'ai_analysis' && (
         <>

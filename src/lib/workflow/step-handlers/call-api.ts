@@ -1,5 +1,5 @@
 import { logger } from '@/lib/logger'
-import { interpolateTemplate } from '../step-engine'
+import { interpolateTemplate, buildStepVariables } from '../step-engine'
 import type { StepResult } from '../step-engine'
 import type { StepHandler } from './types'
 
@@ -57,7 +57,8 @@ const handler: StepHandler = async (step, meta, orgId, supabase) => {
     applies_to_type: meta.applies_to_type,
   }
 
-  const variables = { block: blockVars, context: contextVars }
+  const stepVars = buildStepVariables(meta.step_results)
+  const variables = { block: blockVars, context: contextVars, steps: stepVars }
 
   // Interpolate path and body
   const fullUrl = `${baseUrl.replace(/\/+$/, '')}/${step.path.replace(/^\/+/, '')}`

@@ -54,6 +54,15 @@ const DEFAULT_GROUPS: VariableGroup[] = [
       { path: 'context.timestamp', label: 'Timestamp', type: 'date' },
     ],
   },
+  {
+    label: 'Previous Step Outputs',
+    variables: [
+      { path: 'steps.<step_name>.portal_url', label: 'Portal URL', type: 'string' },
+      { path: 'steps.<step_name>.portal_token', label: 'Portal Token', type: 'string' },
+      { path: 'steps.<step_name>.url', label: 'Share Link URL', type: 'string' },
+      { path: 'steps.<step_name>.link_id', label: 'Link ID', type: 'string' },
+    ],
+  },
 ]
 
 // ---------------------------------------------------------------------------
