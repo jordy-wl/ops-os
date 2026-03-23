@@ -6,12 +6,12 @@ import { cn } from '@/lib/utils'
 import {
   FIELD_TYPES,
   FIELD_TYPE_DEFINITIONS,
-  STANDARD_EDGE_TYPES,
   inferFieldType,
   getFieldGroups,
   type FieldType,
   type FieldGroup,
 } from '@/lib/block-types/field-types'
+import { EdgeTypeSelect } from '@/components/settings/edge-type-select'
 import { FieldConfigPanel } from '@/components/settings/field-config-panel'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -745,21 +745,13 @@ export function FieldManager({
                   htmlFor="new-relation-edge-type"
                   className="block text-xs font-medium text-muted-foreground mb-1"
                 >
-                  Edge Type (auto-created on set)
+                  Edge Type
                 </label>
-                <select
+                <EdgeTypeSelect
                   id="new-relation-edge-type"
                   value={newRelationEdgeType}
-                  onChange={(e) => setNewRelationEdgeType(e.target.value)}
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                >
-                  <option value="">No edge sync (manual only)</option>
-                  {STANDARD_EDGE_TYPES.map((et) => (
-                    <option key={et.value} value={et.value}>
-                      {et.label}
-                    </option>
-                  ))}
-                </select>
+                  onChange={setNewRelationEdgeType}
+                />
               </div>
             </div>
           )}

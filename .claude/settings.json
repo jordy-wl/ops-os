@@ -21,7 +21,8 @@
       "Bash(git commit:*)",
       "Bash(gh pr:*)",
       "Bash(npm install googleapis)",
-      "mcp__browserbase__browserbase_session_create"
+      "mcp__browserbase__browserbase_session_create",
+      "Bash(xargs ls -lh)"
     ],
     "deny": [
       "Read(.env*)",
