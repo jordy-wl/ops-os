@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils'
 import {
   FIELD_TYPES,
   FIELD_TYPE_DEFINITIONS,
+  STANDARD_EDGE_TYPES,
   inferFieldType,
   getFieldGroups,
   type FieldType,
@@ -125,6 +126,8 @@ export function FieldManager({
   const [newFieldName, setNewFieldName] = useState('')
   const [newFieldType, setNewFieldType] = useState<FieldType>('text')
   const [newFieldGroup, setNewFieldGroup] = useState('')
+  const [newRelationTarget, setNewRelationTarget] = useState('')
+  const [newRelationEdgeType, setNewRelationEdgeType] = useState('')
   const [isAdding, setIsAdding] = useState(false)
   const [isDeleting, setIsDeleting] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -257,6 +260,12 @@ export function FieldManager({
       return
     }
 
+    const isRelationType = newFieldType === 'relation' || newFieldType === 'multi-relation'
+    if (isRelationType && !newRelationTarget) {
+      setError('Relation fields require a target block type')
+      return
+    }
+
     setIsAdding(true)
     setError(null)
 
@@ -268,14 +277,10 @@ export function FieldManager({
 
       const config: Record<string, unknown> = {}
 
-      // Add relation target config if applicable
-      if (newFieldType === 'relation') {
-        const firstNonSelf = allBlockTypes.find(
-          (t) => t.type_name !== blockTypeName
-        )
-        if (firstNonSelf) {
-          config['x-relation-target'] = firstNonSelf.type_name
-        }
+      // Add relation config if applicable
+      if (isRelationType) {
+        if (newRelationTarget) config['x-relation-target'] = newRelationTarget
+        if (newRelationEdgeType) config['x-relation-edge-type'] = newRelationEdgeType
       }
 
       // Add field group assignment
@@ -303,6 +308,8 @@ export function FieldManager({
       setNewFieldName('')
       setNewFieldType('text')
       setNewFieldGroup('')
+      setNewRelationTarget('')
+      setNewRelationEdgeType('')
       setShowAddForm(false)
       setSelectedField(newFieldName)
       router.refresh()
@@ -315,9 +322,9 @@ export function FieldManager({
     newFieldName,
     newFieldType,
     newFieldGroup,
+    newRelationTarget,
+    newRelationEdgeType,
     blockTypeId,
-    blockTypeName,
-    allBlockTypes,
     router,
   ])
 
@@ -707,6 +714,55 @@ export function FieldManager({
               </Button>
             </div>
           </div>
+          {/* Relation config row — shown when type is relation or multi-relation */}
+          {(newFieldType === 'relation' || newFieldType === 'multi-relation') && (
+            <div className="grid gap-3 sm:grid-cols-2 mt-3">
+              <div>
+                <label
+                  htmlFor="new-relation-target"
+                  className="block text-xs font-medium text-muted-foreground mb-1"
+                >
+                  Target Block Type
+                </label>
+                <select
+                  id="new-relation-target"
+                  value={newRelationTarget}
+                  onChange={(e) => setNewRelationTarget(e.target.value)}
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                >
+                  <option value="">Select a block type...</option>
+                  {allBlockTypes
+                    .filter((t) => t.type_name !== blockTypeName)
+                    .map((t) => (
+                      <option key={t.type_name} value={t.type_name}>
+                        {t.display_name}
+                      </option>
+                    ))}
+                </select>
+              </div>
+              <div>
+                <label
+                  htmlFor="new-relation-edge-type"
+                  className="block text-xs font-medium text-muted-foreground mb-1"
+                >
+                  Edge Type (auto-created on set)
+                </label>
+                <select
+                  id="new-relation-edge-type"
+                  value={newRelationEdgeType}
+                  onChange={(e) => setNewRelationEdgeType(e.target.value)}
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                >
+                  <option value="">No edge sync (manual only)</option>
+                  {STANDARD_EDGE_TYPES.map((et) => (
+                    <option key={et.value} value={et.value}>
+                      {et.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
