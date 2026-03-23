@@ -4,6 +4,7 @@ import { withAuth } from '@/lib/auth/withAuth'
 import { createServerClient } from '@/lib/supabase/server'
 import { ok, apiError, validationError } from '@/lib/api/responses'
 import { logger } from '@/lib/logger'
+import { syncRelationEdges } from '@/lib/blocks/edge-sync'
 
 const UpdateBlockSchema = z
   .object({
@@ -121,6 +122,23 @@ export const PATCH = withAuth(async (req: NextRequest, ctx, params) => {
 
   if (eventError) {
     logger.error('api-blocks', 'db.event_insert_failed', { error_code: eventError.code, critical: true })
+  }
+
+  // Sync relation field edges (fire-and-forget — errors logged, not propagated)
+  if (parsed.data.metadata) {
+    syncRelationEdges(
+      supabase,
+      ctx.orgId,
+      id,
+      current.type,
+      (current.metadata ?? {}) as Record<string, unknown>,
+      (updated.metadata ?? {}) as Record<string, unknown>
+    ).catch((err) =>
+      logger.warn('api-blocks', 'edge-sync.failed', {
+        block_id: id,
+        error: err instanceof Error ? err.message : String(err),
+      })
+    )
   }
 
   return ok({ block: updated, event: event ?? null })

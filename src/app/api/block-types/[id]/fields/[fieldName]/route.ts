@@ -11,6 +11,7 @@ import {
   removeFieldFromSchema,
   type BuiltSchema,
 } from '@/lib/block-types/field-schema-builder'
+import { VALID_EDGE_TYPE_VALUES } from '@/lib/block-types/field-types'
 
 const UpdateFieldSchema = z
   .object({
@@ -80,6 +81,16 @@ export const PATCH = withAuth(
         `Field "${fieldName}" is a system field and cannot be modified`,
         'fields/system-protected',
         403
+      )
+    }
+
+    // Validate edge type if provided in config
+    const edgeType = parsed.data.config?.['x-relation-edge-type'] as string | undefined
+    if (edgeType && !(VALID_EDGE_TYPE_VALUES as readonly string[]).includes(edgeType)) {
+      return apiError(
+        `Invalid edge type: ${edgeType}`,
+        'validation/invalid-edge-type',
+        400
       )
     }
 

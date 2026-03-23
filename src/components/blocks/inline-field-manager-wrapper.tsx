@@ -10,6 +10,7 @@ interface InlineFieldManagerWrapperProps {
   blockTypeName: string
   blockTypeSlug: string
   fieldSchema: Record<string, unknown>
+  allBlockTypes?: Array<{ type_name: string; display_name: string }>
 }
 
 /**
@@ -21,6 +22,7 @@ export function InlineFieldManagerWrapper({
   blockTypeName,
   blockTypeSlug,
   fieldSchema,
+  allBlockTypes,
 }: InlineFieldManagerWrapperProps) {
   const router = useRouter()
 
@@ -43,6 +45,7 @@ export function InlineFieldManagerWrapper({
       blockTypeSlug={blockTypeSlug}
       schema={schema}
       onSchemaUpdate={handleSchemaUpdate}
+      allBlockTypes={allBlockTypes}
     />
   )
 }

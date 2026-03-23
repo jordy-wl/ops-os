@@ -62,6 +62,7 @@ const PALETTE_ITEMS: { category: string; items: PaletteItem[] }[] = [
       { nodeType: 'trigger', label: 'When Event Occurs', icon: Zap, color: 'text-primary bg-primary/10', description: 'Automatically start when a specific activity happens (e.g. block created, status changed)' },
       { nodeType: 'trigger', label: 'Webhook', icon: Webhook, color: 'text-primary bg-primary/10', description: 'Start when an external system sends data to your endpoint' },
       { nodeType: 'trigger', label: 'Schedule', icon: Timer, color: 'text-primary bg-primary/10', description: 'Run on a recurring schedule (daily, weekly, etc.)' },
+      { nodeType: 'trigger', label: 'Portal Submission', icon: Globe, color: 'text-primary bg-primary/10', description: 'Start when a client submits a form or request through their portal', customActionConfig: { event_pattern: 'portal.form.submitted' } },
     ],
   },
   {

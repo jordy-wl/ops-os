@@ -6,7 +6,7 @@ import { createServerClient } from '@/lib/supabase/server'
 import { ok, apiError, validationError } from '@/lib/api/responses'
 import { isValidJsonSchema } from '@/lib/validation/json-schema'
 import { logger } from '@/lib/logger'
-import { isValidFieldType, FIELD_TYPE_DEFINITIONS } from '@/lib/block-types/field-types'
+import { isValidFieldType, FIELD_TYPE_DEFINITIONS, VALID_EDGE_TYPE_VALUES } from '@/lib/block-types/field-types'
 import {
   addFieldToSchema,
   extractFieldsFromSchema,
@@ -96,8 +96,11 @@ export const POST = withAuth(
       )
     }
 
-    // Validate relation target if applicable
-    if (parsed.data.field_type === 'relation') {
+    // Validate relation fields (both relation and multi-relation)
+    const isRelationType =
+      parsed.data.field_type === 'relation' || parsed.data.field_type === 'multi-relation'
+
+    if (isRelationType) {
       const target = parsed.data.config?.['x-relation-target'] as string | undefined
       if (!target) {
         return apiError(
@@ -128,6 +131,16 @@ export const POST = withAuth(
         return apiError(
           `Relation target type "${target}" does not exist`,
           'validation/invalid-relation-target',
+          400
+        )
+      }
+
+      // Validate edge type if provided
+      const edgeType = parsed.data.config?.['x-relation-edge-type'] as string | undefined
+      if (edgeType && !(VALID_EDGE_TYPE_VALUES as readonly string[]).includes(edgeType)) {
+        return apiError(
+          `Invalid edge type: ${edgeType}`,
+          'validation/invalid-edge-type',
           400
         )
       }

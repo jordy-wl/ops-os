@@ -49,6 +49,15 @@ const EVENT_TYPE_GROUPS = [
     ],
   },
   {
+    group: 'Portal Events',
+    events: [
+      { value: 'portal.form.submitted', label: 'Form Submitted via Portal' },
+      { value: 'portal.request.submitted', label: 'Request Submitted via Portal' },
+      { value: 'portal_config.created', label: 'Portal Created' },
+      { value: 'portal_config.deactivated', label: 'Portal Deactivated' },
+    ],
+  },
+  {
     group: 'System Events',
     events: [{ value: 'custom', label: 'Custom Event' }],
   },

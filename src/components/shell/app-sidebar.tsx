@@ -17,6 +17,7 @@ import {
   FileText,
   Settings,
   Building2,
+  Globe,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -49,6 +50,7 @@ const MAIN_NAV: NavItem[] = [
 const LIBRARY_NAV: NavItem[] = [
   { href: '/library/blocks', label: 'Blocks', icon: LayoutGrid },
   { href: '/library/documents', label: 'Documents', icon: FileText },
+  { href: '/library/portals', label: 'Portals', icon: Globe },
   { href: '/library/integrations', label: 'Integrations', icon: Plug },
 ]
 

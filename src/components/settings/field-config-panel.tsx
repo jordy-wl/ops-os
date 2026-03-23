@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { FIELD_TYPE_DEFINITIONS, type FieldType } from '@/lib/block-types/field-types'
+import { FIELD_TYPE_DEFINITIONS, STANDARD_EDGE_TYPES, type FieldType } from '@/lib/block-types/field-types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
@@ -56,6 +56,9 @@ export function FieldConfigPanel({
   const [relationTarget, setRelationTarget] = useState(
     (property['x-relation-target'] as string) ?? ''
   )
+  const [relationEdgeType, setRelationEdgeType] = useState(
+    (property['x-relation-edge-type'] as string) ?? ''
+  )
   const [currencyCode, setCurrencyCode] = useState(
     (property['x-currency-code'] as string) ?? 'AUD'
   )
@@ -86,6 +89,7 @@ export function FieldConfigPanel({
     }
 
     setRelationTarget((property['x-relation-target'] as string) ?? '')
+    setRelationEdgeType((property['x-relation-edge-type'] as string) ?? '')
     setCurrencyCode((property['x-currency-code'] as string) ?? 'AUD')
     setFieldGroup((property['x-field-group'] as string) ?? '')
   }, [fieldName, fieldType, property, isRequired])
@@ -121,8 +125,9 @@ export function FieldConfigPanel({
         config.items = { type: 'string', enum: values }
       }
 
-      if ((fieldType === 'relation' || fieldType === 'multi-relation') && relationTarget) {
-        config['x-relation-target'] = relationTarget
+      if (fieldType === 'relation' || fieldType === 'multi-relation') {
+        if (relationTarget) config['x-relation-target'] = relationTarget
+        if (relationEdgeType) config['x-relation-edge-type'] = relationEdgeType
       }
 
       if (fieldType === 'currency' && currencyCode) {
@@ -170,6 +175,7 @@ export function FieldConfigPanel({
     required,
     enumValues,
     relationTarget,
+    relationEdgeType,
     currencyCode,
     fieldGroup,
     router,
@@ -406,6 +412,37 @@ export function FieldConfigPanel({
             </select>
             <p className="mt-1 text-xs text-muted-foreground">
               The block type that this relation field points to.
+            </p>
+          </div>
+        )}
+
+        {/* Type-specific config: Relation edge type */}
+        {(fieldType === 'relation' || fieldType === 'multi-relation') && (
+          <div>
+            <label
+              htmlFor={`field-relation-edge-type-${fieldName}`}
+              className="block text-sm font-medium text-foreground mb-1"
+            >
+              Edge Type
+            </label>
+            <select
+              id={`field-relation-edge-type-${fieldName}`}
+              value={relationEdgeType}
+              onChange={(e) => {
+                setRelationEdgeType(e.target.value)
+                setSaveStatus('idle')
+              }}
+              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            >
+              <option value="">No edge sync (manual only)</option>
+              {STANDARD_EDGE_TYPES.map((et) => (
+                <option key={et.value} value={et.value}>
+                  {et.label}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-muted-foreground">
+              When set, a graph edge is automatically created/removed when this field value changes.
             </p>
           </div>
         )}
