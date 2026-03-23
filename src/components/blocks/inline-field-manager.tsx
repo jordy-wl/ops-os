@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils'
 import {
   FIELD_TYPES,
   FIELD_TYPE_DEFINITIONS,
+  STANDARD_EDGE_TYPES,
   inferFieldType,
   getFieldGroups,
   type FieldType,
@@ -36,6 +37,7 @@ interface InlineFieldManagerProps {
   blockTypeSlug: string
   schema: FieldSchema
   onSchemaUpdate: () => void
+  allBlockTypes?: Array<{ type_name: string; display_name: string }>
 }
 
 interface FieldEntry {
@@ -88,6 +90,7 @@ export function InlineFieldManager({
   blockTypeSlug,
   schema,
   onSchemaUpdate,
+  allBlockTypes = [],
 }: InlineFieldManagerProps) {
   const router = useRouter()
 
@@ -140,6 +143,8 @@ export function InlineFieldManager({
   const [newFieldType, setNewFieldType] = useState<FieldType>('text')
   const [newFieldGroup, setNewFieldGroup] = useState('')
   const [newFieldRequired, setNewFieldRequired] = useState(false)
+  const [newRelationTarget, setNewRelationTarget] = useState('')
+  const [newRelationEdgeType, setNewRelationEdgeType] = useState('')
   const [isAdding, setIsAdding] = useState(false)
 
   // Group management state
@@ -232,6 +237,12 @@ export function InlineFieldManager({
       return
     }
 
+    const isRelationType = newFieldType === 'relation' || newFieldType === 'multi-relation'
+    if (isRelationType && !newRelationTarget) {
+      setError('Relation fields require a target block type')
+      return
+    }
+
     const doAdd = async () => {
       setIsAdding(true)
       setError(null)
@@ -245,6 +256,10 @@ export function InlineFieldManager({
         const config: Record<string, unknown> = {}
         if (newFieldGroup) {
           config['x-field-group'] = newFieldGroup
+        }
+        if (isRelationType) {
+          if (newRelationTarget) config['x-relation-target'] = newRelationTarget
+          if (newRelationEdgeType) config['x-relation-edge-type'] = newRelationEdgeType
         }
         if (Object.keys(config).length > 0) {
           body.config = config
@@ -270,6 +285,8 @@ export function InlineFieldManager({
         setNewFieldType('text')
         setNewFieldGroup('')
         setNewFieldRequired(false)
+        setNewRelationTarget('')
+        setNewRelationEdgeType('')
         setShowAddField(false)
         router.refresh()
         onSchemaUpdate()
@@ -286,6 +303,8 @@ export function InlineFieldManager({
     newFieldType,
     newFieldGroup,
     newFieldRequired,
+    newRelationTarget,
+    newRelationEdgeType,
     schema.properties,
     blockTypeId,
     router,
@@ -732,6 +751,55 @@ export function InlineFieldManager({
               </Button>
             </div>
           </div>
+          {/* Relation config row — shown when type is relation or multi-relation */}
+          {(newFieldType === 'relation' || newFieldType === 'multi-relation') && (
+            <div className="grid gap-3 sm:grid-cols-2 mt-3">
+              <div>
+                <label
+                  htmlFor="inline-new-relation-target"
+                  className="block text-xs font-medium text-muted-foreground mb-1"
+                >
+                  Target Block Type
+                </label>
+                <select
+                  id="inline-new-relation-target"
+                  value={newRelationTarget}
+                  onChange={(e) => setNewRelationTarget(e.target.value)}
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                >
+                  <option value="">Select a block type...</option>
+                  {allBlockTypes
+                    .filter((t) => t.type_name !== blockTypeSlug)
+                    .map((t) => (
+                      <option key={t.type_name} value={t.type_name}>
+                        {t.display_name}
+                      </option>
+                    ))}
+                </select>
+              </div>
+              <div>
+                <label
+                  htmlFor="inline-new-relation-edge-type"
+                  className="block text-xs font-medium text-muted-foreground mb-1"
+                >
+                  Edge Type (auto-created on set)
+                </label>
+                <select
+                  id="inline-new-relation-edge-type"
+                  value={newRelationEdgeType}
+                  onChange={(e) => setNewRelationEdgeType(e.target.value)}
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                >
+                  <option value="">No edge sync (manual only)</option>
+                  {STANDARD_EDGE_TYPES.map((et) => (
+                    <option key={et.value} value={et.value}>
+                      {et.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

@@ -9,28 +9,14 @@ import {
   CheckCircle2,
   Upload,
 } from 'lucide-react'
+import {
+  type BranchingConfig,
+  type FormQuestion,
+  evaluateBranching,
+  LIKERT_LABELS_DEFAULT,
+} from '@/lib/form-types'
 
 // --- Types ---
-
-interface BranchingConfig {
-  condition_field: string
-  condition_value: string
-  condition_operator: 'equals' | 'not_equals' | 'contains' | 'greater_than' | 'less_than'
-}
-
-interface FormQuestion {
-  id: string
-  type: 'text' | 'textarea' | 'number' | 'date' | 'url' | 'select' | 'multi_select' | 'scale' | 'likert' | 'emoji' | 'yes_no' | 'file_upload'
-  label: string
-  description?: string
-  required?: boolean
-  options?: string[]
-  max_length?: number
-  scale_min?: number
-  scale_max?: number
-  scale_labels?: string[]
-  branching?: BranchingConfig
-}
 
 interface FormTemplate {
   id: string
@@ -40,41 +26,10 @@ interface FormTemplate {
   collect_contact?: boolean
 }
 
-// --- Helpers ---
-
-function evaluateBranching(
-  branching: BranchingConfig,
-  answers: Record<string, unknown>
-): boolean {
-  const fieldValue = answers[branching.condition_field]
-  const target = branching.condition_value
-
-  switch (branching.condition_operator) {
-    case 'equals':
-      return String(fieldValue) === target
-    case 'not_equals':
-      return String(fieldValue) !== target
-    case 'contains':
-      return String(fieldValue ?? '').toLowerCase().includes(target.toLowerCase())
-    case 'greater_than':
-      return Number(fieldValue) > Number(target)
-    case 'less_than':
-      return Number(fieldValue) < Number(target)
-    default:
-      return true
-  }
-}
+// --- Constants ---
 
 const EMOJI_OPTIONS = ['1f600', '1f610', '1f641', '1f622', '1f621']
 const EMOJI_CHARS = ['😀', '😐', '🙁', '😢', '😡']
-
-const LIKERT_LABELS_DEFAULT = [
-  'Strongly Disagree',
-  'Disagree',
-  'Neutral',
-  'Agree',
-  'Strongly Agree',
-]
 
 // --- Main component ---
 
@@ -643,7 +598,7 @@ function QuestionField({ question, value, onChange, error }: QuestionFieldProps)
     }
 
     case 'likert': {
-      const labels = question.scale_labels ?? LIKERT_LABELS_DEFAULT
+      const labels = Array.isArray(question.scale_labels) ? question.scale_labels : LIKERT_LABELS_DEFAULT
       input = (
         <fieldset>
           <legend className="text-sm font-medium text-gray-700 mb-1.5">

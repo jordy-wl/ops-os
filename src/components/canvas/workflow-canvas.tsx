@@ -162,7 +162,7 @@ export function WorkflowCanvas({ initialLayout, templateName, onSave, saving }: 
 
       const defaultConfig =
         item.nodeType === 'trigger'
-          ? { triggerType: item.label === 'Manual Start' ? 'manual' : 'event' }
+          ? { triggerType: item.label === 'Manual Start' ? 'manual' : 'event', ...(item.customActionConfig ?? {}) }
           : item.nodeType === 'input'
             ? { source_type: 'block_fields', field_mappings: [] }
             : item.nodeType === 'output'

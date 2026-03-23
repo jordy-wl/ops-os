@@ -43,16 +43,7 @@ interface PortalConfigPanelProps {
   blockName: string
 }
 
-const COMMON_BLOCK_TYPES = [
-  { value: 'deal', label: 'Deals' },
-  { value: 'project', label: 'Projects' },
-  { value: 'task', label: 'Tasks' },
-  { value: 'document_template', label: 'Documents' },
-  { value: 'product', label: 'Products' },
-  { value: 'service', label: 'Services' },
-  { value: 'solution', label: 'Solutions' },
-  { value: 'policy', label: 'Policies' },
-]
+import { COMMON_BLOCK_TYPES } from '@/lib/portal-constants'
 
 // --- Main component ---
 
@@ -309,12 +300,20 @@ export function PortalConfigPanel({ blockId, blockName }: PortalConfigPanelProps
           <Globe className="w-4 h-4 text-muted-foreground" />
           <h3 className="text-sm font-semibold text-foreground">Client Portal</h3>
         </div>
-        <Badge
-          variant={config.is_active ? 'default' : 'secondary'}
-          className="text-[10px]"
-        >
-          {config.is_active ? 'Active' : 'Inactive'}
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Badge
+            variant={config.is_active ? 'default' : 'secondary'}
+            className="text-[10px]"
+          >
+            {config.is_active ? 'Active' : 'Inactive'}
+          </Badge>
+          <a
+            href={`/library/portals/${config.id}`}
+            className="text-[11px] text-primary hover:underline"
+          >
+            Manage →
+          </a>
+        </div>
       </div>
 
       {/* Portal URL */}

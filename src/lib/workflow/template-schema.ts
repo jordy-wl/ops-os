@@ -146,6 +146,7 @@ const StepSchema = z.object({
   for_each_source: z.string().max(200).optional(),
   for_each_max_parallel: z.number().int().min(1).max(25).optional(),
   for_each_max_iterations: z.number().int().min(1).max(1000).optional(),
+  portal_config_id: z.string().uuid().optional(),
 })
 
 const DataInputSchema = z.object({

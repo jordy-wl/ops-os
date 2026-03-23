@@ -10,6 +10,8 @@
  * - x-placeholder: custom placeholder text
  * - x-is-system: marks field as system-managed (locked from editing)
  * - x-field-group: group/category ID this field belongs to (string)
+ * - x-relation-edge-type: edge type string to auto-create in block_edges when
+ *   this relation field has a value (empty = no edge sync)
  *
  * Top-level schema extension for field groups:
  * - x-field-groups: array of { id, label, order } defining available groups
@@ -29,6 +31,7 @@ export const FIELD_TYPES = [
   'relation',
   'multi-relation',
   'rich-text',
+  'form-questions',
 ] as const
 
 export type FieldType = (typeof FIELD_TYPES)[number]
@@ -161,6 +164,7 @@ export const FIELD_TYPE_DEFINITIONS: Record<FieldType, FieldTypeDefinition> = {
       type: 'string',
       'x-field-type': 'relation',
       'x-relation-target': '',
+      'x-relation-edge-type': '',
     },
   },
   'multi-relation': {
@@ -173,6 +177,7 @@ export const FIELD_TYPE_DEFINITIONS: Record<FieldType, FieldTypeDefinition> = {
       items: { type: 'string' },
       'x-field-type': 'multi-relation',
       'x-relation-target': '',
+      'x-relation-edge-type': '',
     },
   },
   'rich-text': {
@@ -183,6 +188,17 @@ export const FIELD_TYPE_DEFINITIONS: Record<FieldType, FieldTypeDefinition> = {
     defaultSchema: {
       type: 'string',
       'x-field-type': 'rich-text',
+    },
+  },
+  'form-questions': {
+    type: 'form-questions',
+    label: 'Form Questions',
+    icon: 'list-checks',
+    jsonSchemaType: 'array',
+    defaultSchema: {
+      type: 'array',
+      'x-field-type': 'form-questions',
+      items: { type: 'object' },
     },
   },
 }
@@ -197,6 +213,23 @@ export function getFieldTypeDefinition(type: string): FieldTypeDefinition | unde
   if (!isValidFieldType(type)) return undefined
   return FIELD_TYPE_DEFINITIONS[type]
 }
+
+// --- Standard Edge Types ---
+
+/** Edge types available for relation field auto-sync with block_edges */
+export const STANDARD_EDGE_TYPES = [
+  { value: 'part_of', label: 'Part Of' },
+  { value: 'governed_by', label: 'Governed By' },
+  { value: 'owned_by', label: 'Owned By' },
+  { value: 'related_to', label: 'Related To' },
+  { value: 'counterparty_to', label: 'Counterparty To' },
+  { value: 'instance_of', label: 'Instance Of' },
+  { value: 'processing', label: 'Processing' },
+  { value: 'spawned', label: 'Spawned' },
+  { value: 'triggered_by', label: 'Triggered By' },
+] as const
+
+export const VALID_EDGE_TYPE_VALUES: readonly string[] = STANDARD_EDGE_TYPES.map((e) => e.value)
 
 // --- Field Groups ---
 

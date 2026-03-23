@@ -101,6 +101,13 @@ export default async function BlockDetailPage({ params }: Props) {
     .eq('type_name', block.type)
     .maybeSingle()
 
+  // Fetch all block types for the org (used by relation field config)
+  const { data: allBlockTypes } = await supabase
+    .from('block_type_definitions')
+    .select('type_name, display_name')
+    .eq('org_id', internalOrgId)
+    .order('display_name')
+
   // Resolve user permissions for permission-gated UI (e.g. inline field manager)
   const { permissions } = await resolvePermissions(
     supabase,
@@ -207,6 +214,7 @@ export default async function BlockDetailPage({ params }: Props) {
               blockTypeName={(typeDef.display_name as string) ?? block.type}
               blockTypeSlug={typeDef.type_name as string}
               fieldSchema={typeDef.field_schema as Record<string, unknown>}
+              allBlockTypes={(allBlockTypes ?? []) as Array<{ type_name: string; display_name: string }>}
             />
           )}
         </div>

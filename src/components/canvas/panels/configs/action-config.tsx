@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import type { NodeConfigProps } from '../types'
 import { makeConfigUpdater } from '../types'
 import {
@@ -30,6 +30,45 @@ const ACTION_TYPE_OPTIONS = [
   { value: 'update_block', label: 'Update Record' },
   { value: 'run_sub_workflow', label: 'Run Sub-Workflow' },
 ]
+
+// ─── Portal Config Selector (sub-component) ─────────────────────────────────
+
+function PortalConfigSelector({
+  id,
+  value,
+  onChange,
+}: {
+  id: string
+  value: string
+  onChange: (v: string) => void
+}) {
+  const [options, setOptions] = useState<{ value: string; label: string }[]>([])
+
+  useEffect(() => {
+    fetch('/api/portal-configs')
+      .then((r) => r.json())
+      .then((data) => {
+        const configs = Array.isArray(data) ? data : data.data ?? []
+        setOptions(
+          configs.map((c: Record<string, unknown>) => ({
+            value: c.id as string,
+            label: c.name as string,
+          }))
+        )
+      })
+      .catch(() => {})
+  }, [])
+
+  return (
+    <EntitySelect
+      id={id}
+      value={value}
+      onChange={onChange}
+      options={options}
+      placeholder="Select a portal..."
+    />
+  )
+}
 
 // ─── Update Block Config (sub-component) ─────────────────────────────────────
 
@@ -929,9 +968,20 @@ export function ActionConfig({ node, onUpdate, entities }: NodeConfigProps) {
                 { value: 'view', label: 'View Only' },
                 { value: 'form', label: 'Fill Form' },
                 { value: 'sign', label: 'Sign' },
+                { value: 'portal', label: 'Client Portal' },
               ]}
             />
           </div>
+          {(config.link_type as string) === 'portal' && (
+            <div className="mb-3">
+              <FieldLabel htmlFor="sl-portal">Portal Configuration</FieldLabel>
+              <PortalConfigSelector
+                id="sl-portal"
+                value={(config.portal_config_id as string) ?? ''}
+                onChange={(v) => updateConfig('portal_config_id', v)}
+              />
+            </div>
+          )}
           <div className="mb-3">
             <DurationPicker
               value={(config.link_expires_seconds as number) ?? 604800}

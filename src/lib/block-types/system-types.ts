@@ -912,6 +912,7 @@ export const SYSTEM_BLOCK_TYPES = [
         },
         questions: {
           type: 'array',
+          'x-field-type': 'form-questions',
           items: {
             type: 'object',
             properties: {

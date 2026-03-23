@@ -11,6 +11,7 @@ import {
 } from '@/lib/block-types/field-types'
 import { DateField } from './fields/date-field'
 import { MultiSelectField } from './fields/multi-select-field'
+import { FormQuestionEditor } from './fields/form-question-editor'
 import { CurrencyField } from './fields/currency-field'
 import { UrlField } from './fields/url-field'
 import { PhoneField } from './fields/phone-field'
@@ -239,6 +240,8 @@ function FieldDispatcher(props: FieldComponentProps) {
       return <RelationField {...props} />
     case 'multi-relation':
       return <MultiRelationField {...props} />
+    case 'form-questions':
+      return <FormQuestionEditor {...props} />
     default:
       return <DefaultField {...props} fieldType={fieldType} />
   }
