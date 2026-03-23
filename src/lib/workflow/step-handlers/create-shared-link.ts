@@ -1,4 +1,5 @@
 import { logger } from '@/lib/logger'
+import { generateShareToken } from '@/lib/shared-links'
 import type { StepHandler } from './types'
 
 /**
@@ -17,8 +18,8 @@ const handler: StepHandler = async (step, meta, orgId, supabase) => {
   const linkType = (stepAny.link_type as string) ?? 'view'
   const expiresHours = (stepAny.link_expires_hours as number) ?? 168
 
-  // Generate a secure token
-  const token = crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '')
+  // Generate a secure token (sl_ prefix for shared links)
+  const token = generateShareToken()
 
   // Calculate expiry
   const expiresAt = new Date(Date.now() + expiresHours * 3600000).toISOString()
@@ -29,9 +30,11 @@ const handler: StepHandler = async (step, meta, orgId, supabase) => {
       org_id: orgId,
       block_id: blockId,
       token,
-      type: linkType,
+      share_type: linkType,
+      permissions: {},
+      form_schema: null,
       expires_at: expiresAt,
-      active: true,
+      is_active: true,
       created_by: 'workflow',
     })
     .select('id, token')
@@ -70,6 +73,7 @@ const handler: StepHandler = async (step, meta, orgId, supabase) => {
     output: {
       link_id: link.id,
       token: link.token,
+      url: `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/shared/${link.token}`,
       block_id: blockId,
       type: linkType,
       expires_at: expiresAt,

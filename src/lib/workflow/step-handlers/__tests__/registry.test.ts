@@ -2,15 +2,20 @@ import { describe, it, expect } from 'vitest'
 import { resolveHandler, getRegisteredTypes } from '../registry'
 
 describe('step handler registry', () => {
-  it('has 22 registered step types', () => {
+  it('has 23 registered step types', () => {
     const types = getRegisteredTypes()
-    expect(types.length).toBe(22)
+    expect(types.length).toBe(23)
   })
 
   it('includes Phase 6 Sprint 23 step types', () => {
     const types = getRegisteredTypes()
     expect(types).toContain('route')
     expect(types).toContain('for_each')
+  })
+
+  it('includes Phase 7 provision_portal step type', () => {
+    const types = getRegisteredTypes()
+    expect(types).toContain('provision_portal')
   })
 
   it('includes all original step types', () => {

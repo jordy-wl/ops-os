@@ -240,18 +240,40 @@ async function executeStep(
 // ─── Template interpolation (shared utility) ───────────────────────────────
 
 /**
- * Interpolate {{block.*}} and {{context.*}} template variables in a string.
- * block.* resolves against the source block row, context.* against instance metadata.
+ * Interpolate template variables in a string.
+ * Supports N-part dot paths: {{block.name}}, {{context.template_id}},
+ * {{steps.step_name.field}}, {{steps.step_name.nested.field}}.
  */
 export function interpolateTemplate(
   template: string,
   variables: Record<string, Record<string, unknown>>
 ): string {
-  return template.replace(/\{\{(\w+)\.(\w+)\}\}/g, (_match, ns, key) => {
+  return template.replace(/\{\{(\w+)\.([\w.]+)\}\}/g, (_match, ns, rest) => {
     const scope = variables[ns]
     if (!scope) return ''
-    const val = scope[key]
-    if (val === undefined || val === null) return ''
+    const parts = rest.split('.')
+    let val: unknown = scope
+    for (const part of parts) {
+      if (val == null || typeof val !== 'object') return ''
+      val = (val as Record<string, unknown>)[part]
+    }
+    if (val == null) return ''
     return typeof val === 'object' ? JSON.stringify(val) : String(val)
   })
+}
+
+/**
+ * Convert step results into a namespace for interpolation.
+ * Indexes by step_name so {{steps.create_portal.portal_url}} resolves.
+ */
+export function buildStepVariables(
+  stepResults: StepResult[]
+): Record<string, Record<string, unknown>> {
+  const steps: Record<string, Record<string, unknown>> = {}
+  for (const result of stepResults) {
+    if (result.output) {
+      steps[result.step_name] = result.output
+    }
+  }
+  return steps
 }

@@ -92,6 +92,7 @@ const PALETTE_ITEMS: { category: string; items: PaletteItem[] }[] = [
       { nodeType: 'task', stepType: 'generate_task', label: 'Approval Request', icon: UserCheck, color: 'text-violet-500 bg-violet-500/10', description: 'Create an approval task that pauses the workflow until reviewed' },
       { nodeType: 'action', stepType: 'send_notification', label: 'Send Notification', icon: Bell, color: 'text-violet-500 bg-violet-500/10', description: 'Push a notification to specific users or the whole org' },
       { nodeType: 'action', stepType: 'create_shared_link', label: 'Share Link', icon: Share2, color: 'text-violet-500 bg-violet-500/10', description: 'Generate a secure shared link for external client access' },
+      { nodeType: 'action', stepType: 'provision_portal', label: 'Provision Portal', icon: Globe, color: 'text-violet-500 bg-violet-500/10', description: 'Create a client portal from a template' },
     ],
   },
   {

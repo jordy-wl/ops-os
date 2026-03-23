@@ -35,6 +35,8 @@ const StepSchema = z.object({
     'ai_analysis', 'ai_classify', 'ai_summarize', 'ai_risk_assessment', 'store_file',
     // Phase 6 Sprint 23: Route + For Each
     'route', 'for_each',
+    // Phase 7: Portal provisioning
+    'provision_portal',
   ]),
   event_type: z.string().min(1).max(100).optional(),
   action_type: z.string().min(1).max(100).optional(),
@@ -117,7 +119,7 @@ const StepSchema = z.object({
   notification_link: z.string().max(500).optional(),
   // create_shared_link step fields (Phase 5)
   link_block_id: z.string().max(500).optional(),
-  link_type: z.enum(['view', 'form', 'sign']).optional(),
+  link_type: z.enum(['view', 'form', 'sign', 'portal']).optional(),
   link_expires_hours: z.number().int().min(1).max(8760).optional(),
   // AI step fields (Phase 5 Sprint 16)
   ai_prompt: z.string().max(5000).optional(),
@@ -147,6 +149,9 @@ const StepSchema = z.object({
   for_each_max_parallel: z.number().int().min(1).max(25).optional(),
   for_each_max_iterations: z.number().int().min(1).max(1000).optional(),
   portal_config_id: z.string().uuid().optional(),
+  // provision_portal step fields (Phase 7)
+  portal_name: z.string().max(255).optional(),
+  portal_expires_hours: z.number().int().min(1).max(8760).optional(),
 })
 
 const DataInputSchema = z.object({
