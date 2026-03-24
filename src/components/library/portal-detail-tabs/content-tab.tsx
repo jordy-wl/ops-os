@@ -12,7 +12,7 @@ interface ContentTabProps {
   config: PortalConfig
   onUpdate: (updates: Partial<PortalConfig>) => void
   formTemplates: FormTemplateSummary[]
-  clientId: string
+  clientId: string | null
 }
 
 export function ContentTab({

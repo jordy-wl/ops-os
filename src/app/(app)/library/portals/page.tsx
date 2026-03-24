@@ -8,9 +8,10 @@ import { PortalBrowser } from '@/components/library/portal-browser'
 export interface PortalListItem {
   id: string
   name: string
-  client_block_id: string
+  client_block_id: string | null
   client_name: string
   is_active: boolean
+  is_template: boolean
   dashboard_enabled: boolean
   documents_enabled: boolean
   requests_enabled: boolean
@@ -33,7 +34,7 @@ export default async function PortalsPage() {
   const { data: configs } = await supabase
     .from('portal_configurations')
     .select(`
-      id, name, client_block_id, is_active,
+      id, name, client_block_id, is_active, is_template,
       dashboard_enabled, documents_enabled, requests_enabled, forms_enabled,
       exposed_block_types, created_at, updated_at,
       shared_links!portal_configurations_shared_link_id_fkey(token),
@@ -51,8 +52,9 @@ export default async function PortalsPage() {
       id: c.id,
       name: c.name,
       client_block_id: c.client_block_id,
-      client_name: blockObj?.name ?? 'Unknown Client',
+      client_name: c.client_block_id ? (blockObj?.name ?? 'Unknown Client') : 'Template',
       is_active: c.is_active,
+      is_template: c.is_template ?? false,
       dashboard_enabled: c.dashboard_enabled,
       documents_enabled: c.documents_enabled,
       requests_enabled: c.requests_enabled,

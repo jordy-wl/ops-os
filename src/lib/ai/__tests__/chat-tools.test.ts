@@ -61,8 +61,8 @@ function makeSupabase(responses: Record<string, { data: unknown; error: unknown 
 }
 
 describe('CHAT_TOOLS', () => {
-  it('defines 12 tools', () => {
-    expect(CHAT_TOOLS).toHaveLength(12)
+  it('defines 14 tools', () => {
+    expect(CHAT_TOOLS).toHaveLength(14)
   })
 
   it('each tool has name, description, and input_schema', () => {

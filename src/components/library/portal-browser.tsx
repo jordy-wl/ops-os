@@ -18,14 +18,13 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { CreatePortalDialog } from './create-portal-dialog'
 import type { PortalListItem } from '@/app/(app)/library/portals/page'
 
 interface PortalBrowserProps {
   portals: PortalListItem[]
 }
 
-type StatusFilter = 'all' | 'active' | 'inactive'
+type StatusFilter = 'all' | 'active' | 'inactive' | 'templates'
 type ViewMode = 'grid' | 'list'
 
 const FEATURE_ICONS = [
@@ -39,13 +38,13 @@ const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
   { value: 'all', label: 'All' },
   { value: 'active', label: 'Active' },
   { value: 'inactive', label: 'Inactive' },
+  { value: 'templates', label: 'Templates' },
 ]
 
 export function PortalBrowser({ portals }: PortalBrowserProps) {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [viewMode, setViewMode] = useState<ViewMode>('grid')
-  const [showCreate, setShowCreate] = useState(false)
   const [copiedId, setCopiedId] = useState<string | null>(null)
 
   const filtered = useMemo(() => {
@@ -58,8 +57,9 @@ export function PortalBrowser({ portals }: PortalBrowserProps) {
           p.client_name.toLowerCase().includes(q)
       )
     }
-    if (statusFilter === 'active') items = items.filter((p) => p.is_active)
-    if (statusFilter === 'inactive') items = items.filter((p) => !p.is_active)
+    if (statusFilter === 'active') items = items.filter((p) => p.is_active && !p.is_template)
+    if (statusFilter === 'inactive') items = items.filter((p) => !p.is_active && !p.is_template)
+    if (statusFilter === 'templates') items = items.filter((p) => p.is_template)
     return items
   }, [portals, search, statusFilter])
 
@@ -130,10 +130,12 @@ export function PortalBrowser({ portals }: PortalBrowserProps) {
             <List className="w-4 h-4" />
           </button>
 
-          <Button size="sm" onClick={() => setShowCreate(true)} className="ml-2">
-            <Plus className="w-3.5 h-3.5 mr-1" />
-            Create Portal
-          </Button>
+          <Link href="/library/portals/new">
+            <Button size="sm" className="ml-2">
+              <Plus className="w-3.5 h-3.5 mr-1" />
+              Create Portal
+            </Button>
+          </Link>
         </div>
       </div>
 
@@ -150,10 +152,12 @@ export function PortalBrowser({ portals }: PortalBrowserProps) {
               : 'Try adjusting your search or filter criteria.'}
           </p>
           {portals.length === 0 && (
-            <Button size="sm" onClick={() => setShowCreate(true)}>
-              <Plus className="w-3.5 h-3.5 mr-1" />
-              Create Portal
-            </Button>
+            <Link href="/library/portals/new">
+              <Button size="sm">
+                <Plus className="w-3.5 h-3.5 mr-1" />
+                Create Portal
+              </Button>
+            </Link>
           )}
         </div>
       ) : viewMode === 'grid' ? (
@@ -173,12 +177,16 @@ export function PortalBrowser({ portals }: PortalBrowserProps) {
                     {portal.client_name}
                   </p>
                 </div>
-                <Badge
-                  variant={portal.is_active ? 'default' : 'secondary'}
-                  className="text-[10px] shrink-0"
-                >
-                  {portal.is_active ? 'Active' : 'Inactive'}
-                </Badge>
+                {portal.is_template ? (
+                  <Badge variant="outline" className="text-[10px] shrink-0">Template</Badge>
+                ) : (
+                  <Badge
+                    variant={portal.is_active ? 'default' : 'secondary'}
+                    className="text-[10px] shrink-0"
+                  >
+                    {portal.is_active ? 'Active' : 'Inactive'}
+                  </Badge>
+                )}
               </div>
 
               {/* Feature icons */}
@@ -272,12 +280,16 @@ export function PortalBrowser({ portals }: PortalBrowserProps) {
                   )
                 })}
               </div>
-              <Badge
-                variant={portal.is_active ? 'default' : 'secondary'}
-                className="text-[10px] shrink-0"
-              >
-                {portal.is_active ? 'Active' : 'Inactive'}
-              </Badge>
+              {portal.is_template ? (
+                <Badge variant="outline" className="text-[10px] shrink-0">Template</Badge>
+              ) : (
+                <Badge
+                  variant={portal.is_active ? 'default' : 'secondary'}
+                  className="text-[10px] shrink-0"
+                >
+                  {portal.is_active ? 'Active' : 'Inactive'}
+                </Badge>
+              )}
               <span className="text-[11px] text-muted-foreground shrink-0 w-24 text-right">
                 {new Date(portal.updated_at).toLocaleDateString()}
               </span>
@@ -286,10 +298,6 @@ export function PortalBrowser({ portals }: PortalBrowserProps) {
         </div>
       )}
 
-      <CreatePortalDialog
-        open={showCreate}
-        onOpenChange={setShowCreate}
-      />
     </div>
   )
 }

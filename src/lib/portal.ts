@@ -14,6 +14,7 @@ export interface PortalConfig {
   client_block_id: string
   shared_link_id: string
   name: string
+  is_template: boolean
   dashboard_enabled: boolean
   documents_enabled: boolean
   requests_enabled: boolean
@@ -21,6 +22,7 @@ export interface PortalConfig {
   exposed_block_types: string[]
   exposed_block_ids: string[] | null
   branding_overrides: Record<string, unknown> | null
+  form_template_ids: string[] | null
   is_active: boolean
 }
 
@@ -126,6 +128,7 @@ export async function validatePortalToken(token: string): Promise<PortalValidati
       client_block_id: config.client_block_id,
       shared_link_id: config.shared_link_id,
       name: config.name,
+      is_template: config.is_template ?? false,
       dashboard_enabled: config.dashboard_enabled,
       documents_enabled: config.documents_enabled,
       requests_enabled: config.requests_enabled,
@@ -133,6 +136,7 @@ export async function validatePortalToken(token: string): Promise<PortalValidati
       exposed_block_types: config.exposed_block_types ?? [],
       exposed_block_ids: config.exposed_block_ids ?? null,
       branding_overrides: config.branding_overrides ?? null,
+      form_template_ids: config.form_template_ids ?? null,
       is_active: config.is_active,
     },
     clientBlock: clientBlock as Record<string, unknown>,

@@ -317,6 +317,84 @@ export const CHAT_TOOLS: Anthropic.Tool[] = [
       required: ['instance_id'],
     },
   },
+  {
+    name: 'create_portal',
+    description:
+      'Create a new client portal or portal template. If client_block_id is provided, creates a live portal with a shareable URL. If omitted, saves as a reusable template. Configure features (dashboard, documents, requests, forms), visible block types, and branding.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        name: { type: 'string', description: 'Portal name (e.g. "Acme Corp Portal")' },
+        client_block_id: {
+          type: 'string',
+          description: 'Client block ID to assign this portal to. Omit to create a template.',
+        },
+        features: {
+          type: 'object',
+          description: 'Feature toggles for the portal',
+          properties: {
+            dashboard_enabled: { type: 'boolean' },
+            documents_enabled: { type: 'boolean' },
+            requests_enabled: { type: 'boolean' },
+            forms_enabled: { type: 'boolean' },
+          },
+        },
+        exposed_block_types: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Block types visible in the portal (e.g. deal, project, task)',
+        },
+        branding: {
+          type: 'object',
+          description: 'Branding overrides',
+          properties: {
+            display_name: { type: 'string' },
+            logo_url: { type: 'string' },
+            primary_color: { type: 'string' },
+          },
+        },
+      },
+      required: ['name'],
+    },
+  },
+  {
+    name: 'configure_portal',
+    description:
+      'Update an existing client portal or template configuration. Change features, visible data, branding, or activation status.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        portal_config_id: { type: 'string', description: 'Portal configuration ID to update' },
+        name: { type: 'string', description: 'New portal name' },
+        features: {
+          type: 'object',
+          description: 'Feature toggles to update',
+          properties: {
+            dashboard_enabled: { type: 'boolean' },
+            documents_enabled: { type: 'boolean' },
+            requests_enabled: { type: 'boolean' },
+            forms_enabled: { type: 'boolean' },
+          },
+        },
+        exposed_block_types: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Block types visible in the portal',
+        },
+        branding: {
+          type: 'object',
+          description: 'Branding overrides',
+          properties: {
+            display_name: { type: 'string' },
+            logo_url: { type: 'string' },
+            primary_color: { type: 'string' },
+          },
+        },
+        is_active: { type: 'boolean', description: 'Activate or deactivate the portal' },
+      },
+      required: ['portal_config_id'],
+    },
+  },
 ]
 
 // ─── Tool Execution ──────────────────────────────────────────────────────────
@@ -343,7 +421,7 @@ export async function executeChatTool(
   // RBAC: read-only tools available to all, mutation tools require ops-admin,
   // block config tools require ops-admin (manage_settings)
   const readOnlyTools = new Set(['search_blocks', 'list_block_types', 'calculate_delta'])
-  const configTools = new Set(['suggest_fields', 'configure_block_type', 'create_block_type', 'create_relationship'])
+  const configTools = new Set(['suggest_fields', 'configure_block_type', 'create_block_type', 'create_relationship', 'create_portal', 'configure_portal'])
   const workflowTools = new Set(['reassign_step', 'extend_deadline'])
   if (!readOnlyTools.has(toolName) && role !== 'ops-admin') {
     const required = configTools.has(toolName)
@@ -385,6 +463,10 @@ export async function executeChatTool(
         return await executeExtendDeadline(supabase, orgId, input)
       case 'calculate_delta':
         return await executeCalculateDelta(supabase, orgId, input)
+      case 'create_portal':
+        return await executeCreatePortal(supabase, orgId, input)
+      case 'configure_portal':
+        return await executeConfigurePortal(supabase, orgId, input)
       default:
         return { success: false, error: `Unknown tool: ${toolName}` }
     }
@@ -1297,6 +1379,195 @@ async function executeCalculateDelta(
       instance_id: instanceId,
       instance_name: instance.name,
       ...deltaResult,
+    },
+  }
+}
+
+// ─── Portal Tools ─────────────────────────────────────────────────────────────
+
+async function executeCreatePortal(
+  supabase: ReturnType<typeof createServerClient>,
+  orgId: string,
+  input: Record<string, unknown>
+): Promise<ToolResult> {
+  const name = String(input.name ?? '').trim()
+  if (!name) return { success: false, error: 'Portal name is required' }
+
+  const clientBlockId = input.client_block_id ? String(input.client_block_id) : null
+  const features = (input.features ?? {}) as Record<string, boolean>
+  const exposedBlockTypes = Array.isArray(input.exposed_block_types)
+    ? (input.exposed_block_types as string[])
+    : []
+  const branding = (input.branding ?? null) as Record<string, unknown> | null
+
+  // If a client is specified, verify it exists in the org
+  if (clientBlockId) {
+    const { data: client, error: clientErr } = await supabase
+      .from('blocks')
+      .select('id, name')
+      .eq('id', clientBlockId)
+      .eq('org_id', orgId)
+      .eq('type', 'client')
+      .single()
+
+    if (clientErr || !client) {
+      return { success: false, error: `Client block not found: ${clientBlockId}` }
+    }
+  }
+
+  const isTemplate = !clientBlockId
+
+  // Build shared link if this is a live portal (not a template)
+  let sharedLinkId: string | null = null
+  if (clientBlockId) {
+    const token = `p_${crypto.randomUUID().replace(/-/g, '').slice(0, 24)}`
+    const expiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
+    const { data: link } = await supabase
+      .from('shared_links')
+      .insert({
+        org_id: orgId,
+        block_id: clientBlockId,
+        token,
+        share_type: 'portal',
+        permissions: { view: true },
+        expires_at: expiresAt,
+        created_by: 'ai_chat',
+      })
+      .select('id')
+      .single()
+    sharedLinkId = link?.id ?? null
+  }
+
+  const { data: config, error } = await supabase
+    .from('portal_configurations')
+    .insert({
+      org_id: orgId,
+      client_block_id: clientBlockId,
+      name,
+      is_template: isTemplate,
+      dashboard_enabled: features.dashboard_enabled ?? true,
+      documents_enabled: features.documents_enabled ?? true,
+      requests_enabled: features.requests_enabled ?? true,
+      forms_enabled: features.forms_enabled ?? true,
+      exposed_block_types: exposedBlockTypes,
+      branding_overrides: branding,
+      shared_link_id: sharedLinkId,
+      created_by: 'ai_chat',
+    })
+    .select('id, name, is_template, is_active')
+    .single()
+
+  if (error || !config) {
+    return { success: false, error: `Failed to create portal: ${error?.message ?? 'unknown'}` }
+  }
+
+  // Link shared_link back to portal config
+  if (sharedLinkId) {
+    await supabase
+      .from('shared_links')
+      .update({ portal_config_id: config.id })
+      .eq('id', sharedLinkId)
+  }
+
+  // Audit event
+  await supabase.from('events').insert({
+    org_id: orgId,
+    block_id: clientBlockId ?? config.id,
+    type: isTemplate ? 'portal_template.created' : 'portal_config.created',
+    payload: { portal_config_id: config.id, name, is_template: isTemplate },
+    actor_id: 'ai_chat',
+  })
+
+  logger.info('chat-tools', 'create_portal.success', {
+    org_id: orgId,
+    portal_config_id: config.id,
+    is_template: isTemplate,
+  })
+
+  return {
+    success: true,
+    data: {
+      portal_config_id: config.id,
+      name: config.name,
+      is_template: isTemplate,
+      is_active: config.is_active,
+    },
+  }
+}
+
+async function executeConfigurePortal(
+  supabase: ReturnType<typeof createServerClient>,
+  orgId: string,
+  input: Record<string, unknown>
+): Promise<ToolResult> {
+  const configId = String(input.portal_config_id ?? '')
+  if (!configId) return { success: false, error: 'portal_config_id is required' }
+
+  // Verify the config exists in this org
+  const { data: existing, error: fetchErr } = await supabase
+    .from('portal_configurations')
+    .select('id')
+    .eq('id', configId)
+    .eq('org_id', orgId)
+    .single()
+
+  if (fetchErr || !existing) {
+    return { success: false, error: `Portal configuration not found: ${configId}` }
+  }
+
+  const features = (input.features ?? {}) as Record<string, boolean>
+  const branding = input.branding as Record<string, unknown> | undefined
+  const exposedBlockTypes = input.exposed_block_types as string[] | undefined
+
+  const updatePayload: Record<string, unknown> = {
+    updated_at: new Date().toISOString(),
+  }
+
+  if (input.name) updatePayload.name = String(input.name)
+  if (features.dashboard_enabled !== undefined) updatePayload.dashboard_enabled = features.dashboard_enabled
+  if (features.documents_enabled !== undefined) updatePayload.documents_enabled = features.documents_enabled
+  if (features.requests_enabled !== undefined) updatePayload.requests_enabled = features.requests_enabled
+  if (features.forms_enabled !== undefined) updatePayload.forms_enabled = features.forms_enabled
+  if (exposedBlockTypes) updatePayload.exposed_block_types = exposedBlockTypes
+  if (branding !== undefined) updatePayload.branding_overrides = branding
+  if (input.is_active !== undefined) updatePayload.is_active = input.is_active
+
+  const { data: config, error: updateErr } = await supabase
+    .from('portal_configurations')
+    .update(updatePayload)
+    .eq('id', configId)
+    .select('id, name, is_active, is_template')
+    .single()
+
+  if (updateErr || !config) {
+    return { success: false, error: `Failed to update portal: ${updateErr?.message ?? 'unknown'}` }
+  }
+
+  // Audit event
+  await supabase.from('events').insert({
+    org_id: orgId,
+    block_id: configId,
+    type: 'portal_config.updated',
+    payload: {
+      portal_config_id: configId,
+      updated_fields: Object.keys(updatePayload).filter(k => k !== 'updated_at'),
+    },
+    actor_id: 'ai_chat',
+  })
+
+  logger.info('chat-tools', 'configure_portal.success', {
+    org_id: orgId,
+    portal_config_id: configId,
+    fields_updated: Object.keys(updatePayload),
+  })
+
+  return {
+    success: true,
+    data: {
+      portal_config_id: config.id,
+      name: config.name,
+      is_active: config.is_active,
+      updated_fields: Object.keys(updatePayload).filter(k => k !== 'updated_at'),
     },
   }
 }

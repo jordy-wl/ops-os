@@ -8,8 +8,9 @@ import { logger } from '@/lib/logger'
 import type { Permission } from '@/lib/rbac/types'
 
 const CreateSchema = z.object({
-  client_block_id: z.string().uuid(),
+  client_block_id: z.string().uuid().nullable().optional().default(null),
   name: z.string().min(1).max(255),
+  is_template: z.boolean().optional().default(false),
   dashboard_enabled: z.boolean().optional().default(true),
   documents_enabled: z.boolean().optional().default(true),
   requests_enabled: z.boolean().optional().default(true),
@@ -17,17 +18,19 @@ const CreateSchema = z.object({
   exposed_block_types: z.array(z.string()).optional().default([]),
   exposed_block_ids: z.array(z.string().uuid()).optional().default([]),
   branding_overrides: z.record(z.unknown()).nullable().optional().default(null),
+  form_template_ids: z.array(z.string().uuid()).nullable().optional().default(null),
 })
 
 /**
  * GET /api/portal-configs — list portal configurations for the org
- * Optional query param: ?client_id= to filter by client block
+ * Optional query params: ?client_id= to filter by client block, ?templates_only=true
  */
 export const GET = withAuth(
   requirePermission(['manage_blocks' as Permission], async (req, ctx) => {
     const supabase = createServerClient()
     const url = new URL(req.url)
     const clientId = url.searchParams.get('client_id')
+    const templatesOnly = url.searchParams.get('templates_only')
 
     let query = supabase
       .from('portal_configurations')
@@ -37,6 +40,9 @@ export const GET = withAuth(
 
     if (clientId) {
       query = query.eq('client_block_id', clientId)
+    }
+    if (templatesOnly === 'true') {
+      query = query.eq('is_template', true)
     }
 
     const { data: configs, error } = await query
@@ -65,7 +71,8 @@ export const GET = withAuth(
 
 /**
  * POST /api/portal-configs — create a new portal configuration
- * Auto-generates a long-lived shared_link (365 days, type='portal')
+ * If client_block_id is provided: creates a live portal with shared_link (365 days)
+ * If client_block_id is null: creates a reusable template (no shared_link)
  */
 export const POST = withAuth(
   requirePermission(['manage_blocks' as Permission], async (req, ctx) => {
@@ -77,60 +84,71 @@ export const POST = withAuth(
 
     const supabase = createServerClient()
     const data = parsed.data
+    const isTemplate = !data.client_block_id
 
-    // Verify the client block exists and belongs to this org
-    const { data: clientBlock, error: blockError } = await supabase
-      .from('blocks')
-      .select('id, type')
-      .eq('id', data.client_block_id)
-      .eq('org_id', ctx.orgId)
-      .single()
+    if (data.client_block_id) {
+      // Verify the client block exists and belongs to this org
+      const { data: clientBlock, error: blockError } = await supabase
+        .from('blocks')
+        .select('id, type')
+        .eq('id', data.client_block_id)
+        .eq('org_id', ctx.orgId)
+        .single()
 
-    if (blockError || !clientBlock) {
-      return apiError('Client block not found', 'portal-configs/client-not-found', 404)
+      if (blockError || !clientBlock) {
+        return apiError('Client block not found', 'portal-configs/client-not-found', 404)
+      }
+
+      // Check for existing portal config for this client
+      const { data: existing } = await supabase
+        .from('portal_configurations')
+        .select('id')
+        .eq('org_id', ctx.orgId)
+        .eq('client_block_id', data.client_block_id)
+        .single()
+
+      if (existing) {
+        return apiError(
+          'A portal configuration already exists for this client',
+          'portal-configs/duplicate',
+          409
+        )
+      }
     }
 
-    // Check for existing portal config for this client
-    const { data: existing } = await supabase
-      .from('portal_configurations')
-      .select('id')
-      .eq('org_id', ctx.orgId)
-      .eq('client_block_id', data.client_block_id)
-      .single()
+    // Create shared link only for non-template portals (365 days = 8760 hours)
+    let sharedLinkId: string | null = null
+    let portalToken: string | null = null
 
-    if (existing) {
-      return apiError(
-        'A portal configuration already exists for this client',
-        'portal-configs/duplicate',
-        409
-      )
-    }
+    if (data.client_block_id) {
+      const token = generateShareToken()
+      const expiresAt = new Date(Date.now() + 8760 * 60 * 60 * 1000).toISOString()
 
-    // Create the shared link first (365 days = 8760 hours)
-    const token = generateShareToken()
-    const expiresAt = new Date(Date.now() + 8760 * 60 * 60 * 1000).toISOString()
+      const { data: sharedLink, error: linkError } = await supabase
+        .from('shared_links')
+        .insert({
+          org_id: ctx.orgId,
+          block_id: data.client_block_id,
+          token,
+          share_type: 'portal',
+          permissions: {},
+          form_schema: null,
+          expires_at: expiresAt,
+          created_by: ctx.userId,
+        })
+        .select('id, token')
+        .single()
 
-    const { data: sharedLink, error: linkError } = await supabase
-      .from('shared_links')
-      .insert({
-        org_id: ctx.orgId,
-        block_id: data.client_block_id,
-        token,
-        share_type: 'portal',
-        permissions: {},
-        form_schema: null,
-        expires_at: expiresAt,
-        created_by: ctx.userId,
-      })
-      .select('id, token')
-      .single()
+      if (linkError || !sharedLink) {
+        logger.error('portal-configs', 'portal_config.link_create_failed', {
+          org_id: ctx.orgId,
+          error_code: linkError?.code,
+        })
+        return apiError('Failed to create portal link', 'portal-configs/link-failed', 500)
+      }
 
-    if (linkError || !sharedLink) {
-      logger.error('portal-configs', 'portal_config.link_create_failed', {
-        org_id: ctx.orgId,
-        error_code: linkError?.code,
-      })
-      return apiError('Failed to create portal link', 'portal-configs/link-failed', 500)
+      sharedLinkId = sharedLink.id
+      portalToken = sharedLink.token
     }
 
     // Create the portal configuration
@@ -140,6 +158,7 @@ export const POST = withAuth(
         org_id: ctx.orgId,
         client_block_id: data.client_block_id,
         name: data.name,
+        is_template: isTemplate,
         dashboard_enabled: data.dashboard_enabled,
         documents_enabled: data.documents_enabled,
         requests_enabled: data.requests_enabled,
@@ -147,7 +166,8 @@ export const POST = withAuth(
         exposed_block_types: data.exposed_block_types,
         exposed_block_ids: data.exposed_block_ids.length > 0 ? data.exposed_block_ids : null,
         branding_overrides: data.branding_overrides,
-        shared_link_id: sharedLink.id,
+        form_template_ids: data.form_template_ids,
+        shared_link_id: sharedLinkId,
         created_by: ctx.userId,
       })
       .select('*')
@@ -158,29 +178,46 @@ export const POST = withAuth(
         org_id: ctx.orgId,
         error_code: configError?.code,
       })
-      // Clean up the shared link if config creation failed
-      await supabase
-        .from('shared_links')
-        .update({ is_active: false })
-        .eq('id', sharedLink.id)
+      if (sharedLinkId) {
+        await supabase
+          .from('shared_links')
+          .update({ is_active: false })
+          .eq('id', sharedLinkId)
+      }
       return apiError('Failed to create portal configuration', 'portal-configs/create-failed', 500)
     }
 
-    // Update the shared link with the portal_config_id (bidirectional link)
-    await supabase
-      .from('shared_links')
-      .update({ portal_config_id: config.id })
-      .eq('id', sharedLink.id)
+    // Bidirectional link (shared_link → portal_config)
+    if (sharedLinkId) {
+      await supabase
+        .from('shared_links')
+        .update({ portal_config_id: config.id })
+        .eq('id', sharedLinkId)
+    }
 
-    // Audit event
+    // Create block_edges for form templates when a client is assigned
+    if (data.client_block_id && data.form_template_ids?.length) {
+      for (const ftId of data.form_template_ids) {
+        await supabase.from('block_edges').insert({
+          org_id: ctx.orgId,
+          from_block_id: ftId,
+          to_block_id: data.client_block_id,
+          edge_type: 'related_to',
+          metadata: { source: 'portal_builder' },
+        })
+      }
+    }
+
+    // Audit event (use config.id as block_id for templates without a client)
     await supabase.from('events').insert({
       org_id: ctx.orgId,
-      block_id: data.client_block_id,
-      type: 'portal_config.created',
+      block_id: data.client_block_id ?? config.id,
+      type: isTemplate ? 'portal_template.created' : 'portal_config.created',
       payload: {
         portal_config_id: config.id,
         name: data.name,
-        shared_link_id: sharedLink.id,
+        is_template: isTemplate,
+        shared_link_id: sharedLinkId,
       },
       actor_id: ctx.userId,
     })
@@ -189,12 +226,13 @@ export const POST = withAuth(
       org_id: ctx.orgId,
       portal_config_id: config.id,
       client_block_id: data.client_block_id,
+      is_template: isTemplate,
     })
 
     return ok(
       {
         ...config,
-        portal_token: sharedLink.token,
+        portal_token: portalToken,
       },
       201
     )

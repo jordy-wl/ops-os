@@ -15,7 +15,7 @@ import { SettingsTab } from './portal-detail-tabs/settings-tab'
 export interface PortalConfig {
   id: string
   org_id: string
-  client_block_id: string
+  client_block_id: string | null
   name: string
   dashboard_enabled: boolean
   documents_enabled: boolean
@@ -25,6 +25,8 @@ export interface PortalConfig {
   exposed_block_ids: string[] | null
   branding_overrides: Record<string, unknown> | null
   is_active: boolean
+  is_template: boolean
+  form_template_ids: string[] | null
   portal_token: string | null
   created_at: string
   updated_at: string
@@ -40,7 +42,7 @@ export interface FormTemplateSummary {
 interface PortalDetailViewProps {
   config: PortalConfig
   clientName: string
-  clientId: string
+  clientId: string | null
   formTemplates: FormTemplateSummary[]
 }
 
@@ -129,22 +131,32 @@ export function PortalDetailView({
             <h1 className="text-xl font-semibold text-foreground">
               {config.name}
             </h1>
-            <Badge
-              variant={config.is_active ? 'default' : 'secondary'}
-              className="text-[10px]"
-            >
-              {config.is_active ? 'Active' : 'Inactive'}
-            </Badge>
+            {config.is_template ? (
+              <Badge variant="outline" className="text-[10px]">Template</Badge>
+            ) : (
+              <Badge
+                variant={config.is_active ? 'default' : 'secondary'}
+                className="text-[10px]"
+              >
+                {config.is_active ? 'Active' : 'Inactive'}
+              </Badge>
+            )}
           </div>
-          <p className="text-sm text-muted-foreground">
-            Client:{' '}
-            <Link
-              href={`/blocks/${clientId}`}
-              className="text-primary hover:underline"
-            >
-              {clientName}
-            </Link>
-          </p>
+          {clientId ? (
+            <p className="text-sm text-muted-foreground">
+              Client:{' '}
+              <Link
+                href={`/blocks/${clientId}`}
+                className="text-primary hover:underline"
+              >
+                {clientName}
+              </Link>
+            </p>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Reusable template — assign to a client to create a live portal
+            </p>
+          )}
         </div>
 
         <div className="flex items-center gap-2">

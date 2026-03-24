@@ -45,7 +45,7 @@ function PortalConfigSelector({
   const [options, setOptions] = useState<{ value: string; label: string }[]>([])
 
   useEffect(() => {
-    fetch('/api/portal-configs')
+    fetch('/api/portal-configs?templates_only=true')
       .then((r) => r.json())
       .then((data) => {
         const configs = Array.isArray(data) ? data : data.data ?? []

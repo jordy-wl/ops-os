@@ -51,7 +51,7 @@ const handler: StepHandler = async (step, meta, orgId, supabase) => {
   if (templateConfigId) {
     const { data: templateConfig } = await supabase
       .from('portal_configurations')
-      .select('dashboard_enabled, documents_enabled, requests_enabled, forms_enabled, exposed_block_types, exposed_block_ids, branding_overrides')
+      .select('dashboard_enabled, documents_enabled, requests_enabled, forms_enabled, exposed_block_types, exposed_block_ids, branding_overrides, form_template_ids')
       .eq('id', templateConfigId)
       .eq('org_id', orgId)
       .single()
@@ -65,6 +65,7 @@ const handler: StepHandler = async (step, meta, orgId, supabase) => {
         exposed_block_types: templateConfig.exposed_block_types,
         exposed_block_ids: templateConfig.exposed_block_ids,
         branding_overrides: templateConfig.branding_overrides,
+        form_template_ids: templateConfig.form_template_ids,
       }
     } else {
       logger.warn('step-engine', 'step.provision_portal_template_not_found', {
@@ -188,6 +189,7 @@ const handler: StepHandler = async (step, meta, orgId, supabase) => {
       exposed_block_types: (templateSettings.exposed_block_types as string[]) ?? [],
       exposed_block_ids: (templateSettings.exposed_block_ids as string[]) ?? null,
       branding_overrides: (templateSettings.branding_overrides as Record<string, unknown>) ?? null,
+      form_template_ids: (templateSettings.form_template_ids as string[]) ?? null,
     })
     .select('id')
     .single()
@@ -204,6 +206,21 @@ const handler: StepHandler = async (step, meta, orgId, supabase) => {
     .from('shared_links')
     .update({ portal_config_id: portalConfig.id })
     .eq('id', sharedLink.id)
+
+  // Create block_edges from form_templates to client for portal forms
+  const formTemplateIds = (templateSettings.form_template_ids as string[]) ?? []
+  if (formTemplateIds.length > 0) {
+    const edges = formTemplateIds.map((ftId) => ({
+      org_id: orgId,
+      source_block_id: ftId,
+      target_block_id: clientBlockId,
+      edge_type: 'portal_form',
+    }))
+    await supabase.from('block_edges').upsert(edges, {
+      onConflict: 'org_id,source_block_id,target_block_id,edge_type',
+      ignoreDuplicates: true,
+    })
+  }
 
   // Emit event
   await supabase.from('events').insert({

@@ -70,12 +70,14 @@ export default async function PortalDetailPage({ params }: Props) {
         exposed_block_ids: config.exposed_block_ids,
         branding_overrides: config.branding_overrides,
         is_active: config.is_active,
+        is_template: config.is_template ?? false,
+        form_template_ids: config.form_template_ids ?? null,
         portal_token: link?.token ?? null,
         created_at: config.created_at,
         updated_at: config.updated_at,
       }}
-      clientName={client?.name ?? 'Unknown Client'}
-      clientId={client?.id ?? config.client_block_id}
+      clientName={client?.name ?? 'Template'}
+      clientId={client?.id ?? null}
       formTemplates={(formsResult.data ?? []).map((f) => ({
         id: f.id,
         name: f.name,

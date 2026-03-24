@@ -15,6 +15,7 @@ const PatchSchema = z.object({
   exposed_block_types: z.array(z.string()).optional(),
   exposed_block_ids: z.array(z.string().uuid()).nullable().optional(),
   branding_overrides: z.record(z.unknown()).nullable().optional(),
+  form_template_ids: z.array(z.string().uuid()).nullable().optional(),
   is_active: z.boolean().optional(),
 })
 
@@ -84,6 +85,7 @@ export const PATCH = withAuth(
     if (updates.exposed_block_types !== undefined) updatePayload.exposed_block_types = updates.exposed_block_types
     if (updates.exposed_block_ids !== undefined) updatePayload.exposed_block_ids = updates.exposed_block_ids
     if (updates.branding_overrides !== undefined) updatePayload.branding_overrides = updates.branding_overrides
+    if (updates.form_template_ids !== undefined) updatePayload.form_template_ids = updates.form_template_ids
     if (updates.is_active !== undefined) updatePayload.is_active = updates.is_active
 
     const { data: config, error: updateError } = await supabase
@@ -176,7 +178,7 @@ export const DELETE = withAuth(
     // Audit event
     await supabase.from('events').insert({
       org_id: ctx.orgId,
-      block_id: config.client_block_id,
+      block_id: config.client_block_id ?? params.id,
       type: 'portal_config.deactivated',
       payload: {
         portal_config_id: params.id,

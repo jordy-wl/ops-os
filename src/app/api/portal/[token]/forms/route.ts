@@ -46,7 +46,7 @@ export async function GET(
     return apiError('Failed to fetch portal forms', 'portal/forms-failed', 500)
   }
 
-  // Collect connected block IDs
+  // Collect connected block IDs from edges
   const connectedBlockIds = new Set<string>()
   for (const edge of edges ?? []) {
     if (edge.from_block_id !== clientBlockId) {
@@ -55,6 +55,12 @@ export async function GET(
     if (edge.to_block_id !== clientBlockId) {
       connectedBlockIds.add(edge.to_block_id)
     }
+  }
+
+  // Also include form_template_ids configured on the portal (for template-based portals)
+  const configFormIds = portalConfig.form_template_ids as string[] | null
+  if (configFormIds?.length) {
+    for (const ftId of configFormIds) connectedBlockIds.add(ftId)
   }
 
   if (connectedBlockIds.size === 0) {
