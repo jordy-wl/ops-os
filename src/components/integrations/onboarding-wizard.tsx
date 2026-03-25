@@ -46,7 +46,7 @@ export function OnboardingWizard({ initialProvider }: OnboardingWizardProps) {
   const [config, setConfig] = useState<Record<string, string>>({})
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle')
   const [testError, setTestError] = useState<string | null>(null)
-  const [connectorId, setConnectorId] = useState<string | null>(null)
+  const [, setConnectorId] = useState<string | null>(null)
   const [webhookUrl, setWebhookUrl] = useState<string | null>(null)
   const [hmacSecret, setHmacSecret] = useState<string | null>(null)
   const [copied, setCopied] = useState<string | null>(null)

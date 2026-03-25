@@ -6,7 +6,7 @@ import { createServerClient } from '@/lib/supabase/server'
 import { ok, apiError, validationError } from '@/lib/api/responses'
 import { isValidJsonSchema } from '@/lib/validation/json-schema'
 import { logger } from '@/lib/logger'
-import { isValidFieldType, FIELD_TYPE_DEFINITIONS, VALID_EDGE_TYPE_VALUES } from '@/lib/block-types/field-types'
+import { isValidFieldType, VALID_EDGE_TYPE_VALUES } from '@/lib/block-types/field-types'
 import {
   addFieldToSchema,
   extractFieldsFromSchema,

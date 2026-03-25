@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { CheckCircle2 } from 'lucide-react'
 import { ClickToSign } from './click-to-sign'
 
@@ -46,7 +46,7 @@ export function PublicFormPage({ link, block, branding, documentHash }: PublicFo
     collect_contact?: boolean
   } | null
 
-  const fields = schema?.fields ?? []
+  const fields = useMemo(() => schema?.fields ?? [], [schema?.fields])
   const collectContact = schema?.collect_contact !== false
 
   const [values, setValues] = useState<Record<string, unknown>>({})
@@ -262,6 +262,7 @@ function PublicShell({
       <header className="border-b border-border px-6 py-4">
         <div className="max-w-lg mx-auto flex items-center gap-3">
           {branding.logoUrl && (
+            /* eslint-disable-next-line @next/next/no-img-element */
             <img
               src={branding.logoUrl}
               alt={branding.companyName}

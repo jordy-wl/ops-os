@@ -11,7 +11,7 @@ const ALL_PERMS = new Set<Permission>([
   'manage_integrations', 'view_audit_log',
 ])
 
-const USER_PERMS = new Set<Permission>([
+const _USER_PERMS = new Set<Permission>([
   'view_blocks', 'edit_blocks', 'execute_workflows', 'approve_tasks', 'view_audit_log',
 ])
 
@@ -47,7 +47,7 @@ function makeDb(...responses: { data: unknown; error: unknown }[]) {
   const singleFn = vi.fn().mockImplementation(() =>
     Promise.resolve(queue[i++] ?? { data: null, error: null })
   )
-  const rpcFn = vi.fn().mockImplementation((_fnName: string, _args: unknown) =>
+  const rpcFn = vi.fn().mockImplementation(() =>
     Promise.resolve(queue[i++] ?? { data: null, error: null })
   )
 

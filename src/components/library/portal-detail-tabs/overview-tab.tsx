@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { FileText, MessageSquare, Activity, Clock } from 'lucide-react'
+import { FileText, Activity, Clock } from 'lucide-react'
 
 interface OverviewTabProps {
   configId: string

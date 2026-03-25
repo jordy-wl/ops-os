@@ -117,7 +117,10 @@ export function ContentTab({
   )
 
   // Request type handlers
-  const requestTypeConfig: RequestTypeConfigItem[] = config.request_type_config ?? []
+  const requestTypeConfig: RequestTypeConfigItem[] = useMemo(
+    () => config.request_type_config ?? [],
+    [config.request_type_config]
+  )
 
   const handleAddRequestType = useCallback(
     (workflowId: string) => {

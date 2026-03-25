@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { User, Bot, Link2, ChevronDown, ChevronUp, ScrollText, CheckCircle2, XCircle, PenLine, AlertCircle } from 'lucide-react'
-import type { TaskItem, TaskFormSchema, TaskFormField, TaskFormAction } from '@/app/(app)/tasks/page'
+import type { TaskItem, TaskFormSchema, TaskFormAction } from '@/app/(app)/tasks/page'
 
 interface TaskListClientProps {
   initialTasks: TaskItem[] | null

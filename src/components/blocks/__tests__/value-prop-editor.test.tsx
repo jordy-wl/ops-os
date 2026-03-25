@@ -4,8 +4,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 
 vi.mock('lucide-react', () => {
-  const icon = (name: string) => (props: Record<string, unknown>) =>
-    React.createElement('svg', { 'data-testid': `icon-${name}`, ...props })
+  const icon = (name: string) => {
+    const Icon = (props: Record<string, unknown>) =>
+      React.createElement('svg', { 'data-testid': `icon-${name}`, ...props })
+    Icon.displayName = name
+    return Icon
+  }
   return {
     Plus: icon('plus'),
     X: icon('x'),

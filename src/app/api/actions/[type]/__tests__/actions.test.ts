@@ -61,7 +61,7 @@ function makeReq(type: string, body: unknown) {
 
 const BLOCK_ID = '00000000-0000-0000-0000-000000000001'
 const EVENT_ID = '00000000-0000-0000-0000-000000000002'
-const JOB_ID   = '00000000-0000-0000-0000-000000000003'
+const _JOB_ID   = '00000000-0000-0000-0000-000000000003'
 
 describe('POST /api/actions/:type', () => {
   beforeEach(() => {

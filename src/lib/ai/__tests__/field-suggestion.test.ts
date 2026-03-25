@@ -17,7 +17,6 @@ vi.mock('fs', () => ({
 import {
   suggestFields,
   type SuggestionContext,
-  type FieldSuggestionResult,
 } from '../field-suggestion'
 
 // ─── Helpers ────────────────────────────────────────────────────────────────────

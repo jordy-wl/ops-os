@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { X, Plus, Copy, Check } from 'lucide-react'
 import { FieldLabel, TextInput, SelectInput, EntitySelect } from '../shared/form-primitives'
-import { VariablePickerInput } from '../shared/variable-picker'
 import { TemplateRecordPicker } from '../shared/template-record-picker'
 import { ConditionBuilder, type ConditionValue } from '../shared/condition-builder'
 import { ScheduleConfig, type ScheduleValue } from '../shared/schedule-config'

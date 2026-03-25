@@ -276,7 +276,7 @@ function emptyInsightsSections(): Pick<
  */
 export function buildFallbackInsights(
   delta: DeltaResult,
-  blockContext: BlockContext
+  _blockContext?: BlockContext
 ): InsightsResult {
   const whatsDone: string[] = []
   const whatsNext: string[] = []

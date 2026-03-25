@@ -10,7 +10,6 @@ import {
   Upload,
 } from 'lucide-react'
 import {
-  type BranchingConfig,
   type FormQuestion,
   evaluateBranching,
   LIKERT_LABELS_DEFAULT,

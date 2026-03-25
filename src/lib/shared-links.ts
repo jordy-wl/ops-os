@@ -3,7 +3,7 @@
  * Tokens are cryptographically random, stored in DB, and time-limited.
  */
 
-import { randomBytes, createHash } from 'crypto'
+import { randomBytes } from 'crypto'
 import { createServerClient } from '@/lib/supabase/server'
 import { logger } from '@/lib/logger'
 

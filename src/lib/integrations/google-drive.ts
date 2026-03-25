@@ -1,3 +1,4 @@
+import { Readable } from 'stream'
 import type { drive_v3 } from 'googleapis'
 import { getGoogleServices } from '@/lib/integrations/google-client'
 import { logger } from '@/lib/logger'
@@ -35,9 +36,7 @@ export async function uploadFile(
 
   const media = {
     mimeType: opts.mimeType,
-    body: typeof opts.content === 'string'
-      ? require('stream').Readable.from([opts.content])
-      : require('stream').Readable.from([opts.content]),
+    body: Readable.from([opts.content]),
   }
 
   const response = await drive.files.create({

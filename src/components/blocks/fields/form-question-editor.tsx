@@ -27,7 +27,10 @@ import {
 // ─── Main Editor ────────────────────────────────────────────────────────────
 
 export function FormQuestionEditor({ name, value, onChange, mode }: FieldComponentProps) {
-  const questions: FormQuestion[] = Array.isArray(value) ? (value as FormQuestion[]) : []
+  const questions: FormQuestion[] = useMemo(
+    () => (Array.isArray(value) ? (value as FormQuestion[]) : []),
+    [value]
+  )
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
   const [previewMode, setPreviewMode] = useState(false)
   const [previewAnswers, setPreviewAnswers] = useState<Record<string, unknown>>({})
@@ -595,8 +598,6 @@ function BranchingSection({
   )
 
   const selectClass =
-    'w-full rounded-md border border-input bg-background px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-ring'
-  const textClass =
     'w-full rounded-md border border-input bg-background px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-ring'
 
   if (previousQuestions.length === 0) return null

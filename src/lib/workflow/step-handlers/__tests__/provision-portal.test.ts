@@ -37,7 +37,7 @@ function createMockSupabase(overrides: Record<string, unknown> = {}) {
   const linkInsertError = overrides.linkInsertError ?? null
   const configInsertError = overrides.configInsertError ?? null
 
-  let callCount = 0
+  let _callCount = 0
 
   function makeChain(resolveWith?: unknown): Record<string, unknown> {
     const chain: Record<string, unknown> = {}
@@ -47,7 +47,7 @@ function createMockSupabase(overrides: Record<string, unknown> = {}) {
     chain.insert = vi.fn(self)
     chain.update = vi.fn(self)
     chain.single = vi.fn().mockImplementation(() => {
-      callCount++
+      _callCount++
       if (resolveWith !== undefined) return Promise.resolve(resolveWith)
       return Promise.resolve({ data: null, error: null })
     })

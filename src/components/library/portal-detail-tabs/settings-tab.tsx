@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -11,7 +10,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog'
-import { AlertTriangle, Loader2, RefreshCw, Key } from 'lucide-react'
+import { AlertTriangle, Loader2, RefreshCw } from 'lucide-react'
 import type { PortalConfig } from '../portal-detail-view'
 
 interface SettingsTabProps {
@@ -20,7 +19,6 @@ interface SettingsTabProps {
 }
 
 export function SettingsTab({ config, onUpdate }: SettingsTabProps) {
-  const router = useRouter()
   const [name, setName] = useState(config.name)
   const [regenerating, setRegenerating] = useState(false)
   const [showDeactivateDialog, setShowDeactivateDialog] = useState(false)

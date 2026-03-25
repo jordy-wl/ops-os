@@ -8,8 +8,6 @@ import {
   getFieldGroups,
   groupFieldsByCategory,
   DEFAULT_FIELD_GROUP,
-  type FieldType,
-  type FieldGroup,
 } from '../field-types'
 
 describe('FIELD_TYPES constant', () => {

@@ -162,7 +162,7 @@ describe('SYSTEM_BLOCK_TYPES', () => {
         expect(schema.properties).not.toBeNull()
 
         // Each property must have a type
-        for (const [propName, propDef] of Object.entries(schema.properties)) {
+        for (const [_propName, propDef] of Object.entries(schema.properties)) {
           expect(propDef).toHaveProperty('type')
           expect(typeof propDef.type).toBe('string')
 

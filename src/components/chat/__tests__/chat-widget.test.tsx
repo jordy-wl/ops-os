@@ -4,8 +4,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 // Mock lucide-react icons — return simple SVG stubs for all used icons
 vi.mock('lucide-react', () => {
-  const icon = (name: string) => (props: Record<string, unknown>) =>
-    React.createElement('svg', { 'data-testid': `icon-${name}`, ...props })
+  const icon = (name: string) => {
+    const Icon = (props: Record<string, unknown>) =>
+      React.createElement('svg', { 'data-testid': `icon-${name}`, ...props })
+    Icon.displayName = name
+    return Icon
+  }
   return {
     MessageCircle: icon('message-circle'),
     MessageSquare: icon('message-square'),

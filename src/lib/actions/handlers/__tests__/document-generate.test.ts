@@ -100,13 +100,6 @@ function buildMockSupabase(overrides: Record<string, unknown> = {}) {
     return obj
   }
 
-  // Different chains for different queries
-  const fromMap: Record<string, ReturnType<typeof chain>> = {
-    blocks: chain(sourceBlock),
-    block_edges: chain(edges),
-    events: chain(events),
-  }
-
   // Track calls for assertions
   const fromCalls: string[] = []
 

@@ -42,7 +42,7 @@ export default async function TeamSettingsPage() {
     .map((m: { metadata: { clerk_user_id?: string | null } }) => m.metadata?.clerk_user_id)
     .filter((id): id is string => !!id)
 
-  let roleAssignments = new Map<string, string>()
+  const roleAssignments = new Map<string, string>()
   if (clerkUserIds.length > 0) {
     const { data: assignments } = await supabase
       .from('user_permissions')

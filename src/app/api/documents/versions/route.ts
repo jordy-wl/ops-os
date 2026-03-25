@@ -29,7 +29,7 @@ export const GET = withAuth(async (req: NextRequest, ctx) => {
   try {
     const versions = await getDocumentVersions(supabase, ctx.orgId, blockId, title)
     return ok(versions)
-  } catch (err) {
+  } catch {
     logger.error('api-documents', 'versions_failed', {
       org_id: ctx.orgId,
       block_id: blockId,
