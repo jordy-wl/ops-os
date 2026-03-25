@@ -74,14 +74,14 @@ function createBlock(overrides: Partial<{
 
 function createTypeDef(overrides: Partial<{
   type_name: string
-  label: string | null
+  display_name: string | null
   icon: string | null
   color: string | null
   field_schema: Record<string, unknown> | null
 }> = {}) {
   return {
     type_name: overrides.type_name ?? 'client',
-    label: overrides.label ?? 'Client',
+    display_name: overrides.display_name ?? 'Client',
     icon: overrides.icon ?? null,
     color: overrides.color ?? null,
     field_schema: overrides.field_schema ?? null,
@@ -93,10 +93,10 @@ function createTypeDef(overrides: Partial<{
 describe('BlockBrowser type seeding', () => {
   it('should show all type definitions in filter pills even with 0 blocks', () => {
     const typeDefinitions = [
-      createTypeDef({ type_name: 'client', label: 'Client' }),
-      createTypeDef({ type_name: 'deal', label: 'Deal' }),
-      createTypeDef({ type_name: 'project', label: 'Project' }),
-      createTypeDef({ type_name: 'policy', label: 'Policy' }),
+      createTypeDef({ type_name: 'client', display_name: 'Client' }),
+      createTypeDef({ type_name: 'deal', display_name: 'Deal' }),
+      createTypeDef({ type_name: 'project', display_name: 'Project' }),
+      createTypeDef({ type_name: 'policy', display_name: 'Policy' }),
     ]
 
     render(
@@ -115,9 +115,9 @@ describe('BlockBrowser type seeding', () => {
 
   it('should count blocks per type correctly', () => {
     const typeDefinitions = [
-      createTypeDef({ type_name: 'client', label: 'Client' }),
-      createTypeDef({ type_name: 'deal', label: 'Deal' }),
-      createTypeDef({ type_name: 'project', label: 'Project' }),
+      createTypeDef({ type_name: 'client', display_name: 'Client' }),
+      createTypeDef({ type_name: 'deal', display_name: 'Deal' }),
+      createTypeDef({ type_name: 'project', display_name: 'Project' }),
     ]
 
     const blocks = [
@@ -142,8 +142,8 @@ describe('BlockBrowser type seeding', () => {
 
   it('should filter blocks by type when a pill is clicked', () => {
     const typeDefinitions = [
-      createTypeDef({ type_name: 'client', label: 'Client' }),
-      createTypeDef({ type_name: 'deal', label: 'Deal' }),
+      createTypeDef({ type_name: 'client', display_name: 'Client' }),
+      createTypeDef({ type_name: 'deal', display_name: 'Deal' }),
     ]
 
     const blocks = [
@@ -172,8 +172,8 @@ describe('BlockBrowser type seeding', () => {
 
   it('should show all blocks when "All" pill is clicked after filtering', () => {
     const typeDefinitions = [
-      createTypeDef({ type_name: 'client', label: 'Client' }),
-      createTypeDef({ type_name: 'deal', label: 'Deal' }),
+      createTypeDef({ type_name: 'client', display_name: 'Client' }),
+      createTypeDef({ type_name: 'deal', display_name: 'Deal' }),
     ]
 
     const blocks = [
@@ -197,7 +197,7 @@ describe('BlockBrowser type seeding', () => {
 
   it('should add types from blocks that have no type definition', () => {
     const typeDefinitions = [
-      createTypeDef({ type_name: 'client', label: 'Client' }),
+      createTypeDef({ type_name: 'client', display_name: 'Client' }),
     ]
 
     // A block with type 'task' that has no type definition
@@ -218,7 +218,7 @@ describe('BlockBrowser type seeding', () => {
   it('should format unknown type names to title case with underscores replaced', () => {
     const typeDefinitions: Array<{
       type_name: string
-      label: string | null
+      display_name: string | null
       icon: string | null
       color: string | null
       field_schema: Record<string, unknown> | null
@@ -238,8 +238,8 @@ describe('BlockBrowser type seeding', () => {
 
   it('should display header with correct block and type counts', () => {
     const typeDefinitions = [
-      createTypeDef({ type_name: 'client', label: 'Client' }),
-      createTypeDef({ type_name: 'deal', label: 'Deal' }),
+      createTypeDef({ type_name: 'client', display_name: 'Client' }),
+      createTypeDef({ type_name: 'deal', display_name: 'Deal' }),
     ]
 
     const blocks = [
@@ -267,8 +267,8 @@ describe('BlockBrowser type seeding', () => {
 
   it('should show no-match message when filter yields empty results', () => {
     const typeDefinitions = [
-      createTypeDef({ type_name: 'client', label: 'Client' }),
-      createTypeDef({ type_name: 'policy', label: 'Policy' }),
+      createTypeDef({ type_name: 'client', display_name: 'Client' }),
+      createTypeDef({ type_name: 'policy', display_name: 'Policy' }),
     ]
 
     const blocks = [
@@ -288,7 +288,7 @@ describe('BlockBrowser type seeding', () => {
 
   it('should filter by search text', () => {
     const typeDefinitions = [
-      createTypeDef({ type_name: 'client', label: 'Client' }),
+      createTypeDef({ type_name: 'client', display_name: 'Client' }),
     ]
 
     const blocks = [
@@ -309,7 +309,7 @@ describe('BlockBrowser type seeding', () => {
 
   it('should use type definition label instead of auto-generated label', () => {
     const typeDefinitions = [
-      createTypeDef({ type_name: 'custom_type', label: 'Custom Display Name' }),
+      createTypeDef({ type_name: 'custom_type', display_name: 'Custom Display Name' }),
     ]
 
     const blocks = [

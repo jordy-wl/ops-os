@@ -22,13 +22,14 @@ export default async function BlockLibraryPage() {
       .from('blocks')
       .select('id, name, type, state, metadata, created_at, updated_at')
       .eq('org_id', internalOrgId)
-      .not('type', 'in', '(workflow_template,workflow_instance)')
+      .not('type', 'in', '(workflow_template,workflow_instance,task_queue_item)')
       .order('updated_at', { ascending: false })
       .limit(200),
     supabase
       .from('block_type_definitions')
-      .select('type_name, label, icon, color, field_schema')
-      .eq('org_id', internalOrgId),
+      .select('type_name, display_name, icon, color, field_schema')
+      .eq('org_id', internalOrgId)
+      .not('type_name', 'in', '(workflow_template,workflow_instance,task_queue_item)'),
   ])
 
   return (
