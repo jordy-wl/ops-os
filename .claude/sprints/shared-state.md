@@ -9,10 +9,10 @@
 ## Current Phase and Sprint
 
 **Phase:** 7 — Design Partner Readiness — **ACTIVE**
-**Phase Status:** **IN PROGRESS** — 4 workstreams. WS4 (Google OAuth) DONE. WS3 (Timer Relocation) DONE. WS2 (Entity Dropdown Fields) DONE. WS1 (Client Portal System) DONE.
-**Sprint:** 24 — Phase 7 Build — **IN PROGRESS**
+**Phase Status:** **IN PROGRESS** — Sprint 24 (4 workstreams) DONE. Sprint 25 (Portal Enhancement V2) DONE.
+**Sprint:** 25 — Portal Enhancement V2 — **COMPLETE**
 **Next:** Testing, deploy, design partner outreach
-**Previous:** Phase 6 complete (60/60, S18–S23, 1746 tests). Phase 5 (48/48). Phase 4 (42/42). Phase 3 (70/70). Phase 2 (86/88).
+**Previous:** Sprint 24 (4 workstreams DONE). Phase 6 complete (60/60, S18–S23, 1746 tests). Phase 5 (48/48). Phase 4 (42/42). Phase 3 (70/70). Phase 2 (86/88).
 
 ---
 
@@ -26,6 +26,15 @@
 | P7-S24-WS1A | Portal foundation (migration, form_template, config API) | BE | DONE | 2026-03-18 |
 | P7-S24-WS1B | Portal UI (layout, dashboard, documents, requests, forms) | FE | DONE | 2026-03-18 |
 | P7-S24-WS1C | Portal public API + admin config panel | BE/FE | DONE | 2026-03-18 |
+| WF-UX-WS1 | Template-based record references (TemplateRecordPicker + resolver) | FE/BE | DONE | 2026-03-25 |
+| WF-UX-WS2 | Config panel UX: resizable panel + template header + progressive disclosure | FE | OPEN | 2026-03-25 |
+| WF-UX-WS3 | Swim lanes & stages: BPMN overlay + lane editor + node assignment | FE | OPEN | 2026-03-25 |
+| P7-S25-01 | Workflow Label System (3 tables, 4 API routes, Settings UI, label picker) | BE/FE | DONE | 2026-03-25 |
+| P7-S25-02 | Block Ownership (owner_id column, API, owner picker) | BE/FE | DONE | 2026-03-25 |
+| P7-S25-03 | Request Types as Workflows (migration, portal trigger, status tracking) | BE/FE | DONE | 2026-03-25 |
+| P7-S25-04 | Dedicated Form Builder (@dnd-kit, 6 components, live preview) | FE | DONE | 2026-03-25 |
+| P7-S25-05 | Per-Portal Field Visibility (14 block types, per-field toggles) | BE/FE | DONE | 2026-03-25 |
+| P7-S25-06 | Portal Design Polish (CSS tokens, shimmer, hover elevation) | FE | DONE | 2026-03-25 |
 
 ---
 
@@ -49,6 +58,8 @@
 
 | Date | Author | Note |
 |------|--------|------|
+| 2026-03-25 | ORCHESTRATOR | **SPRINT 25 COMPLETE — Portal Enhancement V2 (6/6).** 6 phases delivered: (1) **Workflow Label System** — 3 normalized tables (label_categories, label_values, label_assignments with entity_type polymorphism), 4 API route files, Settings admin UI with inline CRUD + color picker + suggestion prompts, reusable LabelPicker component with optimistic UI. (2) **Block Ownership** — owner_id column on blocks (FK to blocks, ON DELETE SET NULL), dedicated PATCH API with team_member validation + block.owner.changed event, searchable OwnerPicker dropdown. (3) **Request Types as Workflows** — request_type_config JSONB on portal_configurations, workflow_instance_id on form_submissions, spawnPortalWorkflow() trigger (creates instance block + edges + events), request-types GET API, requests rewrite (GET with workflow status + batch N+1 prevention, POST with dual path: workflow-based + legacy), portal requests page rewrite (card-based type picker → form/fields → submit + workflow spawn, previous requests with step progress, 30s polling). (4) **Dedicated Form Builder** — @dnd-kit installed, library/forms list + builder pages, 6 components (FormBuilderPage 3-panel layout, QuestionTypePicker 12 types in 4 groups, QuestionCard with drag + inline edit, QuestionConfigPanel with type-specific options, FormPreviewPanel with all 12 renderers, BranchingEditor with smart value input). (5) **Per-Portal Field Visibility** — exposed_block_type_config JSONB with backfill migration, ALL_PORTAL_BLOCK_TYPES derived from SYSTEM_BLOCK_TYPES (14 types, 4 internal filtered), portal blocks API field filtering with fallback to legacy, expandable type+field picker in admin UI. (6) **Portal Design Polish** — 17 CSS custom properties, shimmer keyframe animation, header scroll shadow, nav transitions, card hover elevation, semantic status badges, activity timeline connector, file type badge colors, focus rings, glass morphism mobile bar. 4 Supabase migrations applied. New dependency: @dnd-kit/*. ~36 files changed (+4,900 lines). 1764 tests passing (up from 1746). Build + lint + tsc clean. |
+| 2026-03-25 | ORCHESTRATOR | **WORKFLOW BUILDER UX — WS1 COMPLETE.** Template-based record references shipped. Replaced all EntitySelect "pick a block instance" dropdowns with `TemplateRecordPicker` — 3-mode picker (Triggering Record / From Previous Step / Related Record) outputting `{{...}}` template expressions. New shared `resolveTemplateBlockId()` resolver replaces ad-hoc resolution across 8 step handlers. Extended `interpolateTemplate()` for array bracket notation + `{{related:...}}` syntax. Computed `previousSteps` via backward edge traversal. 17 files changed (+781/-299). New files: `template-record-picker.tsx` (347 lines), `resolve-block-ref.ts` (178 lines). **WS2** (config panel UX) and **WS3** (swim lanes) remain OPEN. Plan file: `.claude/plans/swift-frolicking-platypus.md`. |
 | 2026-03-18 | ORCHESTRATOR | **PHASE 7 BUILD — Design Partner Readiness.** 4 workstreams shipped: **WS4** Google OAuth setup guide (docs/google-oauth-setup.md) + granular consent handling (Jan 2026 policy), gmail.readonly deferred (restricted tier). **WS3** Timer widget relocated from floating global → My Work Time tab only, provider restructured as layout wrapper. **WS2** Multi-relation field type added, 7 system type fields converted to relation/multi-relation, RelationField rewritten with searchable dropdown. **WS1** Client Portal System: portal_configurations table + form_template block type + portal validation lib + admin CRUD API + 7 public API endpoints (blocks/docs/events/requests/forms) + 5 portal UI pages (layout+shell, dashboard, documents hub, requests, form filling with 12 question types + branching) + admin config panel on client block detail page. Middleware updated for /portal public routes. New files: ~25. Modified: ~15. Supabase migration applied. Build clean. |
 | 2026-03-18 | ORCHESTRATOR | **SPRINT 23 COMPLETE — Per-Node Improvements (15/15).** 8-wave execution: Route node (component + config + handler + engine branching), For Each node (component + config + placeholder handler), condition handler rewrite (370 lines, 8 operators, AND/OR, 56 new tests), node label renames (user-friendly names, consolidated palette from 30→27 items), trigger configs (4 types: manual/event/webhook/schedule with scoping + condition builder), Wait/Delay DurationPicker, workflow completion config (restart/chain), External Action consolidation with ConnectorTemplates (Xero/HubSpot/Generic), AI template picker wired to 4 AI nodes, data operations abstraction (entity-driven dropdowns), human interaction improvements (multi-channel notifications, share link permissions, task attachments), sub-workflow preview dropdown, External Action test/preview panel, VariablePickerInput wired across 9 inputs in 3 config files, context-aware auto-fill (5 autoSuggestion hints). New files: 5 (route-node, for-each-node, route-config, for-each-config, connector-templates, workflow-settings-panel, route handler, for-each handler). Modified: ~25 files. Step engine now supports N-way branching via next_step_name. Handler registry: 22. Test count: 1746 (+57). Build clean. |
 | 2026-03-18 | ORCHESTRATOR | **SPRINT 22 COMPLETE — Workflow Builder UX Foundation (8/8).** Decomposed 1,697-line `node-config-panel.tsx` monolith into 8 per-node config components (`panels/configs/`) + 7 shared components (`panels/shared/`): form primitives, routing section, duration picker, condition builder, variable picker, schedule config, AI template picker. Created 14 built-in AI prompt templates (`lib/workflow/ai-prompt-templates.ts`). Added `panels/types.ts` with shared NodeConfigProps, getNodeData, makeConfigUpdater helpers. Zero new TypeScript errors. Main dispatcher now ~90 lines. Sprint 23 (15 tasks) planned for per-node improvements. |
@@ -72,6 +83,10 @@
 | 2026-03-17 | supabase | apply_migration: create_calendar_events | SUCCESS | P6-S19-BE-01 | BACKEND |
 | 2026-03-17 | supabase | apply_migration: create_performance_snapshots | SUCCESS | P6-S20-BE-01 | BACKEND |
 | 2026-03-18 | supabase | apply_migration: create_portal_configurations | SUCCESS | P7-S24-WS1A | BACKEND |
+| 2026-03-25 | supabase | apply_migration: workflow_labels (3 tables) | SUCCESS | P7-S25-01 | BACKEND |
+| 2026-03-25 | supabase | apply_migration: block_ownership (owner_id) | SUCCESS | P7-S25-02 | BACKEND |
+| 2026-03-25 | supabase | apply_migration: request_types (request_type_config + workflow_instance_id) | SUCCESS | P7-S25-03 | BACKEND |
+| 2026-03-25 | supabase | apply_migration: portal_field_visibility (exposed_block_type_config + backfill) | SUCCESS | P7-S25-05 | BACKEND |
 
 ---
 

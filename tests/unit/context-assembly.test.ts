@@ -326,7 +326,7 @@ describe('contextToPromptString', () => {
   const baseContext: ContextObject = {
     block: {
       id: BLOCK_ID, org_id: ORG_ID, type: 'client', name: 'Thornfield Capital',
-      state: 'active', metadata: { jurisdiction: 'GB' },
+      state: 'active', metadata: { jurisdiction: 'GB' }, owner_id: null,
       created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z',
     },
     events: [makeEvent('evt-r1', 'block.created'), makeEvent('evt-r2', 'workflow.started')],

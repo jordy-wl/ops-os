@@ -7,6 +7,13 @@
 
 import { createServerClient } from '@/lib/supabase/server'
 import { validateShareToken } from '@/lib/shared-links'
+import type { ExposedBlockTypeConfig } from '@/lib/portal-constants'
+
+export interface RequestTypeConfigEntry {
+  workflow_template_id: string
+  form_template_id?: string
+  display_name?: string
+}
 
 export interface PortalConfig {
   id: string
@@ -23,6 +30,8 @@ export interface PortalConfig {
   exposed_block_ids: string[] | null
   branding_overrides: Record<string, unknown> | null
   form_template_ids: string[] | null
+  exposed_block_type_config: ExposedBlockTypeConfig
+  request_type_config: RequestTypeConfigEntry[]
   is_active: boolean
 }
 
@@ -137,6 +146,8 @@ export async function validatePortalToken(token: string): Promise<PortalValidati
       exposed_block_ids: config.exposed_block_ids ?? null,
       branding_overrides: config.branding_overrides ?? null,
       form_template_ids: config.form_template_ids ?? null,
+      exposed_block_type_config: (config.exposed_block_type_config as ExposedBlockTypeConfig) ?? {},
+      request_type_config: (Array.isArray(config.request_type_config) ? config.request_type_config : []) as RequestTypeConfigEntry[],
       is_active: config.is_active,
     },
     clientBlock: clientBlock as Record<string, unknown>,

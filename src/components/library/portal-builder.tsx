@@ -11,13 +11,19 @@ import {
   ClipboardList,
   ExternalLink,
   Loader2,
+  ChevronDown,
+  ChevronRight,
+  GitBranch,
+  X,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
   PORTAL_FEATURE_FLAGS,
-  COMMON_BLOCK_TYPES,
+  ALL_PORTAL_BLOCK_TYPES,
 } from '@/lib/portal-constants'
+import type { ExposedBlockTypeConfig } from '@/lib/portal-constants'
+import { SYSTEM_BLOCK_TYPES } from '@/lib/block-types/system-types'
 
 interface FormTemplateSummary {
   id: string
@@ -31,12 +37,56 @@ interface ClientOption {
   name: string
 }
 
+interface WorkflowTemplateSummary {
+  id: string
+  name: string
+  description: string
+}
+
+interface RequestTypeConfigItem {
+  workflow_template_id: string
+  form_template_id?: string
+  display_name?: string
+}
+
 interface PortalBuilderProps {
   formTemplates: FormTemplateSummary[]
   clients: ClientOption[]
+  workflowTemplates: WorkflowTemplateSummary[]
 }
 
-export function PortalBuilder({ formTemplates, clients }: PortalBuilderProps) {
+/** Look up a system block type definition by type_name */
+function getSystemType(typeName: string) {
+  return SYSTEM_BLOCK_TYPES.find((t) => t.type_name === typeName)
+}
+
+/** Extract field entries from a type's field_schema, sorted by x-display-order */
+function getFieldEntries(typeName: string): { key: string; label: string; order: number }[] {
+  const def = getSystemType(typeName)
+  if (!def?.field_schema?.properties) return []
+
+  const props = def.field_schema.properties as Record<
+    string,
+    { description?: string; 'x-display-order'?: number }
+  >
+
+  return Object.entries(props)
+    .map(([key, schema]) => ({
+      key,
+      label: schema.description ?? formatFieldKey(key),
+      order: schema['x-display-order'] ?? 999,
+    }))
+    .sort((a, b) => a.order - b.order)
+}
+
+/** Convert snake_case to Title Case for display */
+function formatFieldKey(key: string): string {
+  return key
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
+export function PortalBuilder({ formTemplates, clients, workflowTemplates }: PortalBuilderProps) {
   const router = useRouter()
 
   // Portal config state
@@ -45,8 +95,12 @@ export function PortalBuilder({ formTemplates, clients }: PortalBuilderProps) {
   const [documentsEnabled, setDocumentsEnabled] = useState(true)
   const [requestsEnabled, setRequestsEnabled] = useState(true)
   const [formsEnabled, setFormsEnabled] = useState(true)
-  const [exposedBlockTypes, setExposedBlockTypes] = useState<string[]>([])
+  const [exposedBlockTypeConfig, setExposedBlockTypeConfig] = useState<ExposedBlockTypeConfig>({})
+  const [expandedTypes, setExpandedTypes] = useState<Set<string>>(new Set())
   const [selectedFormTemplateIds, setSelectedFormTemplateIds] = useState<string[]>([])
+
+  // Request type config state
+  const [requestTypeConfig, setRequestTypeConfig] = useState<RequestTypeConfigItem[]>([])
 
   // Branding
   const [displayName, setDisplayName] = useState('')
@@ -81,15 +135,76 @@ export function PortalBuilder({ formTemplates, clients }: PortalBuilderProps) {
     return clients.filter((c) => c.name.toLowerCase().includes(q))
   }, [clients, clientSearch])
 
-  const handleBlockTypeToggle = (value: string, checked: boolean) => {
-    setExposedBlockTypes((prev) =>
-      checked ? [...prev, value] : prev.filter((t) => t !== value)
-    )
+  // Derive the legacy exposed_block_types array from the config
+  const exposedBlockTypes = useMemo(
+    () =>
+      Object.entries(exposedBlockTypeConfig)
+        .filter(([, v]) => v.enabled)
+        .map(([k]) => k),
+    [exposedBlockTypeConfig]
+  )
+
+  const handleTypeToggle = (typeName: string, enabled: boolean) => {
+    setExposedBlockTypeConfig((prev) => ({
+      ...prev,
+      [typeName]: { enabled, fields: prev[typeName]?.fields ?? {} },
+    }))
+  }
+
+  const handleFieldToggle = (typeName: string, fieldKey: string, visible: boolean) => {
+    setExposedBlockTypeConfig((prev) => {
+      const current = prev[typeName] ?? { enabled: true, fields: {} }
+      return {
+        ...prev,
+        [typeName]: { ...current, fields: { ...current.fields, [fieldKey]: visible } },
+      }
+    })
+  }
+
+  const toggleExpanded = (typeName: string) => {
+    setExpandedTypes((prev) => {
+      const next = new Set(prev)
+      if (next.has(typeName)) {
+        next.delete(typeName)
+      } else {
+        next.add(typeName)
+      }
+      return next
+    })
   }
 
   const handleFormToggle = (id: string, checked: boolean) => {
     setSelectedFormTemplateIds((prev) =>
       checked ? [...prev, id] : prev.filter((fid) => fid !== id)
+    )
+  }
+
+  const handleRequestTypeToggle = (workflowId: string, checked: boolean) => {
+    setRequestTypeConfig((prev) => {
+      if (checked) {
+        return [...prev, { workflow_template_id: workflowId }]
+      }
+      return prev.filter((rt) => rt.workflow_template_id !== workflowId)
+    })
+  }
+
+  const handleRequestTypeFormTemplate = (workflowId: string, formTemplateId: string) => {
+    setRequestTypeConfig((prev) =>
+      prev.map((rt) =>
+        rt.workflow_template_id === workflowId
+          ? { ...rt, form_template_id: formTemplateId || undefined }
+          : rt
+      )
+    )
+  }
+
+  const handleRequestTypeDisplayName = (workflowId: string, displayNameValue: string) => {
+    setRequestTypeConfig((prev) =>
+      prev.map((rt) =>
+        rt.workflow_template_id === workflowId
+          ? { ...rt, display_name: displayNameValue || undefined }
+          : rt
+      )
     )
   }
 
@@ -124,8 +239,12 @@ export function PortalBuilder({ formTemplates, clients }: PortalBuilderProps) {
           requests_enabled: requestsEnabled,
           forms_enabled: formsEnabled,
           exposed_block_types: exposedBlockTypes,
+          exposed_block_type_config: Object.keys(exposedBlockTypeConfig).length > 0
+            ? exposedBlockTypeConfig
+            : {},
           branding_overrides: Object.keys(brandingOverrides).length > 0 ? brandingOverrides : null,
           form_template_ids: selectedFormTemplateIds.length > 0 ? selectedFormTemplateIds : null,
+          request_type_config: requestTypeConfig.length > 0 ? requestTypeConfig : null,
         }),
       })
 
@@ -221,24 +340,92 @@ export function PortalBuilder({ formTemplates, clients }: PortalBuilderProps) {
       <div className="rounded-lg border border-border bg-card p-5">
         <h3 className="text-sm font-semibold text-foreground mb-1">Visible Data</h3>
         <p className="text-xs text-muted-foreground mb-3">
-          Select which types of records clients can see in their portal dashboard.
+          Toggle which types of records clients can see, and configure field visibility per type.
         </p>
-        <div className="grid gap-2 sm:grid-cols-2">
-          {COMMON_BLOCK_TYPES.map((bt) => {
-            const checked = exposedBlockTypes.includes(bt.value)
+        <div className="rounded-lg border border-border divide-y divide-border">
+          {ALL_PORTAL_BLOCK_TYPES.map((bt) => {
+            const typeEnabled = exposedBlockTypeConfig[bt.value]?.enabled ?? false
+            const isExpanded = expandedTypes.has(bt.value)
+            const fields = getFieldEntries(bt.value)
+            const fieldConfig = exposedBlockTypeConfig[bt.value]?.fields ?? {}
+
             return (
-              <label
-                key={bt.value}
-                className="flex items-center gap-2.5 rounded-md border border-border px-3 py-2.5 cursor-pointer hover:bg-muted/50 transition-colors"
-              >
-                <input
-                  type="checkbox"
-                  checked={checked}
-                  onChange={(e) => handleBlockTypeToggle(bt.value, e.target.checked)}
-                  className="rounded border-input w-4 h-4"
-                />
-                <span className="text-sm text-foreground">{bt.label}</span>
-              </label>
+              <div key={bt.value}>
+                {/* Type row */}
+                <div className="flex items-center gap-3 px-4 py-3">
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={typeEnabled}
+                    aria-label={`Toggle ${bt.label}`}
+                    onClick={() => handleTypeToggle(bt.value, !typeEnabled)}
+                    className={`
+                      relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full
+                      border-2 border-transparent shadow-sm transition-colors
+                      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
+                      ${typeEnabled ? 'bg-primary' : 'bg-input'}
+                    `}
+                  >
+                    <span
+                      className={`
+                        pointer-events-none block h-4 w-4 rounded-full bg-background shadow-lg ring-0 transition-transform
+                        ${typeEnabled ? 'translate-x-4' : 'translate-x-0'}
+                      `}
+                    />
+                  </button>
+                  <span className={`text-sm flex-1 ${typeEnabled ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
+                    {bt.label}
+                  </span>
+                  {typeEnabled && fields.length > 0 && (
+                    <button
+                      type="button"
+                      aria-label={`${isExpanded ? 'Collapse' : 'Expand'} ${bt.label} fields`}
+                      onClick={() => toggleExpanded(bt.value)}
+                      className="p-1 rounded hover:bg-muted/50 transition-colors text-muted-foreground hover:text-foreground"
+                    >
+                      {isExpanded ? (
+                        <ChevronDown className="w-4 h-4" />
+                      ) : (
+                        <ChevronRight className="w-4 h-4" />
+                      )}
+                    </button>
+                  )}
+                </div>
+
+                {/* Field checkboxes */}
+                {typeEnabled && isExpanded && fields.length > 0 && (
+                  <div className="px-4 pb-3 pl-16">
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Uncheck fields to hide them from the portal.
+                    </p>
+                    <div className="grid gap-1.5 sm:grid-cols-2">
+                      {fields.map((field) => {
+                        const hasExplicitConfig = Object.keys(fieldConfig).length > 0
+                        const isVisible = hasExplicitConfig
+                          ? fieldConfig[field.key] !== false
+                          : true
+
+                        return (
+                          <label
+                            key={field.key}
+                            className="flex items-center gap-2 rounded px-2 py-1.5 cursor-pointer hover:bg-muted/30 transition-colors"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isVisible}
+                              onChange={(e) => handleFieldToggle(bt.value, field.key, e.target.checked)}
+                              className="rounded border-input w-3.5 h-3.5"
+                            />
+                            <span className="text-xs text-foreground">
+                              {formatFieldKey(field.key)}
+                            </span>
+                          </label>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
             )
           })}
         </div>
@@ -298,6 +485,118 @@ export function PortalBuilder({ formTemplates, clients }: PortalBuilderProps) {
                       </Link>
                     </div>
                   </label>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Request Types Card (conditional on requestsEnabled) */}
+      {requestsEnabled && (
+        <div className="rounded-lg border border-border bg-card p-5">
+          <h3 className="text-sm font-semibold text-foreground mb-1">Request Types</h3>
+          <p className="text-xs text-muted-foreground mb-3">
+            Select workflow templates that clients can trigger as request types.
+            When configured, clients see request type cards instead of the default form.
+          </p>
+
+          {workflowTemplates.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-border p-6 text-center">
+              <GitBranch className="w-8 h-8 mx-auto mb-2 text-muted-foreground/40" />
+              <p className="text-sm text-muted-foreground mb-1">No workflow templates yet</p>
+              <p className="text-xs text-muted-foreground">
+                Create a workflow template to make it available as a request type.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {workflowTemplates.map((wf) => {
+                const isSelected = requestTypeConfig.some(
+                  (rt) => rt.workflow_template_id === wf.id
+                )
+                const configItem = requestTypeConfig.find(
+                  (rt) => rt.workflow_template_id === wf.id
+                )
+
+                return (
+                  <div
+                    key={wf.id}
+                    className={`rounded-lg border transition-colors ${
+                      isSelected ? 'border-primary/30 bg-primary/5' : 'border-border bg-background'
+                    }`}
+                  >
+                    <label className="flex items-center gap-3 px-4 py-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={(e) => handleRequestTypeToggle(wf.id, e.target.checked)}
+                        className="rounded border-input w-4 h-4 shrink-0"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-foreground truncate">
+                          {wf.name}
+                        </p>
+                        {wf.description && (
+                          <p className="text-xs text-muted-foreground truncate">
+                            {wf.description}
+                          </p>
+                        )}
+                      </div>
+                    </label>
+
+                    {/* Expanded config when selected */}
+                    {isSelected && (
+                      <div className="px-4 pb-3 pt-0 space-y-3 border-t border-border/50 mt-1 pt-3">
+                        {/* Display name override */}
+                        <div>
+                          <label
+                            htmlFor={`rt-display-${wf.id}`}
+                            className="block text-xs font-medium text-muted-foreground mb-1"
+                          >
+                            Display Name
+                            <span className="text-muted-foreground/60 font-normal ml-1">(optional)</span>
+                          </label>
+                          <input
+                            id={`rt-display-${wf.id}`}
+                            type="text"
+                            value={configItem?.display_name ?? ''}
+                            onChange={(e) =>
+                              handleRequestTypeDisplayName(wf.id, e.target.value)
+                            }
+                            placeholder={wf.name}
+                            className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                          />
+                        </div>
+
+                        {/* Optional form template */}
+                        <div>
+                          <label
+                            htmlFor={`rt-form-${wf.id}`}
+                            className="block text-xs font-medium text-muted-foreground mb-1"
+                          >
+                            Intake Form
+                            <span className="text-muted-foreground/60 font-normal ml-1">(optional)</span>
+                          </label>
+                          <select
+                            id={`rt-form-${wf.id}`}
+                            value={configItem?.form_template_id ?? ''}
+                            onChange={(e) =>
+                              handleRequestTypeFormTemplate(wf.id, e.target.value)
+                            }
+                            className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                          >
+                            <option value="">No intake form</option>
+                            {formTemplates.map((ft) => (
+                              <option key={ft.id} value={ft.id}>
+                                {ft.name} ({ft.questionCount} questions)
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 )
               })}
             </div>

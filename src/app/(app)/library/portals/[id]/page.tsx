@@ -18,7 +18,7 @@ export default async function PortalDetailPage({ params }: Props) {
 
   const supabase = createServerClient()
 
-  const [configResult, formsResult] = await Promise.all([
+  const [configResult, formsResult, workflowsResult] = await Promise.all([
     supabase
       .from('portal_configurations')
       .select(`
@@ -35,6 +35,13 @@ export default async function PortalDetailPage({ params }: Props) {
       .eq('org_id', internalOrgId)
       .eq('type', 'form_template')
       .order('updated_at', { ascending: false }),
+    supabase
+      .from('blocks')
+      .select('id, name, metadata')
+      .eq('org_id', internalOrgId)
+      .eq('type', 'workflow_template')
+      .order('name')
+      .limit(100),
   ])
 
   if (configResult.error || !configResult.data) notFound()
@@ -73,6 +80,8 @@ export default async function PortalDetailPage({ params }: Props) {
         is_template: config.is_template ?? false,
         form_template_ids: config.form_template_ids ?? null,
         portal_token: link?.token ?? null,
+        exposed_block_type_config: (config as Record<string, unknown>).exposed_block_type_config as Record<string, { enabled: boolean; fields: Record<string, boolean> }> ?? {},
+        request_type_config: ((config as Record<string, unknown>).request_type_config as { workflow_template_id: string; form_template_id?: string; display_name?: string }[] | null) ?? null,
         created_at: config.created_at,
         updated_at: config.updated_at,
       }}
@@ -90,6 +99,11 @@ export default async function PortalDetailPage({ params }: Props) {
             ).length
           : 0,
         status: (f.state as string) ?? 'draft',
+      }))}
+      workflowTemplates={(workflowsResult.data ?? []).map((w) => ({
+        id: w.id,
+        name: w.name,
+        description: ((w.metadata as Record<string, unknown>)?.description as string) ?? '',
       }))}
     />
   )

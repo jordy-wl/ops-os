@@ -2,6 +2,61 @@ import { ok, apiError } from '@/lib/api/responses'
 import { validatePortalToken } from '@/lib/portal'
 import { createServerClient } from '@/lib/supabase/server'
 import { logger } from '@/lib/logger'
+import type { ExposedBlockTypeConfig } from '@/lib/portal-constants'
+
+/**
+ * Resolve which block types are enabled for the portal.
+ * Uses exposed_block_type_config when available; falls back to exposed_block_types array.
+ */
+function resolveEnabledTypes(
+  config: {
+    exposed_block_types: string[]
+    exposed_block_type_config?: ExposedBlockTypeConfig | null
+  }
+): { enabledTypes: string[]; typeConfig: ExposedBlockTypeConfig } {
+  const rawConfig = (config.exposed_block_type_config ?? {}) as ExposedBlockTypeConfig
+  const hasConfig = Object.keys(rawConfig).length > 0
+
+  if (hasConfig) {
+    const enabledTypes = Object.entries(rawConfig)
+      .filter(([, v]) => v.enabled)
+      .map(([k]) => k)
+    return { enabledTypes, typeConfig: rawConfig }
+  }
+
+  // Fall back: build config from legacy exposed_block_types array (all fields visible)
+  const typeConfig: ExposedBlockTypeConfig = {}
+  for (const t of config.exposed_block_types ?? []) {
+    typeConfig[t] = { enabled: true, fields: {} }
+  }
+  return { enabledTypes: config.exposed_block_types ?? [], typeConfig }
+}
+
+/**
+ * Filter a block's metadata fields based on the per-type field config.
+ * Empty fields object = all fields visible (opt-out model).
+ */
+function filterFields(
+  metadata: Record<string, unknown> | null,
+  fieldConfig: Record<string, boolean>
+): Record<string, unknown> {
+  if (!metadata) return {}
+
+  const hasExplicitSettings = Object.keys(fieldConfig).length > 0
+  if (!hasExplicitSettings) {
+    // All fields visible
+    return { ...metadata }
+  }
+
+  // Only include fields explicitly set to true (or not mentioned = hidden when config exists)
+  const filtered: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(metadata)) {
+    if (fieldConfig[key] === true) {
+      filtered[key] = value
+    }
+  }
+  return filtered
+}
 
 /**
  * GET /api/portal/[token]/blocks -- list blocks exposed to this portal.
@@ -9,6 +64,7 @@ import { logger } from '@/lib/logger'
  *
  * Returns blocks connected to the client block, filtered by
  * exposed_block_types and optionally exposed_block_ids from the portal config.
+ * Each block includes filtered metadata fields based on exposed_block_type_config.
  */
 export async function GET(
   _req: Request,
@@ -23,8 +79,10 @@ export async function GET(
 
   const { portalConfig } = result
 
+  const { enabledTypes, typeConfig } = resolveEnabledTypes(portalConfig)
+
   // If no block types are exposed, return empty list
-  if (!portalConfig.exposed_block_types || portalConfig.exposed_block_types.length === 0) {
+  if (enabledTypes.length === 0) {
     logger.info('portal', 'portal.blocks.fetched', {
       org_id: portalConfig.org_id,
       token_prefix: token.slice(0, 8) + '...',
@@ -78,7 +136,7 @@ export async function GET(
     .select('id, name, type, state, metadata, updated_at')
     .eq('org_id', portalConfig.org_id)
     .in('id', Array.from(connectedBlockIds))
-    .in('type', portalConfig.exposed_block_types)
+    .in('type', enabledTypes)
     .order('updated_at', { ascending: false })
 
   // Further filter by specific exposed block IDs if set
@@ -97,14 +155,21 @@ export async function GET(
     return apiError('Failed to fetch portal blocks', 'portal/blocks-failed', 500)
   }
 
-  // Return lean block info -- no internal org details
-  const result_blocks = (blocks ?? []).map((b) => ({
-    id: b.id,
-    name: b.name,
-    type: b.type,
-    status: (b.metadata as Record<string, unknown>)?.status ?? b.state ?? null,
-    updated_at: b.updated_at,
-  }))
+  // Return block info with filtered field data
+  const result_blocks = (blocks ?? []).map((b) => {
+    const metadata = (b.metadata as Record<string, unknown>) ?? {}
+    const fieldCfg = typeConfig[b.type]?.fields ?? {}
+    const fields = filterFields(metadata, fieldCfg)
+
+    return {
+      id: b.id,
+      name: b.name,
+      type: b.type,
+      status: metadata.status ?? b.state ?? null,
+      updated_at: b.updated_at,
+      fields,
+    }
+  })
 
   logger.info('portal', 'portal.blocks.fetched', {
     org_id: portalConfig.org_id,

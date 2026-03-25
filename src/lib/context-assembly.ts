@@ -11,6 +11,7 @@ export type Block = {
   name: string
   state: string
   metadata: Record<string, unknown>
+  owner_id: string | null
   created_at: string
   updated_at: string
 }

@@ -1,29 +1,34 @@
 import { logger } from '@/lib/logger'
+import { resolveTemplateBlockId } from './resolve-block-ref'
 import type { StepHandler } from './types'
 
 /**
  * create_edge handler — links two blocks via block_edges table.
  *
  * Step config:
- * - from_block_id: UUID or '{{context.source_block_id}}' (defaults to source block)
- * - to_block_id: UUID (required)
+ * - from_block_id: template expression or UUID (defaults to source block)
+ * - to_block_id: template expression or UUID (required)
  * - edge_type: string label (defaults to 'related')
  */
 const handler: StepHandler = async (step, meta, orgId, supabase) => {
   const now = new Date().toISOString()
   const stepAny = step as Record<string, unknown>
 
-  const fromBlockId = (stepAny.from_block_id as string) ?? meta.source_block_id
-  const toBlockId = stepAny.to_block_id as string | undefined
   const edgeType = (stepAny.edge_type as string) ?? 'related'
 
-  if (!toBlockId) {
-    return { step_name: step.name, step_type: step.type, status: 'failed', error: 'Missing to_block_id', executed_at: now }
+  // Resolve both block IDs via shared resolver
+  const fromResult = await resolveTemplateBlockId(stepAny.from_block_id as string | undefined, meta, orgId, supabase)
+  if (fromResult.error || !fromResult.blockId) {
+    return { step_name: step.name, step_type: step.type, status: 'failed', error: fromResult.error ?? 'Could not resolve from_block_id', executed_at: now }
   }
 
-  // Resolve template expressions
-  const resolvedFrom = fromBlockId === '{{context.source_block_id}}' ? meta.source_block_id : fromBlockId
-  const resolvedTo = toBlockId === '{{context.source_block_id}}' ? meta.source_block_id : toBlockId
+  const toResult = await resolveTemplateBlockId(stepAny.to_block_id as string | undefined, meta, orgId, supabase)
+  if (toResult.error || !toResult.blockId) {
+    return { step_name: step.name, step_type: step.type, status: 'failed', error: toResult.error ?? 'Missing to_block_id', executed_at: now }
+  }
+
+  const resolvedFrom = fromResult.blockId
+  const resolvedTo = toResult.blockId
 
   if (resolvedFrom === resolvedTo) {
     return { step_name: step.name, step_type: step.type, status: 'failed', error: 'Cannot create self-edge', executed_at: now }

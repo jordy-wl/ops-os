@@ -3,6 +3,7 @@
 import { X } from 'lucide-react'
 import type { Node } from '@xyflow/react'
 import type { OrgEntities } from '../hooks/use-org-entities'
+import type { PreviousStep } from './shared/template-record-picker'
 import { FieldLabel, TextInput } from './shared/form-primitives'
 import {
   TriggerConfig,
@@ -22,6 +23,7 @@ interface NodeConfigPanelProps {
   onUpdate: (nodeId: string, data: Record<string, unknown>) => void
   onClose: () => void
   entities?: OrgEntities
+  previousSteps?: PreviousStep[]
 }
 
 const NODE_TYPE_LABELS: Record<string, string> = {
@@ -36,7 +38,7 @@ const NODE_TYPE_LABELS: Record<string, string> = {
   foreach: 'For Each',
 }
 
-export function NodeConfigPanel({ node, onUpdate, onClose, entities }: NodeConfigPanelProps) {
+export function NodeConfigPanel({ node, onUpdate, onClose, entities, previousSteps }: NodeConfigPanelProps) {
   const nodeType = node.type ?? 'action'
   const data = node.data as Record<string, unknown>
 
@@ -76,8 +78,8 @@ export function NodeConfigPanel({ node, onUpdate, onClose, entities }: NodeConfi
         </div>
 
         {/* Type-specific config */}
-        {nodeType === 'trigger' && <TriggerConfig node={node} onUpdate={onUpdate} entities={entities} />}
-        {nodeType === 'action' && <ActionConfig node={node} onUpdate={onUpdate} entities={entities} />}
+        {nodeType === 'trigger' && <TriggerConfig node={node} onUpdate={onUpdate} entities={entities} previousSteps={previousSteps} />}
+        {nodeType === 'action' && <ActionConfig node={node} onUpdate={onUpdate} entities={entities} previousSteps={previousSteps} />}
         {nodeType === 'condition' && <ConditionConfig node={node} onUpdate={onUpdate} />}
         {nodeType === 'wait' && <WaitConfig node={node} onUpdate={onUpdate} />}
         {nodeType === 'input' && <InputConfig node={node} onUpdate={onUpdate} />}

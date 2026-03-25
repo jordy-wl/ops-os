@@ -16,23 +16,34 @@ export default async function NewPortalPage() {
 
   const supabase = createServerClient()
 
-  // Fetch form templates for the form selector
-  const { data: formTemplates } = await supabase
-    .from('blocks')
-    .select('id, name, metadata, state')
-    .eq('org_id', internalOrgId)
-    .eq('type', 'form_template')
-    .order('name')
+  // Fetch form templates, workflow templates, and client blocks in parallel
+  const [formTemplatesResult, workflowTemplatesResult, clientsResult] = await Promise.all([
+    supabase
+      .from('blocks')
+      .select('id, name, metadata, state')
+      .eq('org_id', internalOrgId)
+      .eq('type', 'form_template')
+      .order('name'),
+    supabase
+      .from('blocks')
+      .select('id, name, metadata')
+      .eq('org_id', internalOrgId)
+      .eq('type', 'workflow_template')
+      .order('name')
+      .limit(100),
+    supabase
+      .from('blocks')
+      .select('id, name')
+      .eq('org_id', internalOrgId)
+      .eq('type', 'client')
+      .eq('state', 'active')
+      .order('name')
+      .limit(200),
+  ])
 
-  // Fetch client blocks for the optional client selector
-  const { data: clients } = await supabase
-    .from('blocks')
-    .select('id, name')
-    .eq('org_id', internalOrgId)
-    .eq('type', 'client')
-    .eq('state', 'active')
-    .order('name')
-    .limit(200)
+  const formTemplates = formTemplatesResult.data
+  const workflowTemplates = workflowTemplatesResult.data
+  const clients = clientsResult.data
 
   return (
     <div className="p-6 lg:p-8 max-w-4xl mx-auto">
@@ -52,6 +63,11 @@ export default async function NewPortalPage() {
           }
         })}
         clients={(clients ?? []).map((c) => ({ id: c.id, name: c.name }))}
+        workflowTemplates={(workflowTemplates ?? []).map((w) => ({
+          id: w.id,
+          name: w.name,
+          description: ((w.metadata as Record<string, unknown>)?.description as string) ?? '',
+        }))}
       />
     </div>
   )

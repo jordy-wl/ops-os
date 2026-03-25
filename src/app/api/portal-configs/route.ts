@@ -19,6 +19,15 @@ const CreateSchema = z.object({
   exposed_block_ids: z.array(z.string().uuid()).optional().default([]),
   branding_overrides: z.record(z.unknown()).nullable().optional().default(null),
   form_template_ids: z.array(z.string().uuid()).nullable().optional().default(null),
+  exposed_block_type_config: z
+    .record(
+      z.object({
+        enabled: z.boolean(),
+        fields: z.record(z.boolean()).optional().default({}),
+      })
+    )
+    .optional()
+    .default({}),
 })
 
 /**
@@ -167,6 +176,9 @@ export const POST = withAuth(
         exposed_block_ids: data.exposed_block_ids.length > 0 ? data.exposed_block_ids : null,
         branding_overrides: data.branding_overrides,
         form_template_ids: data.form_template_ids,
+        exposed_block_type_config: Object.keys(data.exposed_block_type_config).length > 0
+          ? data.exposed_block_type_config
+          : {},
         shared_link_id: sharedLinkId,
         created_by: ctx.userId,
       })

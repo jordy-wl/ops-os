@@ -33,6 +33,7 @@ import { NodeConfigPanel } from './panels/node-config-panel'
 import { useOrgEntities } from './hooks/use-org-entities'
 import { useCanvasHistory } from './hooks/use-canvas-history'
 import type { CanvasLayout } from '@/lib/workflow/canvas-layout'
+import { STEP_OUTPUT_FIELDS, type PreviousStep } from './panels/shared/template-record-picker'
 
 const nodeTypes = {
   trigger: TriggerNode,
@@ -248,6 +249,49 @@ export function WorkflowCanvas({ initialLayout, templateName, onSave, saving }: 
     ? nodes.find((n) => n.id === selectedNode) ?? null
     : null
 
+  // Compute previous steps for the selected node (topological predecessors)
+  const previousSteps: PreviousStep[] = useMemo(() => {
+    if (!selectedNode) return []
+
+    // Build reverse adjacency: target -> sources
+    const incomingMap = new Map<string, string[]>()
+    for (const edge of edges) {
+      const sources = incomingMap.get(edge.target) ?? []
+      sources.push(edge.source)
+      incomingMap.set(edge.target, sources)
+    }
+
+    // Walk backward from selected node to collect all predecessors
+    const predecessorIds = new Set<string>()
+    const queue = [selectedNode]
+    while (queue.length > 0) {
+      const current = queue.shift()!
+      const sources = incomingMap.get(current) ?? []
+      for (const src of sources) {
+        if (!predecessorIds.has(src) && src !== selectedNode) {
+          predecessorIds.add(src)
+          queue.push(src)
+        }
+      }
+    }
+
+    // Convert predecessor nodes to PreviousStep objects
+    return nodes
+      .filter((n) => predecessorIds.has(n.id) && n.type !== 'trigger')
+      .map((n) => {
+        const data = n.data as Record<string, unknown>
+        const stepType = (data.stepType as string) ?? ''
+        const stepName = (data.stepName as string) ?? n.id
+        return {
+          id: n.id,
+          name: stepName,
+          label: (data.label as string) ?? stepName,
+          stepType,
+          outputFields: STEP_OUTPUT_FIELDS[stepType] ?? [],
+        }
+      })
+  }, [selectedNode, nodes, edges])
+
   const handleDeleteSelected = useCallback(() => {
     if (!selectedNode) return
     takeSnapshot()
@@ -345,6 +389,7 @@ export function WorkflowCanvas({ initialLayout, templateName, onSave, saving }: 
           onUpdate={onUpdateNodeData}
           onClose={() => setSelectedNode(null)}
           entities={orgEntities}
+          previousSteps={previousSteps}
         />
       )}
     </div>

@@ -40,7 +40,7 @@ function makeDb(...responses: { data: unknown; error: unknown }[]) {
 }
 
 const ORG = { id: 'org-uuid', clerk_org_id: 'org_abc', name: 'Thornfield Capital', slug: 'thornfield', created_at: '2026-03-01T00:00:00Z' }
-const BLOCK = { id: 'block-1', org_id: 'org-uuid', type: 'client', name: 'Acme Ltd', state: 'active', metadata: { jurisdiction: 'UK' }, created_at: '2026-03-01T10:00:00Z', updated_at: '2026-03-02T10:00:00Z' }
+const BLOCK = { id: 'block-1', org_id: 'org-uuid', type: 'client', name: 'Acme Ltd', state: 'active', metadata: { jurisdiction: 'UK' }, owner_id: null, created_at: '2026-03-01T10:00:00Z', updated_at: '2026-03-02T10:00:00Z' }
 const EVENTS = [
   { id: 'ev-2', org_id: 'org-uuid', block_id: 'block-1', type: 'block.updated', actor_id: 'user_111', actor_type: 'human', payload: { diff: { name: { before: 'Acme', after: 'Acme Ltd' } } }, occurred_at: '2026-03-02T10:00:00Z' },
   { id: 'ev-1', org_id: 'org-uuid', block_id: 'block-1', type: 'block.created', actor_id: 'user_111', actor_type: 'human', payload: { block_type: 'client', name: 'Acme' }, occurred_at: '2026-03-01T10:00:00Z' },
@@ -53,7 +53,7 @@ describe('assembleContext', () => {
     const edges = [
       { from_block_id: 'block-1', to_block_id: 'block-2' },
     ]
-    const neighbour = { id: 'block-2', org_id: 'org-uuid', type: 'deal', name: 'Deal Alpha', state: 'active', metadata: {}, created_at: '2026-03-01T00:00:00Z', updated_at: '2026-03-01T00:00:00Z' }
+    const neighbour = { id: 'block-2', org_id: 'org-uuid', type: 'deal', name: 'Deal Alpha', state: 'active', metadata: {}, owner_id: null, created_at: '2026-03-01T00:00:00Z', updated_at: '2026-03-01T00:00:00Z' }
 
     makeDb(
       { data: ORG, error: null },                    // single: org
@@ -176,7 +176,7 @@ describe('contextToPromptString', () => {
     const ctxWithNeighbours: ContextObject = {
       ...baseCtx,
       neighbours: [
-        { id: 'b2', org_id: 'org-uuid', type: 'deal', name: 'Deal Alpha', state: 'active', metadata: {}, created_at: '', updated_at: '' },
+        { id: 'b2', org_id: 'org-uuid', type: 'deal', name: 'Deal Alpha', state: 'active', metadata: {}, owner_id: null, created_at: '', updated_at: '' },
       ],
     }
     const str = contextToPromptString(ctxWithNeighbours)
@@ -206,6 +206,7 @@ describe('contextToPromptString', () => {
       name: `Deal ${String(i).padStart(3, '0')} — ${'long-name-to-fill-context'.repeat(4)}`,
       state: 'active',
       metadata: {},
+      owner_id: null,
       created_at: '',
       updated_at: '',
     }))

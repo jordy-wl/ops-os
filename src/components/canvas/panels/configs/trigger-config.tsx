@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { X, Plus, Copy, Check } from 'lucide-react'
 import { FieldLabel, TextInput, SelectInput, EntitySelect } from '../shared/form-primitives'
 import { VariablePickerInput } from '../shared/variable-picker'
+import { TemplateRecordPicker } from '../shared/template-record-picker'
 import { ConditionBuilder, type ConditionValue } from '../shared/condition-builder'
 import { ScheduleConfig, type ScheduleValue } from '../shared/schedule-config'
 import { makeConfigUpdater } from '../types'
@@ -120,12 +121,14 @@ function EventTriggerConfig({
   eventFilters,
   eventSpecificBlockId,
   onUpdateConfig,
+  previousSteps,
 }: {
   eventPattern: string
   eventScope: string
   eventFilters: ConditionValue
   eventSpecificBlockId: string
   onUpdateConfig: (field: string, value: unknown) => void
+  previousSteps?: import('../shared/template-record-picker').PreviousStep[]
 }) {
   return (
     <div className="space-y-3">
@@ -165,19 +168,19 @@ function EventTriggerConfig({
         </div>
       )}
 
-      {/* Conditional: specific block ID */}
+      {/* Conditional: specific record reference */}
       {eventScope === 'specific' && (
         <div>
-          <FieldLabel htmlFor="event-specific-block-id">Block ID</FieldLabel>
-          <VariablePickerInput
+          <TemplateRecordPicker
             id="event-specific-block-id"
-            value={eventSpecificBlockId}
+            value={eventSpecificBlockId || '{{context.source_block_id}}'}
             onChange={(v) => onUpdateConfig('event_specific_block_id', v)}
-            placeholder="Enter the specific block ID"
-            variables={[]}
+            label="Specific Record"
+            previousSteps={previousSteps}
+            defaultToTriggering
           />
           <p className="mt-1 text-xs text-muted-foreground">
-            Only events on this specific record will trigger the workflow
+            Only events on this record will trigger the workflow
           </p>
         </div>
       )}
@@ -350,7 +353,7 @@ function ScheduleTriggerConfig({
 // Main component
 // ---------------------------------------------------------------------------
 
-export function TriggerConfig({ node, onUpdate, entities }: NodeConfigProps) {
+export function TriggerConfig({ node, onUpdate, entities, previousSteps }: NodeConfigProps) {
   const { config, updateConfig } = makeConfigUpdater(node, onUpdate)
 
   const triggerType = (config.triggerType as string) ?? 'manual'
@@ -390,6 +393,7 @@ export function TriggerConfig({ node, onUpdate, entities }: NodeConfigProps) {
           eventFilters={eventFilters}
           eventSpecificBlockId={eventSpecificBlockId}
           onUpdateConfig={updateConfig}
+          previousSteps={previousSteps}
         />
       )}
 

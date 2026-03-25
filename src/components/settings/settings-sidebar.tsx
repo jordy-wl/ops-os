@@ -7,6 +7,7 @@ import {
   Users,
   Shield,
   LayoutGrid,
+  Tags,
   Palette,
   Plug,
   Route,
@@ -35,6 +36,7 @@ const SETTINGS_SECTIONS: { label: string; items: SettingsNavItem[] }[] = [
     label: 'Content',
     items: [
       { href: '/settings/block-types', label: 'Block Types', icon: LayoutGrid },
+      { href: '/settings/labels', label: 'Labels', icon: Tags },
       { href: '/settings/brand', label: 'Brand Kit', icon: Palette },
     ],
   },

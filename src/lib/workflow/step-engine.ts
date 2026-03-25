@@ -241,25 +241,49 @@ async function executeStep(
 
 /**
  * Interpolate template variables in a string.
- * Supports N-part dot paths: {{block.name}}, {{context.template_id}},
- * {{steps.step_name.field}}, {{steps.step_name.nested.field}}.
+ * Supports:
+ * - Dot paths: {{block.name}}, {{context.template_id}}, {{steps.step_name.field}}
+ * - Array bracket notation: {{steps.search.results[0]}}, {{steps.search.results[0].id}}
+ * - Related record refs ({{related:...}}) are NOT interpolated here — use resolveTemplateBlockId()
  */
 export function interpolateTemplate(
   template: string,
   variables: Record<string, Record<string, unknown>>
 ): string {
-  return template.replace(/\{\{(\w+)\.([\w.]+)\}\}/g, (_match, ns, rest) => {
+  return template.replace(/\{\{(\w+)\.([\w.\[\]0-9]+)\}\}/g, (_match, ns, rest) => {
     const scope = variables[ns]
     if (!scope) return ''
-    const parts = rest.split('.')
+    const parts = parseVariablePath(rest)
     let val: unknown = scope
     for (const part of parts) {
       if (val == null || typeof val !== 'object') return ''
-      val = (val as Record<string, unknown>)[part]
+      if (part.type === 'index') {
+        if (!Array.isArray(val)) return ''
+        val = val[part.index]
+      } else {
+        val = (val as Record<string, unknown>)[part.key]
+      }
     }
     if (val == null) return ''
     return typeof val === 'object' ? JSON.stringify(val) : String(val)
   })
+}
+
+type PathPart = { type: 'key'; key: string } | { type: 'index'; index: number }
+
+/** Parse a variable path like "results[0].id" into structured parts */
+function parseVariablePath(path: string): PathPart[] {
+  const parts: PathPart[] = []
+  for (const segment of path.split('.')) {
+    const bracketMatch = segment.match(/^(\w+)\[(\d+)\]$/)
+    if (bracketMatch) {
+      parts.push({ type: 'key', key: bracketMatch[1] })
+      parts.push({ type: 'index', index: parseInt(bracketMatch[2], 10) })
+    } else {
+      parts.push({ type: 'key', key: segment })
+    }
+  }
+  return parts
 }
 
 /**

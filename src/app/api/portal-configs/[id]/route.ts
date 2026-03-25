@@ -17,6 +17,14 @@ const PatchSchema = z.object({
   branding_overrides: z.record(z.unknown()).nullable().optional(),
   form_template_ids: z.array(z.string().uuid()).nullable().optional(),
   is_active: z.boolean().optional(),
+  exposed_block_type_config: z
+    .record(
+      z.object({
+        enabled: z.boolean(),
+        fields: z.record(z.boolean()).optional().default({}),
+      })
+    )
+    .optional(),
 })
 
 /**
@@ -87,6 +95,7 @@ export const PATCH = withAuth(
     if (updates.branding_overrides !== undefined) updatePayload.branding_overrides = updates.branding_overrides
     if (updates.form_template_ids !== undefined) updatePayload.form_template_ids = updates.form_template_ids
     if (updates.is_active !== undefined) updatePayload.is_active = updates.is_active
+    if (updates.exposed_block_type_config !== undefined) updatePayload.exposed_block_type_config = updates.exposed_block_type_config
 
     const { data: config, error: updateError } = await supabase
       .from('portal_configurations')

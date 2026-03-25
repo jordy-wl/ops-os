@@ -381,7 +381,26 @@ If exit condition is NOT met after 12 weeks:
 5. ≥1 design partner client views their portal
 
 **Sprints in This Phase:**
-- Sprint 24: Full Phase 7 Build (all 4 workstreams) — **IN PROGRESS**
+- Sprint 24: Full Phase 7 Build (all 4 workstreams) — **COMPLETE**
+- Sprint 25: Portal Enhancement V2 (6 phases) — **COMPLETE** (6/6 DONE, 100%. 2026-03-25)
+
+**Sprint 25 deliverables (Portal Enhancement V2):**
+- Phase 1: **Workflow Label System** — 3-table normalized design (label_categories, label_values, label_assignments). entity_type polymorphism for extensibility beyond blocks. 4 API route files (categories CRUD, values CRUD, assignments GET/POST/DELETE). Settings admin UI (labels-manager.tsx ~420 lines, expandable categories, inline value management, color picker, delete confirmation, empty state with suggestion prompts). Reusable LabelPicker component (label-picker.tsx ~397 lines, optimistic UI, colored badges, grouped dropdown).
+- Phase 2: **Block Ownership** — owner_id column on blocks (FK → blocks, ON DELETE SET NULL, partial index). Dedicated PATCH API (blocks/[id]/owner/route.ts, validates team_member type, emits block.owner.changed event). Searchable OwnerPicker dropdown (owner-picker.tsx ~227 lines) added to block detail page sidebar.
+- Phase 3: **Request Types as Workflows** — request_type_config JSONB on portal_configurations (array of {workflow_template_id, form_template_id?, display_name?}). workflow_instance_id on form_submissions. spawnPortalWorkflow() trigger function (creates workflow_instance block + edges + events). Request-types GET API. Portal requests route rewrite: GET lists previous requests with workflow status (batch N+1 prevention), POST dual-path (workflow-based spawns instance, legacy backward compat). Portal requests page rewrite (~1442 lines): card-based request type picker → form/simple fields → submit + workflow spawn, previous requests with step progress bars, 30s status polling.
+- Phase 4: **Dedicated Form Builder** — @dnd-kit/core + @dnd-kit/sortable + @dnd-kit/utilities installed. Library forms list page + builder page. 6 builder components: FormBuilderPage (3-panel layout with DndContext), QuestionTypePicker (12 types in 4 groups), QuestionCard (useSortable drag + inline label edit), QuestionConfigPanel (common + type-specific options + branching), FormPreviewPanel (all 12 question type renderers with branching evaluation), BranchingEditor (condition builder with smart value input adapting to question type). Auto-save with debounced 500ms PATCH.
+- Phase 5: **Per-Portal Field Visibility** — exposed_block_type_config JSONB column with backfill migration from existing exposed_block_types text[]. ALL_PORTAL_BLOCK_TYPES derived from SYSTEM_BLOCK_TYPES (14 portal-eligible types, filtering out workflow_template/workflow_instance/task_queue_item/brand_kit). Portal blocks API field filtering (resolveEnabledTypes + filterFields helpers, falls back to legacy). Admin UI: expandable type+field picker with per-field checkboxes from field_schema. Portal dashboard shows first 3-4 enabled fields per block card.
+- Phase 6: **Portal Design Polish** — 17 CSS custom properties (portal-bg, portal-card-bg/border, portal-text-primary/secondary, portal-radius, portal-shadow-sm/md, portal-transition). Shimmer keyframe animation for skeleton loaders. Page-by-page: shell (header scroll shadow, nav transitions), dashboard (card hover elevation, semantic status badges emerald/amber/red/slate, activity timeline connector), documents (file type badge colors, hover effects), forms (focus rings, press effects, glass morphism mobile bar), requests (CSS variable colors throughout, transitions).
+
+**New database objects (4 migrations):**
+- Tables: label_categories, label_values, label_assignments (RLS enabled, org-scoped)
+- Columns: blocks.owner_id, portal_configurations.request_type_config, portal_configurations.exposed_block_type_config, form_submissions.workflow_instance_id
+- Indexes: idx_label_categories_org, idx_label_values_category, idx_label_assignments_entity, idx_blocks_owner, idx_form_submissions_workflow
+
+**New files (~24):** labels API (4), labels Settings UI (2), label picker (1), owner API (1), owner picker (1), portal-trigger (1), request-types API (1), form builder pages (2), form builder components (6), library forms page (1), labels page (1), labels manager (1), settings labels page (1)
+**Modified files (~27):** portal routes, portal pages, portal components, admin UI, block detail, context assembly, portal constants, portal types, test files
+**New dependency:** @dnd-kit/core, @dnd-kit/sortable, @dnd-kit/utilities
+**Tests:** 1764 passing (up from 1746, +18)
 
 ---
 

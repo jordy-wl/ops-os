@@ -12,6 +12,12 @@ import { ContentTab } from './portal-detail-tabs/content-tab'
 import { BrandingTab } from './portal-detail-tabs/branding-tab'
 import { SettingsTab } from './portal-detail-tabs/settings-tab'
 
+export interface RequestTypeConfigItem {
+  workflow_template_id: string
+  form_template_id?: string
+  display_name?: string
+}
+
 export interface PortalConfig {
   id: string
   org_id: string
@@ -28,6 +34,8 @@ export interface PortalConfig {
   is_template: boolean
   form_template_ids: string[] | null
   portal_token: string | null
+  exposed_block_type_config: Record<string, { enabled: boolean; fields: Record<string, boolean> }>
+  request_type_config: RequestTypeConfigItem[] | null
   created_at: string
   updated_at: string
 }
@@ -39,11 +47,18 @@ export interface FormTemplateSummary {
   status: string
 }
 
+export interface WorkflowTemplateSummary {
+  id: string
+  name: string
+  description: string
+}
+
 interface PortalDetailViewProps {
   config: PortalConfig
   clientName: string
   clientId: string | null
   formTemplates: FormTemplateSummary[]
+  workflowTemplates: WorkflowTemplateSummary[]
 }
 
 export function PortalDetailView({
@@ -51,6 +66,7 @@ export function PortalDetailView({
   clientName,
   clientId,
   formTemplates,
+  workflowTemplates,
 }: PortalDetailViewProps) {
   const [config, setConfig] = useState<PortalConfig>(initialConfig)
   const [copied, setCopied] = useState(false)
@@ -214,6 +230,7 @@ export function PortalDetailView({
             config={config}
             onUpdate={updateConfig}
             formTemplates={formTemplates}
+            workflowTemplates={workflowTemplates}
             clientId={clientId}
           />
         </TabsContent>

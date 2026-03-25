@@ -24,11 +24,11 @@ export default async function PortalLayout({ params, children }: Props) {
 
   if (!result.valid) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-white px-4">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#f8fafc] px-4">
         <div className="text-center max-w-md">
-          <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-gray-100 flex items-center justify-center">
+          <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-[#f1f5f9] flex items-center justify-center">
             <svg
-              className="w-8 h-8 text-gray-400"
+              className="w-8 h-8 text-[#94a3b8]"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -42,10 +42,10 @@ export default async function PortalLayout({ params, children }: Props) {
               />
             </svg>
           </div>
-          <h1 className="text-xl font-semibold text-gray-900 mb-2">
+          <h1 className="text-xl font-semibold text-[#0f172a] mb-2">
             Portal Unavailable
           </h1>
-          <p className="text-sm text-gray-500 mb-1">
+          <p className="text-sm text-[#475569] mb-1">
             {result.reason === 'Token expired'
               ? 'This portal link has expired. Please contact your account manager for a new link.'
               : result.reason === 'Not a portal link'
@@ -65,25 +65,59 @@ export default async function PortalLayout({ params, children }: Props) {
   const fontFamily = (portalConfig.branding_overrides?.font_family as string) || 'Inter, system-ui, sans-serif'
 
   return (
-    <div
-      style={
-        {
-          '--portal-primary': primaryColor,
-          '--portal-primary-foreground': primaryForeground,
-          '--portal-font': fontFamily,
-        } as React.CSSProperties
-      }
-      className="font-[var(--portal-font)]"
-    >
-      <PortalProvider
-        portalConfig={portalConfig}
-        clientBlock={clientBlock as unknown as PortalClientBlock}
-        branding={branding}
-        token={token}
+    <>
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+            :root {
+              --portal-bg: #f8fafc;
+              --portal-card-bg: #ffffff;
+              --portal-card-border: #e2e8f0;
+              --portal-card-border-hover: #cbd5e1;
+              --portal-text-primary: #0f172a;
+              --portal-text-secondary: #475569;
+              --portal-text-muted: #94a3b8;
+              --portal-success: #059669;
+              --portal-warning: #d97706;
+              --portal-error: #dc2626;
+              --portal-radius: 0.5rem;
+              --portal-radius-sm: 0.375rem;
+              --portal-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+              --portal-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+              --portal-transition: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            @keyframes shimmer {
+              0% { background-position: -200% 0; }
+              100% { background-position: 200% 0; }
+            }
+            .portal-shimmer {
+              background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+              background-size: 200% 100%;
+              animation: shimmer 1.5s ease-in-out infinite;
+            }
+          `,
+        }}
+      />
+      <div
+        style={
+          {
+            '--portal-primary': primaryColor,
+            '--portal-primary-foreground': primaryForeground,
+            '--portal-font': fontFamily,
+          } as React.CSSProperties
+        }
+        className="font-[var(--portal-font)]"
       >
-        <PortalShell>{children}</PortalShell>
-      </PortalProvider>
-    </div>
+        <PortalProvider
+          portalConfig={portalConfig}
+          clientBlock={clientBlock as unknown as PortalClientBlock}
+          branding={branding}
+          token={token}
+        >
+          <PortalShell>{children}</PortalShell>
+        </PortalProvider>
+      </div>
+    </>
   )
 }
 

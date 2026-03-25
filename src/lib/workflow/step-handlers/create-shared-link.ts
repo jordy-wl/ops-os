@@ -1,12 +1,13 @@
 import { logger } from '@/lib/logger'
 import { generateShareToken } from '@/lib/shared-links'
+import { resolveTemplateBlockId } from './resolve-block-ref'
 import type { StepHandler } from './types'
 
 /**
  * create_shared_link handler — creates a shared link for a block (client portal access).
  *
  * Step config:
- * - link_block_id: target block ID (defaults to source block)
+ * - link_block_id: template expression or UUID (defaults to source block)
  * - link_type: 'view' | 'form' | 'sign' (default 'view')
  * - link_expires_hours: hours until expiry (default 168 = 7 days)
  */
@@ -14,7 +15,11 @@ const handler: StepHandler = async (step, meta, orgId, supabase) => {
   const now = new Date().toISOString()
   const stepAny = step as Record<string, unknown>
 
-  const blockId = (stepAny.link_block_id as string) ?? meta.source_block_id
+  const blockIdResult = await resolveTemplateBlockId(stepAny.link_block_id as string | undefined, meta, orgId, supabase)
+  if (blockIdResult.error || !blockIdResult.blockId) {
+    return { step_name: step.name, step_type: step.type, status: 'failed', error: blockIdResult.error ?? 'Could not resolve link_block_id', executed_at: now }
+  }
+  const blockId = blockIdResult.blockId
   const linkType = (stepAny.link_type as string) ?? 'view'
   const expiresHours = (stepAny.link_expires_hours as number) ?? 168
 
