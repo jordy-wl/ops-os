@@ -1,12 +1,10 @@
 import { logger } from '@/lib/logger'
 import type { createServerClient } from '@/lib/supabase/server'
 import type { StepResult } from '../step-engine'
-
-/** Allowed template expression prefixes — whitelist for injection prevention */
-const ALLOWED_EXPRESSION_PREFIXES = ['context.', 'block.'] as const
+import { resolveTemplateBlockId } from './resolve-block-ref'
 
 type UpdateBlockConfig = {
-  /** Target block ID: literal UUID, '{{context.source_block_id}}', or '{{block.<relation_field>}}' */
+  /** Target block ID: template expression or literal UUID */
   block_id: string
   /** Field-value pairs to merge into the target block's metadata */
   fields: Record<string, unknown>
@@ -17,89 +15,7 @@ type StepMeta = {
   source_block_id: string
   applies_to_type: string
   current_step_index: number
-}
-
-/**
- * Resolve a template expression like `{{context.source_block_id}}` or `{{block.parent_client}}`
- * against the workflow context and source block.
- */
-function resolveExpression(
-  expr: string,
-  meta: StepMeta,
-  sourceBlock: Record<string, unknown> | null
-): string | null {
-  const match = expr.match(/^\{\{(\w+)\.(\w+)\}\}$/)
-  if (!match) return null
-
-  const [, namespace, key] = match
-
-  // Validate prefix is allowed
-  if (!ALLOWED_EXPRESSION_PREFIXES.some((p) => `${namespace}.` === p)) {
-    return null
-  }
-
-  if (namespace === 'context') {
-    const contextVars: Record<string, string> = {
-      source_block_id: meta.source_block_id,
-      template_id: meta.template_id,
-      applies_to_type: meta.applies_to_type,
-    }
-    return contextVars[key] ?? null
-  }
-
-  if (namespace === 'block' && sourceBlock) {
-    const metadata = (sourceBlock.metadata ?? {}) as Record<string, unknown>
-    const val = metadata[key]
-    return typeof val === 'string' ? val : null
-  }
-
-  return null
-}
-
-/**
- * Resolves the target block ID from the step config.
- * Supports:
- * - Literal UUID
- * - {{context.source_block_id}}
- * - {{block.<relation_field>}} (follows a relation field on the source block)
- */
-async function resolveBlockId(
-  config: UpdateBlockConfig,
-  meta: StepMeta,
-  orgId: string,
-  supabase: ReturnType<typeof createServerClient>
-): Promise<{ blockId: string | null; error?: string }> {
-  const raw = config.block_id
-
-  if (!raw) {
-    return { blockId: null, error: 'Missing block_id in update_block config' }
-  }
-
-  // Check if it's a template expression
-  if (raw.startsWith('{{') && raw.endsWith('}}')) {
-    // Fetch source block for expression resolution
-    const { data: sourceBlock } = await supabase
-      .from('blocks')
-      .select('id, name, type, metadata')
-      .eq('id', meta.source_block_id)
-      .eq('org_id', orgId)
-      .single()
-
-    const resolved = resolveExpression(
-      raw,
-      meta,
-      sourceBlock as Record<string, unknown> | null
-    )
-
-    if (!resolved) {
-      return { blockId: null, error: `Failed to resolve expression: ${raw}` }
-    }
-
-    return { blockId: resolved }
-  }
-
-  // Literal UUID
-  return { blockId: raw }
+  step_results: StepResult[]
 }
 
 /**
@@ -127,16 +43,12 @@ export async function executeUpdateBlock(
     return fail('Missing or empty fields in update_block config')
   }
 
-  // 2. Resolve target block ID
-  const { blockId, error: resolveError } = await resolveBlockId(
-    config,
-    meta,
-    orgId,
-    supabase
-  )
-  if (!blockId || resolveError) {
-    return fail(resolveError ?? 'Could not resolve block_id')
+  // 2. Resolve target block ID via shared resolver
+  const resolved = await resolveTemplateBlockId(config.block_id, meta, orgId, supabase)
+  if (resolved.error || !resolved.blockId) {
+    return fail(resolved.error ?? 'Could not resolve block_id')
   }
+  const blockId = resolved.blockId
 
   // 3. Fetch target block (org-scoped)
   const { data: targetBlock, error: fetchError } = await supabase

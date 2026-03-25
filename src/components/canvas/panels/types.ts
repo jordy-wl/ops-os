@@ -1,10 +1,13 @@
 import type { Node } from '@xyflow/react'
 import type { OrgEntities } from '../hooks/use-org-entities'
+import type { PreviousStep } from './shared/template-record-picker'
 
 export interface NodeConfigProps {
   node: Node
   onUpdate: (nodeId: string, data: Record<string, unknown>) => void
   entities?: OrgEntities
+  /** Steps preceding this node in the canvas (topological order) */
+  previousSteps?: PreviousStep[]
 }
 
 /** Extract typed data from a node */

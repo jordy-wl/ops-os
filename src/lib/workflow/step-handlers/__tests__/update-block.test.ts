@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import type { StepResult } from '../../step-engine'
 
 vi.mock('@/lib/supabase/server', () => ({
   createServerClient: vi.fn(),
@@ -24,12 +25,14 @@ function makeMeta(overrides: Partial<{
   source_block_id: string
   applies_to_type: string
   current_step_index: number
+  step_results: StepResult[]
 }> = {}) {
   return {
     template_id: 'tmpl-1',
     source_block_id: 'block-source',
     applies_to_type: 'client',
     current_step_index: 0,
+    step_results: [] as StepResult[],
     ...overrides,
   }
 }

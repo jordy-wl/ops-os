@@ -1,6 +1,7 @@
 import { logger } from '@/lib/logger'
 import { generateShareToken } from '@/lib/shared-links'
 import { interpolateTemplate, buildStepVariables } from '../step-engine'
+import { resolveTemplateBlockId } from './resolve-block-ref'
 import type { StepHandler } from './types'
 
 /**
@@ -17,7 +18,11 @@ const handler: StepHandler = async (step, meta, orgId, supabase) => {
   const stepAny = step as Record<string, unknown>
 
   const templateConfigId = (stepAny.portal_config_id as string) ?? null
-  const clientBlockId = (stepAny.link_block_id as string) ?? meta.source_block_id
+  const clientResult = await resolveTemplateBlockId(stepAny.link_block_id as string | undefined, meta, orgId, supabase)
+  if (clientResult.error || !clientResult.blockId) {
+    return { step_name: step.name, step_type: step.type, status: 'failed', error: clientResult.error ?? 'Could not resolve link_block_id', executed_at: now }
+  }
+  const clientBlockId = clientResult.blockId
   const rawPortalName = (stepAny.portal_name as string) ?? ''
   const expiresHours = (stepAny.portal_expires_hours as number) ?? 8760
 

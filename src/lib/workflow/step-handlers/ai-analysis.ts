@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { logger } from '@/lib/logger'
+import { resolveTemplateBlockId } from './resolve-block-ref'
 import type { StepHandler } from './types'
 
 const MODEL = 'claude-sonnet-4-6'
@@ -21,11 +22,16 @@ const handler: StepHandler = async (step, meta, orgId, supabase) => {
   const prompt = stepAny.ai_prompt as string | undefined
   const outputFormat = (stepAny.ai_output_format as string) ?? 'json'
   const maxTokens = Math.min((stepAny.ai_max_tokens as number) ?? MAX_TOKENS, 4096)
-  const contextBlockId = (stepAny.ai_context_block_id as string) ?? meta.source_block_id
 
   if (!prompt) {
     return { step_name: step.name, step_type: step.type, status: 'failed', error: 'Missing ai_prompt', executed_at: now }
   }
+
+  const blockIdResult = await resolveTemplateBlockId(stepAny.ai_context_block_id as string | undefined, meta, orgId, supabase)
+  if (blockIdResult.error || !blockIdResult.blockId) {
+    return { step_name: step.name, step_type: step.type, status: 'failed', error: blockIdResult.error ?? 'Could not resolve ai_context_block_id', executed_at: now }
+  }
+  const contextBlockId = blockIdResult.blockId
 
   // Fetch block context
   const { data: block } = await supabase

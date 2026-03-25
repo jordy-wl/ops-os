@@ -17,6 +17,7 @@ import { RoutingSection } from '../shared/routing-section'
 import { AITemplatePicker, type SaveResultDestination } from '../shared/ai-template-picker'
 import { getTemplatesForProvider, type ConnectorTemplate } from '@/lib/workflow/connector-templates'
 import { VariablePickerInput } from '../shared/variable-picker'
+import { TemplateRecordPicker } from '../shared/template-record-picker'
 
 // ─── Action Type Options ─────────────────────────────────────────────────────
 
@@ -72,12 +73,6 @@ function PortalConfigSelector({
 
 // ─── Update Block Config (sub-component) ─────────────────────────────────────
 
-const RECORD_TARGET_OPTIONS = [
-  { value: 'triggering_record', label: 'Triggering Record' },
-  { value: 'different_record', label: 'A different record' },
-  { value: 'related_record', label: 'A related record' },
-]
-
 const STATUS_OPTIONS = [
   { value: '', label: 'Select status...' },
   { value: 'draft', label: 'Draft' },
@@ -87,7 +82,7 @@ const STATUS_OPTIONS = [
   { value: 'archived', label: 'Archived' },
 ]
 
-function UpdateBlockConfig({ node, onUpdate, entities }: NodeConfigProps) {
+function UpdateBlockConfig({ node, onUpdate, entities, previousSteps }: NodeConfigProps) {
   const { config } = makeConfigUpdater(node, onUpdate)
   const fields = (config.fields ?? {}) as Record<string, string>
   const fieldEntries = Object.entries(fields)
@@ -129,50 +124,15 @@ function UpdateBlockConfig({ node, onUpdate, entities }: NodeConfigProps) {
 
   return (
     <>
-      {/* Which record? */}
-      <div className="mb-3">
-        <FieldLabel htmlFor="ub-record-target">Which record?</FieldLabel>
-        <SelectInput
-          id="ub-record-target"
-          value={recordTarget}
-          onChange={(v) => {
-            updateConfig('record_target', v)
-            if (v === 'triggering_record') {
-              updateConfig('block_id', '{{context.source_block_id}}')
-            }
-          }}
-          options={RECORD_TARGET_OPTIONS}
-        />
-      </div>
-
-      {/* Show block picker only when targeting a different or related record */}
-      {recordTarget !== 'triggering_record' && (
-        <div className="mb-3">
-          <FieldLabel htmlFor="ub-block-id">Target Record</FieldLabel>
-          {(entities?.blocks ?? []).length > 0 ? (
-            <EntitySelect
-              id="ub-block-id"
-              value={(config.block_id as string) ?? ''}
-              onChange={(v) => updateConfig('block_id', v)}
-              options={(entities?.blocks ?? []).map((b) => ({ value: b.id, label: `${b.name} (${b.type})` }))}
-              placeholder="Select target record..."
-              allowFreeText
-            />
-          ) : (
-            <TextInput
-              id="ub-block-id"
-              value={(config.block_id as string) ?? ''}
-              onChange={(v) => updateConfig('block_id', v)}
-              placeholder="UUID or {{variable}}"
-            />
-          )}
-          {recordTarget === 'related_record' && (
-            <p className="mt-1 text-xs text-muted-foreground">
-              Pick a record linked to the triggering record
-            </p>
-          )}
-        </div>
-      )}
+      {/* Record reference picker — template-aware */}
+      <TemplateRecordPicker
+        id="ub-block-id"
+        value={(config.block_id as string) ?? '{{context.source_block_id}}'}
+        onChange={(v) => updateConfig('block_id', v)}
+        label="Target Record"
+        previousSteps={previousSteps}
+        defaultToTriggering
+      />
 
       {/* Change Status mode: show status dropdown */}
       {isChangeStatus && (
@@ -507,7 +467,7 @@ function CallApiConfig({
 
 // ─── Action Config (exported) ────────────────────────────────────────────────
 
-export function ActionConfig({ node, onUpdate, entities }: NodeConfigProps) {
+export function ActionConfig({ node, onUpdate, entities, previousSteps }: NodeConfigProps) {
   const { data, config, updateData, updateConfig } = makeConfigUpdater(node, onUpdate)
   const stepType = (data.stepType as string) ?? 'emit_event'
 
@@ -756,39 +716,21 @@ export function ActionConfig({ node, onUpdate, entities }: NodeConfigProps) {
       {/* -- Create Edge / Link Records Config --------------------------------- */}
       {stepType === 'create_edge' && (
         <>
-          <div className="mb-3">
-            <FieldLabel htmlFor="ce-from">From record</FieldLabel>
-            {(entities?.blocks ?? []).length > 0 ? (
-              <EntitySelect
-                id="ce-from"
-                value={(config.from_block_id as string) ?? '{{context.source_block_id}}'}
-                onChange={(v) => updateConfig('from_block_id', v)}
-                options={[
-                  { value: '{{context.source_block_id}}', label: 'Triggering Record' },
-                  ...(entities?.blocks ?? []).map((b) => ({ value: b.id, label: `${b.name} (${b.type})` })),
-                ]}
-                placeholder="Select source record..."
-                allowFreeText
-              />
-            ) : (
-              <TextInput id="ce-from" value={(config.from_block_id as string) ?? ''} onChange={(v) => updateConfig('from_block_id', v)} placeholder="{{context.source_block_id}}" />
-            )}
-          </div>
-          <div className="mb-3">
-            <FieldLabel htmlFor="ce-to">To record</FieldLabel>
-            {(entities?.blocks ?? []).length > 0 ? (
-              <EntitySelect
-                id="ce-to"
-                value={(config.to_block_id as string) ?? ''}
-                onChange={(v) => updateConfig('to_block_id', v)}
-                options={(entities?.blocks ?? []).map((b) => ({ value: b.id, label: `${b.name} (${b.type})` }))}
-                placeholder="Select target record..."
-                allowFreeText
-              />
-            ) : (
-              <TextInput id="ce-to" value={(config.to_block_id as string) ?? ''} onChange={(v) => updateConfig('to_block_id', v)} placeholder="Target record ID" />
-            )}
-          </div>
+          <TemplateRecordPicker
+            id="ce-from"
+            value={(config.from_block_id as string) ?? '{{context.source_block_id}}'}
+            onChange={(v) => updateConfig('from_block_id', v)}
+            label="From record"
+            previousSteps={previousSteps}
+            defaultToTriggering
+          />
+          <TemplateRecordPicker
+            id="ce-to"
+            value={(config.to_block_id as string) ?? ''}
+            onChange={(v) => updateConfig('to_block_id', v)}
+            label="To record"
+            previousSteps={previousSteps}
+          />
           <div className="mb-3">
             <FieldLabel htmlFor="ce-relationship">Relationship</FieldLabel>
             <SelectInput
@@ -943,21 +885,15 @@ export function ActionConfig({ node, onUpdate, entities }: NodeConfigProps) {
       {/* -- Create Shared Link Config ----------------------------------------- */}
       {stepType === 'create_shared_link' && (
         <>
-          <div className="mb-3">
-            <FieldLabel htmlFor="sl-block">Target Block</FieldLabel>
-            {(entities?.blocks ?? []).length > 0 ? (
-              <EntitySelect
-                id="sl-block"
-                value={(config.link_block_id as string) ?? ''}
-                onChange={(v) => updateConfig('link_block_id', v)}
-                options={(entities?.blocks ?? []).map((b) => ({ value: b.id, label: `${b.name} (${b.type})` }))}
-                placeholder="Defaults to trigger block"
-                allowFreeText
-              />
-            ) : (
-              <TextInput id="sl-block" value={(config.link_block_id as string) ?? ''} onChange={(v) => updateConfig('link_block_id', v || undefined)} placeholder="Block ID (defaults to source)" />
-            )}
-          </div>
+          <TemplateRecordPicker
+            id="sl-block"
+            value={(config.link_block_id as string) ?? '{{context.source_block_id}}'}
+            onChange={(v) => updateConfig('link_block_id', v)}
+            label="Target Block"
+            hint="The record to create a shared link for"
+            previousSteps={previousSteps}
+            defaultToTriggering
+          />
           <div className="mb-3">
             <FieldLabel htmlFor="sl-type">Link Type</FieldLabel>
             <SelectInput
@@ -1051,21 +987,15 @@ export function ActionConfig({ node, onUpdate, entities }: NodeConfigProps) {
               Select a portal configuration to use as a template. Settings will be cloned for the client.
             </p>
           </div>
-          <div className="mb-3">
-            <FieldLabel htmlFor="pp-client">Client Record</FieldLabel>
-            {(entities?.blocks ?? []).length > 0 ? (
-              <EntitySelect
-                id="pp-client"
-                value={(config.link_block_id as string) ?? ''}
-                onChange={(v) => updateConfig('link_block_id', v)}
-                options={(entities?.blocks ?? []).map((b) => ({ value: b.id, label: `${b.name} (${b.type})` }))}
-                placeholder="Defaults to triggering record"
-                allowFreeText
-              />
-            ) : (
-              <TextInput id="pp-client" value={(config.link_block_id as string) ?? ''} onChange={(v) => updateConfig('link_block_id', v || undefined)} placeholder="Block ID (defaults to triggering record)" />
-            )}
-          </div>
+          <TemplateRecordPicker
+            id="pp-client"
+            value={(config.link_block_id as string) ?? '{{context.source_block_id}}'}
+            onChange={(v) => updateConfig('link_block_id', v)}
+            label="Client Record"
+            hint="The client to provision the portal for"
+            previousSteps={previousSteps}
+            defaultToTriggering
+          />
           <div className="mb-3">
             <FieldLabel htmlFor="pp-name">Portal Name</FieldLabel>
             <VariablePickerInput
@@ -1108,20 +1038,15 @@ export function ActionConfig({ node, onUpdate, entities }: NodeConfigProps) {
             saveResultTo={((config.ai_save_result_to as string) ?? 'source_record') as SaveResultDestination}
             onSaveResultToChange={(v) => updateConfig('ai_save_result_to', v)}
           />
-          <div className="mb-3 mt-3">
-            <FieldLabel htmlFor="ai-block">Context Block</FieldLabel>
-            {(entities?.blocks ?? []).length > 0 ? (
-              <EntitySelect
-                id="ai-block"
-                value={(config.ai_context_block_id as string) ?? ''}
-                onChange={(v) => updateConfig('ai_context_block_id', v || undefined)}
-                options={(entities?.blocks ?? []).map((b) => ({ value: b.id, label: `${b.name} (${b.type})` }))}
-                placeholder="Defaults to trigger block"
-                allowFreeText
-              />
-            ) : (
-              <TextInput id="ai-block" value={(config.ai_context_block_id as string) ?? ''} onChange={(v) => updateConfig('ai_context_block_id', v || undefined)} placeholder="Block ID (defaults to source)" />
-            )}
+          <div className="mt-3">
+            <TemplateRecordPicker
+              id="ai-block"
+              value={(config.ai_context_block_id as string) ?? '{{context.source_block_id}}'}
+              onChange={(v) => updateConfig('ai_context_block_id', v)}
+              label="Analyze which record?"
+              previousSteps={previousSteps}
+              defaultToTriggering
+            />
           </div>
           <div className="mb-3">
             <FieldLabel htmlFor="ai-tokens">Max Tokens</FieldLabel>
@@ -1144,20 +1069,15 @@ export function ActionConfig({ node, onUpdate, entities }: NodeConfigProps) {
             saveResultTo={((config.ai_save_result_to as string) ?? 'source_record') as SaveResultDestination}
             onSaveResultToChange={(v) => updateConfig('ai_save_result_to', v)}
           />
-          <div className="mb-3 mt-3">
-            <FieldLabel htmlFor="ai-cls-block">Context Block</FieldLabel>
-            {(entities?.blocks ?? []).length > 0 ? (
-              <EntitySelect
-                id="ai-cls-block"
-                value={(config.ai_context_block_id as string) ?? ''}
-                onChange={(v) => updateConfig('ai_context_block_id', v || undefined)}
-                options={(entities?.blocks ?? []).map((b) => ({ value: b.id, label: `${b.name} (${b.type})` }))}
-                placeholder="Defaults to trigger block"
-                allowFreeText
-              />
-            ) : (
-              <TextInput id="ai-cls-block" value={(config.ai_context_block_id as string) ?? ''} onChange={(v) => updateConfig('ai_context_block_id', v || undefined)} placeholder="Block ID (defaults to source)" />
-            )}
+          <div className="mt-3">
+            <TemplateRecordPicker
+              id="ai-cls-block"
+              value={(config.ai_context_block_id as string) ?? '{{context.source_block_id}}'}
+              onChange={(v) => updateConfig('ai_context_block_id', v)}
+              label="Classify which record?"
+              previousSteps={previousSteps}
+              defaultToTriggering
+            />
           </div>
         </>
       )}
@@ -1174,20 +1094,15 @@ export function ActionConfig({ node, onUpdate, entities }: NodeConfigProps) {
             saveResultTo={((config.ai_save_result_to as string) ?? 'source_record') as SaveResultDestination}
             onSaveResultToChange={(v) => updateConfig('ai_save_result_to', v)}
           />
-          <div className="mb-3 mt-3">
-            <FieldLabel htmlFor="ai-sum-block">Context Block</FieldLabel>
-            {(entities?.blocks ?? []).length > 0 ? (
-              <EntitySelect
-                id="ai-sum-block"
-                value={(config.ai_context_block_id as string) ?? ''}
-                onChange={(v) => updateConfig('ai_context_block_id', v || undefined)}
-                options={(entities?.blocks ?? []).map((b) => ({ value: b.id, label: `${b.name} (${b.type})` }))}
-                placeholder="Defaults to trigger block"
-                allowFreeText
-              />
-            ) : (
-              <TextInput id="ai-sum-block" value={(config.ai_context_block_id as string) ?? ''} onChange={(v) => updateConfig('ai_context_block_id', v || undefined)} placeholder="Block ID (defaults to source)" />
-            )}
+          <div className="mt-3">
+            <TemplateRecordPicker
+              id="ai-sum-block"
+              value={(config.ai_context_block_id as string) ?? '{{context.source_block_id}}'}
+              onChange={(v) => updateConfig('ai_context_block_id', v)}
+              label="Summarize which record?"
+              previousSteps={previousSteps}
+              defaultToTriggering
+            />
           </div>
           <div className="flex items-center gap-2 mb-3">
             <input
@@ -1222,20 +1137,15 @@ export function ActionConfig({ node, onUpdate, entities }: NodeConfigProps) {
             saveResultTo={((config.ai_save_result_to as string) ?? 'source_record') as SaveResultDestination}
             onSaveResultToChange={(v) => updateConfig('ai_save_result_to', v)}
           />
-          <div className="mb-3 mt-3">
-            <FieldLabel htmlFor="ai-risk-block">Context Block</FieldLabel>
-            {(entities?.blocks ?? []).length > 0 ? (
-              <EntitySelect
-                id="ai-risk-block"
-                value={(config.ai_context_block_id as string) ?? ''}
-                onChange={(v) => updateConfig('ai_context_block_id', v || undefined)}
-                options={(entities?.blocks ?? []).map((b) => ({ value: b.id, label: `${b.name} (${b.type})` }))}
-                placeholder="Defaults to trigger block"
-                allowFreeText
-              />
-            ) : (
-              <TextInput id="ai-risk-block" value={(config.ai_context_block_id as string) ?? ''} onChange={(v) => updateConfig('ai_context_block_id', v || undefined)} placeholder="Block ID (defaults to source)" />
-            )}
+          <div className="mt-3">
+            <TemplateRecordPicker
+              id="ai-risk-block"
+              value={(config.ai_context_block_id as string) ?? '{{context.source_block_id}}'}
+              onChange={(v) => updateConfig('ai_context_block_id', v)}
+              label="Assess risk for which record?"
+              previousSteps={previousSteps}
+              defaultToTriggering
+            />
           </div>
         </>
       )}
@@ -1267,6 +1177,21 @@ export function ActionConfig({ node, onUpdate, entities }: NodeConfigProps) {
               />
             )}
           </div>
+          {/* Pass which record to the child workflow */}
+          <div className="mb-3">
+            <TemplateRecordPicker
+              id="sw-pass-record"
+              value={(config.pass_block_id as string) ?? '{{context.source_block_id}}'}
+              onChange={(v) => updateConfig('pass_block_id', v)}
+              label="Pass which record?"
+              previousSteps={previousSteps}
+              defaultToTriggering
+            />
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              The record the child workflow will run against
+            </p>
+          </div>
+
           {/* Mini preview of selected template steps */}
           {(() => {
             const selectedTemplate = (entities?.workflowTemplates ?? []).find(
