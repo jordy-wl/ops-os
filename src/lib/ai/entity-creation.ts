@@ -14,6 +14,13 @@ export type BlockTypeSchema = {
   field_schema: Record<string, unknown>
 }
 
+// Internal DB row shape — matches actual column names in block_type_definitions
+type BlockTypeRow = {
+  type_name: string
+  display_name: string
+  field_schema: Record<string, unknown>
+}
+
 /**
  * Fetch all block type definitions for an org to provide to AI context.
  * Returns type name, label, and field schema for each block type.
@@ -23,18 +30,18 @@ export async function getBlockTypeSchemas(orgId: string): Promise<BlockTypeSchem
 
   const { data, error } = await supabase
     .from('block_type_definitions')
-    .select('type, label, field_schema')
+    .select('type_name, display_name, field_schema')
     .eq('org_id', orgId)
-    .order('type')
+    .order('type_name')
 
   if (error) {
     logger.error('entity-creation', 'fetch_schemas.failed', { error_code: error.code })
     return []
   }
 
-  return (data ?? []).map((d) => ({
-    type: d.type,
-    label: d.label,
+  return (data ?? []).map((d: BlockTypeRow) => ({
+    type: d.type_name,
+    label: d.display_name,
     field_schema: (d.field_schema as Record<string, unknown>) ?? {},
   }))
 }

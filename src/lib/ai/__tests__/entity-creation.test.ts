@@ -203,8 +203,8 @@ describe('getBlockTypeSchemas', () => {
 
   it('returns mapped schemas on success', async () => {
     const rawRows = [
-      { type: 'client', label: 'Client', field_schema: { properties: { name: { type: 'string' } } } },
-      { type: 'deal', label: 'Deal', field_schema: { properties: { value: { type: 'number' } } } },
+      { type_name: 'client', display_name: 'Client', field_schema: { properties: { name: { type: 'string' } } } },
+      { type_name: 'deal', display_name: 'Deal', field_schema: { properties: { value: { type: 'number' } } } },
     ]
     const { eqFn } = setupChain({ data: rawRows, error: null })
 
@@ -245,7 +245,7 @@ describe('getBlockTypeSchemas', () => {
 
   it('defaults field_schema to empty object when null in DB row', async () => {
     setupChain({
-      data: [{ type: 'note', label: 'Note', field_schema: null }],
+      data: [{ type_name: 'note', display_name: 'Note', field_schema: null }],
       error: null,
     })
 

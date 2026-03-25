@@ -24,7 +24,7 @@ interface Block {
 
 interface TypeDefinition {
   type_name: string
-  label: string | null
+  display_name: string | null
   icon: string | null
   color: string | null
   field_schema: Record<string, unknown> | null
@@ -57,7 +57,7 @@ export function BlockBrowser({ blocks, typeDefinitions }: BlockBrowserProps) {
   // Seed from all type definitions first (shows types with 0 blocks)
   for (const def of typeDefinitions) {
     typeMap.set(def.type_name, {
-      label: def.label ?? def.type_name.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+      label: def.display_name ?? def.type_name.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
       color: def.color ?? null,
       count: 0,
     })

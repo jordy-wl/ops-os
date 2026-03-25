@@ -550,7 +550,7 @@ async function executeCreateBlock(
       .from('block_type_definitions')
       .select('field_schema')
       .eq('org_id', orgId)
-      .eq('type', type)
+      .eq('type_name', type)
       .single()
 
     if (typeDef?.field_schema) {
@@ -781,9 +781,9 @@ async function executeSuggestFields(
   // Fetch block type definition
   const { data: typeDef } = await supabase
     .from('block_type_definitions')
-    .select('type, label, field_schema')
+    .select('type_name, display_name, field_schema')
     .eq('org_id', orgId)
-    .eq('type', blockType)
+    .eq('type_name', blockType)
     .single()
 
   if (!typeDef) {
@@ -797,14 +797,14 @@ async function executeSuggestFields(
   // Fetch all block types for relationship context
   const { data: allTypes } = await supabase
     .from('block_type_definitions')
-    .select('type, label')
+    .select('type_name, display_name')
     .eq('org_id', orgId)
 
   const ctx: SuggestionContext = {
     description,
     blockType: {
-      name: typeDef.label,
-      slug: typeDef.type,
+      name: typeDef.display_name,
+      slug: typeDef.type_name,
       existingFields: Object.entries(properties).map(([name, prop]) => ({
         name,
         type: (prop['x-field-type'] as string) ?? (prop.type as string) ?? 'text',
@@ -813,8 +813,8 @@ async function executeSuggestFields(
       existingGroups: groups.map((g) => ({ id: g.id, label: g.label })),
     },
     availableBlockTypes: (allTypes ?? [])
-      .filter((t) => t.type !== blockType)
-      .map((t) => ({ name: t.label, slug: t.type })),
+      .filter((t) => t.type_name !== blockType)
+      .map((t) => ({ name: t.display_name, slug: t.type_name })),
   }
 
   const result = await suggestFields(ctx)
@@ -835,7 +835,7 @@ async function executeConfigureBlockType(
     .from('block_type_definitions')
     .select('id, field_schema')
     .eq('org_id', orgId)
-    .eq('type', blockType)
+    .eq('type_name', blockType)
     .single()
 
   if (fetchErr || !typeDef) {
@@ -950,7 +950,7 @@ async function executeCreateBlockType(
     .from('block_type_definitions')
     .select('id')
     .eq('org_id', orgId)
-    .eq('type', typeSlug)
+    .eq('type_name', typeSlug)
     .single()
 
   if (existing) {
@@ -1000,14 +1000,14 @@ async function executeCreateBlockType(
     .from('block_type_definitions')
     .insert({
       org_id: orgId,
-      type: typeSlug,
-      label,
+      type_name: typeSlug,
+      display_name: label,
       description,
       icon,
       field_schema: fieldSchema,
       is_system: false,
     })
-    .select('id, type, label')
+    .select('id, type_name, display_name')
     .single()
 
   if (error) return { success: false, error: error.message }
@@ -1016,8 +1016,8 @@ async function executeCreateBlockType(
     success: true,
     data: {
       id: data.id,
-      type: data.type,
-      label: data.label,
+      type: data.type_name,
+      label: data.display_name,
       field_count: Object.keys(properties).length,
       group_count: groups.length,
     },
@@ -1044,7 +1044,7 @@ async function executeCreateRelationship(
     .from('block_type_definitions')
     .select('id, field_schema')
     .eq('org_id', orgId)
-    .eq('type', sourceType)
+    .eq('type_name', sourceType)
     .single()
 
   if (srcErr || !sourceDef) {
@@ -1055,7 +1055,7 @@ async function executeCreateRelationship(
     .from('block_type_definitions')
     .select('id')
     .eq('org_id', orgId)
-    .eq('type', targetType)
+    .eq('type_name', targetType)
     .single()
 
   if (!targetDef) {
