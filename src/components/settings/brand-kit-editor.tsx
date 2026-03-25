@@ -51,7 +51,6 @@ const FONT_OPTIONS = [
 ]
 
 export function BrandKitEditor({
-  orgId,
   existingBlock,
 }: {
   orgId: string
@@ -122,7 +121,7 @@ export function BrandKitEditor({
     } finally {
       setSaving(false)
     }
-  }, [brand, existingBlock, orgId])
+  }, [brand, existingBlock])
 
   return (
     <div>

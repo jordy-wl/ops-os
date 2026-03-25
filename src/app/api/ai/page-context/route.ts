@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { withAuth } from '@/lib/auth/withAuth'
 import { createServerClient } from '@/lib/supabase/server'
-import { apiError, validationError } from '@/lib/api/responses'
+import { validationError } from '@/lib/api/responses'
 
 const QuerySchema = z.object({
   path: z.string().min(1),

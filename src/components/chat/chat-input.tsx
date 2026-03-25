@@ -69,7 +69,7 @@ function blockTypeLabel(type: string): string {
 /**
  * Maps a block type key to a Tailwind badge color class.
  */
-function blockTypeBadgeClass(_type: string): string {
+function blockTypeBadgeClass(): string {
   return 'bg-muted text-foreground'
 }
 
@@ -377,7 +377,7 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
                   <span
                     className={cn(
                       'ml-auto shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase leading-none',
-                      blockTypeBadgeClass(block.type)
+                      blockTypeBadgeClass()
                     )}
                   >
                     {blockTypeLabel(block.type)}
@@ -405,7 +405,6 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
           disabled={disabled}
           rows={1}
           aria-label="Chat message"
-          aria-expanded={showDropdown}
           aria-haspopup="listbox"
           className={cn(
             'flex-1 resize-none bg-transparent text-sm text-foreground placeholder:text-muted-foreground',

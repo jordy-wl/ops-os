@@ -4,7 +4,6 @@ import {
   buildHealthRecommendation,
   buildOverdueRecommendation,
   DEFAULT_THRESHOLDS,
-  type GeneratedTask,
   type TaskGenerationThresholds,
 } from '../auto-task-generator'
 import type {

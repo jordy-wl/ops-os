@@ -14,7 +14,6 @@ import {
   ChevronDown,
   ChevronRight,
   GitBranch,
-  X,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -664,6 +663,7 @@ export function PortalBuilder({ formTemplates, clients, workflowTemplates }: Por
             <div className="rounded-lg border border-border overflow-hidden">
               <div className="px-4 py-3 flex items-center gap-3" style={{ backgroundColor: primaryColor }}>
                 {logoUrl ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
                   <img
                     src={logoUrl}
                     alt="Logo"

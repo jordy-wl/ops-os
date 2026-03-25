@@ -79,7 +79,7 @@ export const GET = withAuth(async (req: NextRequest, ctx) => {
 
   const totalRuns = templateJobs.length
   const failedRuns = templateJobs.filter((j) => j.status === 'failed').length
-  const completedRuns = templateJobs.filter((j) => j.status === 'done').length
+  // completedRuns intentionally removed — not used in current analysis
 
   // 1. High failure rate
   if (totalRuns >= 5 && failedRuns / totalRuns > 0.3) {
@@ -99,7 +99,6 @@ export const GET = withAuth(async (req: NextRequest, ctx) => {
     const p = ev.payload as Record<string, unknown>
     const stepName = p.step_name as string
     const durationMs = (p.duration_ms as number) ?? 0
-    const success = ev.type === 'workflow.step.completed'
     const failure = ev.type === 'workflow.step.failed'
 
     const entry = stepExecutions.get(stepName) ?? { count: 0, failures: 0, totalMs: 0 }

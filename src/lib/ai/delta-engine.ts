@@ -79,7 +79,7 @@ export function calculateDelta(
   )
 
   // Gap analysis
-  const gapAnalysis = analyzeGaps(steps, meta, resultMap, timelineDeltas, now)
+  const gapAnalysis = analyzeGaps(steps, meta, resultMap, timelineDeltas)
 
   // Health score
   const healthScore = computeHealthScore(timelineDeltas, gapAnalysis)
@@ -248,8 +248,7 @@ function analyzeGaps(
   steps: DeltaTemplateStep[],
   meta: DeltaInstanceMeta,
   resultMap: Map<string, ResultEntry>,
-  timelineDeltas: StepDelta[],
-  now: string
+  timelineDeltas: StepDelta[]
 ): GapAnalysis {
   const overdueSteps: OverdueStep[] = []
   const skippedSteps: SkippedStep[] = []

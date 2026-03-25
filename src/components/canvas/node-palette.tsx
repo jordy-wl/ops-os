@@ -36,9 +36,6 @@ import {
   FileBarChart,
   ShieldAlert,
   Upload,
-  Send,
-  Database,
-  Receipt,
   Repeat,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'

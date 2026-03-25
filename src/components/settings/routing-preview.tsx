@@ -12,7 +12,6 @@ import type {
   PolicyRoutingConfig,
   RiskLevel,
   RiskRoutingEntry,
-  RoutingMode,
 } from '@/lib/routing/types'
 
 interface RoutingPreviewProps {

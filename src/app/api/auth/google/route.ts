@@ -10,7 +10,7 @@ import { logger } from '@/lib/logger'
  * Initiates Google OAuth flow. Redirects user to Google consent screen.
  * State parameter encodes orgId for the callback.
  */
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   try {
     const { userId, orgId: clerkOrgId } = await auth()
     if (!userId) {

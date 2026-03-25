@@ -13,8 +13,6 @@ import {
 } from '@/lib/block-types/field-types'
 import { EdgeTypeSelect } from '@/components/settings/edge-type-select'
 import type {
-  SuggestedField,
-  SuggestedGroup,
   FieldSuggestionResult,
 } from '@/lib/ai/field-suggestion'
 import { Button } from '@/components/ui/button'

@@ -14,7 +14,7 @@ vi.mock('fs', () => ({
   readFileSync: vi.fn().mockReturnValue('Evaluate confidence. Return JSON.'),
 }))
 
-import { evaluateConfidence, type TaskContext, type ConfidenceResult } from '../confidence-scoring'
+import { evaluateConfidence, type TaskContext } from '../confidence-scoring'
 
 // ─── Helpers ────────────────────────────────────────────────────────────────────
 

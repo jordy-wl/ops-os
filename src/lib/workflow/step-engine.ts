@@ -1,5 +1,4 @@
 import { createServerClient } from '@/lib/supabase/server'
-import { logger } from '@/lib/logger'
 import type { WorkflowStep } from './template-schema'
 import { resolveHandler } from './step-handlers/registry'
 

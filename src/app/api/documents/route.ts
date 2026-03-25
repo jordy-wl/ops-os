@@ -38,7 +38,7 @@ export const GET = withAuth(async (req: NextRequest, ctx) => {
   try {
     const documents = await listDocuments(supabase, ctx.orgId, blockId, limit)
     return ok(documents)
-  } catch (err) {
+  } catch {
     logger.error('api-documents', 'list_failed', { org_id: ctx.orgId, block_id: blockId })
     return apiError('Failed to list documents', 'db/query-failed', 500)
   }
@@ -79,7 +79,7 @@ export const POST = withAuth(requirePermission(['manage_blocks'], async (req: Ne
     })
 
     return ok(document, 201)
-  } catch (err) {
+  } catch {
     logger.error('api-documents', 'store_failed', { org_id: ctx.orgId })
     return apiError('Failed to store document', 'db/insert-failed', 500)
   }

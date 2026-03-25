@@ -36,7 +36,7 @@ export const GET = withAuth(async (req: NextRequest, ctx, params) => {
     }
 
     return ok(document)
-  } catch (err) {
+  } catch {
     logger.error('api-documents', 'get_failed', {
       org_id: ctx.orgId,
       document_id: documentId,

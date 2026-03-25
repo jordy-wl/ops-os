@@ -8,7 +8,7 @@
  */
 
 import type { RoutingMode, RiskLevel, RiskRoutingEntry } from '@/lib/routing/types'
-import { RISK_LEVELS, ROUTING_MODES } from '@/lib/routing/types'
+import { RISK_LEVELS } from '@/lib/routing/types'
 
 interface RiskMatrixProps {
   value: Record<string, RiskRoutingEntry>

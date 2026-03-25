@@ -172,6 +172,7 @@ function VariablePickerDropdown({ groups, onSelect, onClose }: DropdownProps) {
                 key={variable.path}
                 type="button"
                 role="option"
+                aria-selected={false}
                 aria-label={`Insert variable ${variable.label} (${variable.path})`}
                 className="w-full px-3 py-1.5 text-xs cursor-pointer hover:bg-accent flex justify-between items-center text-left"
                 onClick={() => handleSelect(variable)}

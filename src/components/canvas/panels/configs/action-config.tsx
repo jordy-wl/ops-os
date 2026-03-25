@@ -82,7 +82,7 @@ const STATUS_OPTIONS = [
   { value: 'archived', label: 'Archived' },
 ]
 
-function UpdateBlockConfig({ node, onUpdate, entities, previousSteps }: NodeConfigProps) {
+function UpdateBlockConfig({ node, onUpdate, previousSteps }: NodeConfigProps) {
   const { config } = makeConfigUpdater(node, onUpdate)
   const fields = (config.fields ?? {}) as Record<string, string>
   const fieldEntries = Object.entries(fields)
@@ -90,9 +90,6 @@ function UpdateBlockConfig({ node, onUpdate, entities, previousSteps }: NodeConf
   const data = node.data as Record<string, unknown>
   const label = (data.label as string) ?? ''
   const isChangeStatus = label.toLowerCase().includes('change status') || label.toLowerCase().includes('status')
-
-  // Determine record target mode
-  const recordTarget = (config.record_target as string) ?? 'triggering_record'
 
   function updateConfig(field: string, value: unknown) {
     onUpdate(node.id, { ...data, config: { ...config, [field]: value } })

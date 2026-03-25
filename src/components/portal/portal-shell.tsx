@@ -50,6 +50,7 @@ export function PortalShell({ children }: { children: React.ReactNode }) {
       <header className="border-b border-[var(--portal-card-border)] bg-[var(--portal-card-bg)] sticky top-0 z-10 shadow-[var(--portal-shadow-sm)] transition-shadow duration-300">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex items-center gap-3">
           {logoUrl && (
+            /* eslint-disable-next-line @next/next/no-img-element */
             <img
               src={logoUrl}
               alt={`${orgName} logo`}

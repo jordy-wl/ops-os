@@ -15,7 +15,6 @@ import {
 } from 'lucide-react'
 import {
   type FormQuestion,
-  type BranchingConfig,
   evaluateBranching,
   LIKERT_LABELS_DEFAULT,
 } from '@/lib/form-types'
@@ -111,7 +110,7 @@ type RequestStep = 'select-type' | 'fill-form' | 'legacy-form' | 'success'
 // --- Main component ---
 
 export default function PortalRequestsPage() {
-  const { token, portalConfig } = usePortal()
+  const { token } = usePortal()
 
   // Request types from API
   const [requestTypes, setRequestTypes] = useState<RequestType[]>([])

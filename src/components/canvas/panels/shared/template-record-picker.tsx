@@ -115,7 +115,6 @@ export function TemplateRecordPicker({
   appliesToType,
   previousSteps = [],
   edgeTypes,
-  defaultToTriggering = true,
 }: TemplateRecordPickerProps) {
   const mode = detectMode(value)
   const resolvedEdgeTypes = edgeTypes ?? DEFAULT_EDGE_TYPES

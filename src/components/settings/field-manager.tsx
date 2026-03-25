@@ -228,7 +228,7 @@ export function FieldManager({
         const updatedProperties: Record<string, Record<string, unknown>> = {}
         for (const [name, prop] of Object.entries(fieldSchema.properties)) {
           if ((prop['x-field-group'] as string) === groupId) {
-            const { 'x-field-group': _, ...rest } = prop
+            const { 'x-field-group': _xFieldGroup, ...rest } = prop
             updatedProperties[name] = rest
           } else {
             updatedProperties[name] = prop

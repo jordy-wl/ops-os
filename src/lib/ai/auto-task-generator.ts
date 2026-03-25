@@ -7,7 +7,7 @@
  * and routing through the routing engine.
  */
 
-import type { DeltaResult, HealthScore, OverdueStep } from './delta-types'
+import type { DeltaResult, OverdueStep } from './delta-types'
 import { logger } from '../logger'
 
 // ─── Constants (default thresholds) ──────────────────────────────────────────

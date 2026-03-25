@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { Globe } from 'lucide-react'
 import type { PortalConfig } from '../portal-detail-view'
 
@@ -10,10 +10,10 @@ interface BrandingTabProps {
 }
 
 export function BrandingTab({ config, onUpdate }: BrandingTabProps) {
-  const overrides = (config.branding_overrides ?? {}) as Record<
-    string,
-    unknown
-  >
+  const overrides = useMemo(
+    () => ((config.branding_overrides ?? {}) as Record<string, unknown>),
+    [config.branding_overrides]
+  )
   const [displayName, setDisplayName] = useState(
     (overrides.display_name as string) ?? ''
   )
@@ -124,6 +124,7 @@ export function BrandingTab({ config, onUpdate }: BrandingTabProps) {
             style={{ backgroundColor: primaryColor }}
           >
             {logoUrl ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
               <img
                 src={logoUrl}
                 alt="Logo"
