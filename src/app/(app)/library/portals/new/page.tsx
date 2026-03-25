@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import { createServerClient } from '@/lib/supabase/server'
 import { resolveOrgId } from '@/lib/auth/resolve-org'
 import { PageHeader } from '@/components/shell/page-header'
-import { PortalBuilder } from '@/components/library/portal-builder'
+import { PortalWizard } from '@/components/portal-wizard'
 
 export const metadata = { title: 'Create Portal — Ops OS' }
 
@@ -16,42 +16,50 @@ export default async function NewPortalPage() {
 
   const supabase = createServerClient()
 
-  // Fetch form templates, workflow templates, and client blocks in parallel
-  const [formTemplatesResult, workflowTemplatesResult, clientsResult] = await Promise.all([
-    supabase
-      .from('blocks')
-      .select('id, name, metadata, state')
-      .eq('org_id', internalOrgId)
-      .eq('type', 'form_template')
-      .order('name'),
-    supabase
-      .from('blocks')
-      .select('id, name, metadata')
-      .eq('org_id', internalOrgId)
-      .eq('type', 'workflow_template')
-      .order('name')
-      .limit(100),
-    supabase
-      .from('blocks')
-      .select('id, name')
-      .eq('org_id', internalOrgId)
-      .eq('type', 'client')
-      .eq('state', 'active')
-      .order('name')
-      .limit(200),
-  ])
+  const [formTemplatesResult, workflowTemplatesResult, clientsResult, documentTemplatesResult] =
+    await Promise.all([
+      supabase
+        .from('blocks')
+        .select('id, name, metadata, state')
+        .eq('org_id', internalOrgId)
+        .eq('type', 'form_template')
+        .order('name'),
+      supabase
+        .from('blocks')
+        .select('id, name, metadata')
+        .eq('org_id', internalOrgId)
+        .eq('type', 'workflow_template')
+        .order('name')
+        .limit(100),
+      supabase
+        .from('blocks')
+        .select('id, name')
+        .eq('org_id', internalOrgId)
+        .eq('type', 'client')
+        .eq('state', 'active')
+        .order('name')
+        .limit(200),
+      supabase
+        .from('blocks')
+        .select('id, name, metadata')
+        .eq('org_id', internalOrgId)
+        .eq('type', 'document_template')
+        .order('name')
+        .limit(100),
+    ])
 
   const formTemplates = formTemplatesResult.data
   const workflowTemplates = workflowTemplatesResult.data
   const clients = clientsResult.data
+  const documentTemplates = documentTemplatesResult.data
 
   return (
     <div className="p-6 lg:p-8 max-w-4xl mx-auto">
       <PageHeader
         title="Create Portal"
-        subtitle="Configure a client-facing portal, then assign it to a client or save as a reusable template."
+        subtitle="Set up a client portal in 5 steps — configure what clients see, which forms to include, and how requests work."
       />
-      <PortalBuilder
+      <PortalWizard
         formTemplates={(formTemplates ?? []).map((f) => {
           const meta = (f.metadata ?? {}) as Record<string, unknown>
           const questions = Array.isArray(meta.questions) ? meta.questions : []
@@ -67,6 +75,11 @@ export default async function NewPortalPage() {
           id: w.id,
           name: w.name,
           description: ((w.metadata as Record<string, unknown>)?.description as string) ?? '',
+        }))}
+        documentTemplates={(documentTemplates ?? []).map((d) => ({
+          id: d.id,
+          name: d.name,
+          category: ((d.metadata as Record<string, unknown>)?.category as string) ?? '',
         }))}
       />
     </div>
