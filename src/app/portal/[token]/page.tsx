@@ -10,6 +10,7 @@ interface PortalBlock {
   type: string
   status: string
   updated_at: string
+  fields?: Record<string, unknown>
 }
 
 interface PortalEvent {
@@ -21,16 +22,16 @@ interface PortalEvent {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  active: 'bg-green-100 text-green-700',
-  completed: 'bg-green-100 text-green-700',
-  in_progress: 'bg-amber-100 text-amber-700',
-  pending: 'bg-amber-100 text-amber-700',
-  overdue: 'bg-red-100 text-red-700',
-  archived: 'bg-gray-100 text-gray-500',
+  active: 'bg-emerald-50 text-emerald-700',
+  completed: 'bg-emerald-50 text-emerald-700',
+  in_progress: 'bg-amber-50 text-amber-700',
+  pending: 'bg-amber-50 text-amber-700',
+  overdue: 'bg-red-50 text-red-700',
+  archived: 'bg-slate-100 text-slate-600',
 }
 
 function getStatusColor(status: string): string {
-  return STATUS_COLORS[status] || 'bg-gray-100 text-gray-600'
+  return STATUS_COLORS[status] || 'bg-slate-100 text-slate-600'
 }
 
 function formatDate(dateStr: string): string {
@@ -57,6 +58,40 @@ function formatTypeName(type: string): string {
   return type
     .replace(/_/g, ' ')
     .replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
+/** Format a field value for display, truncating long strings */
+function formatFieldValue(value: unknown): string {
+  if (value === null || value === undefined) return '-'
+  if (typeof value === 'boolean') return value ? 'Yes' : 'No'
+  if (typeof value === 'number') return String(value)
+  if (Array.isArray(value)) return value.length > 0 ? value.join(', ') : '-'
+  if (typeof value === 'object') return JSON.stringify(value)
+  const str = String(value)
+  return str.length > 40 ? str.slice(0, 37) + '...' : str
+}
+
+/** Render first N visible fields as a compact key-value summary */
+function FieldSummary({ fields, max = 3 }: { fields?: Record<string, unknown>; max?: number }) {
+  if (!fields || Object.keys(fields).length === 0) return null
+
+  const entries = Object.entries(fields)
+    .filter(([, v]) => v !== null && v !== undefined && v !== '')
+    .slice(0, max)
+
+  if (entries.length === 0) return null
+
+  return (
+    <p className="text-xs text-[var(--portal-text-secondary)] mt-1 truncate">
+      {entries.map(([key, val], i) => (
+        <span key={key}>
+          {i > 0 && <span className="mx-1">·</span>}
+          <span className="text-[var(--portal-text-muted)]">{formatTypeName(key)}:</span>{' '}
+          {formatFieldValue(val)}
+        </span>
+      ))}
+    </p>
+  )
 }
 
 export default function PortalDashboardPage() {
@@ -116,14 +151,14 @@ export default function PortalDashboardPage() {
   if (error) {
     return (
       <div className="text-center py-12">
-        <AlertCircle className="w-10 h-10 mx-auto mb-3 text-red-400" />
-        <p className="text-sm text-gray-600 mb-4">{error}</p>
+        <AlertCircle className="w-10 h-10 mx-auto mb-3 text-[var(--portal-error)]" />
+        <p className="text-sm text-[var(--portal-text-secondary)] mb-4">{error}</p>
         <button
           type="button"
           onClick={() => window.location.reload()}
-          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md
+          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-[var(--portal-radius-sm)]
             bg-[var(--portal-primary)] text-[var(--portal-primary-foreground)]
-            hover:opacity-90 transition-opacity min-h-[44px]"
+            hover:opacity-90 transition-all duration-[var(--portal-transition)] active:scale-[0.98] min-h-[44px]"
         >
           <RefreshCw className="w-4 h-4" />
           Retry
@@ -135,21 +170,21 @@ export default function PortalDashboardPage() {
   return (
     <div>
       {/* Welcome header */}
-      <div className="mb-6">
-        <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">
+      <div className="mb-8">
+        <h1 className="text-xl sm:text-2xl font-semibold text-[var(--portal-text-primary)]">
           Welcome, {clientBlock.name}
         </h1>
-        <p className="text-sm text-gray-500 mt-1">
+        <p className="text-sm text-[var(--portal-text-secondary)] mt-1">
           {portalConfig.name} Portal
         </p>
       </div>
 
       {/* Block cards */}
       {blocks.length === 0 ? (
-        <div className="rounded-lg border border-gray-200 bg-gray-50 p-8 text-center mb-8">
-          <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-gray-100 flex items-center justify-center">
+        <div className="rounded-[var(--portal-radius)] border border-[var(--portal-card-border)] bg-[var(--portal-card-bg)] p-8 text-center mb-8">
+          <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-[var(--portal-bg)] flex items-center justify-center">
             <svg
-              className="w-6 h-6 text-gray-400"
+              className="w-6 h-6 text-[var(--portal-text-muted)]"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -163,17 +198,19 @@ export default function PortalDashboardPage() {
               />
             </svg>
           </div>
-          <p className="text-sm text-gray-500">No items to display yet.</p>
+          <p className="text-sm text-[var(--portal-text-secondary)]">No items to display yet.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 mb-8">
           {blocks.map((block) => (
             <article
               key={block.id}
-              className="rounded-lg border border-gray-200 bg-white p-4 hover:shadow-sm transition-shadow"
+              className="rounded-[var(--portal-radius)] border border-[var(--portal-card-border)] bg-[var(--portal-card-bg)] p-4
+                hover:shadow-[var(--portal-shadow-md)] hover:border-[var(--portal-card-border-hover)]
+                transition-all duration-[var(--portal-transition)]"
             >
               <div className="flex items-start justify-between gap-2 mb-2">
-                <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+                <span className="text-xs font-medium text-[var(--portal-text-muted)] uppercase tracking-wide">
                   {formatTypeName(block.type)}
                 </span>
                 <span
@@ -182,10 +219,11 @@ export default function PortalDashboardPage() {
                   {formatTypeName(block.status)}
                 </span>
               </div>
-              <h3 className="text-sm font-semibold text-gray-900 truncate mb-2">
+              <h3 className="text-sm font-semibold text-[var(--portal-text-primary)] truncate mb-1">
                 {block.name}
               </h3>
-              <p className="text-xs text-gray-400 flex items-center gap-1">
+              <FieldSummary fields={block.fields} max={3} />
+              <p className="text-xs text-[var(--portal-text-muted)] flex items-center gap-1 mt-2">
                 <Clock className="w-3 h-3" aria-hidden="true" />
                 Updated {formatRelativeTime(block.updated_at)}
               </p>
@@ -199,19 +237,25 @@ export default function PortalDashboardPage() {
         <section aria-labelledby="recent-activity-heading">
           <h2
             id="recent-activity-heading"
-            className="text-base font-semibold text-gray-900 mb-3"
+            className="text-base font-semibold text-[var(--portal-text-primary)] mb-3"
           >
             Recent Activity
           </h2>
-          <div className="rounded-lg border border-gray-200 bg-white divide-y divide-gray-100">
-            {events.map((event) => (
-              <div key={event.id} className="px-4 py-3 flex items-start gap-3">
-                <div className="mt-0.5 w-2 h-2 rounded-full bg-[var(--portal-primary)] flex-shrink-0" />
+          <div className="rounded-[var(--portal-radius)] border border-[var(--portal-card-border)] bg-[var(--portal-card-bg)]">
+            {events.map((event, idx) => (
+              <div key={event.id} className="px-4 py-3 flex items-start gap-3 relative">
+                {/* Timeline connector */}
+                <div className="flex flex-col items-center flex-shrink-0">
+                  <div className="mt-0.5 w-2 h-2 rounded-full bg-[var(--portal-primary)] relative z-[1]" />
+                  {idx < events.length - 1 && (
+                    <div className="w-px flex-1 bg-[var(--portal-card-border)] mt-1 min-h-[20px]" />
+                  )}
+                </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-gray-700">
+                  <p className="text-sm text-[var(--portal-text-primary)]">
                     {event.description || formatTypeName(event.type)}
                   </p>
-                  <p className="text-xs text-gray-400 mt-0.5">
+                  <p className="text-xs text-[var(--portal-text-muted)] mt-0.5">
                     {formatRelativeTime(event.occurred_at)}
                   </p>
                 </div>
@@ -226,36 +270,36 @@ export default function PortalDashboardPage() {
 
 function DashboardSkeleton() {
   return (
-    <div className="animate-pulse">
+    <div>
       {/* Header skeleton */}
-      <div className="mb-6">
-        <div className="h-7 w-48 bg-gray-200 rounded mb-2" />
-        <div className="h-4 w-32 bg-gray-100 rounded" />
+      <div className="mb-8">
+        <div className="h-7 w-48 rounded-[var(--portal-radius-sm)] portal-shimmer mb-2" />
+        <div className="h-4 w-32 rounded-[var(--portal-radius-sm)] portal-shimmer" />
       </div>
 
       {/* Cards skeleton */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 mb-8">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="rounded-lg border border-gray-200 p-4">
+          <div key={i} className="rounded-[var(--portal-radius)] border border-[var(--portal-card-border)] p-4">
             <div className="flex justify-between mb-3">
-              <div className="h-3 w-16 bg-gray-100 rounded" />
-              <div className="h-5 w-14 bg-gray-100 rounded-full" />
+              <div className="h-3 w-16 rounded portal-shimmer" />
+              <div className="h-5 w-14 rounded-full portal-shimmer" />
             </div>
-            <div className="h-4 w-32 bg-gray-200 rounded mb-3" />
-            <div className="h-3 w-24 bg-gray-100 rounded" />
+            <div className="h-4 w-32 rounded portal-shimmer mb-3" />
+            <div className="h-3 w-24 rounded portal-shimmer" />
           </div>
         ))}
       </div>
 
       {/* Activity skeleton */}
-      <div className="h-5 w-28 bg-gray-200 rounded mb-3" />
-      <div className="rounded-lg border border-gray-200 divide-y divide-gray-100">
+      <div className="h-5 w-28 rounded portal-shimmer mb-3" />
+      <div className="rounded-[var(--portal-radius)] border border-[var(--portal-card-border)]">
         {[1, 2, 3].map((i) => (
           <div key={i} className="px-4 py-3 flex items-center gap-3">
-            <div className="w-2 h-2 rounded-full bg-gray-200" />
+            <div className="w-2 h-2 rounded-full portal-shimmer" />
             <div className="flex-1">
-              <div className="h-4 w-48 bg-gray-100 rounded mb-1" />
-              <div className="h-3 w-20 bg-gray-50 rounded" />
+              <div className="h-4 w-48 rounded portal-shimmer mb-1" />
+              <div className="h-3 w-20 rounded portal-shimmer" />
             </div>
           </div>
         ))}

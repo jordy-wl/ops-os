@@ -82,7 +82,7 @@ describe('create_edge handler', () => {
 
     const result = await handler(step, META, 'org-1', supabase as unknown as never)
     expect(result.status).toBe('failed')
-    expect(result.error).toContain('to_block_id')
+    expect(result.error).toContain('self-edge')
   })
 
   it('prevents self-edges', async () => {

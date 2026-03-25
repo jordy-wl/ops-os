@@ -39,17 +39,17 @@ function formatDate(dateStr: string): string {
 }
 
 const FORMAT_STYLES: Record<string, string> = {
-  pdf: 'bg-red-100 text-red-700',
-  docx: 'bg-blue-100 text-blue-700',
-  doc: 'bg-blue-100 text-blue-700',
-  xlsx: 'bg-green-100 text-green-700',
-  xls: 'bg-green-100 text-green-700',
-  csv: 'bg-green-100 text-green-700',
-  pptx: 'bg-orange-100 text-orange-700',
+  pdf: 'bg-red-50 text-red-700',
+  docx: 'bg-blue-50 text-blue-700',
+  doc: 'bg-blue-50 text-blue-700',
+  xlsx: 'bg-emerald-50 text-emerald-700',
+  xls: 'bg-emerald-50 text-emerald-700',
+  csv: 'bg-emerald-50 text-emerald-700',
+  pptx: 'bg-orange-50 text-orange-700',
 }
 
 function getFormatStyle(format: string): string {
-  return FORMAT_STYLES[format.toLowerCase()] || 'bg-gray-100 text-gray-600'
+  return FORMAT_STYLES[format.toLowerCase()] || 'bg-slate-100 text-slate-600'
 }
 
 export default function PortalDocumentsPage() {
@@ -113,14 +113,14 @@ export default function PortalDocumentsPage() {
   if (error) {
     return (
       <div className="text-center py-12">
-        <AlertCircle className="w-10 h-10 mx-auto mb-3 text-red-400" />
-        <p className="text-sm text-gray-600 mb-4">{error}</p>
+        <AlertCircle className="w-10 h-10 mx-auto mb-3 text-[var(--portal-error)]" />
+        <p className="text-sm text-[var(--portal-text-secondary)] mb-4">{error}</p>
         <button
           type="button"
           onClick={() => window.location.reload()}
-          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md
+          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-[var(--portal-radius-sm)]
             bg-[var(--portal-primary)] text-[var(--portal-primary-foreground)]
-            hover:opacity-90 transition-opacity min-h-[44px]"
+            hover:opacity-90 transition-all duration-[var(--portal-transition)] active:scale-[0.98] min-h-[44px]"
         >
           <RefreshCw className="w-4 h-4" />
           Retry
@@ -131,7 +131,7 @@ export default function PortalDocumentsPage() {
 
   return (
     <div>
-      <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-6">
+      <h1 className="text-xl sm:text-2xl font-semibold text-[var(--portal-text-primary)] mb-6">
         Documents & Forms
       </h1>
 
@@ -139,34 +139,36 @@ export default function PortalDocumentsPage() {
       <section aria-labelledby="documents-heading" className="mb-8">
         <h2
           id="documents-heading"
-          className="text-base font-semibold text-gray-900 mb-3 flex items-center gap-2"
+          className="text-base font-semibold text-[var(--portal-text-primary)] mb-3 flex items-center gap-2"
         >
-          <FileText className="w-4 h-4 text-gray-500" aria-hidden="true" />
+          <FileText className="w-4 h-4 text-[var(--portal-text-secondary)]" aria-hidden="true" />
           Documents
         </h2>
 
         {documents.length === 0 ? (
-          <div className="rounded-lg border border-gray-200 bg-gray-50 p-8 text-center">
-            <FileText className="w-10 h-10 mx-auto mb-3 text-gray-300" aria-hidden="true" />
-            <p className="text-sm text-gray-500">No documents available yet.</p>
+          <div className="rounded-[var(--portal-radius)] border border-[var(--portal-card-border)] bg-[var(--portal-card-bg)] p-8 text-center">
+            <FileText className="w-10 h-10 mx-auto mb-3 text-[var(--portal-text-muted)]" aria-hidden="true" />
+            <p className="text-sm text-[var(--portal-text-secondary)]">No documents available yet.</p>
           </div>
         ) : (
           <div className="space-y-3">
             {documents.map((doc) => (
               <article
                 key={doc.id}
-                className="rounded-lg border border-gray-200 bg-white p-4 flex items-center gap-4"
+                className="rounded-[var(--portal-radius)] border border-[var(--portal-card-border)] bg-[var(--portal-card-bg)] p-4 flex items-center gap-4
+                  hover:shadow-[var(--portal-shadow-md)] hover:border-[var(--portal-card-border-hover)]
+                  transition-all duration-[var(--portal-transition)]"
               >
                 <span
-                  className={`inline-flex items-center rounded px-2 py-0.5 text-xs font-semibold uppercase ${getFormatStyle(doc.format)}`}
+                  className={`inline-flex items-center rounded-[var(--portal-radius-sm)] px-2 py-0.5 text-xs font-semibold uppercase ${getFormatStyle(doc.format)}`}
                 >
                   {doc.format}
                 </span>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-medium text-gray-900 truncate">
+                  <h3 className="text-sm font-medium text-[var(--portal-text-primary)] truncate">
                     {doc.title}
                   </h3>
-                  <p className="text-xs text-gray-400 mt-0.5">
+                  <p className="text-xs text-[var(--portal-text-muted)] mt-0.5">
                     {formatDate(doc.created_at)}
                   </p>
                 </div>
@@ -175,8 +177,10 @@ export default function PortalDocumentsPage() {
                     href={doc.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md
-                      border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors min-h-[44px] min-w-[44px] justify-center"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-[var(--portal-radius-sm)]
+                      border border-[var(--portal-card-border)] text-[var(--portal-text-secondary)]
+                      hover:bg-[var(--portal-bg)] hover:border-[var(--portal-card-border-hover)]
+                      transition-all duration-[var(--portal-transition)] min-h-[44px] min-w-[44px] justify-center"
                     aria-label={`View ${doc.title}`}
                   >
                     <ExternalLink className="w-3.5 h-3.5" />
@@ -185,9 +189,10 @@ export default function PortalDocumentsPage() {
                   <a
                     href={doc.url}
                     download
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-[var(--portal-radius-sm)]
                       bg-[var(--portal-primary)] text-[var(--portal-primary-foreground)]
-                      hover:opacity-90 transition-opacity min-h-[44px] min-w-[44px] justify-center"
+                      hover:opacity-90 transition-all duration-[var(--portal-transition)] active:scale-[0.98]
+                      min-h-[44px] min-w-[44px] justify-center"
                     aria-label={`Download ${doc.title}`}
                   >
                     <Download className="w-3.5 h-3.5" />
@@ -205,16 +210,16 @@ export default function PortalDocumentsPage() {
         <section aria-labelledby="forms-heading">
           <h2
             id="forms-heading"
-            className="text-base font-semibold text-gray-900 mb-3 flex items-center gap-2"
+            className="text-base font-semibold text-[var(--portal-text-primary)] mb-3 flex items-center gap-2"
           >
-            <ClipboardList className="w-4 h-4 text-gray-500" aria-hidden="true" />
+            <ClipboardList className="w-4 h-4 text-[var(--portal-text-secondary)]" aria-hidden="true" />
             Forms
           </h2>
 
           {forms.length === 0 ? (
-            <div className="rounded-lg border border-gray-200 bg-gray-50 p-8 text-center">
-              <ClipboardList className="w-10 h-10 mx-auto mb-3 text-gray-300" aria-hidden="true" />
-              <p className="text-sm text-gray-500">No forms available.</p>
+            <div className="rounded-[var(--portal-radius)] border border-[var(--portal-card-border)] bg-[var(--portal-card-bg)] p-8 text-center">
+              <ClipboardList className="w-10 h-10 mx-auto mb-3 text-[var(--portal-text-muted)]" aria-hidden="true" />
+              <p className="text-sm text-[var(--portal-text-secondary)]">No forms available.</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -223,13 +228,15 @@ export default function PortalDocumentsPage() {
                 return (
                   <article
                     key={form.id}
-                    className="rounded-lg border border-gray-200 bg-white p-4 flex items-center gap-4"
+                    className="rounded-[var(--portal-radius)] border border-[var(--portal-card-border)] bg-[var(--portal-card-bg)] p-4 flex items-center gap-4
+                      hover:shadow-[var(--portal-shadow-md)] hover:border-[var(--portal-card-border-hover)]
+                      transition-all duration-[var(--portal-transition)]"
                   >
                     <span
                       className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${
                         isPending
-                          ? 'bg-amber-100 text-amber-700'
-                          : 'bg-green-100 text-green-700'
+                          ? 'bg-amber-50 text-amber-700'
+                          : 'bg-emerald-50 text-emerald-700'
                       }`}
                     >
                       {isPending ? (
@@ -240,16 +247,16 @@ export default function PortalDocumentsPage() {
                       {isPending ? 'Pending' : 'Submitted'}
                     </span>
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-sm font-medium text-gray-900 truncate">
+                      <h3 className="text-sm font-medium text-[var(--portal-text-primary)] truncate">
                         {form.title}
                       </h3>
                       {form.description && (
-                        <p className="text-xs text-gray-400 mt-0.5 truncate">
+                        <p className="text-xs text-[var(--portal-text-muted)] mt-0.5 truncate">
                           {form.description}
                         </p>
                       )}
                       {form.submitted_at && (
-                        <p className="text-xs text-gray-400 mt-0.5">
+                        <p className="text-xs text-[var(--portal-text-muted)] mt-0.5">
                           Submitted {formatDate(form.submitted_at)}
                         </p>
                       )}
@@ -257,9 +264,9 @@ export default function PortalDocumentsPage() {
                     {isPending && (
                       <Link
                         href={`/portal/${token}/forms/${form.id}`}
-                        className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-medium rounded-md
+                        className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-medium rounded-[var(--portal-radius-sm)]
                           bg-[var(--portal-primary)] text-[var(--portal-primary-foreground)]
-                          hover:opacity-90 transition-opacity min-h-[44px]"
+                          hover:opacity-90 transition-all duration-[var(--portal-transition)] active:scale-[0.98] min-h-[44px]"
                       >
                         Fill Out
                       </Link>
@@ -277,23 +284,23 @@ export default function PortalDocumentsPage() {
 
 function DocumentsSkeleton({ showForms = false }: { showForms?: boolean }) {
   return (
-    <div className="animate-pulse">
-      <div className="h-7 w-48 bg-gray-200 rounded mb-6" />
+    <div>
+      <div className="h-7 w-48 rounded-[var(--portal-radius-sm)] portal-shimmer mb-6" />
 
       {/* Documents skeleton */}
       <div className="mb-8">
-        <div className="h-5 w-24 bg-gray-200 rounded mb-3" />
+        <div className="h-5 w-24 rounded portal-shimmer mb-3" />
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="rounded-lg border border-gray-200 p-4 flex items-center gap-4">
-              <div className="h-5 w-10 bg-gray-100 rounded" />
+            <div key={i} className="rounded-[var(--portal-radius)] border border-[var(--portal-card-border)] p-4 flex items-center gap-4">
+              <div className="h-5 w-10 rounded portal-shimmer" />
               <div className="flex-1">
-                <div className="h-4 w-40 bg-gray-100 rounded mb-1" />
-                <div className="h-3 w-20 bg-gray-50 rounded" />
+                <div className="h-4 w-40 rounded portal-shimmer mb-1" />
+                <div className="h-3 w-20 rounded portal-shimmer" />
               </div>
               <div className="flex gap-2">
-                <div className="h-8 w-16 bg-gray-100 rounded" />
-                <div className="h-8 w-20 bg-gray-200 rounded" />
+                <div className="h-8 w-16 rounded portal-shimmer" />
+                <div className="h-8 w-20 rounded portal-shimmer" />
               </div>
             </div>
           ))}
@@ -303,15 +310,15 @@ function DocumentsSkeleton({ showForms = false }: { showForms?: boolean }) {
       {/* Forms skeleton */}
       {showForms && (
         <div>
-          <div className="h-5 w-16 bg-gray-200 rounded mb-3" />
+          <div className="h-5 w-16 rounded portal-shimmer mb-3" />
           <div className="space-y-3">
             {[1, 2].map((i) => (
-              <div key={i} className="rounded-lg border border-gray-200 p-4 flex items-center gap-4">
-                <div className="h-5 w-16 bg-gray-100 rounded-full" />
+              <div key={i} className="rounded-[var(--portal-radius)] border border-[var(--portal-card-border)] p-4 flex items-center gap-4">
+                <div className="h-5 w-16 rounded-full portal-shimmer" />
                 <div className="flex-1">
-                  <div className="h-4 w-36 bg-gray-100 rounded" />
+                  <div className="h-4 w-36 rounded portal-shimmer" />
                 </div>
-                <div className="h-8 w-20 bg-gray-200 rounded" />
+                <div className="h-8 w-20 rounded portal-shimmer" />
               </div>
             ))}
           </div>

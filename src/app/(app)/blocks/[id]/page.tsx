@@ -18,6 +18,7 @@ import { ShareLinkButton } from '@/components/blocks/share-link-dialog'
 import { SwotEditor } from '@/components/blocks/swot-editor'
 import { ValuePropEditor } from '@/components/blocks/value-prop-editor'
 import { PortalConfigPanel } from '@/components/portal/portal-config-panel'
+import { OwnerPicker } from '@/components/blocks/owner-picker'
 import type { Block, Event } from '@/lib/context-assembly'
 
 interface Props {
@@ -220,6 +221,14 @@ export default async function BlockDetailPage({ params }: Props) {
         </div>
 
         <div className="space-y-6">
+          {/* Owner picker */}
+          <div className="rounded-md border border-border bg-card p-4">
+            <OwnerPicker
+              blockId={block.id}
+              currentOwnerId={block.owner_id ?? null}
+            />
+          </div>
+
           {/* AI Insights panel — workflow_instance blocks only */}
           {block.type === 'workflow_instance' && (
             <InsightsPanel blockId={block.id} />

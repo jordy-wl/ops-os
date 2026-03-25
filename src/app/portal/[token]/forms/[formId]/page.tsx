@@ -191,14 +191,14 @@ export default function PortalFormPage() {
   if (error || !form) {
     return (
       <div className="text-center py-12 max-w-xl mx-auto">
-        <AlertCircle className="w-10 h-10 mx-auto mb-3 text-red-400" />
-        <p className="text-sm text-gray-600 mb-4">{error || 'Form not found'}</p>
+        <AlertCircle className="w-10 h-10 mx-auto mb-3 text-[var(--portal-error)]" />
+        <p className="text-sm text-[var(--portal-text-secondary)] mb-4">{error || 'Form not found'}</p>
         <button
           type="button"
           onClick={() => window.location.reload()}
-          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md
+          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-[var(--portal-radius-sm)]
             bg-[var(--portal-primary)] text-[var(--portal-primary-foreground)]
-            hover:opacity-90 transition-opacity min-h-[44px]"
+            hover:opacity-90 transition-all duration-[var(--portal-transition)] active:scale-[0.98] min-h-[44px]"
         >
           <RefreshCw className="w-4 h-4" />
           Retry
@@ -214,10 +214,10 @@ export default function PortalFormPage() {
           className="w-12 h-12 mx-auto mb-4"
           style={{ color: 'var(--portal-primary)' }}
         />
-        <h1 className="text-xl font-semibold text-gray-900 mb-2">
+        <h1 className="text-xl font-semibold text-[var(--portal-text-primary)] mb-2">
           Form Submitted
         </h1>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-[var(--portal-text-secondary)]">
           Thank you for completing this form. Your responses have been recorded.
         </p>
       </div>
@@ -228,21 +228,21 @@ export default function PortalFormPage() {
     <div className="max-w-2xl mx-auto pb-24 sm:pb-8">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">
+        <h1 className="text-xl sm:text-2xl font-semibold text-[var(--portal-text-primary)]">
           {form.title}
         </h1>
         {form.description && (
-          <p className="text-sm text-gray-500 mt-1">{form.description}</p>
+          <p className="text-sm text-[var(--portal-text-secondary)] mt-1">{form.description}</p>
         )}
       </div>
 
       {/* Progress bar */}
       <div className="mb-6">
-        <div className="flex items-center justify-between text-xs text-gray-500 mb-1.5">
+        <div className="flex items-center justify-between text-xs text-[var(--portal-text-secondary)] mb-1.5">
           <span>{answeredCount} of {totalQuestions} answered</span>
           <span>{progressPercent}%</span>
         </div>
-        <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+        <div className="w-full h-2 bg-[var(--portal-card-border)]/40 rounded-full overflow-hidden">
           <div
             className="h-full rounded-full transition-all duration-300 ease-out"
             style={{
@@ -260,10 +260,11 @@ export default function PortalFormPage() {
 
       {/* Contact info */}
       {form.collect_contact && (
-        <div className="rounded-lg border border-gray-200 bg-white p-4 sm:p-5 mb-4 space-y-3">
-          <p className="text-sm font-medium text-gray-700">Your Information</p>
+        <div className="rounded-[var(--portal-radius)] border border-[var(--portal-card-border)] bg-[var(--portal-card-bg)] p-4 sm:p-5 mb-4 space-y-3
+          focus-within:ring-2 focus-within:ring-[var(--portal-primary)]/20 transition-shadow duration-[var(--portal-transition)]">
+          <p className="text-sm font-medium text-[var(--portal-text-primary)]">Your Information</p>
           <div>
-            <label htmlFor="contact-name" className="block text-xs font-medium text-gray-500 mb-1">
+            <label htmlFor="contact-name" className="block text-xs font-medium text-[var(--portal-text-secondary)] mb-1">
               Name
             </label>
             <input
@@ -272,13 +273,13 @@ export default function PortalFormPage() {
               value={contactName}
               onChange={(e) => setContactName(e.target.value)}
               placeholder="Your full name"
-              className="w-full rounded-md border border-gray-300 px-3 py-2.5 text-sm
+              className="w-full rounded-md border border-[var(--portal-card-border)] px-3 py-2.5 text-sm
                 focus:outline-none focus:ring-2 focus:ring-[var(--portal-primary)]/30 focus:border-[var(--portal-primary)]
                 min-h-[48px]"
             />
           </div>
           <div>
-            <label htmlFor="contact-email" className="block text-xs font-medium text-gray-500 mb-1">
+            <label htmlFor="contact-email" className="block text-xs font-medium text-[var(--portal-text-secondary)] mb-1">
               Email
             </label>
             <input
@@ -297,7 +298,7 @@ export default function PortalFormPage() {
               className={`w-full rounded-md border px-3 py-2.5 text-sm
                 focus:outline-none focus:ring-2 focus:ring-[var(--portal-primary)]/30 focus:border-[var(--portal-primary)]
                 min-h-[48px]
-                ${validationErrors['_contact_email'] ? 'border-red-300' : 'border-gray-300'}`}
+                ${validationErrors['_contact_email'] ? 'border-red-300' : 'border-[var(--portal-card-border)]'}`}
             />
             {validationErrors['_contact_email'] && (
               <p className="text-red-500 text-xs mt-1">{validationErrors['_contact_email']}</p>
@@ -348,23 +349,25 @@ export default function PortalFormPage() {
           type="button"
           onClick={handleSubmit}
           disabled={submitting}
-          className="w-full rounded-md px-4 py-2.5 text-sm font-medium
+          className="w-full rounded-[var(--portal-radius-sm)] px-4 py-2.5 text-sm font-medium
             bg-[var(--portal-primary)] text-[var(--portal-primary-foreground)]
-            hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed min-h-[48px]"
+            hover:opacity-90 transition-all duration-[var(--portal-transition)]
+            active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed min-h-[48px]"
         >
           {submitting ? 'Submitting...' : 'Submit'}
         </button>
       </div>
 
       {/* Mobile sticky submit bar */}
-      <div className="sm:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-20">
+      <div className="sm:hidden fixed bottom-0 left-0 right-0 backdrop-blur-sm bg-white/90 border-t border-[var(--portal-card-border)] p-4 z-20">
         <button
           type="button"
           onClick={handleSubmit}
           disabled={submitting}
-          className="w-full rounded-md px-4 py-3 text-sm font-medium
+          className="w-full rounded-[var(--portal-radius-sm)] px-4 py-3 text-sm font-medium
             bg-[var(--portal-primary)] text-[var(--portal-primary-foreground)]
-            hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed min-h-[48px]"
+            hover:opacity-90 transition-all duration-[var(--portal-transition)]
+            active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed min-h-[48px]"
         >
           {submitting ? 'Submitting...' : 'Submit'}
         </button>
@@ -385,24 +388,25 @@ interface QuestionFieldProps {
 function QuestionField({ question, value, onChange, error }: QuestionFieldProps) {
   const id = `q-${question.id}`
 
-  const inputBase = `w-full rounded-md border px-3 py-2.5 text-sm
+  const inputBase = `w-full rounded-[var(--portal-radius-sm)] border px-3 py-2.5 text-sm
     focus:outline-none focus:ring-2 focus:ring-[var(--portal-primary)]/30 focus:border-[var(--portal-primary)]
+    transition-[border-color,box-shadow] duration-[var(--portal-transition)]
     min-h-[48px]
-    ${error ? 'border-red-300' : 'border-gray-300'}`
+    ${error ? 'border-red-300' : 'border-[var(--portal-card-border)]'}`
 
   const labelEl = (
-    <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1.5">
+    <label htmlFor={id} className="block text-sm font-medium text-[var(--portal-text-primary)] mb-1.5">
       {question.label}
-      {question.required && <span className="text-red-500 ml-0.5">*</span>}
+      {question.required && <span className="text-[var(--portal-error)] ml-0.5">*</span>}
     </label>
   )
 
   const descEl = question.description ? (
-    <p className="text-xs text-gray-400 mb-2">{question.description}</p>
+    <p className="text-xs text-[var(--portal-text-muted)] mb-2">{question.description}</p>
   ) : null
 
   const errorEl = error ? (
-    <p className="text-red-500 text-xs mt-1">{error}</p>
+    <p className="text-[var(--portal-error)] text-xs mt-1">{error}</p>
   ) : null
 
   let input: React.ReactNode
@@ -442,7 +446,7 @@ function QuestionField({ question, value, onChange, error }: QuestionFieldProps)
           <div className="flex justify-between items-center mt-0.5">
             {errorEl || <span />}
             {question.max_length && (
-              <span className="text-xs text-gray-400">
+              <span className="text-xs text-[var(--portal-text-muted)]">
                 {String(value ?? '').length}/{question.max_length}
               </span>
             )}
@@ -528,7 +532,7 @@ function QuestionField({ question, value, onChange, error }: QuestionFieldProps)
       const selected = (Array.isArray(value) ? value : []) as string[]
       input = (
         <fieldset>
-          <legend className="text-sm font-medium text-gray-700 mb-1.5">
+          <legend className="text-sm font-medium text-[var(--portal-text-primary)] mb-1.5">
             {question.label}
             {question.required && <span className="text-red-500 ml-0.5">*</span>}
           </legend>
@@ -537,7 +541,7 @@ function QuestionField({ question, value, onChange, error }: QuestionFieldProps)
             {(question.options ?? []).map((opt) => (
               <label
                 key={opt}
-                className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer min-h-[44px] px-1"
+                className="flex items-center gap-2.5 text-sm text-[var(--portal-text-primary)] cursor-pointer min-h-[44px] px-1"
               >
                 <input
                   type="checkbox"
@@ -549,7 +553,7 @@ function QuestionField({ question, value, onChange, error }: QuestionFieldProps)
                       onChange(selected.filter((s) => s !== opt))
                     }
                   }}
-                  className="rounded border-gray-300 w-4 h-4"
+                  className="rounded border-[var(--portal-card-border)] w-4 h-4"
                   style={{ accentColor: 'var(--portal-primary)' }}
                 />
                 {opt}
@@ -568,7 +572,7 @@ function QuestionField({ question, value, onChange, error }: QuestionFieldProps)
       const nums = Array.from({ length: max - min + 1 }, (_, i) => min + i)
       input = (
         <fieldset>
-          <legend className="text-sm font-medium text-gray-700 mb-1.5">
+          <legend className="text-sm font-medium text-[var(--portal-text-primary)] mb-1.5">
             {question.label}
             {question.required && <span className="text-red-500 ml-0.5">*</span>}
           </legend>
@@ -583,7 +587,7 @@ function QuestionField({ question, value, onChange, error }: QuestionFieldProps)
                   ${
                     value === n
                       ? 'bg-[var(--portal-primary)] text-[var(--portal-primary-foreground)] border-[var(--portal-primary)]'
-                      : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                      : 'border-[var(--portal-card-border)] text-[var(--portal-text-secondary)] hover:bg-[var(--portal-bg)]'
                   }`}
                 aria-pressed={value === n}
               >
@@ -601,7 +605,7 @@ function QuestionField({ question, value, onChange, error }: QuestionFieldProps)
       const labels = Array.isArray(question.scale_labels) ? question.scale_labels : LIKERT_LABELS_DEFAULT
       input = (
         <fieldset>
-          <legend className="text-sm font-medium text-gray-700 mb-1.5">
+          <legend className="text-sm font-medium text-[var(--portal-text-primary)] mb-1.5">
             {question.label}
             {question.required && <span className="text-red-500 ml-0.5">*</span>}
           </legend>
@@ -614,7 +618,7 @@ function QuestionField({ question, value, onChange, error }: QuestionFieldProps)
                   ${
                     value === label
                       ? 'border-[var(--portal-primary)] bg-[var(--portal-primary)]/10 text-[var(--portal-primary)]'
-                      : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                      : 'border-[var(--portal-card-border)] text-[var(--portal-text-secondary)] hover:bg-[var(--portal-bg)]'
                   }`}
               >
                 <input
@@ -638,7 +642,7 @@ function QuestionField({ question, value, onChange, error }: QuestionFieldProps)
     case 'emoji': {
       input = (
         <fieldset>
-          <legend className="text-sm font-medium text-gray-700 mb-1.5">
+          <legend className="text-sm font-medium text-[var(--portal-text-primary)] mb-1.5">
             {question.label}
             {question.required && <span className="text-red-500 ml-0.5">*</span>}
           </legend>
@@ -653,7 +657,7 @@ function QuestionField({ question, value, onChange, error }: QuestionFieldProps)
                   ${
                     value === EMOJI_OPTIONS[i]
                       ? 'border-[var(--portal-primary)] bg-[var(--portal-primary)]/10 scale-110'
-                      : 'border-gray-200 hover:bg-gray-50'
+                      : 'border-[var(--portal-card-border)] hover:bg-[var(--portal-bg)]'
                   }`}
                 aria-pressed={value === EMOJI_OPTIONS[i]}
                 aria-label={emoji}
@@ -671,7 +675,7 @@ function QuestionField({ question, value, onChange, error }: QuestionFieldProps)
     case 'yes_no': {
       input = (
         <fieldset>
-          <legend className="text-sm font-medium text-gray-700 mb-1.5">
+          <legend className="text-sm font-medium text-[var(--portal-text-primary)] mb-1.5">
             {question.label}
             {question.required && <span className="text-red-500 ml-0.5">*</span>}
           </legend>
@@ -686,7 +690,7 @@ function QuestionField({ question, value, onChange, error }: QuestionFieldProps)
                   ${
                     value === option
                       ? 'border-[var(--portal-primary)] bg-[var(--portal-primary)] text-[var(--portal-primary-foreground)]'
-                      : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                      : 'border-[var(--portal-card-border)] text-[var(--portal-text-secondary)] hover:bg-[var(--portal-bg)]'
                   }`}
                 aria-pressed={value === option}
               >
@@ -711,14 +715,14 @@ function QuestionField({ question, value, onChange, error }: QuestionFieldProps)
               ${
                 value
                   ? 'border-[var(--portal-primary)]/40 bg-[var(--portal-primary)]/5'
-                  : 'border-gray-300 hover:border-gray-400'
+                  : 'border-[var(--portal-card-border)] hover:border-[var(--portal-card-border-hover)]'
               }`}
           >
-            <Upload className="w-6 h-6 mx-auto mb-2 text-gray-400" aria-hidden="true" />
-            <p className="text-sm text-gray-600">
+            <Upload className="w-6 h-6 mx-auto mb-2 text-[var(--portal-text-muted)]" aria-hidden="true" />
+            <p className="text-sm text-[var(--portal-text-secondary)]">
               {value ? String(value) : 'Click to upload or drag and drop'}
             </p>
-            <p className="text-xs text-gray-400 mt-1">
+            <p className="text-xs text-[var(--portal-text-muted)] mt-1">
               File upload will be available in a future update
             </p>
             <input
@@ -756,7 +760,8 @@ function QuestionField({ question, value, onChange, error }: QuestionFieldProps)
   }
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-4 sm:p-5">
+    <div className="rounded-[var(--portal-radius)] border border-[var(--portal-card-border)] bg-[var(--portal-card-bg)] p-4 sm:p-5
+      focus-within:ring-2 focus-within:ring-[var(--portal-primary)]/20 transition-shadow duration-[var(--portal-transition)]">
       {input}
     </div>
   )
@@ -766,25 +771,25 @@ function QuestionField({ question, value, onChange, error }: QuestionFieldProps)
 
 function FormSkeleton() {
   return (
-    <div className="max-w-2xl mx-auto animate-pulse">
-      <div className="h-7 w-64 bg-gray-200 rounded mb-2" />
-      <div className="h-4 w-48 bg-gray-100 rounded mb-6" />
+    <div className="max-w-2xl mx-auto">
+      <div className="h-7 w-64 rounded-[var(--portal-radius-sm)] portal-shimmer mb-2" />
+      <div className="h-4 w-48 rounded portal-shimmer mb-6" />
 
       {/* Progress bar */}
       <div className="mb-6">
         <div className="flex justify-between mb-1.5">
-          <div className="h-3 w-24 bg-gray-100 rounded" />
-          <div className="h-3 w-8 bg-gray-100 rounded" />
+          <div className="h-3 w-24 rounded portal-shimmer" />
+          <div className="h-3 w-8 rounded portal-shimmer" />
         </div>
-        <div className="h-2 w-full bg-gray-100 rounded-full" />
+        <div className="h-2 w-full rounded-full portal-shimmer" />
       </div>
 
       {/* Questions */}
       <div className="space-y-4">
         {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="rounded-lg border border-gray-200 p-5">
-            <div className="h-4 w-32 bg-gray-200 rounded mb-3" />
-            <div className="h-10 w-full bg-gray-100 rounded" />
+          <div key={i} className="rounded-[var(--portal-radius)] border border-[var(--portal-card-border)] p-5">
+            <div className="h-4 w-32 rounded portal-shimmer mb-3" />
+            <div className="h-10 w-full rounded portal-shimmer" />
           </div>
         ))}
       </div>
