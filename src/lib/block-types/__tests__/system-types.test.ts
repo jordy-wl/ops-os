@@ -9,8 +9,8 @@ describe('SYSTEM_BLOCK_TYPES', () => {
   // ── Required fields on every type ───────────────────────────────────────────
 
   describe('required fields on all types', () => {
-    it('has exactly 18 system block types', () => {
-      expect(SYSTEM_BLOCK_TYPES).toHaveLength(18)
+    it('has exactly 22 system block types', () => {
+      expect(SYSTEM_BLOCK_TYPES).toHaveLength(22)
     })
 
     it.each(SYSTEM_BLOCK_TYPES.map((t) => [t.type_name, t]))(
@@ -206,10 +206,97 @@ describe('SYSTEM_BLOCK_TYPES', () => {
     })
   })
 
+  // ── All relation fields have x-relation-edge-type ──────────────────────────
+
+  describe('relation field edge types', () => {
+    it('every relation and multi-relation field has x-relation-edge-type set', () => {
+      const missing: string[] = []
+
+      for (const typeDef of SYSTEM_BLOCK_TYPES) {
+        for (const [fieldName, fieldDef] of Object.entries(typeDef.field_schema.properties)) {
+          const def = fieldDef as Record<string, unknown>
+          const fieldType = def['x-field-type']
+          if (fieldType === 'relation' || fieldType === 'multi-relation') {
+            if (!def['x-relation-edge-type']) {
+              missing.push(`${typeDef.type_name}.${fieldName}`)
+            }
+          }
+        }
+      }
+
+      expect(missing).toEqual([])
+    })
+
+    it('edge type values are non-empty strings', () => {
+      for (const typeDef of SYSTEM_BLOCK_TYPES) {
+        for (const [, fieldDef] of Object.entries(typeDef.field_schema.properties)) {
+          const def = fieldDef as Record<string, unknown>
+          if (def['x-relation-edge-type']) {
+            expect(typeof def['x-relation-edge-type']).toBe('string')
+            expect((def['x-relation-edge-type'] as string).length).toBeGreaterThan(0)
+          }
+        }
+      }
+    })
+  })
+
+  // ── Org hierarchy block types ───────────────────────────────────────────────
+
+  describe('org hierarchy types', () => {
+    const hierarchyTypes = ['division', 'department', 'team'] as const
+
+    it.each(hierarchyTypes)('includes the %s type', (typeName) => {
+      const found = SYSTEM_BLOCK_TYPES.find((t) => t.type_name === typeName)
+      expect(found).toBeDefined()
+    })
+
+    it.each([
+      ['division', 1, 'organisation'],
+      ['department', 2, 'division'],
+      ['team', 3, 'department'],
+    ] as const)('%s has x-org-hierarchy-level %d and parent type %s', (typeName, level, parentType) => {
+      const typeDef = SYSTEM_BLOCK_TYPES.find((t) => t.type_name === typeName)!
+      expect(typeDef.field_schema['x-org-hierarchy-level']).toBe(level)
+      expect(typeDef.field_schema['x-org-parent-type']).toBe(parentType)
+    })
+
+    it('all hierarchy types have a parent relation with part_of edge type', () => {
+      const parentFields: Record<string, string> = {
+        division: 'parent_org',
+        department: 'parent_division',
+        team: 'parent_department',
+      }
+
+      for (const [typeName, fieldName] of Object.entries(parentFields)) {
+        const typeDef = SYSTEM_BLOCK_TYPES.find((t) => t.type_name === typeName)!
+        const field = typeDef.field_schema.properties[fieldName] as Record<string, unknown>
+        expect(field).toBeDefined()
+        expect(field['x-field-type']).toBe('relation')
+        expect(field['x-relation-edge-type']).toBe('part_of')
+      }
+    })
+
+    it('team has members multi-relation with has_member edge type', () => {
+      const team = SYSTEM_BLOCK_TYPES.find((t) => t.type_name === 'team')!
+      const members = team.field_schema.properties.members as Record<string, unknown>
+      expect(members['x-field-type']).toBe('multi-relation')
+      expect(members['x-relation-target']).toBe('team_member')
+      expect(members['x-relation-edge-type']).toBe('has_member')
+    })
+
+    it('team_member has team_id relation with member_of edge type', () => {
+      const teamMember = SYSTEM_BLOCK_TYPES.find((t) => t.type_name === 'team_member')!
+      const teamId = teamMember.field_schema.properties.team_id as Record<string, unknown>
+      expect(teamId['x-field-type']).toBe('relation')
+      expect(teamId['x-relation-target']).toBe('team')
+      expect(teamId['x-relation-edge-type']).toBe('member_of')
+    })
+  })
+
   // ── Snapshot of all type names for regression ───────────────────────────────
 
   describe('complete type name list', () => {
-    it('contains exactly the expected 18 types in order', () => {
+    it('contains exactly the expected 22 types in order', () => {
       const names = SYSTEM_BLOCK_TYPES.map((t) => t.type_name)
       expect(names).toEqual([
         'client',
@@ -230,6 +317,10 @@ describe('SYSTEM_BLOCK_TYPES', () => {
         'swot_analysis',
         'value_proposition',
         'form_template',
+        'division',
+        'department',
+        'team',
+        'organisation',
       ])
     })
   })

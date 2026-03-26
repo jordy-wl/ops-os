@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { getBlockHierarchy } from './block-hierarchy'
 
 /**
  * Org overview data aggregation service.
@@ -89,6 +90,19 @@ async function fetchHierarchy(
   supabase: SupabaseClient,
   orgId: string
 ): Promise<HierarchyNode[]> {
+  // Try block-based hierarchy first (division/department/team blocks)
+  const blockHierarchy = await getBlockHierarchy(supabase, orgId)
+  if (blockHierarchy.length > 1) {
+    // Has hierarchy blocks beyond just the org singleton — use block hierarchy
+    return blockHierarchy.map((b) => ({
+      id: b.id,
+      name: b.name,
+      level: b.block_type,
+      parent_org_id: b.parent_id,
+    }))
+  }
+
+  // Fall back to orgs table hierarchy (legacy)
   const { data, error } = await supabase.rpc('get_org_hierarchy', {
     root_org_id: orgId,
   })

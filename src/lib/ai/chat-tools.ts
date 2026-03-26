@@ -6,6 +6,7 @@ import { embedBlock } from '@/lib/embeddings'
 import { validateFieldsAgainstSchema, getBlockTypeSchemas } from '@/lib/ai/entity-creation'
 import { suggestFields, type SuggestionContext } from '@/lib/ai/field-suggestion'
 import { FIELD_TYPE_DEFINITIONS, isValidFieldType, getFieldGroups } from '@/lib/block-types/field-types'
+import { isSingletonType } from '@/lib/block-types/seed-system-types'
 import type { UserRole } from '@/lib/auth/withAuth'
 
 // ─── Tool Definitions ────────────────────────────────────────────────────────
@@ -523,6 +524,14 @@ async function executeCreateBlock(
     return { success: false, error: 'name and type are required' }
   }
 
+  // Singleton guard — cannot create instances of singleton types (e.g. organisation)
+  if (isSingletonType(type)) {
+    return {
+      success: false,
+      error: `"${type}" is a singleton block type — only one instance exists per organisation. Use update_block to modify its fields instead.`,
+    }
+  }
+
   // Step 1: Duplicate detection (unless explicitly skipped)
   if (!skipDuplicateCheck) {
     const duplicates = await checkForDuplicates(name, type, orgId)
@@ -758,10 +767,11 @@ async function executeListBlockTypes(orgId: string): Promise<ToolResult> {
       : []
     const groups = getFieldGroups(fieldSchema)
 
-    return { type: s.type, label: s.label, fields, groups }
+    const singleton = fieldSchema['x-singleton'] === true
+    return { type: s.type, label: s.label, fields, groups, ...(singleton ? { singleton: true } : {}) }
   })
 
-  return { success: true, data: { block_types: blockTypes } }
+  return { success: true, data: { block_types: blockTypes, note: 'Singleton types (e.g. organisation) have exactly one instance per org — update the existing block rather than creating a new one.' } }
 }
 
 // ─── Block Configuration Tools ──────────────────────────────────────────────
@@ -945,6 +955,14 @@ async function executeCreateBlockType(
     return { success: false, error: 'type_slug and label are required' }
   }
 
+  // Singleton guard — cannot re-create system singleton types
+  if (isSingletonType(typeSlug)) {
+    return {
+      success: false,
+      error: `"${typeSlug}" is a system singleton type and already exists. Use configure_block_type to modify its fields.`,
+    }
+  }
+
   // Check if type already exists
   const { data: existing } = await supabase
     .from('block_type_definitions')
@@ -1020,6 +1038,7 @@ async function executeCreateBlockType(
       label: data.display_name,
       field_count: Object.keys(properties).length,
       group_count: groups.length,
+      hint: 'Tip: Use create_relationship to connect this type to others (e.g. clients, projects).',
     },
   }
 }
@@ -1075,6 +1094,7 @@ async function executeCreateRelationship(
     type: 'string',
     'x-field-type': 'relation',
     'x-relation-target': targetType,
+    'x-relation-edge-type': `has_${fieldName}`,
     'x-display-order': displayOrder,
     description: fieldLabel,
     ...(group ? { 'x-field-group': group } : {}),

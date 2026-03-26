@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { createServerClient } from '@/lib/supabase/server'
 import { resolveOrgId } from '@/lib/auth/resolve-org'
 import { CreateBlockTypeButton } from '@/components/settings/create-block-type-modal'
+import { SINGLETON_BLOCK_TYPES } from '@/lib/block-types/system-types'
 
 export const metadata = { title: 'Block Types — Settings — Ops OS' }
 
@@ -34,6 +35,17 @@ function getIconDisplay(icon: string): string {
     'check-square': '\u2611',
     palette: '\u{1F3A8}',
     box: '\u{1F4E6}',
+    'building-2': '\u{1F3E2}',
+    lightbulb: '\u{1F4A1}',
+    package: '\u{1F4E6}',
+    wrench: '\u{1F527}',
+    'user-circle': '\u{1F464}',
+    shield: '\u{1F6E1}',
+    'grid-2x2': '\u{1F4CA}',
+    target: '\u{1F3AF}',
+    'clipboard-list': '\u{1F4CB}',
+    folders: '\u{1F4C2}',
+    users: '\u{1F465}',
   }
   return iconMap[icon] ?? '\u{1F4E6}'
 }
@@ -50,6 +62,11 @@ function getColorClass(color: string): string {
     cyan: 'border-l-cyan-500',
     orange: 'border-l-orange-500',
     rose: 'border-l-rose-500',
+    slate: 'border-l-slate-500',
+    emerald: 'border-l-emerald-500',
+    teal: 'border-l-teal-500',
+    red: 'border-l-red-500',
+    violet: 'border-l-violet-500',
   }
   return colorMap[color] ?? 'border-l-gray-400'
 }
@@ -68,6 +85,7 @@ export default async function BlockTypesPage() {
     .from('block_type_definitions')
     .select('id, type_name, display_name, description, icon, color, is_system, field_schema')
     .eq('org_id', internalOrgId)
+    .not('type_name', 'in', '(workflow_template,workflow_instance,task_queue_item)')
     .order('type_name', { ascending: true })
 
   const types: BlockTypeDefinition[] = blockTypes ?? []
@@ -120,11 +138,18 @@ export default async function BlockTypesPage() {
                   <h2 className="text-sm font-semibold text-foreground truncate group-hover:text-foreground">
                     {typeDef.display_name}
                   </h2>
-                  {typeDef.is_system && (
-                    <span className="inline-block text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-                      System
-                    </span>
-                  )}
+                  <div className="flex items-center gap-1.5">
+                    {typeDef.is_system && (
+                      <span className="inline-block text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                        System
+                      </span>
+                    )}
+                    {SINGLETON_BLOCK_TYPES.has(typeDef.type_name) && (
+                      <span className="inline-block text-[10px] font-medium uppercase tracking-wide text-blue-500">
+                        Singleton
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
               {typeDef.description && (

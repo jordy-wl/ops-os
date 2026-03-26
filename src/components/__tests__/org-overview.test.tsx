@@ -91,17 +91,33 @@ const mockOverview: OrgOverview = {
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 function mockFetchSuccess(data: OrgOverview) {
-  global.fetch = vi.fn().mockResolvedValue({
-    ok: true,
-    json: () => Promise.resolve({ data, error: null }),
+  global.fetch = vi.fn().mockImplementation((url: string) => {
+    if (url === '/api/org/block-hierarchy') {
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ data: { hierarchy: [] }, error: null }),
+      })
+    }
+    return Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve({ data, error: null }),
+    })
   }) as unknown as typeof fetch
 }
 
 function mockFetchError(status: number, message: string) {
-  global.fetch = vi.fn().mockResolvedValue({
-    ok: false,
-    status,
-    json: () => Promise.resolve({ data: null, error: { message, code: 'test/error' } }),
+  global.fetch = vi.fn().mockImplementation((url: string) => {
+    if (url === '/api/org/block-hierarchy') {
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ data: { hierarchy: [] }, error: null }),
+      })
+    }
+    return Promise.resolve({
+      ok: false,
+      status,
+      json: () => Promise.resolve({ data: null, error: { message, code: 'test/error' } }),
+    })
   }) as unknown as typeof fetch
 }
 
@@ -175,9 +191,17 @@ describe('OrgOverviewPage', () => {
 
   describe('Empty state', () => {
     it('shows empty state when data is null', async () => {
-      global.fetch = vi.fn().mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve({ data: null, error: null }),
+      global.fetch = vi.fn().mockImplementation((url: string) => {
+        if (url === '/api/org/block-hierarchy') {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({ data: { hierarchy: [] }, error: null }),
+          })
+        }
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ data: null, error: null }),
+        })
       }) as unknown as typeof fetch
 
       render(<OrgOverviewPage />)
@@ -188,9 +212,17 @@ describe('OrgOverviewPage', () => {
     })
 
     it('shows configure org link in empty state', async () => {
-      global.fetch = vi.fn().mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve({ data: null, error: null }),
+      global.fetch = vi.fn().mockImplementation((url: string) => {
+        if (url === '/api/org/block-hierarchy') {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({ data: { hierarchy: [] }, error: null }),
+          })
+        }
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ data: null, error: null }),
+        })
       }) as unknown as typeof fetch
 
       render(<OrgOverviewPage />)
@@ -294,14 +326,16 @@ describe('OrgOverviewPage', () => {
       })
     })
 
-    it('renders tab triggers for all 5 tabs', async () => {
+    it('renders tab triggers for all 7 tabs', async () => {
       mockFetchSuccess(mockOverview)
       render(<OrgOverviewPage />)
 
       await waitFor(() => {
         const tabs = screen.getAllByRole('tab')
-        expect(tabs.length).toBe(5)
+        expect(tabs.length).toBe(7)
         expect(screen.getByRole('tab', { name: 'Overview' })).toBeTruthy()
+        expect(screen.getByRole('tab', { name: 'Structure' })).toBeTruthy()
+        expect(screen.getByRole('tab', { name: 'Details' })).toBeTruthy()
         expect(screen.getByRole('tab', { name: 'Revenue' })).toBeTruthy()
         expect(screen.getByRole('tab', { name: 'Strategy' })).toBeTruthy()
         expect(screen.getByRole('tab', { name: 'Offerings' })).toBeTruthy()
