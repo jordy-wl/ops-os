@@ -2,11 +2,13 @@
  * SSE chunk types emitted by POST /api/ai/chat.
  *
  * The chat route streams Server-Sent Events in the format:
- *   data: {"text": "..."}\n\n        — token chunk
- *   data: [DONE]\n\n                 — stream end sentinel
- *   data: {"error": "..."}\n\n       — error mid-stream
- *   data: {"suggestions": [...]}\n\n  — discuss mode action suggestions
- *   data: {"plan_data": {...}}\n\n    — plan mode structured plan data
+ *   data: {"text": "..."}\n\n              — token chunk
+ *   data: [DONE]\n\n                       — stream end sentinel
+ *   data: {"error": "..."}\n\n             — error mid-stream
+ *   data: {"suggestions": [...]}\n\n        — discuss mode action suggestions
+ *   data: {"plan_data": {...}}\n\n          — plan mode structured plan data
+ *   data: {"action_preview": [...]}\n\n     — execute mode tool preview cards
+ *   data: {"mode_suggestion": {...}}\n\n    — AI-suggested mode transition
  */
 export type ToolCallChunk = {
   name: string
@@ -33,6 +35,19 @@ export type PlanData = {
   complexity: string
 }
 
+export type ActionPreview = {
+  id: string
+  toolName: string
+  input: Record<string, unknown>
+  description: string
+  riskLevel: 'low' | 'medium' | 'high'
+}
+
+export type ModeSuggestion = {
+  suggested_mode: 'discuss' | 'plan' | 'execute'
+  reason: string
+}
+
 export type SseChunk =
   | { type: 'text'; text: string }
   | { type: 'done' }
@@ -40,6 +55,8 @@ export type SseChunk =
   | { type: 'tool_call'; tool_call: ToolCallChunk }
   | { type: 'suggestions'; suggestions: ActionSuggestion[] }
   | { type: 'plan_data'; plan_data: PlanData }
+  | { type: 'action_preview'; actions: ActionPreview[] }
+  | { type: 'mode_suggestion'; mode_suggestion: ModeSuggestion }
 
 /**
  * parseSseChunk — parses a raw SSE string into typed chunk objects.
@@ -90,6 +107,16 @@ export function parseSseChunk(raw: string): SseChunk[] {
           type: 'plan_data',
           plan_data: obj.plan_data as PlanData,
         })
+      } else if ('action_preview' in obj && Array.isArray(obj.action_preview)) {
+        results.push({
+          type: 'action_preview',
+          actions: obj.action_preview as ActionPreview[],
+        })
+      } else if ('mode_suggestion' in obj && typeof obj.mode_suggestion === 'object') {
+        results.push({
+          type: 'mode_suggestion',
+          mode_suggestion: obj.mode_suggestion as ModeSuggestion,
+        })
       }
     } catch {
       // Malformed JSON — skip silently (partial chunk edge case)
@@ -108,5 +135,6 @@ export function stripStructuredTags(content: string): string {
   return content
     .replace(/<SUGGESTIONS>[\s\S]*?<\/SUGGESTIONS>/g, '')
     .replace(/<PLAN_JSON>[\s\S]*?<\/PLAN_JSON>/g, '')
+    .replace(/<MODE_SUGGESTION>[\s\S]*?<\/MODE_SUGGESTION>/g, '')
     .trim()
 }

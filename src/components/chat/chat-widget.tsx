@@ -1,90 +1,73 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { MessageCircle, X, Wrench, History, PanelRightOpen, PanelRightClose } from 'lucide-react'
+import { MessageCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useChatWidget } from './chat-widget-provider'
-import { ModeSelector } from './mode-selector'
+import type { ChatLayout } from './chat-widget-provider'
+import { useChatStream } from '@/hooks/use-chat-stream'
+import { ChatHeader } from './chat-header'
+import { ChatMessageList } from './chat-message-list'
 import { ChatInput } from './chat-input'
-import { PlanMessage } from './plan-message'
 import { ExecuteConfirmation } from './execute-confirmation'
-import { MessageBubble } from './message-bubble'
-import { BlockCreationPreview, extractBlockCreationData } from './block-creation-preview'
 import { ChatHistorySidebar } from './chat-history-sidebar'
-import { parseSseChunk, stripStructuredTags } from '@/lib/chat/parse-sse'
-import { ActionSuggestionChips } from './action-suggestion-chips'
-import type { ChatMode } from './chat-widget-provider'
-import type { ToolCallChunk, ActionSuggestion, PlanData } from '@/lib/chat/parse-sse'
+import { ModeSuggestionBanner } from './mode-suggestion-banner'
 
-// ─── Types ───────────────────────────────────────────────────────────────────
-
-type WidgetMessage = {
-  id: string
-  role: 'user' | 'assistant'
-  content: string
-  streaming?: boolean
-  isError?: boolean
-  mode?: ChatMode
-  toolCalls?: ToolCallChunk[]
-  suggestions?: ActionSuggestion[]
-  planData?: PlanData | null
-}
-
-// ─── Constants ───────────────────────────────────────────────────────────────
-
-const MAX_HISTORY = 20
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-/** Generate a short title from the first user message */
-function generateTitle(text: string): string {
-  const cleaned = text.replace(/\n/g, ' ').trim()
-  return cleaned.length > 60 ? cleaned.slice(0, 57) + '...' : cleaned
-}
-
-/** Persist messages to conversation (fire-and-forget) */
-async function saveMessages(
-  conversationId: string,
-  userContent: string,
-  assistantContent: string
-) {
-  try {
-    await fetch(`/api/conversations/${conversationId}/messages`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        messages: [
-          { role: 'user', content: userContent },
-          { role: 'assistant', content: assistantContent },
-        ],
-      }),
-    })
-  } catch {
-    // non-critical — messages still visible in current session
-  }
-}
+const PANEL_WIDTH_KEY = 'ops-os-chat-panel-width'
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function ChatWidget() {
-  const { isOpen, mode, setMode, layout, setLayout, toggle, close, currentBlockId, pageContext } = useChatWidget()
-  const [messages, setMessages] = useState<WidgetMessage[]>([])
-  const [streaming, setStreaming] = useState(false)
+  const { isOpen, mode, setMode, layout, setLayout, suggestedMode, setSuggestedMode, toggle, close, currentBlockId, pageContext } = useChatWidget()
+
+  const handleModeSuggestion = useCallback(
+    (suggestion: { suggested_mode: 'discuss' | 'plan' | 'execute'; reason: string }) => {
+      setSuggestedMode(suggestion.suggested_mode)
+    },
+    [setSuggestedMode]
+  )
+
+  const {
+    messages,
+    setMessages,
+    streaming,
+    conversationId,
+    sendMessage,
+    loadConversation,
+    startNewChat,
+    stopGenerating,
+  } = useChatStream({ mode, currentBlockId, pageContext, onModeSuggestion: handleModeSuggestion })
+
   const [pendingMessage, setPendingMessage] = useState<string | null>(null)
   const [showHistory, setShowHistory] = useState(false)
-  const [conversationId, setConversationId] = useState<string | null>(null)
-  const [panelWidth, setPanelWidth] = useState(420)
-  const bottomRef = useRef<HTMLDivElement>(null)
+  const [panelWidth, setPanelWidth] = useState(() => {
+    if (typeof window === 'undefined') return 420
+    const saved = localStorage.getItem(PANEL_WIDTH_KEY)
+    return saved ? Math.max(320, Math.min(800, Number(saved))) : 420
+  })
+  const [isDesktop, setIsDesktop] = useState(false)
   const resizeRef = useRef<{ startX: number; startWidth: number } | null>(null)
+  const lastPanelWidthRef = useRef(420)
 
   const isPanel = layout === 'panel'
+  const isExpanded = layout === 'expanded'
+
+  // Detect desktop viewport for panel mode inline rendering
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 768px)')
+    setIsDesktop(mq.matches)
+    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
 
   // Resize handler for panel mode
   useEffect(() => {
     function onMouseMove(e: MouseEvent) {
       if (!resizeRef.current) return
       const delta = resizeRef.current.startX - e.clientX
-      const newWidth = Math.min(Math.max(resizeRef.current.startWidth + delta, 320), 600)
+      const maxW = Math.min(800, window.innerWidth * 0.5)
+      const newWidth = Math.min(Math.max(resizeRef.current.startWidth + delta, 320), maxW)
       setPanelWidth(newWidth)
     }
     function onMouseUp() {
@@ -100,204 +83,44 @@ export function ChatWidget() {
     }
   }, [])
 
-  // Auto-scroll on new messages
+  // Keyboard shortcuts: Escape to close, Cmd/Ctrl+Shift+L to cycle layout
   useEffect(() => {
-    if (isOpen) bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, isOpen])
-
-  // Close on Escape
-  useEffect(() => {
+    const LAYOUT_CYCLE: Record<ChatLayout, ChatLayout> = { float: 'panel', panel: 'expanded', expanded: 'float' }
     function onKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape' && isOpen) close()
+      // Cmd/Ctrl+Shift+L → cycle layout
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'L') {
+        e.preventDefault()
+        setLayout(LAYOUT_CYCLE[layout])
+        return
+      }
+      // Escape → expanded returns to float, otherwise close
+      if (e.key === 'Escape' && isOpen) {
+        if (isExpanded) {
+          setLayout('float')
+        } else {
+          close()
+        }
+      }
     }
     document.addEventListener('keydown', onKeyDown)
     return () => document.removeEventListener('keydown', onKeyDown)
-  }, [isOpen, close])
+  }, [isOpen, isExpanded, layout, close, setLayout])
 
-  /** Create a new conversation in the DB */
-  const createConversation = useCallback(async (title: string): Promise<string | null> => {
-    try {
-      const res = await fetch('/api/conversations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title,
-          mode,
-          page_context: pageContext ?? {},
-        }),
-      })
-      if (!res.ok) return null
-      const { data } = await res.json()
-      return data?.id ?? null
-    } catch {
-      return null
+  // Persist panel width to localStorage
+  useEffect(() => {
+    if (isPanel && isDesktop) {
+      localStorage.setItem(PANEL_WIDTH_KEY, String(panelWidth))
     }
-  }, [mode, pageContext])
+  }, [panelWidth, isPanel, isDesktop])
 
-  /** Load a conversation from history */
-  const loadConversation = useCallback(async (id: string) => {
-    try {
-      const res = await fetch(`/api/conversations/${id}`)
-      if (!res.ok) return
-      const { data } = await res.json()
-      if (!data) return
-
-      const loaded: WidgetMessage[] = (data.messages ?? []).map((m: { id: string; role: string; content: string }) => ({
-        id: m.id,
-        role: m.role as 'user' | 'assistant',
-        content: m.content,
-        mode: data.mode,
-      }))
-
-      setMessages(loaded)
-      setConversationId(id)
-      if (data.mode) setMode(data.mode)
-      setShowHistory(false)
-    } catch {
-      // non-critical
+  const onResizeDoubleClick = () => {
+    if (panelWidth <= 320) {
+      setPanelWidth(lastPanelWidthRef.current)
+    } else {
+      lastPanelWidthRef.current = panelWidth
+      setPanelWidth(320)
     }
-  }, [setMode])
-
-  /** Start a fresh conversation */
-  const startNewChat = useCallback(() => {
-    setMessages([])
-    setConversationId(null)
-    setShowHistory(false)
-  }, [])
-
-  const sendMessage = useCallback(
-    async (text: string, sendMode: ChatMode) => {
-      if (streaming) return
-
-      const userId = crypto.randomUUID()
-      const assistantId = crypto.randomUUID()
-
-      // Create conversation on first message
-      let activeConvId = conversationId
-      if (!activeConvId) {
-        activeConvId = await createConversation(generateTitle(text))
-        if (activeConvId) setConversationId(activeConvId)
-      }
-
-      const historySnapshot = messages
-        .filter((m) => !m.streaming && !m.isError)
-        .map((m) => ({ role: m.role, content: m.content }))
-        .slice(-MAX_HISTORY)
-
-      setMessages((prev) => [
-        ...prev,
-        { id: userId, role: 'user', content: text, mode: sendMode },
-        { id: assistantId, role: 'assistant', content: '', streaming: true, mode: sendMode, toolCalls: [] },
-      ])
-      setStreaming(true)
-
-      let finalContent = ''
-
-      try {
-        const res = await fetch('/api/ai/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            message: text,
-            mode: sendMode,
-            blockId: currentBlockId ?? undefined,
-            conversationHistory: historySnapshot,
-          }),
-        })
-
-        if (!res.ok || !res.body) {
-          setMessages((prev) =>
-            prev.map((m) =>
-              m.id === assistantId
-                ? { ...m, content: 'AI unavailable. Please try again.', streaming: false, isError: true }
-                : m
-            )
-          )
-          return
-        }
-
-        const reader = res.body.getReader()
-        const decoder = new TextDecoder()
-        let accumulated = ''
-
-        while (true) {
-          const { done, value } = await reader.read()
-          if (done) break
-
-          const raw = decoder.decode(value, { stream: true })
-          const chunks = parseSseChunk(raw)
-
-          for (const chunk of chunks) {
-            if (chunk.type === 'text') {
-              accumulated += chunk.text
-              setMessages((prev) =>
-                prev.map((m) =>
-                  m.id === assistantId ? { ...m, content: accumulated } : m
-                )
-              )
-            } else if (chunk.type === 'tool_call') {
-              setMessages((prev) =>
-                prev.map((m) =>
-                  m.id === assistantId
-                    ? { ...m, toolCalls: [...(m.toolCalls ?? []), chunk.tool_call] }
-                    : m
-                )
-              )
-            } else if (chunk.type === 'suggestions') {
-              setMessages((prev) =>
-                prev.map((m) =>
-                  m.id === assistantId
-                    ? { ...m, suggestions: chunk.suggestions }
-                    : m
-                )
-              )
-            } else if (chunk.type === 'plan_data') {
-              setMessages((prev) =>
-                prev.map((m) =>
-                  m.id === assistantId
-                    ? { ...m, planData: chunk.plan_data }
-                    : m
-                )
-              )
-            } else if (chunk.type === 'done') {
-              // Strip structured tags from final visible content
-              finalContent = stripStructuredTags(accumulated)
-              setMessages((prev) =>
-                prev.map((m) =>
-                  m.id === assistantId
-                    ? { ...m, content: finalContent!, streaming: false }
-                    : m
-                )
-              )
-            } else if (chunk.type === 'error') {
-              setMessages((prev) =>
-                prev.map((m) =>
-                  m.id === assistantId
-                    ? { ...m, content: chunk.message, streaming: false, isError: true }
-                    : m
-                )
-              )
-            }
-          }
-        }
-      } catch {
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === assistantId
-              ? { ...m, content: 'Network error. Please try again.', streaming: false, isError: true }
-              : m
-          )
-        )
-      } finally {
-        setStreaming(false)
-        // Auto-save messages to DB
-        if (activeConvId && finalContent) {
-          saveMessages(activeConvId, text, finalContent)
-        }
-      }
-    },
-    [streaming, messages, conversationId, createConversation, currentBlockId]
-  )
+  }
 
   function handleSend(text: string) {
     if (mode === 'execute') {
@@ -316,6 +139,52 @@ export function ChatWidget() {
 
   function handleExecuteCancel() {
     setPendingMessage(null)
+  }
+
+  function handleLoadConversation(id: string) {
+    loadConversation(id, setMode)
+    setShowHistory(false)
+  }
+
+  function handleNewChat() {
+    startNewChat()
+    setShowHistory(false)
+  }
+
+  function handleRegenerate() {
+    // Find the last user message and re-send it
+    const lastUserMsg = [...messages].reverse().find((m) => m.role === 'user')
+    if (!lastUserMsg) return
+    // Remove the last assistant message
+    setMessages((prev) => {
+      const lastAssistantIdx = prev.findLastIndex((m) => m.role === 'assistant')
+      if (lastAssistantIdx === -1) return prev
+      return prev.filter((_, i) => i !== lastAssistantIdx)
+    })
+    sendMessage(lastUserMsg.content, mode)
+  }
+
+  // Action preview handlers (execute mode)
+  function handleApproveAction(actionId: string, editedInput?: Record<string, unknown>) {
+    // Find the action from the latest message's previews
+    const lastMsg = [...messages].reverse().find((m) => m.actionPreviews?.length)
+    const action = lastMsg?.actionPreviews?.find((a) => a.id === actionId)
+    if (!action) return
+    sendMessage(
+      `Approved action: ${action.toolName}${editedInput ? ' (edited)' : ''}`,
+      'execute'
+    )
+  }
+
+  function handleSkipAction(_actionId: string) {
+    // Skipping is handled visually in ChangePreview — no server call needed
+  }
+
+  function handleApproveAllActions() {
+    const lastMsg = [...messages].reverse().find((m) => m.actionPreviews?.length)
+    if (!lastMsg?.actionPreviews) return
+    const names = lastMsg.actionPreviews.map((a) => a.toolName).join(', ')
+    sendMessage(`Approved all actions: ${names}`, 'execute')
   }
 
   // ── Collapsed state: floating button ────────────────────────────────
@@ -356,180 +225,118 @@ export function ChatWidget() {
       className={cn(
         'flex bg-background',
         isPanel
-          ? 'fixed top-0 right-0 z-40 h-full border-l border-border shadow-lg'
+          ? cn(
+              // Mobile: full-screen overlay (float fallback)
+              'fixed inset-0 z-50',
+              // Desktop: inline flex child in SidebarProvider layout
+              'md:relative md:inset-auto md:z-auto md:h-screen md:sticky md:top-0 md:shrink-0',
+              'md:border-l md:border-border md:shadow-lg',
+            )
+          : isExpanded
+          ? 'fixed inset-0 z-50'
           : cn(
               'fixed z-50 animate-slide-up',
               'inset-0 rounded-none',
               'md:inset-auto md:bottom-5 md:right-5 md:h-[600px] md:max-h-[calc(100vh-4rem)]',
               'md:rounded-lg md:border md:border-border md:shadow-elevation-3',
             ),
-        !isPanel && (showHistory
+        !isPanel && !isExpanded && (showHistory
           ? 'md:w-[min(700px,calc(100vw-3rem))]'
           : 'md:w-[min(480px,calc(100vw-3rem))]')
       )}
-      style={isPanel ? { width: `${panelWidth}px` } : undefined}
+      style={isPanel && isDesktop ? { width: `${panelWidth}px` } : undefined}
     >
-      {/* Resize handle (panel mode only) */}
-      {isPanel && (
+      {/* Resize handle (panel mode, desktop only) */}
+      {isPanel && isDesktop && (
         <div
           onMouseDown={onResizeStart}
-          className="w-1 cursor-col-resize hover:bg-primary/20 active:bg-primary/30 transition-colors shrink-0"
+          onDoubleClick={onResizeDoubleClick}
+          className={cn(
+            'w-1 shrink-0 cursor-col-resize relative group',
+            'before:absolute before:inset-y-0 before:-left-1.5 before:-right-1.5',
+            'after:absolute after:inset-y-0 after:left-1/2 after:-translate-x-1/2 after:w-0.5',
+            'after:transition-colors after:duration-150',
+            'after:bg-transparent group-hover:after:bg-border group-active:after:bg-primary',
+          )}
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="Resize chat panel"
         />
       )}
 
       {/* History sidebar */}
       <ChatHistorySidebar
         activeConversationId={conversationId}
-        onSelect={loadConversation}
-        onNewChat={startNewChat}
+        onSelect={handleLoadConversation}
+        onNewChat={handleNewChat}
         visible={showHistory}
       />
 
       {/* Main chat panel */}
       <div className="flex flex-col flex-1 min-w-0">
-        {/* Header */}
-        <div className="flex items-center justify-between gap-2 border-b px-3 py-2 shrink-0">
-          <div className="flex items-center gap-1">
+        <ChatHeader
+          mode={mode}
+          onModeChange={setMode}
+          layout={layout}
+          onLayoutChange={setLayout}
+          showHistory={showHistory}
+          onToggleHistory={() => setShowHistory((v) => !v)}
+          onClose={close}
+        />
+
+        <ChatMessageList
+          messages={messages}
+          mode={mode}
+          isOpen={isOpen}
+          conversationId={conversationId}
+          onAcceptPlan={(plan, steps) => {
+            const stepsDesc = plan.steps
+              .filter((s) => steps.includes(s.index))
+              .map((s) => `${s.index}. ${s.description}`)
+              .join('\n')
+            setMode('execute')
+            handleSend(`Execute this plan: ${plan.title}\n${stepsDesc}`)
+          }}
+          onRejectPlan={(reason) => handleSend(`Reject this plan: ${reason}`)}
+          onAddMore={(text) => handleSend(`Add to plan: ${text}`)}
+          onSuggestionSelect={(label) => handleSend(label)}
+          onRegenerate={handleRegenerate}
+          onApproveAction={handleApproveAction}
+          onSkipAction={handleSkipAction}
+          onApproveAllActions={handleApproveAllActions}
+        />
+
+        {/* Stop generating button */}
+        {streaming && (
+          <div className="flex justify-center border-t px-3 py-2 shrink-0">
             <button
               type="button"
-              onClick={() => setShowHistory((v) => !v)}
-              className={cn(
-                'flex h-7 w-7 items-center justify-center rounded-md transition-colors',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                showHistory
-                  ? 'text-foreground bg-muted'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-              )}
-              aria-label="Toggle chat history"
+              onClick={stopGenerating}
+              className="flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
             >
-              <History className="h-4 w-4" />
+              <span className="h-2 w-2 rounded-sm bg-current" />
+              Stop generating
             </button>
-            <ModeSelector mode={mode} onModeChange={setMode} />
           </div>
-          <div className="flex items-center gap-0.5">
-            <button
-              type="button"
-              onClick={() => setLayout(isPanel ? 'float' : 'panel')}
-              className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              aria-label={isPanel ? 'Switch to floating mode' : 'Switch to panel mode'}
-            >
-              {isPanel ? <PanelRightClose className="h-4 w-4" /> : <PanelRightOpen className="h-4 w-4" />}
-            </button>
-            <button
-              type="button"
-              onClick={close}
-              className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              aria-label="Close chat"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-
-        {/* Messages */}
-        <div
-          className="flex-1 overflow-y-auto px-3 py-3 space-y-3 bg-muted/50"
-          role="log"
-          aria-label="Chat messages"
-        >
-          {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center py-8">
-              <MessageCircle className="h-8 w-8 text-muted-foreground mb-3" />
-              <p className="text-sm font-medium text-muted-foreground mb-1">How can I help?</p>
-              <p className="text-xs text-muted-foreground max-w-[280px]">
-                {mode === 'discuss' && 'Ask questions about your blocks, workflows, and events.'}
-                {mode === 'plan' && 'Describe what you want to achieve and I\'ll create a step-by-step plan.'}
-                {mode === 'execute' && 'Tell me what to do and I\'ll take action in the system.'}
-              </p>
-            </div>
-          ) : (
-            messages.map((msg) => (
-              <div key={msg.id}>
-                {/* Plan mode: structured rendering for assistant messages */}
-                {msg.role === 'assistant' && msg.mode === 'plan' && !msg.isError && !msg.streaming && msg.content ? (
-                  <div className="bg-background border border-border rounded-2xl rounded-bl-sm px-4 py-2.5 max-w-[85%]">
-                    <PlanMessage
-                      content={msg.content}
-                      planData={msg.planData}
-                      onAccept={(plan, steps) => {
-                        const stepsDesc = plan.steps
-                          .filter((s) => steps.includes(s.index))
-                          .map((s) => `${s.index}. ${s.description}`)
-                          .join('\n')
-                        setMode('execute')
-                        handleSend(`Execute this plan: ${plan.title}\n${stepsDesc}`)
-                      }}
-                      onReject={(reason) => {
-                        handleSend(`Reject this plan: ${reason}`)
-                      }}
-                      onAddMore={(text) => {
-                        handleSend(`Add to plan: ${text}`)
-                      }}
-                    />
-                  </div>
-                ) : (
-                  <MessageBubble
-                    role={msg.role}
-                    content={msg.content}
-                    streaming={msg.streaming}
-                    isError={msg.isError}
-                  />
-                )}
-
-                {/* Action suggestion chips (discuss mode) */}
-                {msg.role === 'assistant' && msg.suggestions && msg.suggestions.length > 0 && !msg.streaming && (
-                  <ActionSuggestionChips
-                    suggestions={msg.suggestions}
-                    onSelect={(suggestion) => {
-                      handleSend(suggestion.label)
-                    }}
-                  />
-                )}
-
-                {/* Tool call indicators */}
-                {msg.toolCalls && msg.toolCalls.length > 0 && (
-                  <div className="mt-1.5 space-y-1.5">
-                    {msg.toolCalls.map((tc, i) => {
-                      const creationData = extractBlockCreationData(tc)
-                      if (creationData) {
-                        return <BlockCreationPreview key={i} {...creationData} />
-                      }
-                      return (
-                        <div
-                          key={i}
-                          className={cn(
-                            'flex items-center gap-1.5 text-xs rounded-md px-2.5 py-1 max-w-[85%]',
-                            tc.result.success
-                              ? 'bg-success/5 text-success border border-success/20'
-                              : 'bg-destructive/5 text-destructive border border-destructive/20'
-                          )}
-                        >
-                          <Wrench className="h-3 w-3 shrink-0" />
-                          <span className="font-medium">{tc.name}</span>
-                          <span className="text-muted-foreground">—</span>
-                          <span className="truncate">
-                            {tc.result.success
-                              ? JSON.stringify(tc.result.data).slice(0, 60)
-                              : tc.result.error}
-                          </span>
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
-            ))
-          )}
-          <div ref={bottomRef} aria-hidden="true" />
-        </div>
+        )}
 
         {/* Execute mode confirmation */}
         {pendingMessage && (
           <ExecuteConfirmation onConfirm={handleExecuteConfirm} onCancel={handleExecuteCancel} />
         )}
 
+        {/* Mode suggestion banner */}
+        {suggestedMode && !streaming && (
+          <ModeSuggestionBanner
+            suggestedMode={suggestedMode}
+            reason={`Switch to ${suggestedMode} mode`}
+            onAccept={() => setMode(suggestedMode)}
+            onDismiss={() => setSuggestedMode(null)}
+          />
+        )}
+
         {/* Input */}
-        <ChatInput onSend={handleSend} disabled={streaming} />
+        <ChatInput onSend={handleSend} disabled={streaming} currentMode={mode} onModeChange={setMode} />
       </div>
     </div>
   )

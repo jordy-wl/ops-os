@@ -1,8 +1,9 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Loader2, Search } from 'lucide-react'
+import { ArrowRight, Loader2, Search } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import type { ChatMode } from './chat-widget-provider'
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -15,6 +16,8 @@ interface MentionBlock {
 interface ChatInputProps {
   onSend: (message: string, mentionedBlockIds?: string[]) => void
   disabled?: boolean
+  currentMode: ChatMode
+  onModeChange: (mode: ChatMode) => void
 }
 
 // ─── Constants ──────────────────────────────────────────────────────────────
@@ -22,6 +25,24 @@ interface ChatInputProps {
 const DEBOUNCE_MS = 300
 const MENTION_TRIGGER = '@'
 const MAX_RESULTS = 5
+
+const NEXT_MODE: Record<ChatMode, ChatMode> = {
+  discuss: 'plan',
+  plan: 'execute',
+  execute: 'discuss',
+}
+
+const MODE_STYLE: Record<ChatMode, string> = {
+  plan: 'text-amber-600 border-amber-400 hover:bg-amber-50 dark:text-amber-400 dark:border-amber-600 dark:hover:bg-amber-950',
+  execute: 'text-green-600 border-green-400 hover:bg-green-50 dark:text-green-400 dark:border-green-600 dark:hover:bg-green-950',
+  discuss: 'text-blue-600 border-blue-400 hover:bg-blue-50 dark:text-blue-400 dark:border-blue-600 dark:hover:bg-blue-950',
+}
+
+const MODE_LABEL: Record<ChatMode, string> = {
+  discuss: 'Discuss',
+  plan: 'Plan',
+  execute: 'Execute',
+}
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -87,7 +108,7 @@ function blockTypeBadgeClass(): string {
  * @param onSend   - Called with the trimmed message and optional array of mentioned block IDs
  * @param disabled - True while a streaming response is in progress
  */
-export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
+export function ChatInput({ onSend, disabled = false, currentMode, onModeChange }: ChatInputProps) {
   const [value, setValue] = useState('')
   const [mentionedBlocks, setMentionedBlocks] = useState<MentionBlock[]>([])
 
@@ -436,9 +457,26 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
           </svg>
         </button>
       </div>
-      <p className="mt-1.5 text-center text-xs text-muted-foreground">
-        Enter to send · Shift+Enter for newline · @ to mention a block
-      </p>
+      <div className="mt-1.5 flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => onModeChange(NEXT_MODE[currentMode])}
+          aria-label={`Switch to ${MODE_LABEL[NEXT_MODE[currentMode]]} mode`}
+          className={cn(
+            'text-xs font-medium px-2 py-0.5 rounded-full border transition-colors',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+            MODE_STYLE[NEXT_MODE[currentMode]]
+          )}
+        >
+          <span className="inline-flex items-center gap-1">
+            <ArrowRight className="h-3 w-3" aria-hidden="true" />
+            {MODE_LABEL[NEXT_MODE[currentMode]]} mode
+          </span>
+        </button>
+        <p className="text-xs text-muted-foreground">
+          Enter to send · Shift+Enter for newline · @ to mention
+        </p>
+      </div>
     </div>
   )
 }

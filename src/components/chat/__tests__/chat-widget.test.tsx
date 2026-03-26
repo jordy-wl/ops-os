@@ -21,9 +21,23 @@ vi.mock('lucide-react', () => {
     History: icon('history'),
     PanelRightOpen: icon('panel-right-open'),
     PanelRightClose: icon('panel-right-close'),
+    Maximize2: icon('maximize-2'),
+    ArrowRight: icon('arrow-right'),
+    Sparkles: icon('sparkles'),
     Plus: icon('plus'),
     Clock: icon('clock'),
     Trash2: icon('trash-2'),
+    Check: icon('check'),
+    SkipForward: icon('skip-forward'),
+    Shield: icon('shield'),
+    ChevronDown: icon('chevron-down'),
+    ChevronUp: icon('chevron-up'),
+    Copy: icon('copy'),
+    RefreshCw: icon('refresh-cw'),
+    ThumbsUp: icon('thumbs-up'),
+    ThumbsDown: icon('thumbs-down'),
+    Square: icon('square'),
+    ExternalLink: icon('external-link'),
   }
 })
 
@@ -48,6 +62,21 @@ function WidgetTestWrapper({ children }: { children: React.ReactNode }) {
 
 // jsdom doesn't implement scrollIntoView
 Element.prototype.scrollIntoView = vi.fn()
+
+// jsdom doesn't implement matchMedia
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: vi.fn().mockImplementation((query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  })),
+})
 
 describe('ChatWidget', () => {
   beforeEach(() => {

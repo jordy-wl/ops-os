@@ -6,13 +6,13 @@ import Anthropic from '@anthropic-ai/sdk'
 import { withAuth } from '@/lib/auth/withAuth'
 import { assembleContext, contextToPromptString } from '@/lib/context-assembly'
 import { loadDeltaContext } from '@/lib/ai/delta-context-loader'
-import { CHAT_TOOLS, executeChatTool } from '@/lib/ai/chat-tools'
+import { CHAT_TOOLS } from '@/lib/ai/chat-tools'
+import { buildActionPreviews } from '@/lib/ai/action-preview'
 import { apiError, validationError } from '@/lib/api/responses'
 import { logger } from '@/lib/logger'
 
 const MAX_HISTORY_TURNS = 10
 const MAX_TOKENS = 1000
-const MAX_TOOL_ROUNDS = 3
 const MODEL = 'claude-sonnet-4-6'
 
 const ChatMode = z.enum(['discuss', 'plan', 'execute']).default('discuss')
@@ -33,9 +33,9 @@ const ChatSchema = z.object({
     .default([]),
 })
 
-// Load mode-specific system prompts (v2 for discuss/plan, v1 for execute)
+// Load mode-specific system prompts (v3 for discuss/plan, v2 for execute)
 const PROMPTS: Record<string, string> = {}
-const PROMPT_VERSIONS: Record<string, string> = { discuss: 'v2', plan: 'v2', execute: 'v1' }
+const PROMPT_VERSIONS: Record<string, string> = { discuss: 'v3', plan: 'v3', execute: 'v2' }
 for (const mode of ['discuss', 'plan', 'execute'] as const) {
   PROMPTS[mode] = fs.readFileSync(
     path.join(process.cwd(), `src/prompts/chat-${mode}-mode.${PROMPT_VERSIONS[mode]}.md`),
@@ -93,7 +93,7 @@ export const POST = withAuth(async (req: NextRequest, ctx) => {
 
   const anthropic = new Anthropic()
 
-  // ── Execute mode: handle tool_use with multi-turn loop ─────────────
+  // ── Execute mode: propose actions for user approval ─────────────────
   if (mode === 'execute') {
     return handleExecuteMode(anthropic, systemPrompt, messages, ctx.orgId, ctx.role, blockId, message)
   }
@@ -118,96 +118,66 @@ export const POST = withAuth(async (req: NextRequest, ctx) => {
 })
 
 // ─── Execute Mode Handler ────────────────────────────────────────────────────
+//
+// Action Preview Pattern:
+// Instead of auto-executing tool calls, execute mode now emits an `action_preview`
+// SSE event containing the proposed actions (with descriptions and risk levels).
+// The frontend renders these as an approval UI. When the user approves, the
+// frontend calls POST /api/ai/chat/execute-actions with the approved action IDs.
+// This gives the user explicit control over all mutating operations.
+//
 
 async function handleExecuteMode(
   anthropic: Anthropic,
   systemPrompt: string,
   messages: Anthropic.MessageParam[],
   orgId: string,
-  role: string,
+  _role: string,
   blockId: string | undefined,
   userMessage: string
 ): Promise<NextResponse> {
   const encoder = new TextEncoder()
-  const toolCallsMade: Array<{ name: string; input: unknown; result: unknown }> = []
 
   const readable = new ReadableStream({
     async start(controller) {
       try {
-        let currentMessages = [...messages]
-        let rounds = 0
+        // Single-round call: Claude returns text + optional tool_use blocks.
+        // We do NOT loop or auto-execute — we preview the proposed actions.
+        const response = await anthropic.messages.create({
+          model: MODEL,
+          max_tokens: MAX_TOKENS,
+          system: systemPrompt,
+          messages,
+          tools: CHAT_TOOLS,
+        })
 
-        while (rounds < MAX_TOOL_ROUNDS) {
-          rounds++
-
-          const response = await anthropic.messages.create({
-            model: MODEL,
-            max_tokens: MAX_TOKENS,
-            system: systemPrompt,
-            messages: currentMessages,
-            tools: CHAT_TOOLS,
-          })
-
-          // Stream text blocks
-          for (const block of response.content) {
-            if (block.type === 'text' && block.text) {
-              controller.enqueue(
-                encoder.encode(`data: ${JSON.stringify({ text: block.text })}\n\n`)
-              )
-            }
+        // Stream any text content from Claude first
+        for (const block of response.content) {
+          if (block.type === 'text' && block.text) {
+            controller.enqueue(
+              encoder.encode(`data: ${JSON.stringify({ text: block.text })}\n\n`)
+            )
           }
+        }
 
-          // Check for tool_use
-          const toolUseBlocks = response.content.filter(
-            (b): b is Anthropic.ContentBlock & { type: 'tool_use' } => b.type === 'tool_use'
+        // Collect tool_use blocks (proposed actions)
+        const toolUseBlocks = response.content.filter(
+          (b): b is Anthropic.ContentBlock & { type: 'tool_use' } => b.type === 'tool_use'
+        )
+
+        // If Claude proposed any tool calls, emit them as action previews
+        // instead of executing them. The user must approve via the
+        // /api/ai/chat/execute-actions endpoint.
+        if (toolUseBlocks.length > 0) {
+          const previews = buildActionPreviews(
+            toolUseBlocks.map((b) => ({ name: b.name, input: b.input }))
           )
 
-          if (toolUseBlocks.length === 0 || response.stop_reason !== 'tool_use') {
-            break // No more tools — done
-          }
-
-          // Execute tools and build results
-          const toolResults: Anthropic.ToolResultBlockParam[] = []
-          for (const toolBlock of toolUseBlocks) {
-            const result = await executeChatTool(
-              toolBlock.name,
-              toolBlock.input as Record<string, unknown>,
-              orgId,
-              role as 'ops-admin' | 'ops-user' | 'compliance-approver'
+          controller.enqueue(
+            encoder.encode(
+              `data: ${JSON.stringify({ action_preview: previews })}\n\n`
             )
-
-            toolCallsMade.push({
-              name: toolBlock.name,
-              input: toolBlock.input,
-              result,
-            })
-
-            // Emit tool call info to client
-            controller.enqueue(
-              encoder.encode(
-                `data: ${JSON.stringify({
-                  tool_call: {
-                    name: toolBlock.name,
-                    input: toolBlock.input,
-                    result,
-                  },
-                })}\n\n`
-              )
-            )
-
-            toolResults.push({
-              type: 'tool_result',
-              tool_use_id: toolBlock.id,
-              content: JSON.stringify(result),
-            })
-          }
-
-          // Continue conversation with tool results
-          currentMessages = [
-            ...currentMessages,
-            { role: 'assistant', content: response.content },
-            { role: 'user', content: toolResults },
-          ]
+          )
         }
 
         logger.info('ai-chat', 'ai.chat_completed', {
@@ -215,7 +185,7 @@ async function handleExecuteMode(
           block_id: blockId ?? null,
           message_length: userMessage.length,
           mode: 'execute',
-          tool_calls: toolCallsMade.length,
+          proposed_actions: toolUseBlocks.length,
         })
 
         controller.enqueue(encoder.encode('data: [DONE]\n\n'))
@@ -289,6 +259,18 @@ function streamSseResponse(
           }
         }
 
+        const modeSuggestion = extractTagContent(accumulatedText, 'MODE_SUGGESTION')
+        if (modeSuggestion) {
+          try {
+            const parsed = JSON.parse(modeSuggestion)
+            controller.enqueue(
+              encoder.encode(`data: ${JSON.stringify({ mode_suggestion: parsed })}\n\n`)
+            )
+          } catch {
+            // malformed mode suggestion JSON — skip silently
+          }
+        }
+
         logger.info('ai-chat', 'ai.chat_completed', {
           org_id: orgId,
           block_id: blockId ?? null,
@@ -297,6 +279,7 @@ function streamSseResponse(
           mode,
           has_suggestions: !!suggestions,
           has_plan_data: !!planJson,
+          has_mode_suggestion: !!modeSuggestion,
         })
 
         controller.enqueue(encoder.encode('data: [DONE]\n\n'))

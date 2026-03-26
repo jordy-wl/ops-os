@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import type { PageContext } from '@/app/api/ai/page-context/route'
 
 export type ChatMode = 'discuss' | 'plan' | 'execute'
-export type ChatLayout = 'float' | 'panel'
+export type ChatLayout = 'float' | 'panel' | 'expanded'
 
 interface ChatWidgetState {
   isOpen: boolean
@@ -13,6 +13,10 @@ interface ChatWidgetState {
   setMode: (mode: ChatMode) => void
   layout: ChatLayout
   setLayout: (layout: ChatLayout) => void
+  suggestedMode: ChatMode | null
+  setSuggestedMode: (mode: ChatMode | null) => void
+  trustedToolTypes: Set<string>
+  trustToolType: (toolName: string) => void
   toggle: () => void
   open: () => void
   close: () => void
@@ -24,6 +28,8 @@ const ChatWidgetContext = createContext<ChatWidgetState | null>(null)
 
 const STORAGE_KEY = 'ops-os-chat-widget-open'
 const LAYOUT_STORAGE_KEY = 'ops-os-chat-layout'
+const STATE_VERSION_KEY = 'ops-os-chat-state-v'
+const CURRENT_STATE_VERSION = 2
 
 /** Extract block ID from pathname like /blocks/UUID or /library/blocks/UUID */
 function extractBlockId(pathname: string): string | null {
@@ -34,18 +40,39 @@ function extractBlockId(pathname: string): string | null {
 export function ChatWidgetProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
-  const [mode, setMode] = useState<ChatMode>('discuss')
+  const [mode, setModeState] = useState<ChatMode>('discuss')
   const [layout, setLayoutState] = useState<ChatLayout>('float')
   const [pageContext, setPageContext] = useState<PageContext | null>(null)
+  const [suggestedMode, setSuggestedMode] = useState<ChatMode | null>(null)
+  const [trustedToolTypes, setTrustedToolTypes] = useState<Set<string>>(new Set())
 
   const currentBlockId = extractBlockId(pathname)
 
-  // Restore open state + layout from localStorage on mount
+  // Clear suggestedMode when mode changes
+  const setMode = useCallback((m: ChatMode) => {
+    setModeState(m)
+    setSuggestedMode(null)
+  }, [])
+
+  // Add a tool type to the trusted set (session-only, not persisted)
+  const trustToolType = useCallback((toolName: string) => {
+    setTrustedToolTypes((prev) => new Set(prev).add(toolName))
+  }, [])
+
+  // Restore open state + layout from localStorage on mount (with version migration)
   useEffect(() => {
+    const version = localStorage.getItem(STATE_VERSION_KEY)
+    if (version !== String(CURRENT_STATE_VERSION)) {
+      // Clear stale state and reinitialize
+      localStorage.removeItem(STORAGE_KEY)
+      localStorage.removeItem(LAYOUT_STORAGE_KEY)
+      localStorage.setItem(STATE_VERSION_KEY, String(CURRENT_STATE_VERSION))
+      return
+    }
     const saved = localStorage.getItem(STORAGE_KEY)
     if (saved === 'true') setIsOpen(true)
-    const savedLayout = localStorage.getItem(LAYOUT_STORAGE_KEY)
-    if (savedLayout === 'panel') setLayoutState('panel')
+    const savedLayout = localStorage.getItem(LAYOUT_STORAGE_KEY) as ChatLayout | null
+    if (savedLayout === 'panel' || savedLayout === 'expanded') setLayoutState(savedLayout)
   }, [])
 
   // Persist open state
@@ -87,7 +114,7 @@ export function ChatWidgetProvider({ children }: { children: React.ReactNode }) 
 
   return (
     <ChatWidgetContext.Provider
-      value={{ isOpen, mode, setMode, layout, setLayout, toggle, open, close, pageContext, currentBlockId }}
+      value={{ isOpen, mode, setMode, layout, setLayout, suggestedMode, setSuggestedMode, trustedToolTypes, trustToolType, toggle, open, close, pageContext, currentBlockId }}
     >
       {children}
     </ChatWidgetContext.Provider>

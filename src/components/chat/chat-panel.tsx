@@ -5,6 +5,7 @@ import { MessageList, type ChatMessage } from './message-list'
 import { ChatInput } from './chat-input'
 import { BlockContextPicker } from './block-context-picker'
 import { parseSseChunk } from '@/lib/chat/parse-sse'
+import type { ChatMode } from './chat-widget-provider'
 import type { Block } from '@/lib/context-assembly'
 
 interface ChatPanelProps {
@@ -34,6 +35,7 @@ export function ChatPanel({ blocks, mode = 'full-page' }: ChatPanelProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [streaming, setStreaming] = useState(false)
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null)
+  const [chatMode, setChatMode] = useState<ChatMode>('discuss')
 
   const selectedBlock = selectedBlockId
     ? blocks.find((b) => b.id === selectedBlockId) ?? null
@@ -156,7 +158,7 @@ export function ChatPanel({ blocks, mode = 'full-page' }: ChatPanelProps) {
       <MessageList messages={messages} />
 
       {/* Input */}
-      <ChatInput onSend={send} disabled={streaming} />
+      <ChatInput onSend={send} disabled={streaming} currentMode={chatMode} onModeChange={setChatMode} />
     </div>
   )
 }
