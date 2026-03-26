@@ -42,7 +42,7 @@ export function ChatPanel({ blocks, mode = 'full-page' }: ChatPanelProps) {
     : null
 
   const send = useCallback(
-    async (userText: string) => {
+    async (userText: string, _mentions?: unknown) => {
       if (streaming) return
 
       const userId = crypto.randomUUID()

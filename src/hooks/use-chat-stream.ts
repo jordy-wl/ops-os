@@ -4,6 +4,7 @@ import { useCallback, useRef, useState } from 'react'
 import { parseSseChunk, stripStructuredTags } from '@/lib/chat/parse-sse'
 import type { ChatMode } from '@/components/chat/chat-widget-provider'
 import type { ToolCallChunk, ActionSuggestion, PlanData, ActionPreview, ModeSuggestion } from '@/lib/chat/parse-sse'
+import type { MentionResolution } from '@/lib/chat/mention-engine'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -128,7 +129,7 @@ export function useChatStream({ mode, currentBlockId, pageContext, onModeSuggest
 
   /** Send a message and stream the response */
   const sendMessage = useCallback(
-    async (text: string, sendMode: ChatMode) => {
+    async (text: string, sendMode: ChatMode, mentions?: MentionResolution[]) => {
       if (streaming) return
 
       const userId = crypto.randomUUID()
@@ -166,6 +167,7 @@ export function useChatStream({ mode, currentBlockId, pageContext, onModeSuggest
             mode: sendMode,
             blockId: currentBlockId ?? undefined,
             conversationHistory: historySnapshot,
+            mentions: mentions && mentions.length > 0 ? mentions : undefined,
           }),
           signal: controller.signal,
         })

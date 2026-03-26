@@ -1,9 +1,20 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { ArrowRight, Loader2, Search } from 'lucide-react'
+import { ArrowLeft, ArrowRight, ChevronRight, Loader2, Search } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { ChatMode } from './chat-widget-provider'
+import type { MentionResolution, MentionState } from '@/lib/chat/mention-engine'
+import {
+  parseMentionState,
+  advanceStage,
+  resolveMention,
+  getMentionReplaceRange,
+  getBreadcrumbs,
+  prettifyName,
+  INITIAL_MENTION_STATE,
+} from '@/lib/chat/mention-engine'
+import { MentionPillRow } from './mention-pill'
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -13,8 +24,33 @@ interface MentionBlock {
   type: string
 }
 
-interface ChatInputProps {
-  onSend: (message: string, mentionedBlockIds?: string[]) => void
+/** Results from /api/blocks/mention-search by stage */
+interface TypeResult {
+  type_name: string
+  display_name: string
+  icon: string
+  block_count: number
+}
+
+interface FieldResult {
+  field: string
+  label: string
+  field_type: string
+}
+
+interface ValueResult {
+  value: string
+  count: number
+}
+
+type DropdownItem =
+  | { kind: 'block'; block: MentionBlock }
+  | { kind: 'type'; data: TypeResult }
+  | { kind: 'field'; data: FieldResult }
+  | { kind: 'value'; data: ValueResult }
+
+export interface ChatInputProps {
+  onSend: (message: string, mentions?: MentionResolution[]) => void
   disabled?: boolean
   currentMode: ChatMode
   onModeChange: (mode: ChatMode) => void
@@ -22,9 +58,7 @@ interface ChatInputProps {
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
-const DEBOUNCE_MS = 300
-const MENTION_TRIGGER = '@'
-const MAX_RESULTS = 5
+const DEBOUNCE_MS = 250
 
 const NEXT_MODE: Record<ChatMode, ChatMode> = {
   discuss: 'plan',
@@ -44,150 +78,151 @@ const MODE_LABEL: Record<ChatMode, string> = {
   execute: 'Execute',
 }
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
-
-/**
- * Find the @mention query at the current cursor position.
- * Returns the query string (text after @) and the start index of the @,
- * or null if the cursor is not inside an @mention.
- */
-function getMentionQuery(text: string, cursorPos: number): { query: string; startIndex: number } | null {
-  // Walk backwards from cursor to find the nearest unescaped @
-  const before = text.slice(0, cursorPos)
-  const atIndex = before.lastIndexOf(MENTION_TRIGGER)
-  if (atIndex === -1) return null
-
-  // The @ must be at the start of input or preceded by a space/newline
-  if (atIndex > 0 && !/\s/.test(before[atIndex - 1])) return null
-
-  const query = before.slice(atIndex + 1)
-
-  // If the query contains a space it means the mention was already completed or abandoned
-  // Allow spaces in block names during search (user might type "Thornfield Cap")
-  // But if there are two consecutive spaces, the mention is abandoned
-  if (/\s{2,}/.test(query)) return null
-
-  return { query, startIndex: atIndex }
-}
-
-/**
- * Maps a block type key to a short display label for the badge.
- */
-function blockTypeLabel(type: string): string {
-  const labels: Record<string, string> = {
-    client: 'Client',
-    deal: 'Deal',
-    project: 'Project',
-    contact: 'Contact',
-    contract: 'Contract',
-    workflow_template: 'Template',
-    workflow_instance: 'Instance',
-    task_queue_item: 'Task',
-  }
-  return labels[type] ?? type
-}
-
-/**
- * Maps a block type key to a Tailwind badge color class.
- */
-function blockTypeBadgeClass(): string {
-  return 'bg-muted text-foreground'
+const STAGE_BORDER_COLOR: Record<string, string> = {
+  type: 'border-l-blue-500',
+  field: 'border-l-amber-500',
+  value: 'border-l-green-500',
 }
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
-/**
- * ChatInput -- textarea + send button for composing chat messages with
- * @mention block autocomplete support.
- *
- * When the user types `@`, a dropdown appears above the input showing
- * matching blocks from `GET /api/blocks?q=<query>&limit=5`. Keyboard
- * navigation (ArrowUp/ArrowDown/Enter/Escape) and click selection are
- * both supported. Selected blocks are tracked by ID and passed to onSend.
- *
- * @param onSend   - Called with the trimmed message and optional array of mentioned block IDs
- * @param disabled - True while a streaming response is in progress
- */
 export function ChatInput({ onSend, disabled = false, currentMode, onModeChange }: ChatInputProps) {
   const [value, setValue] = useState('')
-  const [mentionedBlocks, setMentionedBlocks] = useState<MentionBlock[]>([])
+  const [resolvedMentions, setResolvedMentions] = useState<MentionResolution[]>([])
 
-  // Mention dropdown state
-  const [showMention, setShowMention] = useState(false)
-  const [mentionQuery, setMentionQuery] = useState('')
-  const [mentionStartIndex, setMentionStartIndex] = useState(0)
-  const [mentionResults, setMentionResults] = useState<MentionBlock[]>([])
-  const [mentionLoading, setMentionLoading] = useState(false)
+  // Mention state machine
+  const [mentionState, setMentionState] = useState<MentionState>(INITIAL_MENTION_STATE)
+  const [dropdownItems, setDropdownItems] = useState<DropdownItem[]>([])
+  const [loading, setLoading] = useState(false)
   const [activeIndex, setActiveIndex] = useState(0)
 
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const dropdownRef = useRef<HTMLUListElement>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const abortRef = useRef<AbortController | null>(null)
 
-  // ── Debounced block search ────────────────────────────────────────────
+  // ── Search (stage-aware) ────────────────────────────────────────────────
 
-  const searchBlocks = useCallback(async (query: string) => {
-    // Cancel any in-flight request
-    if (abortRef.current) {
-      abortRef.current.abort()
-    }
+  const search = useCallback(async (state: MentionState) => {
+    if (abortRef.current) abortRef.current.abort()
+    if (!state.active || !state.current) return
 
-    if (!query.trim()) {
-      setMentionResults([])
-      setMentionLoading(false)
-      return
-    }
-
-    setMentionLoading(true)
     const controller = new AbortController()
     abortRef.current = controller
+    setLoading(true)
 
     try {
-      const params = new URLSearchParams({ q: query, limit: String(MAX_RESULTS) })
-      const res = await fetch(`/api/blocks?${params.toString()}`, {
+      const { stage } = state.current
+
+      // Plain block name search (non-hierarchical type stage with query)
+      if (stage === 'type' && !state.hierarchical) {
+        const query = state.current.query
+        if (!query.trim()) {
+          // Show type list when @ just typed (empty query)
+          await searchTypes('', controller.signal)
+          return
+        }
+        // Search both blocks by name AND types
+        await searchBlocksAndTypes(query, controller.signal)
+        return
+      }
+
+      // Hierarchical search via mention-search API
+      const params = new URLSearchParams({ stage })
+      if (state.current.query) params.set('q', state.current.query)
+      if ('type' in state.current) params.set('type', state.current.type)
+      if ('field' in state.current) params.set('field', state.current.field)
+
+      const res = await fetch(`/api/blocks/mention-search?${params}`, {
         signal: controller.signal,
       })
 
       if (!res.ok) {
-        setMentionResults([])
+        setDropdownItems([])
         return
       }
 
       const json = await res.json()
-      const blocks: MentionBlock[] = (json.data ?? []).map(
-        (b: { id: string; name: string; type: string }) => ({
-          id: b.id,
-          name: b.name,
-          type: b.type,
-        })
-      )
+      const data = json.data ?? []
 
-      setMentionResults(blocks)
+      if (stage === 'type') {
+        setDropdownItems(data.map((d: TypeResult) => ({ kind: 'type' as const, data: d })))
+      } else if (stage === 'field') {
+        setDropdownItems(data.map((d: FieldResult) => ({ kind: 'field' as const, data: d })))
+      } else if (stage === 'value') {
+        setDropdownItems(data.map((d: ValueResult) => ({ kind: 'value' as const, data: d })))
+      }
       setActiveIndex(0)
     } catch (err: unknown) {
       if (err instanceof DOMException && err.name === 'AbortError') return
-      setMentionResults([])
+      setDropdownItems([])
     } finally {
-      if (!controller.signal.aborted) {
-        setMentionLoading(false)
-      }
+      if (!controller.signal.aborted) setLoading(false)
     }
   }, [])
 
-  const debouncedSearch = useCallback(
-    (query: string) => {
-      if (debounceRef.current) {
-        clearTimeout(debounceRef.current)
+  /** Search types only (when @ is first typed) */
+  async function searchTypes(query: string, signal: AbortSignal) {
+    const params = new URLSearchParams({ stage: 'type' })
+    if (query) params.set('q', query)
+    try {
+      const res = await fetch(`/api/blocks/mention-search?${params}`, { signal })
+      if (!res.ok) { setDropdownItems([]); return }
+      const json = await res.json()
+      setDropdownItems((json.data ?? []).map((d: TypeResult) => ({ kind: 'type' as const, data: d })))
+      setActiveIndex(0)
+    } catch (err: unknown) {
+      if (err instanceof DOMException && err.name === 'AbortError') return
+      setDropdownItems([])
+    } finally {
+      if (!signal.aborted) setLoading(false)
+    }
+  }
+
+  /** Search blocks by name AND types (backward compatible plain @query) */
+  async function searchBlocksAndTypes(query: string, signal: AbortSignal) {
+    try {
+      // Fetch blocks and types in parallel
+      const [blocksRes, typesRes] = await Promise.all([
+        fetch(`/api/blocks?q=${encodeURIComponent(query)}&limit=5`, { signal }),
+        fetch(`/api/blocks/mention-search?stage=type&q=${encodeURIComponent(query)}`, { signal }),
+      ])
+
+      const items: DropdownItem[] = []
+
+      if (blocksRes.ok) {
+        const json = await blocksRes.json()
+        const blocks: MentionBlock[] = (json.data ?? []).map(
+          (b: { id: string; name: string; type: string }) => ({ id: b.id, name: b.name, type: b.type })
+        )
+        items.push(...blocks.map((block) => ({ kind: 'block' as const, block })))
       }
-      debounceRef.current = setTimeout(() => {
-        searchBlocks(query)
-      }, DEBOUNCE_MS)
+
+      if (typesRes.ok) {
+        const json = await typesRes.json()
+        const types: TypeResult[] = json.data ?? []
+        items.push(...types.map((data) => ({ kind: 'type' as const, data })))
+      }
+
+      setDropdownItems(items)
+      setActiveIndex(0)
+    } catch (err: unknown) {
+      if (err instanceof DOMException && err.name === 'AbortError') return
+      setDropdownItems([])
+    } finally {
+      if (!signal.aborted) setLoading(false)
+    }
+  }
+
+  const debouncedSearch = useCallback(
+    (state: MentionState) => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+      debounceRef.current = setTimeout(() => search(state), DEBOUNCE_MS)
     },
-    [searchBlocks]
+    [search]
   )
 
-  // Cleanup debounce and abort on unmount
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current)
@@ -195,218 +230,339 @@ export function ChatInput({ onSend, disabled = false, currentMode, onModeChange 
     }
   }, [])
 
-  // ── Click outside to close dropdown ───────────────────────────────────
+  // ── Click outside to close ──────────────────────────────────────────────
 
   useEffect(() => {
-    if (!showMention) return
-
+    if (!mentionState.active) return
     function handleClickOutside(e: MouseEvent) {
       const target = e.target as Node
       if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(target) &&
-        textareaRef.current &&
-        !textareaRef.current.contains(target)
+        dropdownRef.current && !dropdownRef.current.contains(target) &&
+        textareaRef.current && !textareaRef.current.contains(target)
       ) {
         closeMention()
       }
     }
-
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [showMention])
+  }, [mentionState.active])
 
-  // ── Mention helpers ───────────────────────────────────────────────────
+  // ── Mention helpers ─────────────────────────────────────────────────────
 
   function closeMention() {
-    setShowMention(false)
-    setMentionQuery('')
-    setMentionResults([])
-    setMentionLoading(false)
+    setMentionState(INITIAL_MENTION_STATE)
+    setDropdownItems([])
+    setLoading(false)
     setActiveIndex(0)
     if (debounceRef.current) clearTimeout(debounceRef.current)
     if (abortRef.current) abortRef.current.abort()
   }
 
-  function selectBlock(block: MentionBlock) {
-    // Replace the @query text with @BlockName
-    const before = value.slice(0, mentionStartIndex)
-    const after = value.slice(mentionStartIndex + 1 + mentionQuery.length)
-    const insertText = `@${block.name} `
-    const newValue = before + insertText + after
+  function selectItem(item: DropdownItem) {
+    if (!mentionState.current) return
 
+    if (item.kind === 'block') {
+      // Plain block selection — resolve immediately
+      const { resolution, displayText } = resolveMention(mentionState, {
+        blockId: item.block.id,
+        blockName: item.block.name,
+        blockType: item.block.type,
+      })
+      replaceAndResolve(displayText, resolution)
+      return
+    }
+
+    if (item.kind === 'type') {
+      if (mentionState.current.stage === 'type') {
+        // Advance to field stage
+        const { newMentionText, newStage } = advanceStage(mentionState, item.data.type_name)
+        replaceInInput(newMentionText)
+        const newState: MentionState = {
+          ...mentionState,
+          current: newStage,
+          hierarchical: true,
+        }
+        setMentionState(newState)
+        setDropdownItems([])
+        setLoading(true)
+        search(newState)
+        return
+      }
+      // Type selected at type stage as final resolution
+      const { resolution, displayText } = resolveMention(
+        { ...mentionState, hierarchical: true },
+        { type: item.data.type_name, displayName: item.data.display_name }
+      )
+      replaceAndResolve(displayText, resolution)
+      return
+    }
+
+    if (item.kind === 'field') {
+      // Advance to value stage
+      const { newMentionText, newStage } = advanceStage(mentionState, item.data.field)
+      replaceInInput(newMentionText)
+      const newState: MentionState = {
+        ...mentionState,
+        current: newStage,
+        hierarchical: true,
+      }
+      setMentionState(newState)
+      setDropdownItems([])
+      setLoading(true)
+      search(newState)
+      return
+    }
+
+    if (item.kind === 'value') {
+      // Final resolution
+      const { resolution, displayText } = resolveMention(mentionState, {
+        value: item.data.value,
+      })
+      replaceAndResolve(displayText, resolution)
+    }
+  }
+
+  function replaceInInput(mentionText: string) {
+    const cursorPos = textareaRef.current?.selectionStart ?? value.length
+    const { start } = getMentionReplaceRange(mentionState, cursorPos)
+    const after = value.slice(cursorPos)
+    const newValue = value.slice(0, start) + mentionText + after
     setValue(newValue)
 
-    // Track the mentioned block (avoid duplicates)
-    setMentionedBlocks((prev) => {
-      if (prev.some((b) => b.id === block.id)) return prev
-      return [...prev, block]
-    })
-
-    closeMention()
-
-    // Restore focus and set cursor position after the inserted mention
     requestAnimationFrame(() => {
       if (textareaRef.current) {
-        const newCursorPos = before.length + insertText.length
+        const pos = start + mentionText.length
         textareaRef.current.focus()
-        textareaRef.current.setSelectionRange(newCursorPos, newCursorPos)
+        textareaRef.current.setSelectionRange(pos, pos)
       }
     })
   }
 
-  // ── Submission ────────────────────────────────────────────────────────
+  function replaceAndResolve(displayText: string, resolution: MentionResolution) {
+    const cursorPos = textareaRef.current?.selectionStart ?? value.length
+    const { start } = getMentionReplaceRange(mentionState, cursorPos)
+    const after = value.slice(cursorPos)
+    const insertText = displayText + ' '
+    const newValue = value.slice(0, start) + insertText + after
+    setValue(newValue)
+
+    setResolvedMentions((prev) => [...prev, resolution])
+    closeMention()
+
+    requestAnimationFrame(() => {
+      if (textareaRef.current) {
+        const pos = start + insertText.length
+        textareaRef.current.focus()
+        textareaRef.current.setSelectionRange(pos, pos)
+      }
+    })
+  }
+
+  function handleBack() {
+    if (!mentionState.current) return
+    const stage = mentionState.current.stage
+    if (stage === 'type') { closeMention(); return }
+
+    // Go back one stage
+    if (stage === 'field') {
+      const text = '@'
+      replaceInInput(text)
+      const newState: MentionState = {
+        ...mentionState,
+        current: { stage: 'type', query: '' },
+        hierarchical: false,
+      }
+      setMentionState(newState)
+      setDropdownItems([])
+      setLoading(true)
+      search(newState)
+    } else if (stage === 'value' && mentionState.current.stage === 'value') {
+      const text = `@${mentionState.current.type}/`
+      replaceInInput(text)
+      const newState: MentionState = {
+        ...mentionState,
+        current: { stage: 'field', type: mentionState.current.type, query: '' },
+        hierarchical: true,
+      }
+      setMentionState(newState)
+      setDropdownItems([])
+      setLoading(true)
+      search(newState)
+    }
+  }
+
+  // ── Submission ──────────────────────────────────────────────────────────
 
   function handleSubmit() {
     const trimmed = value.trim()
     if (!trimmed || disabled) return
 
-    const blockIds = mentionedBlocks.length > 0
-      ? mentionedBlocks.map((b) => b.id)
-      : undefined
-
-    onSend(trimmed, blockIds)
+    onSend(trimmed, resolvedMentions.length > 0 ? resolvedMentions : undefined)
     setValue('')
-    setMentionedBlocks([])
+    setResolvedMentions([])
     closeMention()
 
-    // Reset textarea height
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto'
     }
   }
 
-  // ── Keyboard handling ─────────────────────────────────────────────────
+  // ── Keyboard ────────────────────────────────────────────────────────────
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
-    // When mention dropdown is open, intercept navigation keys
-    if (showMention && mentionResults.length > 0) {
+    if (mentionState.active && dropdownItems.length > 0) {
       if (e.key === 'ArrowDown') {
         e.preventDefault()
-        setActiveIndex((prev) => (prev + 1) % mentionResults.length)
+        setActiveIndex((prev) => (prev + 1) % dropdownItems.length)
         return
       }
       if (e.key === 'ArrowUp') {
         e.preventDefault()
-        setActiveIndex((prev) => (prev - 1 + mentionResults.length) % mentionResults.length)
+        setActiveIndex((prev) => (prev - 1 + dropdownItems.length) % dropdownItems.length)
         return
       }
       if (e.key === 'Enter') {
         e.preventDefault()
-        selectBlock(mentionResults[activeIndex])
+        selectItem(dropdownItems[activeIndex])
+        return
+      }
+      if (e.key === 'Tab') {
+        e.preventDefault()
+        const item = dropdownItems[activeIndex]
+        // Tab advances to next stage for types/fields, resolves for blocks/values
+        if (item.kind === 'type' || item.kind === 'field') {
+          selectItem(item)
+        } else {
+          selectItem(item)
+        }
         return
       }
     }
 
-    if (showMention && e.key === 'Escape') {
+    if (mentionState.active && e.key === 'Escape') {
       e.preventDefault()
       closeMention()
       return
     }
 
-    // Normal Enter = submit (Shift+Enter = newline)
+    // Backspace: if we're at a stage boundary, go back
+    if (mentionState.active && mentionState.hierarchical && e.key === 'Backspace') {
+      const cursorPos = textareaRef.current?.selectionStart ?? 0
+      const charBefore = value[cursorPos - 1]
+      if (charBefore === '/') {
+        e.preventDefault()
+        handleBack()
+        return
+      }
+    }
+
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       handleSubmit()
     }
   }
 
-  // ── Input change + mention detection ──────────────────────────────────
+  // ── Input change ────────────────────────────────────────────────────────
 
   function handleInput(e: React.ChangeEvent<HTMLTextAreaElement>) {
     const newValue = e.target.value
     setValue(newValue)
 
-    // Auto-resize: reset then set to scrollHeight (capped at ~5 lines via CSS max-h)
     const el = e.target
     el.style.height = 'auto'
     el.style.height = `${el.scrollHeight}px`
 
-    // Detect @mention
     const cursorPos = el.selectionStart ?? newValue.length
-    const mention = getMentionQuery(newValue, cursorPos)
+    const state = parseMentionState(newValue, cursorPos)
 
-    if (mention) {
-      setShowMention(true)
-      setMentionQuery(mention.query)
-      setMentionStartIndex(mention.startIndex)
-      debouncedSearch(mention.query)
+    if (state) {
+      setMentionState(state)
+      debouncedSearch(state)
     } else {
-      if (showMention) closeMention()
+      if (mentionState.active) closeMention()
     }
   }
 
-  // ── Scroll active item into view ──────────────────────────────────────
+  // ── Scroll active item into view ────────────────────────────────────────
 
   useEffect(() => {
-    if (!showMention || !dropdownRef.current) return
-    const activeEl = dropdownRef.current.children[activeIndex] as HTMLElement | undefined
-    if (activeEl) {
-      activeEl.scrollIntoView({ block: 'nearest' })
-    }
-  }, [activeIndex, showMention])
+    if (!mentionState.active || !dropdownRef.current) return
+    const listEl = dropdownRef.current.querySelector('[role="listbox"]')
+    if (!listEl) return
+    const activeEl = listEl.children[activeIndex] as HTMLElement | undefined
+    if (activeEl) activeEl.scrollIntoView({ block: 'nearest' })
+  }, [activeIndex, mentionState.active])
 
-  // ── Render ────────────────────────────────────────────────────────────
+  // ── Render ──────────────────────────────────────────────────────────────
 
-  const showDropdown = showMention && (mentionLoading || mentionResults.length > 0 || mentionQuery.trim().length > 0)
+  const showDropdown = mentionState.active && (loading || dropdownItems.length > 0)
+  const breadcrumbs = mentionState.active ? getBreadcrumbs(mentionState) : []
+  const currentStage = mentionState.current?.stage ?? 'type'
 
   return (
     <div className="relative border-t bg-background px-4 py-3">
-      {/* Mention autocomplete dropdown — positioned above the input */}
+      {/* Mention dropdown */}
       {showDropdown && (
         <div
-          className="absolute bottom-full left-4 right-4 mb-1 rounded-lg border border-border bg-background shadow-lg z-10"
+          ref={dropdownRef}
+          className={cn(
+            'absolute bottom-full left-4 right-4 mb-1 rounded-lg border border-border bg-background shadow-lg z-10 border-l-2',
+            STAGE_BORDER_COLOR[currentStage]
+          )}
           role="dialog"
-          aria-label="Block mention suggestions"
+          aria-label="Mention suggestions"
         >
-          {mentionLoading && mentionResults.length === 0 ? (
-            <div className="flex items-center gap-2 px-3 py-3 text-sm text-muted-foreground" role="status" aria-label="Searching blocks">
-              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-              <span>Searching blocks...</span>
+          {/* Breadcrumb header */}
+          {breadcrumbs.length > 0 && (
+            <div className="flex items-center gap-1 border-b border-border px-3 py-1.5 text-xs text-muted-foreground">
+              <button
+                type="button"
+                onClick={(e) => { e.preventDefault(); handleBack() }}
+                className="shrink-0 rounded p-0.5 hover:bg-muted focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                aria-label="Go back"
+              >
+                <ArrowLeft className="h-3 w-3" aria-hidden="true" />
+              </button>
+              <span className="text-muted-foreground">@</span>
+              {breadcrumbs.map((crumb, i) => (
+                <span key={i} className="flex items-center gap-1">
+                  <ChevronRight className="h-3 w-3 text-muted-foreground/50" aria-hidden="true" />
+                  <span className="font-medium text-foreground">{crumb}</span>
+                </span>
+              ))}
+              <ChevronRight className="h-3 w-3 text-muted-foreground/50" aria-hidden="true" />
             </div>
-          ) : mentionResults.length === 0 && mentionQuery.trim().length > 0 && !mentionLoading ? (
+          )}
+
+          {/* Content */}
+          {loading && dropdownItems.length === 0 ? (
+            <div className="flex items-center gap-2 px-3 py-3 text-sm text-muted-foreground" role="status">
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+              <span>Searching...</span>
+            </div>
+          ) : dropdownItems.length === 0 ? (
             <div className="px-3 py-3 text-sm text-muted-foreground">
-              No blocks found
+              No results found
             </div>
           ) : (
-            <ul
-              ref={dropdownRef}
-              role="listbox"
-              aria-label="Block suggestions"
-              className="max-h-48 overflow-y-auto py-1"
-            >
-              {mentionResults.map((block, index) => (
+            <ul role="listbox" aria-label="Suggestions" className="max-h-52 overflow-y-auto py-1">
+              {dropdownItems.map((item, index) => (
                 <li
-                  key={block.id}
+                  key={getItemKey(item, index)}
                   role="option"
                   aria-selected={index === activeIndex}
                   className={cn(
                     'flex items-center gap-2 px-3 py-2 text-sm cursor-pointer transition-colors',
-                    index === activeIndex
-                      ? 'bg-muted text-foreground'
-                      : 'text-foreground hover:bg-muted'
+                    index === activeIndex ? 'bg-muted text-foreground' : 'text-foreground hover:bg-muted'
                   )}
-                  onMouseDown={(e) => {
-                    // Use mousedown (not click) to fire before blur
-                    e.preventDefault()
-                    selectBlock(block)
-                  }}
+                  onMouseDown={(e) => { e.preventDefault(); selectItem(item) }}
                   onMouseEnter={() => setActiveIndex(index)}
                 >
-                  <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
-                  <span className="truncate font-medium">{block.name}</span>
-                  <span
-                    className={cn(
-                      'ml-auto shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase leading-none',
-                      blockTypeBadgeClass()
-                    )}
-                  >
-                    {blockTypeLabel(block.type)}
-                  </span>
+                  {renderItem(item)}
                 </li>
               ))}
-              {mentionLoading && mentionResults.length > 0 && (
-                <li className="flex items-center gap-2 px-3 py-1.5 text-xs text-muted-foreground" role="status" aria-label="Updating results">
+              {loading && dropdownItems.length > 0 && (
+                <li className="flex items-center gap-2 px-3 py-1.5 text-xs text-muted-foreground" role="status">
                   <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" />
                   <span>Updating...</span>
                 </li>
@@ -416,47 +572,49 @@ export function ChatInput({ onSend, disabled = false, currentMode, onModeChange 
         </div>
       )}
 
-      <div className="flex items-end gap-2 rounded-xl border border-border bg-muted px-3 py-2 focus-within:border-ring focus-within:ring-1 focus-within:ring-ring">
-        <textarea
-          ref={textareaRef}
-          value={value}
-          onChange={handleInput}
-          onKeyDown={handleKeyDown}
-          placeholder={disabled ? 'AI is responding...' : 'Ask about your operations... (@ to mention a block)'}
-          disabled={disabled}
-          rows={1}
-          aria-label="Chat message"
-          aria-haspopup="listbox"
-          className={cn(
-            'flex-1 resize-none bg-transparent text-sm text-foreground placeholder:text-muted-foreground',
-            'focus:outline-none max-h-32 leading-relaxed',
-            disabled && 'opacity-60 cursor-not-allowed'
-          )}
+      {/* Input area with mention pills */}
+      <div className="flex flex-col gap-1 rounded-xl border border-border bg-muted px-3 py-2 focus-within:border-ring focus-within:ring-1 focus-within:ring-ring">
+        <MentionPillRow
+          mentions={resolvedMentions}
+          onRemove={(index) => setResolvedMentions((prev) => prev.filter((_, i) => i !== index))}
         />
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={disabled || !value.trim()}
-          aria-label="Send message"
-          className={cn(
-            'shrink-0 h-8 w-8 rounded-lg flex items-center justify-center transition-colors',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-            disabled || !value.trim()
-              ? 'bg-muted text-muted-foreground cursor-not-allowed'
-              : 'bg-primary text-primary-foreground hover:bg-primary/80'
-          )}
-        >
-          {/* Send arrow icon */}
-          <svg
-            viewBox="0 0 16 16"
-            fill="currentColor"
-            className="h-3.5 w-3.5"
-            aria-hidden="true"
+        <div className="flex items-end gap-2">
+          <textarea
+            ref={textareaRef}
+            value={value}
+            onChange={handleInput}
+            onKeyDown={handleKeyDown}
+            placeholder={disabled ? 'AI is responding...' : 'Ask about your operations... (@ to mention)'}
+            disabled={disabled}
+            rows={1}
+            aria-label="Chat message"
+            aria-haspopup="listbox"
+            className={cn(
+              'flex-1 resize-none bg-transparent text-sm text-foreground placeholder:text-muted-foreground',
+              'focus:outline-none max-h-32 leading-relaxed',
+              disabled && 'opacity-60 cursor-not-allowed'
+            )}
+          />
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={disabled || !value.trim()}
+            aria-label="Send message"
+            className={cn(
+              'shrink-0 h-8 w-8 rounded-lg flex items-center justify-center transition-colors',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+              disabled || !value.trim()
+                ? 'bg-muted text-muted-foreground cursor-not-allowed'
+                : 'bg-primary text-primary-foreground hover:bg-primary/80'
+            )}
           >
-            <path d="M1.5 1.5a.5.5 0 0 1 .5-.5h12a.5.5 0 0 1 .354.854l-6 6a.5.5 0 0 1-.708 0l-6-6A.5.5 0 0 1 1.5 1.5zm.707.5L8 7.793 13.793 2H2.207zM1.5 6a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1H2a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1H2a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1H2a.5.5 0 0 1-.5-.5z" />
-          </svg>
-        </button>
+            <svg viewBox="0 0 16 16" fill="currentColor" className="h-3.5 w-3.5" aria-hidden="true">
+              <path d="M1.5 1.5a.5.5 0 0 1 .5-.5h12a.5.5 0 0 1 .354.854l-6 6a.5.5 0 0 1-.708 0l-6-6A.5.5 0 0 1 1.5 1.5zm.707.5L8 7.793 13.793 2H2.207zM1.5 6a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1H2a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1H2a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1H2a.5.5 0 0 1-.5-.5z" />
+            </svg>
+          </button>
+        </div>
       </div>
+
       <div className="mt-1.5 flex items-center gap-2">
         <button
           type="button"
@@ -479,4 +637,74 @@ export function ChatInput({ onSend, disabled = false, currentMode, onModeChange 
       </div>
     </div>
   )
+}
+
+// ─── Dropdown item rendering ────────────────────────────────────────────────
+
+function renderItem(item: DropdownItem) {
+  switch (item.kind) {
+    case 'block':
+      return (
+        <>
+          <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
+          <span className="truncate font-medium">{item.block.name}</span>
+          <span className="ml-auto shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase leading-none bg-muted text-foreground">
+            {prettifyName(item.block.type)}
+          </span>
+        </>
+      )
+    case 'type':
+      return (
+        <>
+          <span className="shrink-0 text-base" aria-hidden="true">{item.data.icon || '📦'}</span>
+          <span className="truncate font-medium">{item.data.display_name}</span>
+          <span className="ml-auto shrink-0 text-xs text-muted-foreground">
+            {item.data.block_count} blocks
+          </span>
+          <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50" aria-hidden="true" />
+        </>
+      )
+    case 'field':
+      return (
+        <>
+          <span className="shrink-0 w-4 text-center text-xs text-muted-foreground" aria-hidden="true">
+            {fieldTypeIcon(item.data.field_type)}
+          </span>
+          <span className="truncate font-medium">{item.data.label}</span>
+          <span className="ml-auto shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium leading-none bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+            {item.data.field_type}
+          </span>
+          <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50" aria-hidden="true" />
+        </>
+      )
+    case 'value':
+      return (
+        <>
+          <span className="truncate font-medium">{item.data.value}</span>
+          <span className="ml-auto shrink-0 text-xs text-muted-foreground">
+            {item.data.count} {item.data.count === 1 ? 'block' : 'blocks'}
+          </span>
+        </>
+      )
+  }
+}
+
+function fieldTypeIcon(type: string): string {
+  switch (type) {
+    case 'string': return 'T'
+    case 'number': return '#'
+    case 'boolean': return '✓'
+    case 'array': return '[]'
+    case 'object': return '{}'
+    default: return '·'
+  }
+}
+
+function getItemKey(item: DropdownItem, index: number): string {
+  switch (item.kind) {
+    case 'block': return `block-${item.block.id}`
+    case 'type': return `type-${item.data.type_name}`
+    case 'field': return `field-${item.data.field}`
+    case 'value': return `value-${item.data.value}-${index}`
+  }
 }

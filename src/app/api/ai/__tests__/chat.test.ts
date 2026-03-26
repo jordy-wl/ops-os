@@ -32,6 +32,18 @@ vi.mock('@/lib/ai/chat-tools', () => ({
   executeChatTool: vi.fn().mockResolvedValue({ success: true, data: {} }),
 }))
 
+vi.mock('@/lib/ai/mention-context', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/ai/mention-context')>()
+  return {
+    ...actual,
+    resolveMentionContext: vi.fn().mockResolvedValue(null),
+  }
+})
+
+vi.mock('@/lib/supabase/server', () => ({
+  createServerClient: vi.fn().mockReturnValue({}),
+}))
+
 vi.mock('@anthropic-ai/sdk', () => {
   const mockStream = {
     [Symbol.asyncIterator]: async function* () {
@@ -51,6 +63,7 @@ vi.mock('@anthropic-ai/sdk', () => {
 })
 
 import { assembleContext } from '@/lib/context-assembly'
+import { resolveMentionContext } from '@/lib/ai/mention-context'
 import Anthropic from '@anthropic-ai/sdk'
 
 const { POST: chatEndpoint } = await import('@/app/api/ai/chat/route')
@@ -175,5 +188,118 @@ describe('POST /api/ai/chat', () => {
       { params: Promise.resolve({}) }
     )
     expect(res.status).toBe(200)
+  })
+
+  // ── Mention context tests ──────────────────────────────────────────────────
+
+  it('calls resolveMentionContext when mentions are provided', async () => {
+    await chatEndpoint(
+      makeReq({
+        message: 'Tell me about @Acme',
+        mentions: [
+          { kind: 'block', blockId: '00000000-0000-0000-0000-000000000001', blockName: 'Acme', blockType: 'client' },
+        ],
+      }),
+      { params: Promise.resolve({}) }
+    )
+
+    expect(resolveMentionContext).toHaveBeenCalledTimes(1)
+    expect(resolveMentionContext).toHaveBeenCalledWith(
+      expect.anything(), // supabase client
+      'uuid-org-1',
+      [{ kind: 'block', blockId: '00000000-0000-0000-0000-000000000001', blockName: 'Acme', blockType: 'client' }]
+    )
+  })
+
+  it('does not call resolveMentionContext when mentions are empty', async () => {
+    await chatEndpoint(
+      makeReq({ message: 'Hello there' }),
+      { params: Promise.resolve({}) }
+    )
+
+    expect(resolveMentionContext).not.toHaveBeenCalled()
+  })
+
+  it('injects MENTION_CONTEXT into system prompt when mentions resolve', async () => {
+    vi.mocked(resolveMentionContext).mockResolvedValueOnce(
+      '[Block: "Acme Corp" (client)]\n  State: active'
+    )
+
+    await chatEndpoint(
+      makeReq({
+        message: 'Tell me about Acme',
+        mentions: [
+          { kind: 'block', blockId: '00000000-0000-0000-0000-000000000001', blockName: 'Acme', blockType: 'client' },
+        ],
+      }),
+      { params: Promise.resolve({}) }
+    )
+
+    const anthropicInstance = vi.mocked(Anthropic).mock.results[0].value
+    const streamCall = anthropicInstance.messages.stream.mock.calls[0][0]
+    expect(streamCall.system).toContain('<MENTION_CONTEXT>')
+    expect(streamCall.system).toContain('[Block: "Acme Corp" (client)]')
+    expect(streamCall.system).toContain('</MENTION_CONTEXT>')
+  })
+
+  it('does not inject resolved mention data when resolveMentionContext returns null', async () => {
+    vi.mocked(resolveMentionContext).mockResolvedValueOnce(null)
+
+    await chatEndpoint(
+      makeReq({
+        message: 'Tell me about clients',
+        mentions: [
+          { kind: 'type_query', type: 'client', displayName: 'Client' },
+        ],
+      }),
+      { params: Promise.resolve({}) }
+    )
+
+    const anthropicInstance = vi.mocked(Anthropic).mock.results[0].value
+    const streamCall = anthropicInstance.messages.stream.mock.calls[0][0]
+    // The prompt template itself may reference MENTION_CONTEXT in its instructions,
+    // but the actual injected data block should NOT be present when resolution is null.
+    // Verify no appended MENTION_CONTEXT block with resolved data:
+    expect(streamCall.system).not.toContain('</MENTION_CONTEXT>')
+  })
+
+  it('accepts multiple mention types in a single request', async () => {
+    vi.mocked(resolveMentionContext).mockResolvedValueOnce(
+      '[Block: "Acme" (client)]\n\n[Type Query: Deal]'
+    )
+
+    const res = await chatEndpoint(
+      makeReq({
+        message: 'Compare Acme to all deals',
+        mentions: [
+          { kind: 'block', blockId: '00000000-0000-0000-0000-000000000001', blockName: 'Acme', blockType: 'client' },
+          { kind: 'type_query', type: 'deal', displayName: 'Deal' },
+        ],
+      }),
+      { params: Promise.resolve({}) }
+    )
+
+    expect(res.status).toBe(200)
+    expect(resolveMentionContext).toHaveBeenCalledWith(
+      expect.anything(),
+      'uuid-org-1',
+      expect.arrayContaining([
+        expect.objectContaining({ kind: 'block' }),
+        expect.objectContaining({ kind: 'type_query' }),
+      ])
+    )
+  })
+
+  it('returns 400 when mentions contain invalid blockId', async () => {
+    const res = await chatEndpoint(
+      makeReq({
+        message: 'Test',
+        mentions: [
+          { kind: 'block', blockId: 'not-a-uuid' },
+        ],
+      }),
+      { params: Promise.resolve({}) }
+    )
+    expect(res.status).toBe(400)
   })
 })

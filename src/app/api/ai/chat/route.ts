@@ -8,6 +8,8 @@ import { assembleContext, contextToPromptString } from '@/lib/context-assembly'
 import { loadDeltaContext } from '@/lib/ai/delta-context-loader'
 import { CHAT_TOOLS } from '@/lib/ai/chat-tools'
 import { buildActionPreviews } from '@/lib/ai/action-preview'
+import { MentionInputSchema, resolveMentionContext } from '@/lib/ai/mention-context'
+import { createServerClient } from '@/lib/supabase/server'
 import { apiError, validationError } from '@/lib/api/responses'
 import { logger } from '@/lib/logger'
 
@@ -31,6 +33,7 @@ const ChatSchema = z.object({
     .max(MAX_HISTORY_TURNS * 2)
     .optional()
     .default([]),
+  mentions: MentionInputSchema.optional().default([]),
 })
 
 // Load mode-specific system prompts (v3 for discuss/plan, v2 for execute)
@@ -43,11 +46,17 @@ for (const mode of ['discuss', 'plan', 'execute'] as const) {
   )
 }
 
-function buildSystemPrompt(mode: string, contextString: string): string {
+function buildSystemPrompt(mode: string, contextString: string, mentionContext?: string | null): string {
   const template = PROMPTS[mode] ?? PROMPTS.discuss
-  return template
+  let prompt = template
     .replace('{date}', new Date().toISOString().split('T')[0])
     .replace('{contextString}', contextString)
+
+  if (mentionContext) {
+    prompt += `\n\n<MENTION_CONTEXT>\n${mentionContext}\n</MENTION_CONTEXT>`
+  }
+
+  return prompt
 }
 
 export const POST = withAuth(async (req: NextRequest, ctx) => {
@@ -57,7 +66,7 @@ export const POST = withAuth(async (req: NextRequest, ctx) => {
   const parsed = ChatSchema.safeParse(body)
   if (!parsed.success) return validationError(parsed.error.issues)
 
-  const { message, blockId, mode, conversationHistory } = parsed.data
+  const { message, blockId, mode, conversationHistory, mentions } = parsed.data
 
   // RBAC: execute mode requires ops-admin
   if (mode === 'execute' && ctx.role !== 'ops-admin') {
@@ -83,8 +92,15 @@ export const POST = withAuth(async (req: NextRequest, ctx) => {
     if (deltaCtx) context.deltaContext = deltaCtx
   }
 
+  // Resolve @mention context if any mentions are present
+  let mentionContext: string | null = null
+  if (mentions && mentions.length > 0) {
+    const supabase = createServerClient()
+    mentionContext = await resolveMentionContext(supabase, ctx.orgId, mentions)
+  }
+
   const contextString = contextToPromptString(context)
-  const systemPrompt = buildSystemPrompt(mode, contextString)
+  const systemPrompt = buildSystemPrompt(mode, contextString, mentionContext)
 
   const messages: Anthropic.MessageParam[] = [
     ...conversationHistory.slice(-(MAX_HISTORY_TURNS * 2)),

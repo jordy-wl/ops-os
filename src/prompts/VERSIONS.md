@@ -7,9 +7,9 @@
 | delta-chat-context | v1 | 2026-03-12 | AI-ML-ENGINEER | 15/15 (100%) | Initial version — Sprint 7. Delta-aware chat context instructions: how to interpret WORKFLOW DELTA sections, available actions (reassign_step, extend_deadline), response guidelines. |
 | chat-discuss-mode | v2 | 2026-03-18 | AI-ML-ENGINEER | Pending eval | Adds user context awareness, delta reasoning instructions, and `<SUGGESTIONS>` extraction block for actionable chips. |
 | chat-plan-mode | v2 | 2026-03-18 | AI-ML-ENGINEER | Pending eval | Adds user context awareness, delta-informed planning, qualifying questions, and `<PLAN_JSON>` structured output for interactive accept/reject/modify UI. |
-| chat-discuss-mode | v3 | 2026-03-25 | AI-ML-ENGINEER | Pending eval | Adds `<MODE_SUGGESTION>` tag output — AI suggests transitioning to plan mode when user describes goals or multi-step tasks. |
-| chat-plan-mode | v3 | 2026-03-25 | AI-ML-ENGINEER | Pending eval | Adds `<MODE_SUGGESTION>` tag output — AI suggests execute mode on plan acceptance, or discuss mode when user wants more discussion. |
-| chat-execute-mode | v2 | 2026-03-25 | AI-ML-ENGINEER | Pending eval | Adds `<MODE_SUGGESTION>` tag output — AI suggests returning to discuss mode after completing all requested actions. |
+| chat-discuss-mode | v3 | 2026-03-25 | AI-ML-ENGINEER | Pending eval | Adds `<MODE_SUGGESTION>` tag output — AI suggests transitioning to plan mode when user describes goals or multi-step tasks. Adds `## Mention Context` section — documents `<MENTION_CONTEXT>` injection format (block, type_query, field_query, value_query) with data-accuracy and distribution-citation guidelines. |
+| chat-plan-mode | v3 | 2026-03-25 | AI-ML-ENGINEER | Pending eval | Adds `<MODE_SUGGESTION>` tag output — AI suggests execute mode on plan acceptance, or discuss mode when user wants more discussion. Adds `## Mention Context` section — documents `<MENTION_CONTEXT>` injection format with plan-grounding and complexity-scoping guidelines. |
+| chat-execute-mode | v2 | 2026-03-25 | AI-ML-ENGINEER | Pending eval | Adds `<MODE_SUGGESTION>` tag output — AI suggests returning to discuss mode after completing all requested actions. Adds `## Mention Context` section — documents `<MENTION_CONTEXT>` injection format with tool-targeting and action-confirmation guidelines. |
 | block-suggestions | v1 | 2026-03-18 | AI-ML-ENGINEER | Pending eval | Block-type-specific AI suggestion generation. Returns typed suggestions (action/insight/risk/next_step) with priority levels. |
 
 ## Eval Notes

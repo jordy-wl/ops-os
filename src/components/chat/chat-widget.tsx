@@ -5,6 +5,7 @@ import { MessageCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useChatWidget } from './chat-widget-provider'
 import type { ChatLayout } from './chat-widget-provider'
+import type { MentionResolution } from '@/lib/chat/mention-engine'
 import { useChatStream } from '@/hooks/use-chat-stream'
 import { ChatHeader } from './chat-header'
 import { ChatMessageList } from './chat-message-list'
@@ -122,11 +123,11 @@ export function ChatWidget() {
     }
   }
 
-  function handleSend(text: string) {
+  function handleSend(text: string, mentions?: MentionResolution[]) {
     if (mode === 'execute') {
       setPendingMessage(text)
     } else {
-      sendMessage(text, mode)
+      sendMessage(text, mode, mentions)
     }
   }
 
