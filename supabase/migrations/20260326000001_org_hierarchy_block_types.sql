@@ -81,14 +81,18 @@ RETURNS TABLE (
   depth INT
 ) AS $$
   WITH RECURSIVE tree AS (
-    -- Root: the organisation singleton block
-    SELECT b.id, b.name, b.type AS block_type, b.metadata,
-           NULL::UUID AS parent_id, 0 AS depth
-    FROM blocks b
-    WHERE b.org_id = p_org_id
-      AND b.type = 'organisation'
-      AND b.state = 'active'
-    LIMIT 1
+    -- Root: the organisation singleton block (subquery required — LIMIT not allowed in CTE anchor)
+    SELECT sub.id, sub.name, sub.block_type, sub.metadata,
+           sub.parent_id, sub.depth
+    FROM (
+      SELECT b.id, b.name, b.type AS block_type, b.metadata,
+             NULL::UUID AS parent_id, 0 AS depth
+      FROM blocks b
+      WHERE b.org_id = p_org_id
+        AND b.type = 'organisation'
+        AND b.state = 'active'
+      LIMIT 1
+    ) sub
 
     UNION ALL
 
