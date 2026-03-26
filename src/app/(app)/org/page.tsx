@@ -23,7 +23,15 @@ import {
   Target,
   Plus,
   Sparkles,
+  Pencil,
+  Save,
+  X,
+  Network,
+  FolderTree,
+  ChevronDown,
+  ChevronRight,
 } from 'lucide-react'
+import { DynamicFieldRenderer } from '@/components/blocks/dynamic-field-renderer'
 import type {
   OrgOverview,
   HierarchyNode,
@@ -31,6 +39,7 @@ import type {
   BlockStats,
   RecentEvent,
 } from '@/lib/org/overview'
+import type { HierarchyBlock } from '@/lib/org/block-hierarchy'
 
 // ─── Revenue Types ──────────────────────────────────────────────────────────
 
@@ -207,6 +216,153 @@ function HierarchySection({ hierarchy }: { hierarchy: HierarchyNode[] }) {
         </ul>
       </div>
     </section>
+  )
+}
+
+// ─── Block Hierarchy Section (Structure Tab) ────────────────────────────────
+
+const HIERARCHY_ICONS: Record<string, React.ElementType> = {
+  organisation: Building2,
+  division: Building2,
+  department: FolderTree,
+  team: Users,
+}
+
+const HIERARCHY_COLORS: Record<string, string> = {
+  organisation: 'text-slate-500',
+  division: 'text-indigo-500',
+  department: 'text-violet-500',
+  team: 'text-cyan-500',
+}
+
+function BlockHierarchySection({ hierarchy }: { hierarchy: HierarchyBlock[] }) {
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
+
+  if (hierarchy.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <Network className="h-10 w-10 text-muted-foreground/40 mb-3" />
+        <p className="text-sm font-medium text-foreground mb-1">No hierarchy blocks yet</p>
+        <p className="text-[13px] text-muted-foreground max-w-sm">
+          Create divisions, departments, and teams to build your org structure.
+          Use the AI chat or create blocks manually to get started.
+        </p>
+      </div>
+    )
+  }
+
+  // Build parent-child map
+  const childMap = new Map<string | null, HierarchyBlock[]>()
+  for (const node of hierarchy) {
+    const parentId = node.parent_id
+    if (!childMap.has(parentId)) {
+      childMap.set(parentId, [])
+    }
+    childMap.get(parentId)!.push(node)
+  }
+
+  function toggleCollapse(id: string) {
+    setCollapsed((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
+      return next
+    })
+  }
+
+  function renderNode(node: HierarchyBlock, depth: number): React.ReactNode {
+    const children = childMap.get(node.id) ?? []
+    const Icon = HIERARCHY_ICONS[node.block_type] ?? Building2
+    const colorClass = HIERARCHY_COLORS[node.block_type] ?? 'text-muted-foreground'
+    const isCollapsed = collapsed.has(node.id)
+    const hasChildren = children.length > 0
+
+    return (
+      <li key={node.id}>
+        <div
+          className="flex items-center gap-2 py-1.5 group"
+          style={{ paddingLeft: `${depth * 20}px` }}
+        >
+          {/* Tree connector */}
+          {depth > 0 && (
+            <span className="text-border" aria-hidden="true">
+              {'└'}
+            </span>
+          )}
+
+          {/* Expand/collapse */}
+          {hasChildren ? (
+            <button
+              onClick={() => toggleCollapse(node.id)}
+              className="flex h-5 w-5 items-center justify-center rounded hover:bg-accent"
+              aria-label={isCollapsed ? 'Expand' : 'Collapse'}
+            >
+              {isCollapsed ? (
+                <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+              ) : (
+                <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+              )}
+            </button>
+          ) : (
+            <span className="w-5" />
+          )}
+
+          {/* Icon */}
+          <Icon className={`h-4 w-4 ${colorClass}`} aria-hidden="true" />
+
+          {/* Name — clickable link to block detail */}
+          <Link
+            href={`/blocks/${node.id}`}
+            className="text-[13px] font-medium text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+          >
+            {node.name}
+          </Link>
+
+          {/* Type badge */}
+          <span className={`text-[10px] font-medium uppercase tracking-wide ${colorClass}`}>
+            {node.block_type}
+          </span>
+
+          {/* Head/lead name */}
+          {node.head_name && (
+            <span className="text-[11px] text-muted-foreground">
+              — {node.head_name}
+            </span>
+          )}
+
+          {/* Member count for teams */}
+          {node.block_type === 'team' && node.member_count !== undefined && (
+            <span className="text-[11px] text-muted-foreground">
+              ({node.member_count} {node.member_count === 1 ? 'member' : 'members'})
+            </span>
+          )}
+        </div>
+
+        {/* Children */}
+        {hasChildren && !isCollapsed && (
+          <ul role="group">
+            {children.map((child) => renderNode(child, depth + 1))}
+          </ul>
+        )}
+      </li>
+    )
+  }
+
+  // Find root nodes
+  const nodeIds = new Set(hierarchy.map((n) => n.id))
+  const rootNodes = hierarchy.filter(
+    (n) => n.parent_id === null || !nodeIds.has(n.parent_id)
+  )
+
+  return (
+    <div className="rounded-md border border-border bg-card p-4">
+      <ul role="tree" aria-label="Organisation structure">
+        {rootNodes.map((root) => renderNode(root, 0))}
+      </ul>
+    </div>
   )
 }
 
@@ -1067,10 +1223,185 @@ function OfferingsTab({ revenue }: { revenue: RevenueData | null }) {
   )
 }
 
+// ─── Details Tab (Organisation Block Fields) ────────────────────────────────
+
+interface OrgBlock {
+  id: string
+  name: string
+  metadata: Record<string, unknown>
+}
+
+interface OrgTypeDef {
+  id: string
+  field_schema: Record<string, unknown>
+}
+
+function DetailsTab() {
+  const [orgBlock, setOrgBlock] = useState<OrgBlock | null>(null)
+  const [typeDef, setTypeDef] = useState<OrgTypeDef | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [editing, setEditing] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [editValues, setEditValues] = useState<Record<string, unknown>>({})
+  const [saveError, setSaveError] = useState<string | null>(null)
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const [blockRes, typeRes] = await Promise.all([
+          fetch('/api/blocks?type=organisation&limit=1'),
+          fetch('/api/block-types'),
+        ])
+
+        if (blockRes.ok) {
+          const json = await blockRes.json()
+          const blocks = (json.data ?? []) as OrgBlock[]
+          if (blocks.length > 0) {
+            setOrgBlock(blocks[0])
+            setEditValues(blocks[0].metadata ?? {})
+          }
+        }
+
+        if (typeRes.ok) {
+          const json = await typeRes.json()
+          const types = (json.data ?? []) as Array<{ type_name: string; id: string; field_schema: Record<string, unknown> }>
+          const orgType = types.find((t) => t.type_name === 'organisation')
+          if (orgType) {
+            setTypeDef({ id: orgType.id, field_schema: orgType.field_schema })
+          }
+        }
+      } catch {
+        // Non-blocking
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    load()
+  }, [])
+
+  const handleChange = useCallback((field: string, value: unknown) => {
+    setEditValues((prev) => ({ ...prev, [field]: value }))
+  }, [])
+
+  const handleSave = useCallback(async () => {
+    if (!orgBlock) return
+    setSaving(true)
+    setSaveError(null)
+    try {
+      const res = await fetch(`/api/blocks/${orgBlock.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ metadata: editValues }),
+      })
+      if (!res.ok) {
+        const body = await res.json().catch(() => null)
+        throw new Error(body?.error?.message ?? 'Failed to save')
+      }
+      setOrgBlock((prev) => prev ? { ...prev, metadata: editValues } : prev)
+      setEditing(false)
+    } catch (e) {
+      setSaveError((e as Error).message)
+    } finally {
+      setSaving(false)
+    }
+  }, [orgBlock, editValues])
+
+  const handleCancel = useCallback(() => {
+    if (orgBlock) setEditValues(orgBlock.metadata ?? {})
+    setEditing(false)
+    setSaveError(null)
+  }, [orgBlock])
+
+  if (isLoading) {
+    return (
+      <div className="animate-pulse space-y-4">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="rounded-md border border-border bg-card p-4 h-16" />
+        ))}
+      </div>
+    )
+  }
+
+  if (!orgBlock) {
+    return (
+      <div className="rounded-xl border border-border bg-card p-8 text-center">
+        <Building2 className="h-8 w-8 text-muted-foreground mx-auto mb-3" aria-hidden="true" />
+        <p className="text-[13px] text-muted-foreground">
+          Organisation profile not yet created. It will be provisioned automatically on next page load.
+        </p>
+      </div>
+    )
+  }
+
+  const fieldSchema = typeDef?.field_schema
+  const hasSchema = fieldSchema && typeof fieldSchema === 'object' && 'properties' in fieldSchema &&
+    Object.keys(fieldSchema.properties as Record<string, unknown>).length > 0
+
+  return (
+    <section aria-label="Organisation details">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-sm font-semibold text-foreground">Organisation Profile</h2>
+        {!editing ? (
+          <button
+            onClick={() => setEditing(true)}
+            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <Pencil className="h-3 w-3" aria-hidden="true" />
+            Edit
+          </button>
+        ) : (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleCancel}
+              disabled={saving}
+              className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <X className="h-3 w-3" aria-hidden="true" />
+              Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="inline-flex items-center gap-1 rounded-md bg-primary px-3 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+            >
+              <Save className="h-3 w-3" aria-hidden="true" />
+              {saving ? 'Saving...' : 'Save'}
+            </button>
+          </div>
+        )}
+      </div>
+
+      {saveError && (
+        <div className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 mb-4 text-xs text-destructive">
+          {saveError}
+        </div>
+      )}
+
+      {hasSchema ? (
+        <div className="rounded-xl border border-border bg-card p-5">
+          <DynamicFieldRenderer
+            schema={fieldSchema as { type?: string; properties?: Record<string, unknown>; required?: string[] }}
+            values={editing ? editValues : (orgBlock.metadata ?? {})}
+            editing={editing}
+            onChange={handleChange}
+          />
+        </div>
+      ) : (
+        <div className="rounded-xl border border-border bg-card p-6 text-center">
+          <p className="text-[13px] text-muted-foreground">
+            No fields configured yet. Use the chat to add fields: &quot;Add industry and headquarters fields to the organisation&quot;
+          </p>
+        </div>
+      )}
+    </section>
+  )
+}
+
 // ─── Main Page Component ────────────────────────────────────────────────────
 
 export default function OrgOverviewPage() {
   const [data, setData] = useState<OrgOverview | null>(null)
+  const [blockHierarchy, setBlockHierarchy] = useState<HierarchyBlock[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -1079,16 +1410,24 @@ export default function OrgOverviewPage() {
     setError(null)
 
     try {
-      const res = await fetch('/api/org/overview')
+      const [overviewRes, hierarchyRes] = await Promise.all([
+        fetch('/api/org/overview'),
+        fetch('/api/org/block-hierarchy'),
+      ])
 
-      if (!res.ok) {
-        const body = await res.json().catch(() => null)
-        const msg = body?.error?.message ?? `Request failed with status ${res.status}`
+      if (!overviewRes.ok) {
+        const body = await overviewRes.json().catch(() => null)
+        const msg = body?.error?.message ?? `Request failed with status ${overviewRes.status}`
         throw new Error(msg)
       }
 
-      const json = await res.json()
+      const json = await overviewRes.json()
       setData(json.data as OrgOverview)
+
+      if (hierarchyRes.ok) {
+        const hJson = await hierarchyRes.json()
+        setBlockHierarchy((hJson.data?.hierarchy ?? []) as HierarchyBlock[])
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'An unexpected error occurred'
       setError(message)
@@ -1141,6 +1480,8 @@ export default function OrgOverviewPage() {
       <Tabs defaultValue="overview" className="w-full">
         <TabsList className="mb-6 w-full overflow-x-auto scrollbar-none justify-start">
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="structure">Structure</TabsTrigger>
+          <TabsTrigger value="details">Details</TabsTrigger>
           <TabsTrigger value="revenue">Revenue</TabsTrigger>
           <TabsTrigger value="strategy">Strategy</TabsTrigger>
           <TabsTrigger value="offerings">Offerings</TabsTrigger>
@@ -1168,6 +1509,26 @@ export default function OrgOverviewPage() {
               <TeamUtilization team={data.team} />
             </div>
           </div>
+        </TabsContent>
+
+        {/* Structure Tab */}
+        <TabsContent value="structure">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-[13px] font-semibold text-foreground">Organisation Structure</h2>
+                <p className="text-[12px] text-muted-foreground mt-0.5">
+                  Divisions, departments, and teams that make up your org hierarchy.
+                </p>
+              </div>
+            </div>
+            <BlockHierarchySection hierarchy={blockHierarchy} />
+          </div>
+        </TabsContent>
+
+        {/* Details Tab */}
+        <TabsContent value="details">
+          <DetailsTab />
         </TabsContent>
 
         {/* Revenue Tab */}

@@ -12,6 +12,7 @@ import { getOrgOverview } from '../overview'
 function createMockSupabase(config: {
   orgs?: { data: unknown; error: unknown }
   rpc?: { data: unknown; error: unknown }
+  rpcBlockHierarchy?: { data: unknown; error: unknown }
   blocks?: { data: unknown; error: unknown }[]
   events?: { data: unknown; error: unknown }
 }) {
@@ -24,6 +25,7 @@ function createMockSupabase(config: {
     // Each method returns the chain, terminal methods return the response
     chain.select = vi.fn().mockReturnValue(chain)
     chain.eq = vi.fn().mockReturnValue(chain)
+    chain.in = vi.fn().mockReturnValue(chain)
     chain.order = vi.fn().mockReturnValue(chain)
     chain.limit = vi.fn().mockReturnValue(chain)
     chain.single = terminal
@@ -49,9 +51,12 @@ function createMockSupabase(config: {
     return buildChain({ data: null, error: null })
   })
 
-  const rpcFn = vi.fn().mockImplementation(() =>
-    Promise.resolve(config.rpc ?? { data: [], error: null })
-  )
+  const rpcFn = vi.fn().mockImplementation((fnName: string) => {
+    if (fnName === 'get_block_hierarchy') {
+      return Promise.resolve(config.rpcBlockHierarchy ?? { data: [], error: null })
+    }
+    return Promise.resolve(config.rpc ?? { data: [], error: null })
+  })
 
   return { from: fromFn, rpc: rpcFn } as unknown as SupabaseClient
 }

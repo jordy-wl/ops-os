@@ -1,4 +1,26 @@
 /**
+ * Block types that are managed through dedicated UIs (not the block browser).
+ * Hidden from: block browser type filter, create block modal, settings block types page.
+ */
+export const HIDDEN_BLOCK_TYPES = new Set([
+  'workflow_template',
+  'workflow_instance',
+  'task_queue_item',
+  'organisation',
+  'division',
+  'department',
+  'team',
+])
+
+/**
+ * Singleton block types — exactly one instance per org, auto-provisioned.
+ * Cannot be created or deleted by users. Managed through dedicated UIs.
+ */
+export const SINGLETON_BLOCK_TYPES = new Set([
+  'organisation',
+])
+
+/**
  * System block type definitions — seeded per-org on first provision.
  * These types are `is_system = true` and cannot be deleted by users.
  */
@@ -235,8 +257,8 @@ export const SYSTEM_BLOCK_TYPES = [
     field_schema: {
       type: 'object',
       properties: {
-        template_id: { type: 'string', description: 'ID of the workflow template block', 'x-field-type': 'relation', 'x-relation-target': 'workflow_template' },
-        source_block_id: { type: 'string', description: 'ID of the block that triggered this workflow', 'x-field-type': 'relation', 'x-relation-target': '' },
+        template_id: { type: 'string', description: 'ID of the workflow template block', 'x-field-type': 'relation', 'x-relation-target': 'workflow_template', 'x-relation-edge-type': 'instance_of' },
+        source_block_id: { type: 'string', description: 'ID of the block that triggered this workflow', 'x-field-type': 'relation', 'x-relation-target': '', 'x-relation-edge-type': 'triggered_by' },
         applies_to_type: { type: 'string', description: 'Block type this workflow processes' },
         status: {
           type: 'string',
@@ -260,7 +282,7 @@ export const SYSTEM_BLOCK_TYPES = [
     field_schema: {
       type: 'object',
       properties: {
-        workflow_instance_id: { type: 'string', description: 'ID of the parent workflow instance', 'x-field-type': 'relation', 'x-relation-target': 'workflow_instance' },
+        workflow_instance_id: { type: 'string', description: 'ID of the parent workflow instance', 'x-field-type': 'relation', 'x-relation-target': 'workflow_instance', 'x-relation-edge-type': 'belongs_to' },
         step_name: { type: 'string', description: 'Name of the workflow step that created this task' },
         assigned_to: { type: 'string', description: 'User ID of the assignee' },
         claimed_at: { type: 'string', description: 'When the task was claimed' },
@@ -436,6 +458,7 @@ export const SYSTEM_BLOCK_TYPES = [
           description: 'Block IDs of included products',
           'x-field-type': 'multi-relation',
           'x-relation-target': 'product',
+          'x-relation-edge-type': 'includes_product',
         },
         service_refs: {
           type: 'array',
@@ -443,6 +466,7 @@ export const SYSTEM_BLOCK_TYPES = [
           description: 'Block IDs of included services',
           'x-field-type': 'multi-relation',
           'x-relation-target': 'service',
+          'x-relation-edge-type': 'includes_service',
         },
       },
     },
@@ -618,8 +642,18 @@ export const SYSTEM_BLOCK_TYPES = [
           description: 'Block ID of the manager (team_member block)',
           'x-field-type': 'relation',
           'x-relation-target': 'team_member',
+          'x-relation-edge-type': 'reports_to',
           'x-field-group': 'organisation',
           'x-display-order': 2,
+        },
+        team_id: {
+          type: 'string',
+          description: 'Primary team assignment',
+          'x-field-type': 'relation',
+          'x-relation-target': 'team',
+          'x-relation-edge-type': 'member_of',
+          'x-field-group': 'organisation',
+          'x-display-order': 3,
         },
         clerk_user_id: {
           type: 'string',
@@ -798,6 +832,7 @@ export const SYSTEM_BLOCK_TYPES = [
           description: 'Optional reference to the client or org block being analysed',
           'x-field-type': 'relation',
           'x-relation-target': '',
+          'x-relation-edge-type': 'analyses',
           'x-field-group': 'context',
           'x-display-order': 2,
         },
@@ -958,8 +993,299 @@ export const SYSTEM_BLOCK_TYPES = [
           type: 'string',
           'x-field-type': 'relation',
           'x-relation-target': 'client',
+          'x-relation-edge-type': 'assigned_to',
           description: 'Client this form is assigned to (optional)',
           'x-field-group': 'config',
+          'x-display-order': 3,
+        },
+      },
+    },
+  },
+  {
+    type_name: 'division',
+    display_name: 'Division',
+    description: 'A major division or business unit within the organisation.',
+    icon: 'building',
+    color: 'indigo',
+    field_schema: {
+      type: 'object',
+      'x-org-hierarchy-level': 1,
+      'x-org-parent-type': 'organisation',
+      'x-field-groups': [
+        { id: 'basics', label: 'Basics', order: 1 },
+        { id: 'leadership', label: 'Leadership', order: 2 },
+        { id: 'operations', label: 'Operations', order: 3 },
+      ],
+      properties: {
+        description: {
+          type: 'string',
+          'x-field-type': 'rich-text',
+          description: 'Division purpose and scope',
+          'x-field-group': 'basics',
+          'x-display-order': 1,
+        },
+        parent_org: {
+          type: 'string',
+          description: 'Parent organisation block',
+          'x-field-type': 'relation',
+          'x-relation-target': 'organisation',
+          'x-relation-edge-type': 'part_of',
+          'x-field-group': 'basics',
+          'x-display-order': 2,
+        },
+        head: {
+          type: 'string',
+          description: 'Division head (team member)',
+          'x-field-type': 'relation',
+          'x-relation-target': 'team_member',
+          'x-relation-edge-type': 'has_head',
+          'x-field-group': 'leadership',
+          'x-display-order': 1,
+        },
+        location: {
+          type: 'string',
+          description: 'Primary office location',
+          'x-field-group': 'operations',
+          'x-display-order': 1,
+        },
+        cost_centre: {
+          type: 'string',
+          description: 'Cost centre code',
+          'x-field-group': 'operations',
+          'x-display-order': 2,
+        },
+        budget: {
+          type: 'number',
+          minimum: 0,
+          description: 'Annual budget allocation',
+          'x-field-type': 'currency',
+          'x-field-group': 'operations',
+          'x-display-order': 3,
+        },
+      },
+    },
+  },
+  {
+    type_name: 'department',
+    display_name: 'Department',
+    description: 'A department within a division.',
+    icon: 'folders',
+    color: 'violet',
+    field_schema: {
+      type: 'object',
+      'x-org-hierarchy-level': 2,
+      'x-org-parent-type': 'division',
+      'x-field-groups': [
+        { id: 'basics', label: 'Basics', order: 1 },
+        { id: 'leadership', label: 'Leadership', order: 2 },
+        { id: 'compliance', label: 'Compliance', order: 3 },
+      ],
+      properties: {
+        description: {
+          type: 'string',
+          'x-field-type': 'rich-text',
+          description: 'Department purpose and scope',
+          'x-field-group': 'basics',
+          'x-display-order': 1,
+        },
+        parent_division: {
+          type: 'string',
+          description: 'Parent division',
+          'x-field-type': 'relation',
+          'x-relation-target': 'division',
+          'x-relation-edge-type': 'part_of',
+          'x-field-group': 'basics',
+          'x-display-order': 2,
+        },
+        head: {
+          type: 'string',
+          description: 'Department head (team member)',
+          'x-field-type': 'relation',
+          'x-relation-target': 'team_member',
+          'x-relation-edge-type': 'has_head',
+          'x-field-group': 'leadership',
+          'x-display-order': 1,
+        },
+        deputy_head: {
+          type: 'string',
+          description: 'Deputy department head (team member)',
+          'x-field-type': 'relation',
+          'x-relation-target': 'team_member',
+          'x-relation-edge-type': 'has_deputy',
+          'x-field-group': 'leadership',
+          'x-display-order': 2,
+        },
+        jurisdiction: {
+          type: 'string',
+          enum: ['AU', 'US', 'GB', 'SG', 'HK', 'NZ', 'JP', 'DE', 'FR', 'CA', 'global'],
+          description: 'Primary jurisdiction',
+          'x-field-group': 'compliance',
+          'x-display-order': 1,
+        },
+        compliance_notes: {
+          type: 'string',
+          'x-field-type': 'rich-text',
+          description: 'Compliance requirements and notes',
+          'x-field-group': 'compliance',
+          'x-display-order': 2,
+        },
+      },
+    },
+  },
+  {
+    type_name: 'team',
+    display_name: 'Team',
+    description: 'A team within a department.',
+    icon: 'users',
+    color: 'cyan',
+    field_schema: {
+      type: 'object',
+      'x-org-hierarchy-level': 3,
+      'x-org-parent-type': 'department',
+      'x-field-groups': [
+        { id: 'basics', label: 'Basics', order: 1 },
+        { id: 'leadership', label: 'Leadership', order: 2 },
+        { id: 'capacity', label: 'Capacity', order: 3 },
+      ],
+      properties: {
+        description: {
+          type: 'string',
+          'x-field-type': 'rich-text',
+          description: 'Team purpose and scope',
+          'x-field-group': 'basics',
+          'x-display-order': 1,
+        },
+        parent_department: {
+          type: 'string',
+          description: 'Parent department',
+          'x-field-type': 'relation',
+          'x-relation-target': 'department',
+          'x-relation-edge-type': 'part_of',
+          'x-field-group': 'basics',
+          'x-display-order': 2,
+        },
+        team_lead: {
+          type: 'string',
+          description: 'Team lead (team member)',
+          'x-field-type': 'relation',
+          'x-relation-target': 'team_member',
+          'x-relation-edge-type': 'has_lead',
+          'x-field-group': 'leadership',
+          'x-display-order': 1,
+        },
+        members: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Team members',
+          'x-field-type': 'multi-relation',
+          'x-relation-target': 'team_member',
+          'x-relation-edge-type': 'has_member',
+          'x-field-group': 'capacity',
+          'x-display-order': 1,
+        },
+        capacity_notes: {
+          type: 'string',
+          'x-field-type': 'rich-text',
+          description: 'Current capacity and workload notes',
+          'x-field-group': 'capacity',
+          'x-display-order': 2,
+        },
+      },
+    },
+  },
+  {
+    type_name: 'organisation',
+    display_name: 'Organisation',
+    description: 'The organisation master record — one per org, auto-provisioned.',
+    icon: 'building-2',
+    color: 'slate',
+    field_schema: {
+      type: 'object',
+      'x-singleton': true,
+      'x-field-groups': [
+        { id: 'company_info', label: 'Company Info', order: 1 },
+        { id: 'contact_details', label: 'Contact Details', order: 2 },
+        { id: 'legal_compliance', label: 'Legal & Compliance', order: 3 },
+      ],
+      properties: {
+        industry: {
+          type: 'string',
+          enum: [
+            'financial_services', 'technology', 'healthcare', 'manufacturing',
+            'retail', 'professional_services', 'real_estate', 'energy',
+            'education', 'government', 'media', 'hospitality', 'other',
+          ],
+          description: 'Primary industry vertical',
+          'x-field-group': 'company_info',
+          'x-display-order': 1,
+        },
+        headquarters: {
+          type: 'string',
+          description: 'Headquarters location (city, country)',
+          'x-field-group': 'company_info',
+          'x-display-order': 2,
+        },
+        description: {
+          type: 'string',
+          description: 'Organisation description or mission statement',
+          'x-field-type': 'rich-text',
+          'x-field-group': 'company_info',
+          'x-display-order': 3,
+        },
+        employee_count: {
+          type: 'number',
+          minimum: 0,
+          description: 'Number of employees',
+          'x-field-group': 'company_info',
+          'x-display-order': 4,
+        },
+        founded_year: {
+          type: 'number',
+          minimum: 1800,
+          description: 'Year the organisation was founded',
+          'x-field-group': 'company_info',
+          'x-display-order': 5,
+        },
+        website: {
+          type: 'string',
+          format: 'uri',
+          description: 'Organisation website URL',
+          'x-field-type': 'url',
+          'x-field-group': 'contact_details',
+          'x-display-order': 1,
+        },
+        phone: {
+          type: 'string',
+          description: 'Main phone number',
+          'x-field-type': 'phone',
+          'x-field-group': 'contact_details',
+          'x-display-order': 2,
+        },
+        email: {
+          type: 'string',
+          format: 'email',
+          description: 'Main contact email',
+          'x-field-group': 'contact_details',
+          'x-display-order': 3,
+        },
+        jurisdiction: {
+          type: 'string',
+          enum: ['AU', 'US', 'GB', 'SG', 'HK', 'NZ', 'JP', 'DE', 'FR', 'CA'],
+          description: 'Primary jurisdiction (ISO 3166-1 alpha-2)',
+          'x-field-group': 'legal_compliance',
+          'x-display-order': 1,
+        },
+        tax_id: {
+          type: 'string',
+          description: 'Tax identification number (ABN, EIN, etc.)',
+          'x-field-group': 'legal_compliance',
+          'x-display-order': 2,
+        },
+        entity_type: {
+          type: 'string',
+          enum: ['sole_trader', 'partnership', 'pty_ltd', 'ltd', 'llc', 'plc', 'government', 'non_profit'],
+          description: 'Legal entity type',
+          'x-field-group': 'legal_compliance',
           'x-display-order': 3,
         },
       },
