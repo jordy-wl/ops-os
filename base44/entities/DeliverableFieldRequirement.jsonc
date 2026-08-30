@@ -1,0 +1,26 @@
+{
+  "name": "DeliverableFieldRequirement",
+  "type": "object",
+  "properties": {
+    "deliverable_template_id": {
+      "type": "string"
+    },
+    "field_definition_id": {
+      "type": "string"
+    },
+    "is_required": {
+      "type": "boolean",
+      "default": true
+    },
+    "notes": {
+      "type": "string"
+    },
+    "sequence_order": {
+      "type": "integer"
+    }
+  },
+  "required": [
+    "deliverable_template_id",
+    "field_definition_id"
+  ]
+}

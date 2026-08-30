@@ -1,0 +1,75 @@
+{
+  "name": "FormTemplate",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "form_schema": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "field_key": {
+            "type": "string"
+          },
+          "field_label": {
+            "type": "string"
+          },
+          "field_type": {
+            "type": "string",
+            "enum": [
+              "text",
+              "number",
+              "email",
+              "phone",
+              "date",
+              "textarea",
+              "select",
+              "multiselect",
+              "checkbox",
+              "file"
+            ]
+          },
+          "is_required": {
+            "type": "boolean"
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "placeholder": {
+            "type": "string"
+          },
+          "validation_rules": {
+            "type": "object"
+          }
+        }
+      },
+      "description": "Schema defining form fields and their properties"
+    },
+    "client_data_map": {
+      "type": "object",
+      "description": "Maps form field keys to Client entity paths (e.g., {email: 'email', company_size: 'metadata.company_size'})"
+    },
+    "thank_you_message": {
+      "type": "string",
+      "default": "Thank you for your submission!"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "metadata": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

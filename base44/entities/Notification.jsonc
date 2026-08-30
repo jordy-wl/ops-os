@@ -1,0 +1,54 @@
+{
+  "name": "Notification",
+  "type": "object",
+  "properties": {
+    "recipient_user_id": {
+      "type": "string",
+      "description": "User who will receive the notification"
+    },
+    "sender_user_id": {
+      "type": "string",
+      "description": "User who triggered the notification"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "comment_mention",
+        "task_assigned",
+        "task_completed",
+        "new_kpi"
+      ],
+      "description": "Type of notification"
+    },
+    "entity_type": {
+      "type": "string",
+      "description": "Type of entity (e.g., TaskInstance, Client)"
+    },
+    "entity_id": {
+      "type": "string",
+      "description": "ID of the related entity"
+    },
+    "message": {
+      "type": "string",
+      "description": "Notification message text"
+    },
+    "read_status": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the notification has been read"
+    },
+    "action_url": {
+      "type": "string",
+      "description": "URL to navigate when notification is clicked"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional notification data"
+    }
+  },
+  "required": [
+    "recipient_user_id",
+    "type",
+    "message"
+  ]
+}

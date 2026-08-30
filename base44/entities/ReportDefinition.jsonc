@@ -1,0 +1,51 @@
+{
+  "name": "ReportDefinition",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "operational",
+        "performance",
+        "client",
+        "workflow",
+        "custom"
+      ],
+      "default": "custom"
+    },
+    "query_config": {
+      "type": "object",
+      "description": "Data source and filter configuration"
+    },
+    "visualization_type": {
+      "type": "string",
+      "enum": [
+        "table",
+        "chart",
+        "dashboard",
+        "timeline"
+      ],
+      "default": "table"
+    },
+    "chart_config": {
+      "type": "object"
+    },
+    "schedule": {
+      "type": "object",
+      "description": "Auto-generation schedule"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

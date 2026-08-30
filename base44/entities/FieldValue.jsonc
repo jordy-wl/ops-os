@@ -1,0 +1,44 @@
+{
+  "name": "FieldValue",
+  "type": "object",
+  "properties": {
+    "object_type": {
+      "type": "string",
+      "enum": [
+        "client",
+        "workflow_instance",
+        "task_instance",
+        "contact"
+      ]
+    },
+    "object_id": {
+      "type": "string"
+    },
+    "field_definition_id": {
+      "type": "string"
+    },
+    "value": {
+      "type": "object",
+      "description": "The actual value (JSONB)"
+    },
+    "source_task_instance_id": {
+      "type": "string",
+      "description": "Task that populated this value"
+    },
+    "source_type": {
+      "type": "string",
+      "enum": [
+        "user_input",
+        "ai_enriched",
+        "computed",
+        "system"
+      ],
+      "default": "user_input"
+    }
+  },
+  "required": [
+    "object_type",
+    "object_id",
+    "field_definition_id"
+  ]
+}

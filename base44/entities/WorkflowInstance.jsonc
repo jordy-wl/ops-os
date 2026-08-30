@@ -1,0 +1,82 @@
+{
+  "name": "WorkflowInstance",
+  "type": "object",
+  "properties": {
+    "workflow_template_id": {
+      "type": "string"
+    },
+    "workflow_template_version_id": {
+      "type": "string"
+    },
+    "client_id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "not_started",
+        "in_progress",
+        "completed",
+        "blocked",
+        "cancelled",
+        "archived"
+      ],
+      "default": "not_started"
+    },
+    "current_stage_id": {
+      "type": "string"
+    },
+    "owner_type": {
+      "type": "string",
+      "enum": [
+        "user",
+        "team",
+        "department"
+      ]
+    },
+    "owner_id": {
+      "type": "string"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "progress_percentage": {
+      "type": "number",
+      "default": 0
+    },
+    "deviations_from_template": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "ad_hoc_tasks": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "insights": {
+      "type": "object"
+    },
+    "metadata": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "workflow_template_id",
+    "client_id"
+  ]
+}

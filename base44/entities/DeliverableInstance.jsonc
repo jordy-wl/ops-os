@@ -1,0 +1,75 @@
+{
+  "name": "DeliverableInstance",
+  "type": "object",
+  "properties": {
+    "stage_instance_id": {
+      "type": "string"
+    },
+    "deliverable_template_id": {
+      "type": "string"
+    },
+    "workflow_instance_id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "sequence_order": {
+      "type": "integer"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "not_started",
+        "in_progress",
+        "completed",
+        "blocked"
+      ],
+      "default": "not_started"
+    },
+    "owner_type": {
+      "type": "string",
+      "enum": [
+        "user",
+        "team",
+        "department"
+      ]
+    },
+    "owner_id": {
+      "type": "string"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "fields": {
+      "type": "object",
+      "description": "Task-filled enrichment data"
+    },
+    "document_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "ai_summary": {
+      "type": "string"
+    },
+    "metadata": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "stage_instance_id",
+    "deliverable_template_id",
+    "sequence_order"
+  ]
+}

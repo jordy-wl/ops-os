@@ -1,0 +1,35 @@
+{
+  "name": "UserTeam",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "User ID"
+    },
+    "team_id": {
+      "type": "string",
+      "description": "Team ID"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "member",
+        "lead",
+        "admin"
+      ],
+      "default": "member"
+    },
+    "joined_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "user_id",
+    "team_id"
+  ]
+}

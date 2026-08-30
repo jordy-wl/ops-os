@@ -1,0 +1,142 @@
+{
+  "name": "Org",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Official name of the organization or sub-organization"
+    },
+    "parent_org_id": {
+      "type": "string",
+      "description": "Reference to the parent organization if this is a sub-organization. Null for the root organization"
+    },
+    "description": {
+      "type": "string",
+      "description": "A detailed description of the organization's mission, vision, and core activities"
+    },
+    "logo_url": {
+      "type": "string",
+      "description": "URL to the organization's logo"
+    },
+    "website": {
+      "type": "string",
+      "description": "Official website of the organization"
+    },
+    "key_stats": {
+      "type": "object",
+      "properties": {
+        "headcount": {
+          "type": "string",
+          "description": "Employee headcount range (e.g., '1-49', '50-249', '249-500', '500+')"
+        },
+        "annual_revenue": {
+          "type": "number"
+        },
+        "revenue_currency": {
+          "type": "string",
+          "default": "USD"
+        },
+        "client_count": {
+          "type": "integer"
+        },
+        "market_share_percentage": {
+          "type": "number"
+        }
+      },
+      "description": "Dynamic key performance indicators and statistics"
+    },
+    "products_and_services": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of product/service IDs offered by this organization/sub-organization"
+    },
+    "client_segments": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Key client segments targeted by this organization (e.g., 'SMB', 'Enterprise', 'Fintech Startups')"
+    },
+    "geographic_reach": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Geographic regions where the organization operates"
+    },
+    "strengths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Key strengths of the organization (SWOT analysis)"
+    },
+    "weaknesses": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Key weaknesses of the organization (SWOT analysis)"
+    },
+    "opportunities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "External opportunities for the organization (SWOT analysis)"
+    },
+    "threats": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "External threats to the organization (SWOT analysis)"
+    },
+    "strategic_objectives": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "objective": {
+            "type": "string"
+          },
+          "target_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "on_track",
+              "at_risk",
+              "achieved",
+              "delayed"
+            ]
+          }
+        }
+      },
+      "description": "High-level strategic objectives"
+    },
+    "industry_intel": {
+      "type": "string",
+      "description": "Aggregated industry intelligence relevant to the organization"
+    },
+    "owner_user_id": {
+      "type": "string",
+      "description": "The user ID responsible for managing this Org entity"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Flexible field for additional dynamic data, potentially AI-generated insights"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

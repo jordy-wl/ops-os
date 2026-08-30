@@ -1,0 +1,98 @@
+{
+  "name": "FieldDefinition",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "code": {
+      "type": "string",
+      "description": "Unique field code"
+    },
+    "description": {
+      "type": "string"
+    },
+    "scope": {
+      "type": "string",
+      "enum": [
+        "global",
+        "workflow"
+      ],
+      "default": "global"
+    },
+    "object_type": {
+      "type": "string",
+      "enum": [
+        "client",
+        "workflow_instance",
+        "task_instance",
+        "contact"
+      ],
+      "default": "client"
+    },
+    "field_type": {
+      "type": "string",
+      "enum": [
+        "string",
+        "text",
+        "integer",
+        "float",
+        "boolean",
+        "date",
+        "datetime",
+        "enum",
+        "json",
+        "file",
+        "relation",
+        "computed",
+        "ai_field"
+      ],
+      "default": "string"
+    },
+    "enum_values": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "default_value": {
+      "type": "string"
+    },
+    "validation_rules": {
+      "type": "object",
+      "description": "Validation constraints"
+    },
+    "visibility_rules": {
+      "type": "object",
+      "description": "Who can see this field"
+    },
+    "field_permissions": {
+      "type": "object",
+      "description": "Edit/view permissions by role"
+    },
+    "ai_context": {
+      "type": "object",
+      "description": "AI hints for reasoning"
+    },
+    "ai_rules": {
+      "type": "object",
+      "description": "AI behavior constraints"
+    },
+    "is_required": {
+      "type": "boolean",
+      "default": false
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "sequence_order": {
+      "type": "integer"
+    }
+  },
+  "required": [
+    "name",
+    "code",
+    "field_type"
+  ]
+}

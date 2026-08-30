@@ -1,0 +1,43 @@
+{
+  "name": "AIPermissionScope",
+  "type": "object",
+  "properties": {
+    "agent_id": {
+      "type": "string",
+      "description": "AI agent identifier"
+    },
+    "object_type": {
+      "type": "string",
+      "description": "Entity type (e.g., client, workflow_instance, task_instance)"
+    },
+    "can_read": {
+      "type": "boolean",
+      "default": false
+    },
+    "can_create": {
+      "type": "boolean",
+      "default": false
+    },
+    "can_update": {
+      "type": "boolean",
+      "default": false
+    },
+    "can_delete": {
+      "type": "boolean",
+      "default": false
+    },
+    "can_execute_actions": {
+      "type": "boolean",
+      "default": false,
+      "description": "Can execute strategy actions on this object type"
+    },
+    "conditions": {
+      "type": "object",
+      "description": "Additional conditions or constraints"
+    }
+  },
+  "required": [
+    "agent_id",
+    "object_type"
+  ]
+}

@@ -1,0 +1,75 @@
+{
+  "name": "StrategyAction",
+  "type": "object",
+  "properties": {
+    "strategy_space_id": {
+      "type": "string",
+      "description": "Parent strategy space"
+    },
+    "trigger_message_id": {
+      "type": "string",
+      "description": "Message that triggered this action"
+    },
+    "action_type": {
+      "type": "string",
+      "enum": [
+        "CREATE_WORKFLOW",
+        "UPDATE_CLIENT_FIELD",
+        "GENERATE_REPORT",
+        "CREATE_TASK",
+        "PROPOSE_TEMPLATE_CHANGE",
+        "UPDATE_WORKFLOW_INSTANCE",
+        "GENERATE_DOCUMENT"
+      ],
+      "description": "Type of action to execute"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "executed",
+        "rejected",
+        "failed",
+        "rolled_back"
+      ],
+      "default": "pending"
+    },
+    "requested_by_user_id": {
+      "type": "string",
+      "description": "User who initiated this"
+    },
+    "executed_by": {
+      "type": "string",
+      "description": "User or AI that executed"
+    },
+    "executed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable description"
+    },
+    "payload": {
+      "type": "object",
+      "description": "Action parameters"
+    },
+    "result_data": {
+      "type": "object",
+      "description": "Execution result"
+    },
+    "target_object_type": {
+      "type": "string",
+      "description": "Type of object being acted upon"
+    },
+    "target_object_id": {
+      "type": "string",
+      "description": "ID of target object"
+    }
+  },
+  "required": [
+    "strategy_space_id",
+    "action_type"
+  ]
+}

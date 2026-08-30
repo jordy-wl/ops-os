@@ -1,0 +1,94 @@
+{
+  "name": "BrandKit",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the brand kit"
+    },
+    "description": {
+      "type": "string"
+    },
+    "logo_url": {
+      "type": "string",
+      "description": "URL to company logo"
+    },
+    "primary_color": {
+      "type": "string",
+      "default": "#00E5FF",
+      "description": "Primary brand color (hex)"
+    },
+    "secondary_color": {
+      "type": "string",
+      "default": "#BD00FF",
+      "description": "Secondary brand color (hex)"
+    },
+    "accent_color": {
+      "type": "string",
+      "default": "#F5F5F5",
+      "description": "Accent color (hex)"
+    },
+    "font_family": {
+      "type": "string",
+      "default": "Inter, sans-serif",
+      "description": "Primary font family"
+    },
+    "font_family_heading": {
+      "type": "string",
+      "default": "Poppins, sans-serif",
+      "description": "Heading font family"
+    },
+    "header_html_template": {
+      "type": "string",
+      "description": "HTML template for document header"
+    },
+    "footer_html_template": {
+      "type": "string",
+      "description": "HTML template for document footer"
+    },
+    "cover_page_template": {
+      "type": "string",
+      "description": "HTML template for cover page"
+    },
+    "page_margins": {
+      "type": "object",
+      "properties": {
+        "top": {
+          "type": "string",
+          "default": "1in"
+        },
+        "right": {
+          "type": "string",
+          "default": "1in"
+        },
+        "bottom": {
+          "type": "string",
+          "default": "1in"
+        },
+        "left": {
+          "type": "string",
+          "default": "1in"
+        }
+      }
+    },
+    "custom_css": {
+      "type": "string",
+      "description": "Additional CSS for document styling"
+    },
+    "is_default": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this is the default brand kit"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "metadata": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

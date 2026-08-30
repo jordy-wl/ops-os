@@ -1,0 +1,45 @@
+{
+  "name": "WorkflowTemplateVersion",
+  "type": "object",
+  "properties": {
+    "workflow_template_id": {
+      "type": "string"
+    },
+    "version_number": {
+      "type": "integer"
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "change_notes": {
+      "type": "string"
+    },
+    "published_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "published_by": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "published",
+        "archived"
+      ],
+      "default": "draft"
+    },
+    "configuration": {
+      "type": "object",
+      "description": "Version-specific settings"
+    }
+  },
+  "required": [
+    "workflow_template_id",
+    "version_number"
+  ]
+}

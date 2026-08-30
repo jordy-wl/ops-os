@@ -1,0 +1,40 @@
+{
+  "name": "StrategySpace",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "primary_client_id": {
+      "type": "string",
+      "description": "Anchored client context"
+    },
+    "primary_workflow_id": {
+      "type": "string",
+      "description": "Anchored workflow context"
+    },
+    "department_id": {
+      "type": "string"
+    },
+    "participants": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "User IDs of participants"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "metadata": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

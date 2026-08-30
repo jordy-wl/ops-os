@@ -1,0 +1,188 @@
+{
+  "name": "DocumentTemplate",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "code": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "proposal",
+        "contract",
+        "quote",
+        "welcome_pack",
+        "compliance",
+        "onboarding",
+        "report",
+        "other"
+      ],
+      "default": "other"
+    },
+    "sections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "text",
+              "chart",
+              "table"
+            ],
+            "default": "text"
+          },
+          "order": {
+            "type": "integer"
+          },
+          "ai_prompt": {
+            "type": "string",
+            "description": "Specific AI instructions for generating this section"
+          },
+          "data_references": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "entity_type": {
+                  "type": "string"
+                },
+                "field_paths": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "use_entire_entity": {
+                  "type": "boolean",
+                  "default": false,
+                  "description": "If true, use all data from the entity instead of specific fields"
+                },
+                "entity_id": {
+                  "type": "string",
+                  "description": "ID of specific entity to reference"
+                },
+                "usage_prompt": {
+                  "type": "string",
+                  "description": "Instructions for how AI should use this data"
+                }
+              }
+            }
+          },
+          "chart_type": {
+            "type": "string",
+            "enum": [
+              "bar",
+              "line",
+              "pie",
+              "area",
+              "scatter"
+            ],
+            "description": "For chart type sections"
+          },
+          "chart_data_source": {
+            "type": "object",
+            "description": "Configuration for chart data source - multiple entities and fields"
+          },
+          "chart_options": {
+            "type": "object",
+            "description": "Chart styling and configuration options"
+          },
+          "table_data_source": {
+            "type": "object",
+            "description": "Configuration for table data source - columns from multiple entities"
+          }
+        }
+      },
+      "description": "Progressive document structure with configurable sections"
+    },
+    "include_appendix": {
+      "type": "boolean",
+      "default": false,
+      "description": "If true, automatically generate an appendix with supplementary information"
+    },
+    "brand_kit_id": {
+      "type": "string",
+      "description": "BrandKit to use for document styling"
+    },
+    "document_outline": {
+      "type": "string",
+      "description": "High-level structure guide for AI (legacy field)"
+    },
+    "placeholder_schema": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "text",
+              "number",
+              "date",
+              "currency",
+              "email",
+              "table",
+              "array",
+              "object"
+            ]
+          },
+          "example": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Schema defining available placeholders (legacy)"
+    },
+    "rag_keywords": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Keywords for knowledge base queries"
+    },
+    "output_format": {
+      "type": "string",
+      "enum": [
+        "pdf",
+        "doc",
+        "html",
+        "markdown"
+      ],
+      "default": "pdf"
+    },
+    "version": {
+      "type": "integer",
+      "default": 1
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "metadata": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

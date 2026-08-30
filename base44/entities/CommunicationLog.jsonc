@@ -1,0 +1,73 @@
+{
+  "name": "CommunicationLog",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string",
+      "description": "Related client ID"
+    },
+    "communication_type": {
+      "type": "string",
+      "enum": [
+        "email",
+        "call",
+        "meeting",
+        "message",
+        "note",
+        "other"
+      ],
+      "default": "note",
+      "description": "Type of communication"
+    },
+    "subject": {
+      "type": "string",
+      "description": "Subject or title of communication"
+    },
+    "content": {
+      "type": "string",
+      "description": "Content or notes from communication"
+    },
+    "contact_id": {
+      "type": "string",
+      "description": "Related contact if applicable"
+    },
+    "workflow_instance_id": {
+      "type": "string",
+      "description": "Related workflow instance if applicable"
+    },
+    "direction": {
+      "type": "string",
+      "enum": [
+        "inbound",
+        "outbound"
+      ],
+      "description": "Direction of communication"
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the communication occurred"
+    },
+    "is_ai_drafted": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this communication was drafted by AI"
+    },
+    "ai_prompt": {
+      "type": "string",
+      "description": "Original user request to AI"
+    },
+    "ai_response_raw": {
+      "type": "string",
+      "description": "Raw AI response before user edits"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional metadata"
+    }
+  },
+  "required": [
+    "client_id",
+    "communication_type"
+  ]
+}

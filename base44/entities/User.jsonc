@@ -1,0 +1,44 @@
+{
+  "name": "User",
+  "type": "object",
+  "properties": {
+    "app_role": {
+      "type": "string",
+      "enum": [
+        "workflow_designer",
+        "manager",
+        "operator",
+        "viewer"
+      ],
+      "description": "Application-specific role for granular permissions"
+    },
+    "department_id": {
+      "type": "string",
+      "description": "Department the user belongs to"
+    },
+    "job_title": {
+      "type": "string"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "avatar_url": {
+      "type": "string"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "metadata": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "app_role",
+    "department_id",
+    "job_title",
+    "phone",
+    "avatar_url",
+    "metadata"
+  ]
+}

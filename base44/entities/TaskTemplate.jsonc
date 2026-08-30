@@ -1,0 +1,204 @@
+{
+  "name": "TaskTemplate",
+  "type": "object",
+  "properties": {
+    "deliverable_template_id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "instructions": {
+      "type": "string",
+      "description": "SOP/how-to instructions"
+    },
+    "sequence_order": {
+      "type": "integer"
+    },
+    "owner_type": {
+      "type": "string",
+      "enum": [
+        "user",
+        "team",
+        "department"
+      ]
+    },
+    "owner_id": {
+      "type": "string"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "normal",
+        "high",
+        "urgent"
+      ],
+      "default": "normal"
+    },
+    "communication_type": {
+      "type": "string",
+      "enum": [
+        "email",
+        "call",
+        "meeting",
+        "form_send",
+        "other"
+      ],
+      "description": "Type of communication action associated with this task template"
+    },
+    "is_required": {
+      "type": "boolean",
+      "default": true
+    },
+    "is_parallel": {
+      "type": "boolean",
+      "default": false
+    },
+    "dependency_task_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "conditions": {
+      "type": "object",
+      "description": "Conditional branching logic - paths based on task outcomes"
+    },
+    "requires_review": {
+      "type": "boolean",
+      "default": false,
+      "description": "Task must be reviewed before marked complete"
+    },
+    "reviewer_type": {
+      "type": "string",
+      "enum": [
+        "team_lead",
+        "department_head",
+        "specific_user",
+        "any_admin"
+      ],
+      "description": "Who can review this task"
+    },
+    "can_be_overridden": {
+      "type": "boolean",
+      "default": true,
+      "description": "Can this task be overridden (completed without data input)?"
+    },
+    "can_be_dumped": {
+      "type": "boolean",
+      "default": true,
+      "description": "Can this task be marked as 'dumped' (cancelled)?"
+    },
+    "can_be_delayed": {
+      "type": "boolean",
+      "default": true,
+      "description": "Can this task be delayed?"
+    },
+    "can_add_subtask": {
+      "type": "boolean",
+      "default": true,
+      "description": "Can new subtasks be added to this task?"
+    },
+    "data_field_definitions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "field_name": {
+            "type": "string"
+          },
+          "field_code": {
+            "type": "string"
+          },
+          "field_type": {
+            "type": "string",
+            "enum": [
+              "text",
+              "number",
+              "currency",
+              "date",
+              "url",
+              "email",
+              "phone",
+              "multiselect",
+              "single_select",
+              "boolean",
+              "file"
+            ]
+          },
+          "is_required": {
+            "type": "boolean"
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Dropdown options for single_select and multiselect field types"
+          },
+          "allow_other": {
+            "type": "boolean",
+            "default": false,
+            "description": "Allow users to enter custom values not in the predefined options list"
+          },
+          "validation_rules": {
+            "type": "object"
+          },
+          "save_to_client_field": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string",
+            "description": "Optional category for grouping fields in the UI (e.g., 'Client Information', 'Technical Requirements')"
+          }
+        }
+      },
+      "description": "Data fields to collect during task execution, saved to client record"
+    },
+    "assignment_config": {
+      "type": "object",
+      "description": "Assignment rules following org hierarchy",
+      "properties": {
+        "auto_assign_to_lead": {
+          "type": "boolean"
+        },
+        "allow_reassignment": {
+          "type": "boolean"
+        },
+        "reassignment_allowed_by": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "team_lead",
+              "department_head",
+              "admin"
+            ]
+          }
+        }
+      }
+    },
+    "ai_auto_enrich": {
+      "type": "boolean",
+      "default": false
+    },
+    "ai_context": {
+      "type": "object"
+    },
+    "metadata": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "deliverable_template_id",
+    "name",
+    "sequence_order"
+  ]
+}

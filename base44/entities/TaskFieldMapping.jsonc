@@ -1,0 +1,37 @@
+{
+  "name": "TaskFieldMapping",
+  "type": "object",
+  "properties": {
+    "task_template_id": {
+      "type": "string"
+    },
+    "field_definition_id": {
+      "type": "string"
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "write",
+        "append",
+        "compute",
+        "read_only"
+      ],
+      "default": "write"
+    },
+    "is_primary": {
+      "type": "boolean",
+      "default": false
+    },
+    "ui_prompt": {
+      "type": "string",
+      "description": "UI label/prompt for input"
+    },
+    "sequence_order": {
+      "type": "integer"
+    }
+  },
+  "required": [
+    "task_template_id",
+    "field_definition_id"
+  ]
+}

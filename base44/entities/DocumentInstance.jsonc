@@ -1,0 +1,66 @@
+{
+  "name": "DocumentInstance",
+  "type": "object",
+  "properties": {
+    "document_template_id": {
+      "type": "string"
+    },
+    "client_id": {
+      "type": "string"
+    },
+    "workflow_instance_id": {
+      "type": "string"
+    },
+    "deliverable_instance_id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "generated_content": {
+      "type": "string",
+      "description": "Populated content after template processing"
+    },
+    "data_snapshot": {
+      "type": "object",
+      "description": "Snapshot of data used to generate the document"
+    },
+    "file_url": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "generated",
+        "approved",
+        "sent"
+      ],
+      "default": "draft"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "generated_by": {
+      "type": "string"
+    },
+    "approved_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "approved_by": {
+      "type": "string"
+    },
+    "sent_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "metadata": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "document_template_id"
+  ]
+}

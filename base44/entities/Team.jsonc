@@ -1,0 +1,39 @@
+{
+  "name": "Team",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Team name"
+    },
+    "code": {
+      "type": "string",
+      "description": "Short code identifier"
+    },
+    "department_id": {
+      "type": "string",
+      "description": "Parent department ID"
+    },
+    "lead_user_id": {
+      "type": "string",
+      "description": "Team lead user ID"
+    },
+    "description": {
+      "type": "string"
+    },
+    "color": {
+      "type": "string",
+      "description": "Team accent color for UI"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "metadata": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

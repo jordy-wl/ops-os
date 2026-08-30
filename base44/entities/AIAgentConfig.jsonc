@@ -1,0 +1,48 @@
+{
+  "name": "AIAgentConfig",
+  "type": "object",
+  "properties": {
+    "agent_id": {
+      "type": "string",
+      "description": "Unique identifier for the agent"
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-readable agent name"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "strategic_command_center",
+        "workflow_template_builder",
+        "document_content_generator",
+        "event_monitor",
+        "sago_rag_engine"
+      ],
+      "default": "strategic_command_center"
+    },
+    "description": {
+      "type": "string"
+    },
+    "is_enabled": {
+      "type": "boolean",
+      "default": true
+    },
+    "config_jsonb": {
+      "type": "object",
+      "description": "Configuration including context sources, allowed actions, safety guardrails, retrieval settings"
+    },
+    "model_provider": {
+      "type": "string",
+      "description": "LLM provider (e.g., openai, anthropic)"
+    },
+    "metadata": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "agent_id",
+    "name",
+    "role"
+  ]
+}

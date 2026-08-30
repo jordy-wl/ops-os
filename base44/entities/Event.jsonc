@@ -1,0 +1,72 @@
+{
+  "name": "Event",
+  "type": "object",
+  "properties": {
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "workflow_instance_started",
+        "workflow_instance_completed",
+        "workflow_instance_blocked",
+        "stage_entered",
+        "stage_completed",
+        "deliverable_started",
+        "deliverable_completed",
+        "deliverable_blocked",
+        "task_released",
+        "task_started",
+        "task_completed",
+        "task_blocked",
+        "task_unblocked",
+        "task_failed",
+        "task_reassigned",
+        "field_updated",
+        "field_validation_failed",
+        "client_record_enriched",
+        "client_lifecycle_change",
+        "document_generation_requested",
+        "document_generated",
+        "document_approved",
+        "document_sent",
+        "report_generated",
+        "strategy_message_created",
+        "strategy_action_requested",
+        "strategy_action_executed",
+        "ai_reasoning_triggered",
+        "permission_granted",
+        "permission_revoked",
+        "ownership_changed"
+      ]
+    },
+    "source_entity_type": {
+      "type": "string"
+    },
+    "source_entity_id": {
+      "type": "string"
+    },
+    "actor_type": {
+      "type": "string",
+      "enum": [
+        "user",
+        "ai",
+        "system"
+      ],
+      "default": "user"
+    },
+    "actor_id": {
+      "type": "string"
+    },
+    "payload": {
+      "type": "object"
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "event_type",
+    "source_entity_type",
+    "source_entity_id"
+  ]
+}

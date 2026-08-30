@@ -1,0 +1,54 @@
+{
+  "name": "ClientOffering",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string"
+    },
+    "offering_id": {
+      "type": "string",
+      "description": "Product or Service ID"
+    },
+    "offering_type": {
+      "type": "string",
+      "enum": [
+        "product",
+        "service"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "onboarding",
+        "churned",
+        "trial",
+        "paused"
+      ],
+      "default": "active"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "current_contract_value": {
+      "type": "number"
+    },
+    "usage_metrics": {
+      "type": "object",
+      "description": "Usage statistics (e.g., seats, features enabled)"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "client_id",
+    "offering_id",
+    "offering_type"
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "name": "BusinessConcept",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Concept name"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "methodology",
+        "framework",
+        "internal_process",
+        "value_proposition",
+        "other"
+      ],
+      "default": "other"
+    },
+    "description": {
+      "type": "string",
+      "description": "Detailed description"
+    },
+    "associated_product_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Linked Product IDs"
+    },
+    "associated_service_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Linked Service IDs"
+    },
+    "version": {
+      "type": "string",
+      "description": "Version number"
+    },
+    "last_reviewed_by_user_id": {
+      "type": "string",
+      "description": "User ID of last reviewer"
+    },
+    "last_reviewed_date": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "metadata": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

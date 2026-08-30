@@ -1,0 +1,54 @@
+{
+  "name": "StrategyMessage",
+  "type": "object",
+  "properties": {
+    "strategy_space_id": {
+      "type": "string"
+    },
+    "author_type": {
+      "type": "string",
+      "enum": [
+        "user",
+        "ai"
+      ],
+      "default": "user"
+    },
+    "author_user_id": {
+      "type": "string"
+    },
+    "content": {
+      "type": "string"
+    },
+    "content_type": {
+      "type": "string",
+      "enum": [
+        "text",
+        "markdown",
+        "json",
+        "widget"
+      ],
+      "default": "text"
+    },
+    "client_id": {
+      "type": "string",
+      "description": "Context reference"
+    },
+    "workflow_instance_id": {
+      "type": "string"
+    },
+    "report_instance_id": {
+      "type": "string"
+    },
+    "widget_data": {
+      "type": "object",
+      "description": "Rich widget render data"
+    },
+    "metadata": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "strategy_space_id",
+    "content"
+  ]
+}

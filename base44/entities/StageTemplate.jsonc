@@ -1,0 +1,56 @@
+{
+  "name": "StageTemplate",
+  "type": "object",
+  "properties": {
+    "workflow_template_version_id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "sequence_order": {
+      "type": "integer"
+    },
+    "owner_type": {
+      "type": "string",
+      "enum": [
+        "user",
+        "team",
+        "department"
+      ]
+    },
+    "owner_id": {
+      "type": "string"
+    },
+    "is_parallel": {
+      "type": "boolean",
+      "default": false
+    },
+    "estimated_duration_days": {
+      "type": "number"
+    },
+    "entry_conditions": {
+      "type": "object",
+      "description": "Conditions to enter this stage"
+    },
+    "exit_conditions": {
+      "type": "object",
+      "description": "Conditions to complete this stage"
+    },
+    "failure_path_stage_id": {
+      "type": "string",
+      "description": "Stage to go to on failure"
+    },
+    "metadata": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "workflow_template_version_id",
+    "name",
+    "sequence_order"
+  ]
+}

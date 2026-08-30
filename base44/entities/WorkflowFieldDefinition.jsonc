@@ -1,0 +1,23 @@
+{
+  "name": "WorkflowFieldDefinition",
+  "type": "object",
+  "properties": {
+    "workflow_template_version_id": {
+      "type": "string"
+    },
+    "field_definition_id": {
+      "type": "string"
+    },
+    "is_required": {
+      "type": "boolean",
+      "default": false
+    },
+    "sequence_order": {
+      "type": "integer"
+    }
+  },
+  "required": [
+    "workflow_template_version_id",
+    "field_definition_id"
+  ]
+}

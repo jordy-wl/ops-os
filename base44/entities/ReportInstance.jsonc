@@ -1,0 +1,174 @@
+{
+  "name": "ReportInstance",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Report title"
+    },
+    "report_type": {
+      "type": "string",
+      "enum": [
+        "workflow_insights",
+        "process_improvement",
+        "client_analysis",
+        "performance_summary",
+        "bottleneck_analysis",
+        "efficiency_report",
+        "outcome_analysis",
+        "custom"
+      ],
+      "default": "custom"
+    },
+    "scope": {
+      "type": "object",
+      "description": "What this report covers (e.g., workflow_id, client_id, date_range)",
+      "properties": {
+        "workflow_template_id": {
+          "type": "string"
+        },
+        "client_id": {
+          "type": "string"
+        },
+        "date_from": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "date_to": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "content": {
+      "type": "string",
+      "description": "AI-generated report content (markdown)"
+    },
+    "insights": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string",
+            "enum": [
+              "bottleneck",
+              "efficiency",
+              "quality",
+              "timeline",
+              "resource",
+              "risk",
+              "opportunity"
+            ]
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high",
+              "critical"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "recommendation": {
+            "type": "string"
+          },
+          "affected_entities": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      "description": "Structured insights and findings"
+    },
+    "metrics": {
+      "type": "object",
+      "description": "Key metrics calculated in this report",
+      "properties": {
+        "total_workflows": {
+          "type": "number"
+        },
+        "avg_completion_time_days": {
+          "type": "number"
+        },
+        "success_rate": {
+          "type": "number"
+        },
+        "blocked_tasks_count": {
+          "type": "number"
+        }
+      }
+    },
+    "recommendations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "priority": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ]
+          },
+          "action": {
+            "type": "string"
+          },
+          "expected_impact": {
+            "type": "string"
+          },
+          "implementation_effort": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ]
+          }
+        }
+      },
+      "description": "Process improvement recommendations"
+    },
+    "data_sources": {
+      "type": "object",
+      "description": "What data was analyzed (counts, date ranges, etc.)"
+    },
+    "generated_by": {
+      "type": "string",
+      "description": "User ID who requested the report"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "ai_model": {
+      "type": "string",
+      "description": "AI model used for generation"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "final",
+        "archived"
+      ],
+      "default": "final"
+    },
+    "metadata": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "title",
+    "report_type"
+  ]
+}

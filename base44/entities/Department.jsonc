@@ -1,0 +1,33 @@
+{
+  "name": "Department",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Department name"
+    },
+    "code": {
+      "type": "string",
+      "description": "Short code identifier"
+    },
+    "description": {
+      "type": "string",
+      "description": "Department description"
+    },
+    "head_user_id": {
+      "type": "string",
+      "description": "Department head user ID"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional metadata"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

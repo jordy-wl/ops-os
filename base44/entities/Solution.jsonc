@@ -1,0 +1,626 @@
+{
+  "name": "Solution",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string",
+      "description": "Reference to Client entity"
+    },
+    "name": {
+      "type": "string",
+      "description": "Solution name"
+    },
+    "description": {
+      "type": "string",
+      "description": "Solution description"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "prospecting",
+        "discovery",
+        "proposal",
+        "negotiation",
+        "active",
+        "pending_renewal",
+        "expired",
+        "cancelled",
+        "closed_lost"
+      ],
+      "default": "prospecting"
+    },
+    "is_primary": {
+      "type": "boolean",
+      "default": false,
+      "description": "If true, this is the primary solution for the client"
+    },
+    "solution_category": {
+      "type": "string",
+      "enum": [
+        "new_business",
+        "upsell",
+        "cross_sell",
+        "renewal"
+      ],
+      "description": "Classification of the solution"
+    },
+    "opportunity_type": {
+      "type": "string",
+      "enum": [
+        "Broking",
+        "Technology",
+        "Wealth",
+        "Investment",
+        "Consulting",
+        "Other"
+      ],
+      "description": "Type of opportunity as per business lines"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "expected_close_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Anticipated date the solution will close (for prospecting/proposal stages)"
+    },
+    "pricing_model": {
+      "type": "string",
+      "enum": [
+        "one_time",
+        "monthly",
+        "annual",
+        "usage_based",
+        "tiered",
+        "custom"
+      ],
+      "default": "monthly"
+    },
+    "total_contract_value": {
+      "type": "number",
+      "description": "Total value of the solution contract"
+    },
+    "currency": {
+      "type": "string",
+      "default": "USD"
+    },
+    "selected_offerings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "offering_type": {
+            "type": "string",
+            "enum": [
+              "product",
+              "service"
+            ]
+          },
+          "offering_id": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number"
+          }
+        }
+      },
+      "description": "Products/Services included in this solution"
+    },
+    "pricing_breakdown": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "item_name": {
+            "type": "string"
+          },
+          "item_type": {
+            "type": "string"
+          },
+          "offering_id": {
+            "type": "string"
+          },
+          "offering_type": {
+            "type": "string",
+            "enum": [
+              "product",
+              "service"
+            ]
+          },
+          "unit_price": {
+            "type": "number"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "discount_percentage": {
+            "type": "number"
+          },
+          "subtotal": {
+            "type": "number"
+          },
+          "configuration_details": {
+            "type": "object"
+          },
+          "pricing_approval_status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "approved",
+              "rejected"
+            ],
+            "description": "Status of pricing rule approval if required"
+          },
+          "pricing_approval_notes": {
+            "type": "string",
+            "description": "Notes from pricing approval process"
+          }
+        }
+      },
+      "description": "Detailed pricing line items"
+    },
+    "global_discount_percentage": {
+      "type": "number",
+      "default": 0
+    },
+    "features_included": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Key features included in this solution"
+    },
+    "pain_points": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Client's key pain points identified"
+    },
+    "desired_outcomes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Client's desired outcomes from the solution"
+    },
+    "current_providers": {
+      "type": "object",
+      "properties": {
+        "custodian": {
+          "type": "string"
+        },
+        "third_party_integrations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "market_data_vendor": {
+          "type": "string"
+        }
+      },
+      "description": "Current providers used by the client"
+    },
+    "market_access_requirements": {
+      "type": "string"
+    },
+    "client_price_expectations": {
+      "type": "string"
+    },
+    "regulatory_tax_compliance_learnings": {
+      "type": "string"
+    },
+    "industry_intel": {
+      "type": "string"
+    },
+    "trading_infrastructure_vendor": {
+      "type": "string"
+    },
+    "decision_makers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "role_title": {
+            "type": "string"
+          },
+          "buying_criteria_influence": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Key decision makers"
+    },
+    "decision_timeline": {
+      "type": "string"
+    },
+    "additional_stakeholders": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "key_risks_to_winning": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "mitigation_strategies": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "client_risk_appetite": {
+      "type": "string"
+    },
+    "contingency_plans": {
+      "type": "string"
+    },
+    "risk_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "next_best_action": {
+      "type": "string",
+      "description": "AI-suggested next action for this solution"
+    },
+    "ai_generated_summary": {
+      "type": "string",
+      "description": "AI-generated summary of the solution state"
+    },
+    "competitive_names": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "competitive_strengths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "competitive_weaknesses": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "value_proposition": {
+      "type": "string"
+    },
+    "our_weakness": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "sales_lead_id": {
+      "type": "string"
+    },
+    "proposition_lead_id": {
+      "type": "string"
+    },
+    "subject_matter_experts_assigned": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "key_internal_risks": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "internal_teams": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "business_sponsor_id": {
+      "type": "string"
+    },
+    "enterprise_team_id": {
+      "type": "string"
+    },
+    "key_milestones": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "upcoming",
+              "completed",
+              "missed"
+            ]
+          }
+        }
+      }
+    },
+    "critical_next_steps": {
+      "type": "string"
+    },
+    "communication_plan": {
+      "type": "string"
+    },
+    "stakeholder_update_plan": {
+      "type": "string"
+    },
+    "timeline_for_action_items": {
+      "type": "string"
+    },
+    "next_action_item": {
+      "type": "string"
+    },
+    "competitor_learnings": {
+      "type": "string"
+    },
+    "playbook_additions": {
+      "type": "string"
+    },
+    "consulting_requirements": {
+      "type": "string"
+    },
+    "bespoke_customisation_requirements": {
+      "type": "string"
+    },
+    "other_notes": {
+      "type": "string"
+    },
+    "lost_reason": {
+      "type": "string"
+    },
+    "feedback_from_client": {
+      "type": "string"
+    },
+    "missing_data_fields": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of critical fields that are still missing data from the workflow"
+    },
+    "offering_fit_analysis": {
+      "type": "object",
+      "properties": {
+        "fit_offerings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "offering_id": {
+                "type": "string"
+              },
+              "offering_type": {
+                "type": "string"
+              },
+              "offering_name": {
+                "type": "string"
+              },
+              "reasoning": {
+                "type": "string"
+              },
+              "confidence": {
+                "type": "string",
+                "enum": [
+                  "high",
+                  "medium",
+                  "low"
+                ]
+              }
+            }
+          }
+        },
+        "could_fit_offerings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "offering_id": {
+                "type": "string"
+              },
+              "offering_type": {
+                "type": "string"
+              },
+              "offering_name": {
+                "type": "string"
+              },
+              "reasoning": {
+                "type": "string"
+              },
+              "conditions": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "not_fit_offerings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "offering_id": {
+                "type": "string"
+              },
+              "offering_type": {
+                "type": "string"
+              },
+              "offering_name": {
+                "type": "string"
+              },
+              "reasoning": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "last_analyzed": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "description": "AI-driven analysis of which offerings are a fit, could be a fit, or not a fit for this solution"
+    },
+    "workflow_context": {
+      "type": "object",
+      "properties": {
+        "current_workflow_id": {
+          "type": "string"
+        },
+        "current_workflow_name": {
+          "type": "string"
+        },
+        "current_stage_name": {
+          "type": "string"
+        },
+        "data_collected_count": {
+          "type": "integer"
+        },
+        "data_remaining_count": {
+          "type": "integer"
+        }
+      },
+      "description": "Context about the workflow that is building this solution"
+    },
+    "terms_and_conditions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Selected term block IDs"
+    },
+    "custom_terms": {
+      "type": "string"
+    },
+    "solution_contacts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Contact IDs associated with this solution"
+    },
+    "solution_room_token": {
+      "type": "string",
+      "description": "Unique token for client-facing solution room access"
+    },
+    "terms_and_conditions_url": {
+      "type": "string",
+      "description": "Link to contract/terms document"
+    },
+    "stakeholders": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "contact_id": {
+            "type": "string"
+          },
+          "role_in_solution": {
+            "type": "string",
+            "enum": [
+              "sponsor",
+              "decision_maker",
+              "technical_lead",
+              "end_user",
+              "billing_contact"
+            ]
+          }
+        }
+      },
+      "description": "Key stakeholders for this solution"
+    },
+    "qbr_metrics": {
+      "type": "object",
+      "description": "Placeholder for QBR metrics"
+    },
+    "usage_data_url": {
+      "type": "string"
+    },
+    "approval_status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "pending_approval",
+        "approved",
+        "rejected"
+      ],
+      "default": "draft"
+    },
+    "approved_by_user_id": {
+      "type": "string"
+    },
+    "approved_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "owner_type": {
+      "type": "string",
+      "enum": [
+        "user",
+        "team",
+        "department"
+      ]
+    },
+    "owner_id": {
+      "type": "string"
+    },
+    "event_log": {
+      "type": "array",
+      "description": "Immutable log of significant events and state changes",
+      "items": {
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "event_type": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "user_id": {
+            "type": "string"
+          },
+          "details": {
+            "type": "object",
+            "description": "Contextual data related to the event"
+          }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional dynamic data"
+    }
+  },
+  "required": [
+    "client_id",
+    "name",
+    "status"
+  ]
+}

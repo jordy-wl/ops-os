@@ -1,0 +1,143 @@
+{
+  "name": "Quote",
+  "type": "object",
+  "properties": {
+    "solution_id": {
+      "type": "string",
+      "description": "Reference to Solution entity"
+    },
+    "version_number": {
+      "type": "integer",
+      "default": 1
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "generated_by": {
+      "type": "string",
+      "description": "User ID"
+    },
+    "total_quoted_value": {
+      "type": "number"
+    },
+    "quote_document_url": {
+      "type": "string",
+      "description": "Link to generated PDF/document"
+    },
+    "content": {
+      "type": "string",
+      "description": "Full markdown/HTML content of the quote"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "sent",
+        "viewed",
+        "negotiating",
+        "accepted",
+        "rejected"
+      ],
+      "default": "draft"
+    },
+    "sent_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "viewed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "accepted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "rejected_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "solution_room_token": {
+      "type": "string",
+      "description": "Secure token for solution room access"
+    },
+    "comments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "user_id": {
+            "type": "string"
+          },
+          "user_name": {
+            "type": "string"
+          },
+          "user_type": {
+            "type": "string",
+            "enum": [
+              "internal",
+              "client"
+            ]
+          },
+          "comment": {
+            "type": "string"
+          },
+          "section": {
+            "type": "string",
+            "description": "Which section the comment relates to"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "description": "Comments and annotations on the quote"
+    },
+    "changes_requested": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "requested_by": {
+            "type": "string"
+          },
+          "section": {
+            "type": "string"
+          },
+          "original_text": {
+            "type": "string"
+          },
+          "proposed_text": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "accepted",
+              "rejected"
+            ]
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "description": "Tracked change requests during negotiation"
+    },
+    "metadata": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "solution_id"
+  ]
+}

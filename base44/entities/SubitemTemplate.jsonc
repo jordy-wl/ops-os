@@ -1,0 +1,27 @@
+{
+  "name": "SubitemTemplate",
+  "type": "object",
+  "properties": {
+    "task_template_id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "sequence_order": {
+      "type": "integer"
+    },
+    "is_required": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "task_template_id",
+    "name",
+    "sequence_order"
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "name": "ClientContact",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string"
+    },
+    "contact_id": {
+      "type": "string"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "decision_maker",
+        "influencer",
+        "billing",
+        "technical",
+        "executive",
+        "other"
+      ],
+      "default": "other"
+    },
+    "is_primary": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "client_id",
+    "contact_id"
+  ]
+}

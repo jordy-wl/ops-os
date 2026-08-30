@@ -1,0 +1,125 @@
+{
+  "name": "PricingOption",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of this pricing option (e.g., 'Monthly Subscription', 'Per Trade')"
+    },
+    "product_id": {
+      "type": "string",
+      "description": "Associated Product ID"
+    },
+    "service_id": {
+      "type": "string",
+      "description": "Associated Service ID"
+    },
+    "calculation_method": {
+      "type": "string",
+      "enum": [
+        "fixed_fee",
+        "percentage_of_value",
+        "per_unit",
+        "per_transaction",
+        "per_share",
+        "bps_of_value",
+        "tiered",
+        "volume_based",
+        "custom"
+      ],
+      "default": "fixed_fee",
+      "description": "How the fee is calculated"
+    },
+    "fee_value": {
+      "type": "number",
+      "description": "The numeric value of the fee"
+    },
+    "fee_unit": {
+      "type": "string",
+      "enum": [
+        "USD",
+        "EUR",
+        "GBP",
+        "CAD",
+        "AUD",
+        "JPY",
+        "BPS",
+        "percentage",
+        "share",
+        "contract",
+        "trade",
+        "unit",
+        "hour",
+        "day",
+        "month",
+        "year",
+        "event",
+        "seat",
+        "user",
+        "transaction"
+      ],
+      "default": "USD",
+      "description": "The unit in which the fee is measured"
+    },
+    "minimum_fee": {
+      "type": "number",
+      "description": "Minimum fee that must be charged"
+    },
+    "maximum_fee": {
+      "type": "number",
+      "description": "Maximum fee that can be charged"
+    },
+    "frequency": {
+      "type": "string",
+      "enum": [
+        "one_time",
+        "per_transaction",
+        "daily",
+        "weekly",
+        "monthly",
+        "quarterly",
+        "annually",
+        "per_event"
+      ],
+      "default": "one_time",
+      "description": "How often this fee is charged"
+    },
+    "tiered_structure": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "from_quantity": {
+            "type": "number"
+          },
+          "to_quantity": {
+            "type": "number"
+          },
+          "fee_value": {
+            "type": "number"
+          }
+        }
+      },
+      "description": "For tiered pricing models"
+    },
+    "conditions": {
+      "type": "object",
+      "description": "Conditions for when this pricing applies"
+    },
+    "is_default": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this is the default pricing option"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "metadata": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

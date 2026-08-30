@@ -1,0 +1,64 @@
+{
+  "name": "StageInstance",
+  "type": "object",
+  "properties": {
+    "workflow_instance_id": {
+      "type": "string"
+    },
+    "stage_template_id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "sequence_order": {
+      "type": "integer"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "not_started",
+        "in_progress",
+        "completed",
+        "blocked",
+        "skipped"
+      ],
+      "default": "not_started"
+    },
+    "owner_type": {
+      "type": "string",
+      "enum": [
+        "user",
+        "team",
+        "department"
+      ]
+    },
+    "owner_id": {
+      "type": "string"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "progress_percentage": {
+      "type": "number",
+      "default": 0
+    },
+    "metadata": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "workflow_instance_id",
+    "stage_template_id",
+    "sequence_order"
+  ]
+}

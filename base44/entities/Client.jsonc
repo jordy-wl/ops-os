@@ -1,0 +1,125 @@
+{
+  "name": "Client",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Client/company name"
+    },
+    "org_id": {
+      "type": "string",
+      "description": "Reference to the Org entity that owns this client"
+    },
+    "industry": {
+      "type": "string",
+      "enum": [
+        "fintech",
+        "retail",
+        "legal",
+        "healthcare",
+        "technology",
+        "manufacturing",
+        "professional_services",
+        "real_estate",
+        "education",
+        "other"
+      ]
+    },
+    "region": {
+      "type": "string"
+    },
+    "lifecycle_stage": {
+      "type": "string",
+      "enum": [
+        "prospect",
+        "qualified",
+        "proposal",
+        "onboarding",
+        "active",
+        "churned"
+      ],
+      "default": "prospect"
+    },
+    "value": {
+      "type": "number",
+      "description": "Aggregate client value"
+    },
+    "currency": {
+      "type": "string",
+      "default": "USD"
+    },
+    "website": {
+      "type": "string"
+    },
+    "logo_url": {
+      "type": "string"
+    },
+    "owner_type": {
+      "type": "string",
+      "enum": [
+        "user",
+        "team",
+        "department"
+      ]
+    },
+    "owner_id": {
+      "type": "string"
+    },
+    "insights": {
+      "type": "object",
+      "description": "AI-generated insights"
+    },
+    "next_best_action": {
+      "type": "string",
+      "description": "AI-suggested next action"
+    },
+    "sentiment_score": {
+      "type": "string",
+      "enum": [
+        "positive",
+        "neutral",
+        "negative"
+      ]
+    },
+    "risk_score": {
+      "type": "number",
+      "description": "Churn risk 0-100"
+    },
+    "summary_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "stage_instance_id": {
+            "type": "string"
+          },
+          "stage_name": {
+            "type": "string"
+          },
+          "workflow_name": {
+            "type": "string"
+          },
+          "summary_text": {
+            "type": "string"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "description": "Historical summaries from completed stages"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Dynamic enrichment fields"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

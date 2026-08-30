@@ -1,0 +1,129 @@
+{
+  "name": "Product",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "short_description": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "features": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "target_audience": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "associated_workflows": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Workflow template IDs used to deliver this offering"
+    },
+    "related_documents": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Document template IDs related to this offering"
+    },
+    "upsell_opportunities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Product/Service IDs that are good upsells"
+    },
+    "cross_sell_opportunities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Product/Service IDs that are good cross-sells"
+    },
+    "knowledge_assets": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Knowledge asset IDs for FAQs, documentation"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "software",
+        "consulting",
+        "managed_services",
+        "implementation",
+        "training",
+        "support",
+        "other"
+      ]
+    },
+    "pricing_rules": {
+      "type": "array",
+      "description": "Rules governing pricing adjustments and approvals for this offering",
+      "items": {
+        "type": "object",
+        "properties": {
+          "rule_name": {
+            "type": "string"
+          },
+          "condition": {
+            "type": "string",
+            "description": "e.g., 'discount_percentage > 15'"
+          },
+          "action": {
+            "type": "string",
+            "description": "e.g., 'require_approval', 'apply_automatic_discount'"
+          },
+          "parameters": {
+            "type": "object",
+            "description": "e.g., {'approval_level': 'manager', 'discount_amount': 0.10}"
+          }
+        }
+      }
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "version_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "string"
+          },
+          "changed_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "changed_by": {
+            "type": "string"
+          },
+          "changes": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

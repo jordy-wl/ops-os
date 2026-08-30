@@ -1,0 +1,102 @@
+{
+  "name": "KnowledgeAsset",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "content": {
+      "type": "string",
+      "description": "Markdown/HTML content for SOPs, plans, etc."
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "sop",
+        "strategic_plan",
+        "meeting_notes",
+        "decision_log",
+        "ai_strategy",
+        "best_practice",
+        "template",
+        "other"
+      ],
+      "default": "other"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "strategy_chat",
+        "manual_upload",
+        "ai_generated",
+        "workflow_summary",
+        "other"
+      ],
+      "default": "manual_upload"
+    },
+    "related_entities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "entity_type": {
+            "type": "string"
+          },
+          "entity_id": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Links to workflows, clients, etc."
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "ai_summary": {
+      "type": "string",
+      "description": "AI-generated summary"
+    },
+    "ai_insights": {
+      "type": "string",
+      "description": "AI-generated key takeaways"
+    },
+    "permission_scopes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "AIPermissionScope IDs"
+    },
+    "vector_id": {
+      "type": "string",
+      "description": "Pinecone vector ID for this asset"
+    },
+    "embedding_model": {
+      "type": "string",
+      "description": "Model used to generate embedding",
+      "default": "text-embedding-3-small"
+    },
+    "last_embedded_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When embedding was last generated"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "metadata": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "title",
+    "type"
+  ]
+}

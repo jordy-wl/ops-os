@@ -1,0 +1,98 @@
+{
+  "name": "DeliverableTemplate",
+  "type": "object",
+  "properties": {
+    "stage_template_id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "sequence_order": {
+      "type": "integer"
+    },
+    "owner_type": {
+      "type": "string",
+      "enum": [
+        "user",
+        "team",
+        "department"
+      ]
+    },
+    "owner_id": {
+      "type": "string"
+    },
+    "is_required": {
+      "type": "boolean",
+      "default": true
+    },
+    "estimated_duration_hours": {
+      "type": "number"
+    },
+    "output_type": {
+      "type": "string",
+      "enum": [
+        "document",
+        "meeting",
+        "approval",
+        "report",
+        "form",
+        "contract",
+        "other"
+      ],
+      "default": "document",
+      "description": "Type of deliverable output artifact"
+    },
+    "document_template_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Document templates to auto-generate when deliverable completes"
+    },
+    "auto_generate_ai_document": {
+      "type": "boolean",
+      "default": true,
+      "description": "If true, triggers AI document generation on deliverable completion"
+    },
+    "meeting_config": {
+      "type": "object",
+      "description": "Meeting link, duration, attendees for meeting-type deliverables"
+    },
+    "data_mapping": {
+      "type": "object",
+      "description": "Maps task field outputs to document template placeholders (legacy manual mapping)"
+    },
+    "completion_criteria": {
+      "type": "object",
+      "description": "Conditions that must be met for deliverable completion"
+    },
+    "trigger_entity_update_enabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "If true, automatically creates/updates target entity when deliverable completes"
+    },
+    "target_entity_name": {
+      "type": "string",
+      "description": "Name of entity to create/update (e.g., 'Solution', 'Client')"
+    },
+    "critical_fields": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of critical fields for the target entity to track missing data"
+    },
+    "metadata": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "stage_template_id",
+    "name",
+    "sequence_order"
+  ]
+}

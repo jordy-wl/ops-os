@@ -1,0 +1,65 @@
+{
+  "name": "GlossaryTerm",
+  "type": "object",
+  "properties": {
+    "term": {
+      "type": "string",
+      "description": "The business-specific term (e.g., 'Unit', 'Transaction', 'Event')"
+    },
+    "definition": {
+      "type": "string",
+      "description": "Clear definition of what this term means in the user's business context"
+    },
+    "user_defined_label": {
+      "type": "string",
+      "description": "The label the user wants to display instead of system terminology (e.g., 'Consulting Hour' instead of 'Unit')"
+    },
+    "system_mapping": {
+      "type": "string",
+      "description": "Which system concept this maps to (e.g., 'PricingRule.fee_unit', 'calculation_method')"
+    },
+    "examples": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Example uses of this term in context"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "pricing",
+        "offering",
+        "workflow",
+        "client",
+        "general"
+      ],
+      "description": "Which area of the business this term applies to"
+    },
+    "synonyms": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Alternative terms that mean the same thing"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "usage_count": {
+      "type": "integer",
+      "description": "How many times this term is referenced in the system"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional context-specific information"
+    }
+  },
+  "required": [
+    "term",
+    "definition",
+    "user_defined_label",
+    "system_mapping"
+  ]
+}

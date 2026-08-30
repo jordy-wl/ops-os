@@ -1,0 +1,154 @@
+{
+  "name": "TaskInstance",
+  "type": "object",
+  "properties": {
+    "deliverable_instance_id": {
+      "type": "string"
+    },
+    "task_template_id": {
+      "type": "string"
+    },
+    "workflow_instance_id": {
+      "type": "string"
+    },
+    "client_id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "instructions": {
+      "type": "string"
+    },
+    "sequence_order": {
+      "type": "integer"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "not_started",
+        "in_progress",
+        "review",
+        "blocked",
+        "completed",
+        "failed"
+      ],
+      "default": "not_started"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "normal",
+        "high",
+        "urgent"
+      ],
+      "default": "normal"
+    },
+    "assigned_user_id": {
+      "type": "string"
+    },
+    "owner_type": {
+      "type": "string",
+      "enum": [
+        "user",
+        "team",
+        "department"
+      ]
+    },
+    "owner_id": {
+      "type": "string"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "is_ad_hoc": {
+      "type": "boolean",
+      "default": false
+    },
+    "is_blocked": {
+      "type": "boolean",
+      "default": false
+    },
+    "blocker_reason": {
+      "type": "string"
+    },
+    "personal_status": {
+      "type": "string",
+      "enum": [
+        "dump",
+        "prioritized",
+        "scheduled"
+      ],
+      "default": "dump",
+      "description": "User's personal status for task organization within 'My Work'"
+    },
+    "action_notes": {
+      "type": "string",
+      "description": "Notes related to specific task actions like override, dump, or delay"
+    },
+    "comments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "text": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Audit trail of user comments on the task"
+    },
+    "audit_trail": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "user_id": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "details": {
+            "type": "object"
+          }
+        }
+      },
+      "description": "Record of significant actions taken on the task instance (dump, delay, override, add subtask)"
+    },
+    "field_values": {
+      "type": "object",
+      "description": "Collected input values"
+    },
+    "metadata": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "name": "FormInstance",
+  "type": "object",
+  "properties": {
+    "form_template_id": {
+      "type": "string"
+    },
+    "client_id": {
+      "type": "string"
+    },
+    "unique_url_token": {
+      "type": "string",
+      "description": "Unique token for the public form URL"
+    },
+    "recipient_email": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "sent",
+        "opened",
+        "completed",
+        "expired"
+      ],
+      "default": "sent"
+    },
+    "submitted_data": {
+      "type": "object",
+      "description": "Data submitted by the client"
+    },
+    "sent_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "opened_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "submitted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "metadata": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "form_template_id",
+    "client_id",
+    "unique_url_token"
+  ]
+}

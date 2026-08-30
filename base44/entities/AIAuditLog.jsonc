@@ -1,0 +1,60 @@
+{
+  "name": "AIAuditLog",
+  "type": "object",
+  "properties": {
+    "ai_agent_config_id": {
+      "type": "string",
+      "description": "AI agent that performed this action"
+    },
+    "strategy_action_id": {
+      "type": "string",
+      "description": "Related strategy action"
+    },
+    "action_type": {
+      "type": "string",
+      "description": "Type of AI action"
+    },
+    "actor_type": {
+      "type": "string",
+      "enum": [
+        "user",
+        "ai",
+        "system"
+      ],
+      "default": "ai"
+    },
+    "actor_id": {
+      "type": "string",
+      "description": "User or AI ID"
+    },
+    "input_summary": {
+      "type": "string",
+      "description": "Brief description of input"
+    },
+    "output_summary": {
+      "type": "string",
+      "description": "Brief description of output"
+    },
+    "raw_input": {
+      "type": "object",
+      "description": "Full input data"
+    },
+    "raw_output": {
+      "type": "object",
+      "description": "Full output data"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "success",
+        "error",
+        "partial"
+      ],
+      "default": "success"
+    },
+    "error_message": {
+      "type": "string"
+    }
+  },
+  "required": []
+}

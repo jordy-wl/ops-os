@@ -1,0 +1,109 @@
+{
+  "name": "TermBlock",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name/title of this term or clause"
+    },
+    "content": {
+      "type": "string",
+      "description": "The actual legal text or contractual language (supports rich text/markdown)"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "payment_terms",
+        "liability",
+        "confidentiality",
+        "termination",
+        "intellectual_property",
+        "warranties",
+        "indemnification",
+        "dispute_resolution",
+        "general",
+        "custom"
+      ],
+      "description": "Category of the term for organization"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Tags for easier searching and filtering"
+    },
+    "is_standard": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether this is a standard term used across deals"
+    },
+    "is_required": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this term must be included in deals"
+    },
+    "applicable_offerings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Product/Service IDs this term is relevant for"
+    },
+    "version": {
+      "type": "string",
+      "description": "Version number of this term"
+    },
+    "version_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "string"
+          },
+          "changed_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "changed_by": {
+            "type": "string"
+          },
+          "changes": {
+            "type": "string"
+          },
+          "previous_content": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "History of changes to this term"
+    },
+    "legal_review_status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "in_review",
+        "approved",
+        "deprecated"
+      ],
+      "default": "draft"
+    },
+    "reviewed_by": {
+      "type": "string",
+      "description": "User ID of legal reviewer"
+    },
+    "reviewed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional flexible metadata"
+    }
+  },
+  "required": [
+    "name",
+    "content"
+  ]
+}

@@ -1,0 +1,70 @@
+{
+  "name": "WorkflowTemplate",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "code": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "linear",
+        "cyclical"
+      ],
+      "default": "linear"
+    },
+    "current_version": {
+      "type": "integer",
+      "default": 1
+    },
+    "owner_type": {
+      "type": "string",
+      "enum": [
+        "user",
+        "team",
+        "department"
+      ]
+    },
+    "owner_id": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "sales",
+        "onboarding",
+        "compliance",
+        "operations",
+        "support",
+        "renewal",
+        "custom"
+      ]
+    },
+    "icon": {
+      "type": "string"
+    },
+    "color": {
+      "type": "string"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "next_workflow_template_id": {
+      "type": "string",
+      "description": "ID of the workflow template to automatically start when this workflow completes"
+    },
+    "metadata": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}
