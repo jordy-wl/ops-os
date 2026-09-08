@@ -47,3 +47,4 @@ next-env.d.ts
 
 .vercel
 .env*.local
+base44/.app.jsonc
